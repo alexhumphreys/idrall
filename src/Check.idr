@@ -51,7 +51,7 @@ mutual
     | VNeutral Neutral
 
   data Neutral
-    = NNaturalIsZero Normal -- TODO Neutral?
+    = NNaturalIsZero Neutral
     | NApp Neutral Normal
-    | NBoolAnd Normal Normal -- TODO Neutral Normal?
+    | NBoolAnd Neutral Neutral
     | NLet Name
