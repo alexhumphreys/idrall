@@ -19,7 +19,7 @@ data Expr
   -- | > NaturalLit n ~ n
   | ENaturalLit Nat
   -- | > NaturalIsZero ~ Natural/isZero
-  | ENaturalIsZero
+  | ENaturalIsZero Expr
 
 mutual
   data Normal = Normal' Ty Value
@@ -51,7 +51,7 @@ mutual
     | VNeutral Neutral
 
   data Neutral
-    = NNaturalIsZero -- TODO Neutral Normal?
+    = NNaturalIsZero Normal -- TODO Neutral?
     | NApp Neutral Normal
     | NBoolAnd Normal Normal -- TODO Neutral Normal?
     | NLet Name
