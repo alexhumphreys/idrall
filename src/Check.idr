@@ -1,17 +1,22 @@
+Name : Type
+Name = String
+
 Namespace : Type
-Namespace = List (String, Integer)
+Namespace = List (Name, Integer)
 %name Namespace ns1, ns2, ns3
 
 -- expressions
 
 data Expr
+  -- x
+  = EVar Name
   -- | Lam x A b ~ λ(x : A) -> b
-  = ELam String Expr Expr
+  | ELam Name Expr Expr
   -- | > App f a ~ f a
   | EApp Expr Expr
   -- | > Let x Nothing r e ~ let x = r in e
   --   > Let x (Just t) r e ~ let x : t = r in e
-  | ELet String (Maybe Expr) Expr Expr
+  | ELet Name (Maybe Expr) Expr Expr
   -- | > Annot x t ~ x : t
   | EAnnot Expr Expr
   -- | > Bool ~ Bool
@@ -32,6 +37,11 @@ aEquivHelper : (i : Integer) ->
                Namespace -> Expr ->
                Namespace -> Expr ->
                Bool
+aEquivHelper i ns1 (EVar x) ns2 (EVar y) =
+  case (lookup x ns1, lookup y ns2) of
+       (Nothing, Nothing) => x == y
+       (Just j, Just k) => i == j
+       _ => False
 aEquivHelper i ns1 (ELam x ty1 body1) ns2 (ELam y ty2 body2)
   = let newNs1 = (x, i) :: ns1
         newNs2 = (y, i) :: ns2 in
@@ -72,9 +82,6 @@ aEquiv e1 e2 = aEquivHelper 0 [] e1 [] e2
 mutual
   data Normal = Normal' Ty Value
 
-  Name : Type
-  Name = String
-
   Ty : Type
   Ty = Value
 
@@ -96,10 +103,42 @@ mutual
     | VNatural
     | VNaturalLit Nat
     | VAnnot Value Ty
-    | VNeutral Neutral
+    | VNeutral Ty Neutral
 
   data Neutral
-    = NNaturalIsZero Neutral
+    = NVar Name
+    | NNaturalIsZero Neutral
     | NApp Neutral Normal
     | NBoolAnd Neutral Neutral
     | NLet Name
+
+extendEnv : Env -> Name -> Value -> Env
+extendEnv env x v = ((x, v) :: env)
+
+-- definitions and dependent types
+data CtxEntry = Def Ty Value | IsA Ty
+
+Ctx : Type
+Ctx = List (Name, CtxEntry)
+%name Ctx ctx, ctx1, ctx2
+
+initCtx : Ctx
+initCtx = []
+
+ctxNames : Ctx -> List Name
+ctxNames ctx = map fst ctx
+
+extendCtx : Ctx -> Name -> Ty -> Ctx
+extendCtx ctx x t = (x, (IsA t)) :: ctx
+
+define : Ctx -> Name -> Ty -> Value -> Ctx
+define ctx x t v = (x, Def t v) :: ctx
+
+mkEnv : Ctx -> Env
+mkEnv [] = []
+mkEnv ((x, e) :: ctx) =
+  let env = mkEnv ctx in
+  (case e of
+        (Def _ v) => (x, v) :: env
+        (IsA t) => let v = VNeutral t (NVar x) in
+                       (x, v) :: env)
