@@ -146,6 +146,7 @@ mkEnv ((x, e) :: ctx) =
 -- evaluator
 data Error
   = MissingVar String
+  | EvalNaturalIsZeroErr String
 
 mutual
   evalClosure : Closure -> Value -> Either Error Value
@@ -160,3 +161,35 @@ mutual
            False => evalVar env x
 
   eval : Env -> Expr -> Either Error Value
+  eval env (EVar x)
+    = evalVar env x
+  eval env (ELam x y z) = ?eval_rhs_2
+  eval env (EApp rator rand)
+    = do rator' <- eval env rator
+         rand' <- eval env rator
+         doApply rator' rand'
+  eval env (ELet x y z w) = ?eval_rhs_4
+  eval env (EAnnot x y)
+    = do x' <- eval env x
+         y' <- eval env y
+         Right (VAnnot x' y')
+  eval env EBool = Right VBool
+  eval env (EBoolLit x) = Right (VBoolLit x)
+  eval env (BoolAnd x y)
+    = do x' <- eval env x
+         y' <- eval env y
+         doBoolAnd x' y'
+  eval env ENatural = Right VNatural
+  eval env (ENaturalLit k) = Right (VNaturalLit k)
+  eval env (ENaturalIsZero x)
+    = do x' <- eval env x
+         doNaturalIsZero x'
+
+  doApply : Value -> Value -> Either Error Value
+
+  doNaturalIsZero : Value -> Either Error Value
+  doNaturalIsZero (VNaturalLit k) = Right (VBoolLit (k == 0))
+  doNaturalIsZero (VNeutral x y) = ?doNaturalIsZero_rhs_7
+  doNaturalIsZero _ = ?doNaturalIsZero_rhs_7
+
+  doBoolAnd : Value -> Value -> Either Error Value
