@@ -142,3 +142,21 @@ mkEnv ((x, e) :: ctx) =
         (Def _ v) => (x, v) :: env
         (IsA t) => let v = VNeutral t (NVar x) in
                        (x, v) :: env)
+
+-- evaluator
+data Error
+  = MissingVar String
+
+mutual
+  evalClosure : Closure -> Value -> Either Error Value
+  evalClosure (MkClosure env x e) v
+    = eval (extendEnv env x v) e
+
+  evalVar : Env -> Name -> Either Error Value
+  evalVar [] x = Left (MissingVar (x ++ " not found in env"))
+  evalVar ((y, v) :: env) x
+    = case x == y of
+           True => Right v
+           False => evalVar env x
+
+  eval : Env -> Expr -> Either Error Value
