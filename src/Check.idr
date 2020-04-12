@@ -168,7 +168,13 @@ mutual
     = do rator' <- eval env rator
          rand' <- eval env rator
          doApply rator' rand'
-  eval env (ELet x y z w) = ?eval_rhs_4
+  eval env (ELet x ty r e)
+    = case ty of
+           Nothing => ?eval_rhs_1
+           (Just ty') => do vTy <- eval env ty'
+                            vr <- eval env r
+                            e' <- eval (extendEnv env x vr) e -- TODO change Env to use Binding
+                            ?foooo
   eval env (EAnnot x y)
     = do x' <- eval env x
          y' <- eval env y
