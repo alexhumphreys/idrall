@@ -93,6 +93,7 @@ mutual
     constructor MkClosure
     closureEnv : Env
     closureName : Name
+    closureType : Expr
     closureBody : Expr
 
   -- Values
@@ -146,12 +147,15 @@ mkEnv ((x, e) :: ctx) =
 -- evaluator
 data Error
   = MissingVar String
-  | EvalNaturalIsZeroErr String
+  | EvalNaturalIsZeroErr
+  | EvalBoolAndErr
+  | EvalApplyErr
 
 mutual
   evalClosure : Closure -> Value -> Either Error Value
-  evalClosure (MkClosure env x e) v
-    = eval (extendEnv env x v) e
+  evalClosure (MkClosure env x ty e) v
+    = do ty' <- eval env ty -- TODO not using this type info
+         eval (extendEnv env x v) e
 
   evalVar : Env -> Name -> Either Error Value
   evalVar [] x = Left (MissingVar (x ++ " not found in env"))
@@ -163,18 +167,18 @@ mutual
   eval : Env -> Expr -> Either Error Value
   eval env (EVar x)
     = evalVar env x
-  eval env (ELam x y z) = ?eval_rhs_2
+  eval env (ELam x ty body) = Right (VLambda (MkClosure env x ty body))
   eval env (EApp rator rand)
     = do rator' <- eval env rator
          rand' <- eval env rator
          doApply rator' rand'
   eval env (ELet x ty r e)
     = case ty of
-           Nothing => ?eval_rhs_1
-           (Just ty') => do vTy <- eval env ty'
+           Nothing => do vr <- eval env r
+                         eval (extendEnv env x vr) e
+           (Just ty') => do vTy <- eval env ty' -- TODO not using this type info
                             vr <- eval env r
-                            e' <- eval (extendEnv env x vr) e -- TODO change Env to use Binding
-                            ?foooo
+                            eval (extendEnv env x vr) e -- TODO change Env to use Binding?
   eval env (EAnnot x y)
     = do x' <- eval env x
          y' <- eval env y
@@ -192,10 +196,17 @@ mutual
          doNaturalIsZero x'
 
   doApply : Value -> Value -> Either Error Value
+  doApply (VLambda closure) arg =
+    evalClosure closure arg
+  doApply (VNeutral x y) _ = ?doApply_rhs_6
+  doApply _ _ = Left EvalApplyErr
 
   doNaturalIsZero : Value -> Either Error Value
   doNaturalIsZero (VNaturalLit k) = Right (VBoolLit (k == 0))
   doNaturalIsZero (VNeutral x y) = ?doNaturalIsZero_rhs_7
-  doNaturalIsZero _ = ?doNaturalIsZero_rhs_7
+  doNaturalIsZero _ = Left EvalNaturalIsZeroErr
 
   doBoolAnd : Value -> Value -> Either Error Value
+  doBoolAnd (VBoolLit x) (VBoolLit y) = Right (VBoolLit (x && y))
+  doBoolAnd (VNeutral x z) y = ?doBoolAnd_rhs_7
+  doBoolAnd _ _ = Left EvalBoolAndErr
