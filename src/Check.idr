@@ -213,3 +213,22 @@ mutual
   doBoolAnd (VBoolLit x) (VBoolLit y) = Right (VBoolLit (x && y))
   doBoolAnd (VNeutral x z) y = ?doBoolAnd_rhs_7
   doBoolAnd _ _ = Left EvalBoolAndErr
+
+-- fresh names
+nextName : Name -> Name
+nextName x = x ++ "'"
+
+-- TODO could possibly fail for a list like [n', n'', n']
+freshen : List Name -> Name -> Name
+freshen [] n = n
+freshen (x :: used) n = case x == n of
+                             False => freshen used n
+                             True => freshen used (nextName n)
+
+-- reading back
+mutual
+  readBackNeutral : Ctx -> Neutral -> Either Error Expr
+
+  readBackTyped : Ctx -> Ty -> Value -> Either Error Expr
+
+  readBackNormal : Ctx -> Normal -> Either Error Expr
