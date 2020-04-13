@@ -152,6 +152,7 @@ data Error
   | EvalApplyErr
 
 mutual
+  partial
   evalClosure : Closure -> Value -> Either Error Value
   evalClosure (MkClosure env x ty e) v
     = do ty' <- eval env ty -- TODO not using this type info
@@ -164,6 +165,7 @@ mutual
            True => Right v
            False => evalVar env x
 
+  partial
   eval : Env -> Expr -> Either Error Value
   eval env (EVar x)
     = evalVar env x
@@ -195,6 +197,7 @@ mutual
     = do x' <- eval env x
          doNaturalIsZero x'
 
+  partial
   doApply : Value -> Value -> Either Error Value
   doApply (VLambda closure) arg =
     evalClosure closure arg
