@@ -110,7 +110,7 @@ mutual
     = NVar Name
     | NNaturalIsZero Neutral
     | NApp Neutral Normal
-    | NBoolAnd Neutral Neutral
+    | NBoolAnd Neutral Normal
     | NLet Name
 
 extendEnv : Env -> Name -> Value -> Env
@@ -206,12 +206,12 @@ mutual
 
   doNaturalIsZero : Value -> Either Error Value
   doNaturalIsZero (VNaturalLit k) = Right (VBoolLit (k == 0))
-  doNaturalIsZero (VNeutral x y) = ?doNaturalIsZero_rhs_7
+  doNaturalIsZero (VNeutral VNatural neu) = Right (VNeutral VBool (NNaturalIsZero neu))
   doNaturalIsZero _ = Left EvalNaturalIsZeroErr
 
   doBoolAnd : Value -> Value -> Either Error Value
   doBoolAnd (VBoolLit x) (VBoolLit y) = Right (VBoolLit (x && y))
-  doBoolAnd (VNeutral x z) y = ?doBoolAnd_rhs_7
+  doBoolAnd (VNeutral VBool v) y = Right (VNeutral VBool (NBoolAnd v (Normal' VBool y)))
   doBoolAnd _ _ = Left EvalBoolAndErr
 
 -- fresh names
