@@ -221,7 +221,9 @@ mutual
   doApply : Value -> Value -> Either Error Value
   doApply (VLambda closure) arg =
     evalClosure closure arg
-  doApply (VNeutral x y) _ = ?doApply_rhs_6
+  doApply (VNeutral (VPi dom ran) neu) arg =
+    do arg' <- evalClosure ran arg
+       Right (VNeutral arg' (NApp neu (Normal' dom arg)))
   doApply _ _ = Left EvalApplyErr
 
   doNaturalIsZero : Value -> Either Error Value
