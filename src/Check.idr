@@ -5,11 +5,14 @@ Namespace : Type
 Namespace = List (Name, Integer)
 %name Namespace ns1, ns2, ns3
 
+data U = CType | Sort | Kind
+
 -- expressions
 
 data Expr
   -- x
   = EVar Name
+  | EConst U
   -- | Lam x A b ~ λ(x : A) -> b
   | ELam Name Expr Expr
   -- | > App f a ~ f a
@@ -99,6 +102,7 @@ mutual
   -- Values
   data Value
     = VLambda Closure
+    | VConst U
     | VBool
     | VBoolLit Bool
     | VNatural
@@ -167,6 +171,7 @@ mutual
 
   partial
   eval : Env -> Expr -> Either Error Value
+  eval env (EConst x) = Right (VConst x)
   eval env (EVar x)
     = evalVar env x
   eval env (ELam x ty body) = Right (VLambda (MkClosure env x ty body))
