@@ -7,6 +7,12 @@ Namespace = List (Name, Integer)
 
 data U = CType | Sort | Kind
 
+Eq U where
+  (==) CType CType = True
+  (==) Sort Sort = True
+  (==) Kind Kind = True
+  (==) _ _ = False
+
 -- expressions
 
 data Expr
@@ -73,6 +79,7 @@ aEquivHelper i ns1 (BoolAnd w x) ns2 (BoolAnd y z)
   = aEquivHelper i ns1 w ns2 y &&
     aEquivHelper i ns1 x ns2 z
 aEquivHelper _ _ ENatural _ ENatural = True
+aEquivHelper _ _ (EConst x) _ (EConst y) = x == y
 aEquivHelper i ns1 (ENaturalLit x) ns2 (ENaturalLit y) = x == y
 aEquivHelper i ns1 (ENaturalIsZero x) ns2 (ENaturalIsZero y)
   = aEquivHelper i ns1 x ns2 y
