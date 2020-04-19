@@ -19,6 +19,7 @@ data Expr
   -- x
   = EVar Name
   | EConst U
+  | EPi Name Expr Expr
   -- | Lam x A b ~ λ(x : A) -> b
   | ELam Name Expr Expr
   -- | > App f a ~ f a
@@ -51,6 +52,9 @@ aEquivHelper i ns1 (EVar x) ns2 (EVar y) =
        (Nothing, Nothing) => x == y
        (Just j, Just k) => i == j
        _ => False
+aEquivHelper i ns1 (EPi x a1 r1) ns2 (EPi y a2 r2) =
+  aEquivHelper i ns1 a1 ns2 a2 &&
+  aEquivHelper (i+1) ((x, i) :: ns1) r1 ((y, i) :: ns2) r2
 aEquivHelper i ns1 (ELam x ty1 body1) ns2 (ELam y ty2 body2)
   = let newNs1 = (x, i) :: ns1
         newNs2 = (y, i) :: ns2 in
@@ -109,6 +113,7 @@ mutual
   -- Values
   data Value
     = VLambda Closure
+    | VPi Ty Closure
     | VConst U
     | VBool
     | VBoolLit Bool
@@ -181,6 +186,9 @@ mutual
   eval env (EConst x) = Right (VConst x)
   eval env (EVar x)
     = evalVar env x
+  eval env (EPi x dom ran)
+    = do ty <- eval env dom
+         Right (VPi ty (MkClosure env x dom ran)) -- TODO double check
   eval env (ELam x ty body) = Right (VLambda (MkClosure env x ty body))
   eval env (EApp rator rand)
     = do rator' <- eval env rator
