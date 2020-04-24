@@ -119,7 +119,6 @@ mutual
     | VBoolLit Bool
     | VNatural
     | VNaturalLit Nat
-    | VAnnot Value Ty
     | VNeutral Ty Neutral
 
   data Neutral
@@ -203,7 +202,7 @@ mutual
   eval env (EAnnot x y)
     = do x' <- eval env x
          y' <- eval env y
-         Right (VAnnot x' y')
+         Right x' -- TODO check this
   eval env EBool = Right VBool
   eval env (EBoolLit x) = Right (VBoolLit x)
   eval env (EBoolAnd x y)
@@ -253,7 +252,10 @@ mutual
   readBackNeutral ctx (NNaturalIsZero x) = do
     x' <- readBackNeutral ctx x
     Right (ENaturalIsZero x')
-  readBackNeutral ctx (NApp x y) = ?readBackNeutral_rhs_3
+  readBackNeutral ctx (NApp neu arg) = do
+      neu' <- readBackNeutral ctx neu
+      arg' <- readBackNormal ctx arg
+      Right (EApp neu' arg')
   readBackNeutral ctx (NBoolAnd x y) = do
     x' <- readBackNeutral ctx x
     y' <- readBackNormal ctx y
@@ -267,8 +269,7 @@ mutual
   readBackTyped ctx (VConst CType) VNatural = Right ENatural
   readBackTyped ctx VBool (VBoolLit x) = Right (EBoolLit x)
   readBackTyped ctx VNatural (VNaturalLit x) = Right (ENaturalLit x)
-  readBackTyped ctx (VAnnot x z) y = ?readBackTyped_rhs_8
-  readBackTyped ctx (VNeutral x z) y = ?readBackTyped_rhs_9
+  readBackTyped ctx t (VNeutral x z) = readBackNeutral ctx z
 
   readBackNormal : Ctx -> Normal -> Either Error Expr
-  readBackNormal ctx (Normal' x y) = ?readBackNormal_rhs_1
+  readBackNormal ctx (Normal' t v) = readBackTyped ctx t v
