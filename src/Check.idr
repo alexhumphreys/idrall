@@ -250,7 +250,22 @@ freshen (x :: used) n = case x == n of
 -- reading back
 mutual
   readBackNeutral : Ctx -> Neutral -> Either Error Expr
+  readBackNeutral ctx (NVar x) = ?readBackNeutral_rhs_1
+  readBackNeutral ctx (NNaturalIsZero x) = Right (ENaturalIsZero ?rbn)
+  readBackNeutral ctx (NApp x y) = ?readBackNeutral_rhs_3
+  readBackNeutral ctx (NBoolAnd x y) = ?readBackNeutral_rhs_4
+  readBackNeutral ctx (NLet x) = ?readBackNeutral_rhs_5
 
   readBackTyped : Ctx -> Ty -> Value -> Either Error Expr
+  readBackTyped ctx (VLambda x) y = ?readBackTyped_rhs_1
+  readBackTyped ctx (VPi x z) y = ?readBackTyped_rhs_2
+  readBackTyped ctx (VConst x) (VConst y) = Right (EConst y) -- TODO check this
+  readBackTyped ctx (VConst CType) VBool = Right EBool
+  readBackTyped ctx (VConst CType) VNatural = Right ENatural
+  readBackTyped ctx VBool (VBoolLit x) = Right (EBoolLit x)
+  readBackTyped ctx VNatural (VNaturalLit x) = Right (ENaturalLit x)
+  readBackTyped ctx (VAnnot x z) y = ?readBackTyped_rhs_8
+  readBackTyped ctx (VNeutral x z) y = ?readBackTyped_rhs_9
 
   readBackNormal : Ctx -> Normal -> Either Error Expr
+  readBackNormal ctx (Normal' x y) = ?readBackNormal_rhs_1
