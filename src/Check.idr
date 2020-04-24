@@ -34,7 +34,7 @@ data Expr
   -- | > BoolLit b ~ b
   | EBoolLit Bool
   -- | > BoolAnd x y ~ x && y
-  | BoolAnd Expr Expr
+  | EBoolAnd Expr Expr
   -- | > Natural ~ Natural
   | ENatural
   -- | > NaturalLit n ~ n
@@ -79,7 +79,7 @@ aEquivHelper i ns1 (EAnnot w x) ns2 (EAnnot y z)
     aEquivHelper i ns1 x ns2 z
 aEquivHelper _ _ EBool _ EBool = True
 aEquivHelper i ns1 (EBoolLit x) ns2 (EBoolLit y) = x == y
-aEquivHelper i ns1 (BoolAnd w x) ns2 (BoolAnd y z)
+aEquivHelper i ns1 (EBoolAnd w x) ns2 (EBoolAnd y z)
   = aEquivHelper i ns1 w ns2 y &&
     aEquivHelper i ns1 x ns2 z
 aEquivHelper _ _ ENatural _ ENatural = True
@@ -127,7 +127,6 @@ mutual
     | NNaturalIsZero Neutral
     | NApp Neutral Normal
     | NBoolAnd Neutral Normal
-    | NLet Name
 
 extendEnv : Env -> Name -> Value -> Env
 extendEnv env x v = ((x, v) :: env)
@@ -207,7 +206,7 @@ mutual
          Right (VAnnot x' y')
   eval env EBool = Right VBool
   eval env (EBoolLit x) = Right (VBoolLit x)
-  eval env (BoolAnd x y)
+  eval env (EBoolAnd x y)
     = do x' <- eval env x
          y' <- eval env y
          doBoolAnd x' y'
@@ -250,11 +249,15 @@ freshen (x :: used) n = case x == n of
 -- reading back
 mutual
   readBackNeutral : Ctx -> Neutral -> Either Error Expr
-  readBackNeutral ctx (NVar x) = ?readBackNeutral_rhs_1
-  readBackNeutral ctx (NNaturalIsZero x) = Right (ENaturalIsZero ?rbn)
+  readBackNeutral ctx (NVar x) = Right (EVar x)
+  readBackNeutral ctx (NNaturalIsZero x) = do
+    x' <- readBackNeutral ctx x
+    Right (ENaturalIsZero x')
   readBackNeutral ctx (NApp x y) = ?readBackNeutral_rhs_3
-  readBackNeutral ctx (NBoolAnd x y) = ?readBackNeutral_rhs_4
-  readBackNeutral ctx (NLet x) = ?readBackNeutral_rhs_5
+  readBackNeutral ctx (NBoolAnd x y) = do
+    x' <- readBackNeutral ctx x
+    y' <- readBackNormal ctx y
+    Right (EBoolAnd x' y')
 
   readBackTyped : Ctx -> Ty -> Value -> Either Error Expr
   readBackTyped ctx (VLambda x) y = ?readBackTyped_rhs_1
