@@ -273,3 +273,18 @@ mutual
 
   readBackNormal : Ctx -> Normal -> Either Error Expr
   readBackNormal ctx (Normal' t v) = readBackTyped ctx t v
+
+-- helpers
+unexpected : Ctx -> String -> Value -> Either Error a
+
+isPi : Ctx -> Value -> Either Error (Ty, Closure)
+isPi _ (VPi a b) = Right (a, b)
+isPi ctx other = unexpected ctx "Not a Pi type" other
+
+isNat : Ctx -> Value -> Either Error ()
+isNat _ VNatural = Right ()
+isNat ctx other = unexpected ctx "Not Natural" other
+
+isBool : Ctx -> Value -> Either Error ()
+isBool _ VBool = Right ()
+isBool ctx other = unexpected ctx "Not Bool" other
