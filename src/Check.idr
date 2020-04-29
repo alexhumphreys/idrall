@@ -112,7 +112,7 @@ mutual
 
   -- Values
   data Value
-    = VLambda Closure
+    = VLambda Ty Closure
     | VPi Ty Closure
     | VConst U
     | VBool
@@ -164,6 +164,7 @@ data Error
   | EvalNaturalIsZeroErr
   | EvalBoolAndErr
   | EvalApplyErr
+  | Unexpected String
 
 mutual
   partial
@@ -187,7 +188,9 @@ mutual
   eval env (EPi x dom ran)
     = do ty <- eval env dom
          Right (VPi ty (MkClosure env x dom ran)) -- TODO double check
-  eval env (ELam x ty body) = Right (VLambda (MkClosure env x ty body))
+  eval env (ELam x ty body)
+    = do vTy <- eval env ty
+         Right (VLambda vTy (MkClosure env x ty body))
   eval env (EApp rator rand)
     = do rator' <- eval env rator
          rand' <- eval env rator
@@ -217,7 +220,7 @@ mutual
 
   partial
   doApply : Value -> Value -> Either Error Value
-  doApply (VLambda closure) arg =
+  doApply (VLambda ty closure) arg =
     evalClosure closure arg
   doApply (VNeutral (VPi dom ran) neu) arg =
     do arg' <- evalClosure ran arg
@@ -247,6 +250,7 @@ freshen (x :: used) n = case x == n of
 
 -- reading back
 mutual
+  partial
   readBackNeutral : Ctx -> Neutral -> Either Error Expr
   readBackNeutral ctx (NVar x) = Right (EVar x)
   readBackNeutral ctx (NNaturalIsZero x) = do
@@ -261,9 +265,17 @@ mutual
     y' <- readBackNormal ctx y
     Right (EBoolAnd x' y')
 
+  partial
   readBackTyped : Ctx -> Ty -> Value -> Either Error Expr
-  readBackTyped ctx (VLambda x) y = ?readBackTyped_rhs_1
-  readBackTyped ctx (VPi x z) y = ?readBackTyped_rhs_2
+  readBackTyped ctx (VPi dom ran) fun =
+    let x = freshen (ctxNames ctx) (closureName ran)
+        xVal = VNeutral dom (NVar x)
+        ctx' = extendCtx ctx x dom in
+    do ty' <- evalClosure ran xVal
+       v' <- doApply fun xVal
+       body <- readBackTyped ctx' ty' v'
+       eTy <- readBackTyped ctx' (VConst CType) ty' -- TODO check this
+       Right (ELam x eTy body)
   readBackTyped ctx (VConst x) (VConst y) = Right (EConst y) -- TODO check this
   readBackTyped ctx (VConst CType) VBool = Right EBool
   readBackTyped ctx (VConst CType) VNatural = Right ENatural
@@ -271,11 +283,13 @@ mutual
   readBackTyped ctx VNatural (VNaturalLit x) = Right (ENaturalLit x)
   readBackTyped ctx t (VNeutral x z) = readBackNeutral ctx z
 
+  partial
   readBackNormal : Ctx -> Normal -> Either Error Expr
   readBackNormal ctx (Normal' t v) = readBackTyped ctx t v
 
 -- helpers
 unexpected : Ctx -> String -> Value -> Either Error a
+unexpected ctx x y = Left (Unexpected x) -- TODO add value
 
 isPi : Ctx -> Value -> Either Error (Ty, Closure)
 isPi _ (VPi a b) = Right (a, b)
