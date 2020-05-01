@@ -165,6 +165,8 @@ data Error
   | EvalBoolAndErr
   | EvalApplyErr
   | Unexpected String
+  | ErrorMessage String
+  | SortError
 
 mutual
   partial
@@ -302,3 +304,45 @@ isNat ctx other = unexpected ctx "Not Natural" other
 isBool : Ctx -> Value -> Either Error ()
 isBool _ VBool = Right ()
 isBool ctx other = unexpected ctx "Not Bool" other
+
+lookupType : Ctx -> Name -> Either Error Ty -- didn't use message type
+lookupType [] x = Left (ErrorMessage "unbound variable: ") -- TODO ++ show x
+lookupType ((y, e) :: ctx) x =
+  (case x == y of
+        False => lookupType ctx x
+        True => (case e of
+                      (Def t _) => Right t
+                      (IsA t) => Right t))
+
+axioms : (x : U) -> Either Error Value
+axioms CType = Right (VConst Kind) -- TODO double check
+axioms Kind = Right (VConst Sort)
+axioms Sort = Left SortError
+
+mutual
+  convert : Ctx -> Ty -> Value -> Value -> Either Error ()
+
+  partial
+  check : Ctx -> Expr -> Ty -> Either Error ()
+  check ctx x y = ?check_rhs
+
+  partial
+  synth : Ctx -> Expr -> Either Error Ty
+  synth ctx (EVar x) = lookupType ctx x
+  synth ctx (EConst x) = axioms x
+  synth ctx (EPi x y z) = ?synth_rhs_3
+  synth ctx (ELam x y z) = ?synth_rhs_4
+  synth ctx (EApp x y) = ?synth_rhs_5
+  synth ctx (ELet x y z w) = ?synth_rhs_6
+  synth ctx (EAnnot x y) = ?synth_rhs_7
+  synth ctx EBool = Right (VConst CType)
+  synth ctx (EBoolLit x) = Right (VBool)
+  synth ctx (EBoolAnd x y)
+    = do check ctx x VBool
+         check ctx y VBool
+         Right (VBool)
+  synth ctx ENatural = Right (VConst CType)
+  synth ctx (ENaturalLit k) = Right (VNatural)
+  synth ctx (ENaturalIsZero x)
+    = do check ctx x VNatural
+         Right (VBool)
