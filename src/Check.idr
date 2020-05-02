@@ -332,7 +332,12 @@ mutual
   synth ctx (EConst x) = axioms x
   synth ctx (EPi x y z) = ?synth_rhs_3
   synth ctx (ELam x y z) = ?synth_rhs_4
-  synth ctx (EApp x y) = ?synth_rhs_5
+  synth ctx (EApp rator rand)
+    = do funTy <- synth ctx rator
+         (a, b) <- isPi ctx funTy
+         check ctx rand a
+         rand' <- (eval (mkEnv ctx) rand)
+         evalClosure b rand'
   synth ctx (ELet x y z w) = ?synth_rhs_6
   synth ctx (EAnnot x y) = ?synth_rhs_7
   synth ctx EBool = Right (VConst CType)
