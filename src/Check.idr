@@ -339,7 +339,10 @@ mutual
          rand' <- (eval (mkEnv ctx) rand)
          evalClosure b rand'
   synth ctx (ELet x y z w) = ?synth_rhs_6
-  synth ctx (EAnnot x y) = ?synth_rhs_7
+  synth ctx (EAnnot e t)
+    = do tV <- synth ctx t
+         check ctx e tV
+         Right tV
   synth ctx EBool = Right (VConst CType)
   synth ctx (EBoolLit x) = Right (VBool)
   synth ctx (EBoolAnd x y)
