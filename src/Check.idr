@@ -320,7 +320,14 @@ axioms Kind = Right (VConst Sort)
 axioms Sort = Left SortError
 
 mutual
+  partial
   convert : Ctx -> Ty -> Value -> Value -> Either Error ()
+  convert ctx t v1 v2
+    = do e1 <- readBackTyped ctx t v1
+         e2 <- readBackTyped ctx t v2
+         if aEquiv e1 e2
+            then Right ()
+            else Left (ErrorMessage "not alpha equivalent")
 
   partial
   check : Ctx -> Expr -> Ty -> Either Error ()
