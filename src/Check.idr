@@ -13,6 +13,10 @@ Eq U where
   (==) Kind Kind = True
   (==) _ _ = False
 
+Show U where
+  show CType = "Type"
+  show Sort = "Sort"
+  show Kind = "Kind"
 -- expressions
 
 data Expr
@@ -41,6 +45,8 @@ data Expr
   | ENaturalLit Nat
   -- | > NaturalIsZero ~ Natural/isZero
   | ENaturalIsZero Expr
+
+Show Expr where
 
 -- alpha equivalence
 aEquivHelper : (i : Integer) ->
@@ -127,6 +133,16 @@ mutual
     | NApp Neutral Normal
     | NBoolAnd Neutral Normal
 
+Show Value where
+  show (VLambda x y) = "(lam " ++ show x ++ ")" -- TODO show y
+  show (VPi x y) = "(pi " ++ show x ++ ")" -- TODO show y
+  show (VConst x) = show x
+  show VBool = "VBool"
+  show (VBoolLit x) = "(" ++ show x ++ ")"
+  show VNatural = "VNatural"
+  show (VNaturalLit k) = "(" ++ show k ++ ")"
+  show (VNeutral x y) = ?Show_rhs_9
+
 extendEnv : Env -> Name -> Value -> Env
 extendEnv env x v = ((x, v) :: env)
 
@@ -161,12 +177,21 @@ mkEnv ((x, e) :: ctx) =
 -- evaluator
 data Error
   = MissingVar String
-  | EvalNaturalIsZeroErr
+  | EvalNaturalIsZeroErr String
   | EvalBoolAndErr
   | EvalApplyErr
   | Unexpected String
   | ErrorMessage String
   | SortError
+
+Show Error where
+  show (MissingVar x) = "MissingVar: " ++ show x
+  show (EvalNaturalIsZeroErr x) = "EvalNaturalIsZero error:" ++ x
+  show EvalBoolAndErr = "EvalBoolAndErr"
+  show EvalApplyErr = "EvalApplyErr"
+  show (Unexpected x) = "Unexpected: " ++ show x
+  show (ErrorMessage x) = "ErrorMessage: " ++ show x
+  show SortError = "SortError"
 
 mutual
   partial
@@ -232,7 +257,7 @@ mutual
   doNaturalIsZero : Value -> Either Error Value
   doNaturalIsZero (VNaturalLit k) = Right (VBoolLit (k == 0))
   doNaturalIsZero (VNeutral VNatural neu) = Right (VNeutral VBool (NNaturalIsZero neu))
-  doNaturalIsZero _ = Left EvalNaturalIsZeroErr
+  doNaturalIsZero x = Left (EvalNaturalIsZeroErr (show x))
 
   doBoolAnd : Value -> Value -> Either Error Value
   doBoolAnd (VBoolLit x) (VBoolLit y) = Right (VBoolLit (x && y))
