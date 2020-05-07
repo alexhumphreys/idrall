@@ -195,7 +195,7 @@ mutual
          Right (VLambda vTy (MkClosure env x ty body))
   eval env (EApp rator rand)
     = do rator' <- eval env rator
-         rand' <- eval env rator
+         rand' <- eval env rand
          doApply rator' rand'
   eval env (ELet x ty r e)
     = case ty of
