@@ -365,7 +365,14 @@ mutual
 
   partial
   check : Ctx -> Expr -> Ty -> Either Error ()
-  check ctx x y = ?check_rhs
+  check ctx (EConst x) t = ?check_rhs_2
+  check ctx (ELam x y z) t = ?check_rhs_4
+  check ctx (EAnnot x y) t = ?check_rhs_7
+  check ctx (EBoolLit x) t = isBool ctx t
+  check ctx (ENaturalLit k) t = isNat ctx t
+  check ctx other t
+    = do t' <- synth ctx other
+         convert ctx (VConst CType) t' t
 
   partial
   synth : Ctx -> Expr -> Either Error Ty
