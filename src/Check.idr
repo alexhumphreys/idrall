@@ -102,6 +102,9 @@ aEquiv e1 e2 = aEquivHelper 0 [] e1 [] e2
 mutual
   data Normal = Normal' Ty Value
 
+  Show Normal where
+    show (Normal' x y) = "(normal v: " ++ (show y) ++ ")"
+
   Ty : Type
   Ty = Value
 
@@ -133,15 +136,21 @@ mutual
     | NApp Neutral Normal
     | NBoolAnd Neutral Normal
 
-Show Value where
-  show (VLambda x y) = "(lam " ++ show x ++ ")" -- TODO show y
-  show (VPi x y) = "(pi " ++ show x ++ ")" -- TODO show y
-  show (VConst x) = show x
-  show VBool = "VBool"
-  show (VBoolLit x) = "(" ++ show x ++ ")"
-  show VNatural = "VNatural"
-  show (VNaturalLit k) = "(" ++ show k ++ ")"
-  show (VNeutral x y) = ?Show_rhs_9
+  Show Value where
+    show (VLambda x y) = "(lam " ++ show x ++ ")" -- TODO show y
+    show (VPi x y) = "(pi " ++ show x ++ ")" -- TODO show y
+    show (VConst x) = show x
+    show VBool = "VBool"
+    show (VBoolLit x) = "(" ++ show x ++ ")"
+    show VNatural = "VNatural"
+    show (VNaturalLit k) = "(" ++ show k ++ ")"
+    show (VNeutral x y) = ?Show_rhs_9
+
+Show Neutral where
+  show (NVar x) = x
+  show (NNaturalIsZero x) = "NNaturalIsZero " ++ show x
+  show (NApp x y) = ?bar_3
+  show (NBoolAnd x y) = ?bar_4
 
 extendEnv : Env -> Name -> Value -> Env
 extendEnv env x v = ((x, v) :: env)
