@@ -119,6 +119,8 @@ mutual
     closureType : Expr
     closureBody : Expr
 
+  Show Closure where
+
   -- Values
   data Value
     = VLambda Ty Closure
@@ -141,7 +143,7 @@ mutual
     show (VPi x y) = "(pi " ++ show x ++ ")" -- TODO show y
     show (VConst x) = show x
     show VBool = "VBool"
-    show (VBoolLit x) = "(" ++ show x ++ ")"
+    show (VBoolLit x) = "(V" ++ show x ++ ")"
     show VNatural = "VNatural"
     show (VNaturalLit k) = "(" ++ show k ++ ")"
     show (VNeutral x y) = ?Show_rhs_9
@@ -189,7 +191,7 @@ data Error
   | EvalNaturalIsZeroErr String
   | EvalBoolAndErr
   | EvalApplyErr
-  | Unexpected String
+  | Unexpected String Value
   | ErrorMessage String
   | SortError
 
@@ -198,7 +200,7 @@ Show Error where
   show (EvalNaturalIsZeroErr x) = "EvalNaturalIsZero error:" ++ x
   show EvalBoolAndErr = "EvalBoolAndErr"
   show EvalApplyErr = "EvalApplyErr"
-  show (Unexpected x) = "Unexpected: " ++ show x
+  show (Unexpected str v) = "Unexpected: " ++ str ++ " value: " ++ show v
   show (ErrorMessage x) = "ErrorMessage: " ++ show x
   show SortError = "SortError"
 
@@ -325,7 +327,7 @@ mutual
 
 -- helpers
 unexpected : Ctx -> String -> Value -> Either Error a
-unexpected ctx x y = Left (Unexpected x) -- TODO add value
+unexpected ctx str v = Left (Unexpected str v) -- TODO add value
 
 isPi : Ctx -> Value -> Either Error (Ty, Closure)
 isPi _ (VPi a b) = Right (a, b)
@@ -340,7 +342,7 @@ isBool _ VBool = Right ()
 isBool ctx other = unexpected ctx "Not Bool" other
 
 lookupType : Ctx -> Name -> Either Error Ty -- didn't use message type
-lookupType [] x = Left (ErrorMessage "unbound variable: ") -- TODO ++ show x
+lookupType [] x = Left (ErrorMessage ("unbound variable: " ++ x))
 lookupType ((y, e) :: ctx) x =
   (case x == y of
         False => lookupType ctx x
@@ -366,7 +368,11 @@ mutual
   partial
   check : Ctx -> Expr -> Ty -> Either Error ()
   check ctx (EConst x) t = ?check_rhs_2
-  check ctx (ELam x y z) t = ?check_rhs_4
+  check ctx (ELam x ty body) t
+    = do (a,b) <- isPi ctx t
+         check ctx ty a
+         xV <- evalClosure b (VNeutral a (NVar x))
+         check (extendCtx ctx x a) body xV
   check ctx (EAnnot x y) t = ?check_rhs_7
   check ctx (EBoolLit x) t = isBool ctx t
   check ctx (ENaturalLit k) t = isNat ctx t
@@ -379,13 +385,15 @@ mutual
   synth ctx (EVar x) = lookupType ctx x
   synth ctx (EConst x) = axioms x
   synth ctx (EPi x y z) = ?synth_rhs_3
-  synth ctx (ELam x y z) = ?synth_rhs_4
+  synth ctx (ELam x ty b)
+    = do xTy <- eval (mkEnv ctx) ty
+         bTy <- synth (extendCtx ctx x xTy) b
+         Right (VPi xTy (MkClosure (mkEnv ctx) x ty b))
   synth ctx (EApp rator rand)
     = do funTy <- synth ctx rator
          (a, b) <- isPi ctx funTy
          check ctx rand a
-         rand' <- (eval (mkEnv ctx) rand)
-         evalClosure b rand'
+         synth (extendCtx ctx (closureName b) a) (closureBody b) -- TODO check why paper is different
   synth ctx (ELet x ann v e)
     = case ann of
            Nothing =>
