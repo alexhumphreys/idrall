@@ -386,7 +386,16 @@ mutual
          check ctx rand a
          rand' <- (eval (mkEnv ctx) rand)
          evalClosure b rand'
-  synth ctx (ELet x y z w) = ?synth_rhs_6
+  synth ctx (ELet x ann v e)
+    = case ann of
+           Nothing =>
+              do xTy <- synth ctx v
+                 synth (extendCtx ctx x xTy) e
+           (Just ann') =>
+              do check ctx ann' (VConst CType)
+                 xTy <- eval (mkEnv ctx) ann'
+                 check ctx v xTy
+                 synth (extendCtx ctx x xTy) e
   synth ctx (EAnnot e t)
     = do tV <- synth ctx t
          check ctx e tV
