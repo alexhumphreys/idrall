@@ -3,30 +3,36 @@ import Lightyear.Core
 import Lightyear.Char
 import Lightyear.Strings
 
-import Idrall.Expr
-
+public export
 data Assoc = AssocNone
            | AssocLeft
            | AssocRight
 
+public export
 data Operator a = Infix (Parser (a -> a -> a)) Assoc
                 | Prefix (Parser (a -> a))
                 | Postfix (Parser (a -> a))
 
+public export
 LO : Type -> Type
 LO a = List (Operator a)
 
+public export
 OperatorTable : Type -> Type
 OperatorTable a = List (LO a)
 
+public export
 BinaryOperator : Type -> Type
 BinaryOperator a = List (Parser (a -> a -> a))
 
+public export
 UnaryOperator : Type -> Type
 UnaryOperator a = List (Parser (a -> a))
 
+public export
 data Ops a = BinOp (BinaryOperator a) | UnOp (UnaryOperator a)
 
+public export
 ReturnType : Type -> Type
 ReturnType a = (BinaryOperator a, BinaryOperator a, BinaryOperator a, UnaryOperator a, UnaryOperator a)
 
@@ -73,6 +79,7 @@ mkNassocP amRight amLeft amNon nassocOp termP x =
      amRight <|> amLeft <|> amNon
      pure (f x y)
 
+public export
 buildExpressionParser : (a : Type) -> OperatorTable a -> Parser a -> Parser a
 buildExpressionParser a operators simpleExpr =
   foldl (makeParser a) simpleExpr operators
@@ -117,5 +124,3 @@ buildExpressionParser a operators simpleExpr =
           in
           do x <- termP
              rassocP x <|> lassocP  x <|> nassocP x <|> pure x <?> "operator"
-
-
