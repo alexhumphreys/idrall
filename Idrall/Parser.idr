@@ -6,5 +6,6 @@ import Lightyear.Strings
 import Idrall.Expr
 import Idrall.BuildExprParser
 
+public export
 true : Parser Expr
 true = token "True" *> pure (EBoolLit True)

@@ -1,3 +1,5 @@
+module Idrall.Check
+
 import Idrall.Expr
 
 -- alpha equivalence
@@ -57,6 +59,7 @@ mutual
   Show Normal where
     show (Normal' x y) = "(normal v: " ++ (show y) ++ ")"
 
+  export
   Ty : Type
   Ty = Value
 
@@ -112,6 +115,7 @@ extendEnv env x v = ((x, v) :: env)
 -- definitions and dependent types
 data CtxEntry = Def Ty Value | IsA Ty
 
+export
 Ctx : Type
 Ctx = List (Name, CtxEntry)
 %name Ctx ctx, ctx1, ctx2
@@ -138,6 +142,7 @@ mkEnv ((x, e) :: ctx) =
                        (x, v) :: env)
 
 -- evaluator
+export
 data Error
   = MissingVar String
   | EvalNaturalIsZeroErr String
@@ -317,6 +322,7 @@ mutual
             then Right ()
             else Left (ErrorMessage "not alpha equivalent")
 
+  export
   partial
   check : Ctx -> Expr -> Ty -> Either Error ()
   check ctx (EConst x) t = ?check_rhs_2
@@ -332,6 +338,7 @@ mutual
     = do t' <- synth ctx other
          convert ctx (VConst CType) t' t
 
+  export
   partial
   synth : Ctx -> Expr -> Either Error Ty
   synth ctx (EVar x) = lookupType ctx x
