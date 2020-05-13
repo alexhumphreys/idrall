@@ -54,19 +54,26 @@ aEquiv e1 e2 = aEquivHelper 0 [] e1 [] e2
 
 -- values
 mutual
+  public export
   data Normal = Normal' Ty Value
 
   Show Normal where
     show (Normal' x y) = "(normal v: " ++ (show y) ++ ")"
 
-  export
+  public export
   Ty : Type
   Ty = Value
 
+  export
   Env : Type -- Now a type alias
   Env = List (Name,Value)
   %name Env env, env1, env2
 
+  export
+  initEnv : Env
+  initEnv = []
+
+  export
   record Closure where
     constructor MkClosure
     closureEnv : Env
@@ -77,6 +84,7 @@ mutual
   Show Closure where
 
   -- Values
+  export
   data Value
     = VLambda Ty Closure
     | VPi Ty Closure
@@ -87,6 +95,7 @@ mutual
     | VNaturalLit Nat
     | VNeutral Ty Neutral
 
+  export
   data Neutral
     = NVar Name
     | NNaturalIsZero Neutral
@@ -120,6 +129,7 @@ Ctx : Type
 Ctx = List (Name, CtxEntry)
 %name Ctx ctx, ctx1, ctx2
 
+export
 initCtx : Ctx
 initCtx = []
 
@@ -142,7 +152,7 @@ mkEnv ((x, e) :: ctx) =
                        (x, v) :: env)
 
 -- evaluator
-export
+public export
 data Error
   = MissingVar String
   | EvalNaturalIsZeroErr String
@@ -152,6 +162,7 @@ data Error
   | ErrorMessage String
   | SortError
 
+export
 Show Error where
   show (MissingVar x) = "MissingVar: " ++ show x
   show (EvalNaturalIsZeroErr x) = "EvalNaturalIsZero error:" ++ x
@@ -175,6 +186,7 @@ mutual
            True => Right v
            False => evalVar env x
 
+  export
   partial
   eval : Env -> Expr -> Either Error Value
   eval env (EConst x) = Right (VConst x)
@@ -278,6 +290,7 @@ mutual
   readBackTyped ctx VNatural (VNaturalLit x) = Right (ENaturalLit x)
   readBackTyped ctx t (VNeutral x z) = readBackNeutral ctx z
 
+  export
   partial
   readBackNormal : Ctx -> Normal -> Either Error Expr
   readBackNormal ctx (Normal' t v) = readBackTyped ctx t v
