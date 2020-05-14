@@ -54,17 +54,17 @@ data Expr
 
 export
 Show Expr where
-  show (EVar x) = ?foo_1
-  show (EConst x) = ?foo_2
+  show (EVar x) = x
+  show (EConst x) = show x
   show (EPi x y z) = ?foo_3
   show (ELam x y z) = ?foo_4
   show (EApp x y) = ?foo_5
   show (ELet x y z w) = ?foo_6
   show (EAnnot x y) = ?foo_7
-  show EBool = ?foo_8
+  show EBool = "Bool"
   show (EBoolLit False) = "False"
   show (EBoolLit True) = "True"
   show (EBoolAnd x y) = ?foo_10
-  show ENatural = ?foo_11
-  show (ENaturalLit k) = ?foo_12
+  show ENatural = "Natural"
+  show (ENaturalLit k) = show k
   show (ENaturalIsZero x) = ?foo_13
