@@ -57,8 +57,9 @@ mutual
   public export
   data Normal = Normal' Ty Value
 
+  partial
   Show Normal where
-    show (Normal' x y) = "(normal v: " ++ (show y) ++ ")"
+    show (Normal' x y) = "(Normal' " ++ " " ++ show y ++ ")" -- TODO show x
 
   public export
   Ty : Type
@@ -81,7 +82,11 @@ mutual
     closureType : Expr
     closureBody : Expr
 
+  partial
   Show Closure where
+    show (MkClosure closureEnv closureName closureType closureBody)
+      = "(MkClosure " ++ show closureEnv ++ " " ++ closureName ++ " " ++ show closureType
+         ++ " " ++ show closureBody ++ ")"
 
   -- Values
   export
@@ -102,9 +107,10 @@ mutual
     | NApp Neutral Normal
     | NBoolAnd Neutral Normal
 
+  partial
   Show Value where
-    show (VLambda x y) = "(lam " ++ show x ++ ")" -- TODO show y
-    show (VPi x y) = "(pi " ++ show x ++ ")" -- TODO show y
+    show (VLambda x y) = "(VLambda " ++ show x ++ " " ++ show y ++ ")" -- TODO make total
+    show (VPi x y) = "(VPi " ++ show x ++ " " ++ show y ++ ")"
     show (VConst x) = show x
     show VBool = "VBool"
     show (VBoolLit x) = "(V" ++ show x ++ ")"
@@ -162,6 +168,7 @@ data Error
   | ErrorMessage String
   | SortError
 
+partial
 export
 Show Error where
   show (MissingVar x) = "MissingVar: " ++ show x
@@ -234,6 +241,7 @@ mutual
        Right (VNeutral arg' (NApp neu (Normal' dom arg)))
   doApply _ _ = Left EvalApplyErr
 
+  partial
   doNaturalIsZero : Value -> Either Error Value
   doNaturalIsZero (VNaturalLit k) = Right (VBoolLit (k == 0))
   doNaturalIsZero (VNeutral VNatural neu) = Right (VNeutral VBool (NNaturalIsZero neu))
@@ -360,7 +368,9 @@ mutual
   synth ctx (ELam x ty b)
     = do xTy <- eval (mkEnv ctx) ty
          bTy <- synth (extendCtx ctx x xTy) b
-         Right (VPi xTy (MkClosure (mkEnv ctx) x ty b))
+         tyRb <- readBackTyped ctx (VConst CType) xTy
+         bRb <- readBackTyped ctx (VConst CType) bTy
+         Right (VPi xTy (MkClosure (mkEnv ctx) x tyRb bRb))
   synth ctx (EApp rator rand)
     = do funTy <- synth ctx rator
          (a, b) <- isPi ctx funTy
