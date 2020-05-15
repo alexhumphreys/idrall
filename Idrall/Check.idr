@@ -297,6 +297,8 @@ mutual
   readBackTyped ctx VBool (VBoolLit x) = Right (EBoolLit x)
   readBackTyped ctx VNatural (VNaturalLit x) = Right (ENaturalLit x)
   readBackTyped ctx t (VNeutral x z) = readBackNeutral ctx z
+  -- TODO add readback catchall
+  -- TODO add readback (VConst CType) (VPi dom ran)
 
   export
   partial
