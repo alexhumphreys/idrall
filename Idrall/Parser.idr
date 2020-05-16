@@ -42,10 +42,17 @@ identFirst = letter <|> char '_'
 identRest : Parser Char
 identRest = alphaNum <|> char '-' <|> char '/' <|> char '_'
 
+identLong : Parser String
+identLong = do f <- identFirst
+               r <- some identRest -- TODO check for reservered words, back ticks
+               pure (pack (f :: r))
+
+identShort : Parser String
+identShort = do i <- identFirst
+                pure (singleton i)
+
 identity : Parser String
-identity = do f <- identFirst
-              r <- some identRest -- TODO check for reservered words, back ticks, single letters
-              pure (pack (f :: r))
+identity = identLong <|> identShort
 
 letExpr : Parser Expr -- TODO handle type annotation
 letExpr = token "let" *> do
