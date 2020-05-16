@@ -52,6 +52,7 @@ data Expr
   -- | > NaturalIsZero ~ Natural/isZero
   | ENaturalIsZero Expr
 
+partial
 export
 Show Expr where
   show (EVar x) = x
@@ -59,7 +60,7 @@ Show Expr where
   show (EPi x y z) = ?foo_3
   show (ELam x y z) = ?foo_4
   show (EApp x y) = ?foo_5
-  show (ELet x y z w) = ?foo_6
+  show (ELet x y z w) = "(ELet " ++ x ++ " " ++ show y ++ " " ++ show z ++ " " ++ show w ++ ")"
   show (EAnnot x y) = ?foo_7
   show EBool = "Bool"
   show (EBoolLit False) = "False"

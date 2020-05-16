@@ -36,5 +36,27 @@ value = true <|> false <|> bool <|>
 expr : Parser Expr
 expr = value
 
+identFirst : Parser Char
+identFirst = letter <|> char '_'
+
+identRest : Parser Char
+identRest = alphaNum <|> char '-' <|> char '/' <|> char '_'
+
+identity : Parser String
+identity = do f <- identFirst
+              r <- some identRest -- TODO check for reservered words, back ticks, single letters
+              pure (pack (f :: r))
+
+letExpr : Parser Expr -- TODO handle type annotation
+letExpr = token "let" *> do
+  i <- identity
+  spaces
+  token "="
+  v <- expr
+  spaces
+  token "in"
+  e <- expr
+  pure (ELet i Nothing v e)
+
 parseExpr : String -> Either String Expr
 parseExpr str = parse expr str
