@@ -19,7 +19,7 @@ Eq U where
 
 export
 Show U where
-  show CType = "Type"
+  show CType = "CType"
   show Sort = "Sort"
   show Kind = "Kind"
 -- expressions
@@ -55,17 +55,17 @@ data Expr
 partial
 export
 Show Expr where
-  show (EVar x) = x
-  show (EConst x) = show x
-  show (EPi x y z) = ?foo_3
-  show (ELam x y z) = ?foo_4
-  show (EApp x y) = ?foo_5
-  show (ELet x y z w) = "(ELet " ++ x ++ " " ++ show y ++ " " ++ show z ++ " " ++ show w ++ ")"
-  show (EAnnot x y) = ?foo_7
-  show EBool = "Bool"
-  show (EBoolLit False) = "False"
-  show (EBoolLit True) = "True"
-  show (EBoolAnd x y) = ?foo_10
-  show ENatural = "Natural"
-  show (ENaturalLit k) = show k
-  show (ENaturalIsZero x) = ?foo_13
+  show (EVar x) = "(EVar " ++ show x ++ ")"
+  show (EConst x) = "(EConst " ++ show x ++ ")"
+  show (EPi x y z) = "(EPi " ++ show x ++ " " ++ show y ++ " " ++ show z ++ ")"
+  show (ELam x y z) = "(ELam " ++ show x ++ " " ++ show y ++ " " ++ show z ++ ")"
+  show (EApp x y) = "(EApp " ++ show x ++ " " ++ show y ++ ")"
+  show (ELet x y z w) = "(ELet " ++ show x ++ " " ++ show y ++ " " ++ show z ++ " " ++ show w ++ ")"
+  show (EAnnot x y) = "(EAnnot " ++ show x ++ " " ++ show y ++ ")"
+  show EBool = "EBool"
+  show (EBoolLit False) = "(EBoolLit False)"
+  show (EBoolLit True) = "(EBoolLit True)"
+  show (EBoolAnd x y) = "(EBoolAnd " ++ show x ++ " " ++ show y ++ ")"
+  show ENatural = "ENatural"
+  show (ENaturalLit k) = "(ENaturalLit " ++ show k ++ ")"
+  show (ENaturalIsZero x) = "(ENaturalIsZero " ++ show x ++ ")"
