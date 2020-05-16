@@ -52,7 +52,6 @@ data Expr
   -- | > NaturalIsZero ~ Natural/isZero
   | ENaturalIsZero Expr
 
-partial
 export
 Show Expr where
   show (EVar x) = "(EVar " ++ show x ++ ")"
