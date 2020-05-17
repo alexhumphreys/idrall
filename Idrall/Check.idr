@@ -82,7 +82,6 @@ mutual
     closureType : Expr
     closureBody : Expr
 
-  partial
   Show Closure where
     show (MkClosure closureEnv closureName closureType closureBody)
       = "(MkClosure " ++ show closureEnv ++ " " ++ closureName ++ " " ++ show closureType
@@ -107,7 +106,6 @@ mutual
     | NApp Neutral Normal
     | NBoolAnd Neutral Normal
 
-  partial
   Show Value where
     show (VLambda x y) = "(VLambda " ++ show x ++ " " ++ show y ++ ")" -- TODO make total
     show (VPi x y) = "(VPi " ++ show x ++ " " ++ show y ++ ")"
@@ -118,7 +116,6 @@ mutual
     show (VNaturalLit k) = "(VNaturalLit" ++ show k ++ ")"
     show (VNeutral x y) = "(VNeutral " ++ show x ++ " " ++ show y ++ ")"
 
-  partial
   Show Neutral where
     show (NVar x) = "(NVar " ++ show x ++ ")"
     show (NNaturalIsZero x) = "(NNaturalIsZero " ++ show x ++ ")"
