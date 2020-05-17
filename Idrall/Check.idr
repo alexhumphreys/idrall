@@ -111,18 +111,19 @@ mutual
   Show Value where
     show (VLambda x y) = "(VLambda " ++ show x ++ " " ++ show y ++ ")" -- TODO make total
     show (VPi x y) = "(VPi " ++ show x ++ " " ++ show y ++ ")"
-    show (VConst x) = show x
+    show (VConst x) = "(VConst " ++ show x ++ ")"
     show VBool = "VBool"
-    show (VBoolLit x) = "(V" ++ show x ++ ")"
+    show (VBoolLit x) = "(VBoolLit" ++ show x ++ ")"
     show VNatural = "VNatural"
-    show (VNaturalLit k) = "(" ++ show k ++ ")"
-    show (VNeutral x y) = ?Show_rhs_9
+    show (VNaturalLit k) = "(VNaturalLit" ++ show k ++ ")"
+    show (VNeutral x y) = "(VNeutral " ++ show x ++ " " ++ show y ++ ")"
 
-Show Neutral where
-  show (NVar x) = x
-  show (NNaturalIsZero x) = "NNaturalIsZero " ++ show x
-  show (NApp x y) = ?bar_3
-  show (NBoolAnd x y) = ?bar_4
+  partial
+  Show Neutral where
+    show (NVar x) = "(NVar " ++ show x ++ ")"
+    show (NNaturalIsZero x) = "(NNaturalIsZero " ++ show x ++ ")"
+    show (NApp x y) = "(NApp " ++ show x ++ " " ++ show y ++ ")"
+    show (NBoolAnd x y) = "(NBoolAnd " ++ show x ++ " " ++ show y ++ ")"
 
 extendEnv : Env -> Name -> Value -> Env
 extendEnv env x v = ((x, v) :: env)
