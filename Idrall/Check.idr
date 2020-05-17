@@ -341,7 +341,7 @@ mutual
          e2 <- readBackTyped ctx t v2
          if aEquiv e1 e2
             then Right ()
-            else Left (ErrorMessage "not alpha equivalent")
+            else Left (ErrorMessage ("not alpha equivalent: " ++ show e1 ++ " : " ++ show e2))
 
   export
   partial
