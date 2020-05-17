@@ -366,7 +366,11 @@ mutual
   synth : Ctx -> Expr -> Either Error Ty
   synth ctx (EVar x) = lookupType ctx x
   synth ctx (EConst x) = axioms x
-  synth ctx (EPi x y z) = ?synth_rhs_3
+  synth ctx (EPi x y z)
+    = do check ctx y (VConst CType)
+         yV <- eval (mkEnv ctx) y
+         check (extendCtx ctx x yV) z (VConst CType)
+         Right (VConst CType)
   synth ctx (ELam x ty b)
     = do xTy <- eval (mkEnv ctx) ty
          bTy <- synth (extendCtx ctx x xTy) b
