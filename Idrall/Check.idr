@@ -331,7 +331,7 @@ lookupType ((y, e) :: ctx) x =
                       (IsA t) => Right t))
 
 axioms : (x : U) -> Either Error Value
-axioms CType = Right (VConst Kind) -- TODO double check
+axioms CType = Right (VConst Kind)
 axioms Kind = Right (VConst Sort)
 axioms Sort = Left SortError
 
@@ -348,13 +348,20 @@ mutual
   export
   partial
   check : Ctx -> Expr -> Ty -> Either Error ()
-  check ctx (EConst x) t = ?check_rhs_2
+  check ctx (EConst CType) (VConst Kind) = Right ()
+  check ctx (EConst Kind) (VConst Sort) = Right ()
+  check ctx (EConst Sort) (VConst Sort) = ?sort -- TODO check what happens here
   check ctx (ELam x ty body) t
     = do (a,b) <- isPi ctx t
          check ctx ty a
          xV <- evalClosure b (VNeutral a (NVar x))
          check (extendCtx ctx x a) body xV
-  check ctx (EAnnot x y) t = ?check_rhs_7
+  check ctx (EAnnot x y) t
+    = do xV <- synth ctx x
+         yV <- eval (mkEnv ctx) y
+         x' <- readBackTyped ctx xV (VConst CType)
+         check ctx x' yV
+         check ctx x' t -- TODO double check it makes sense to type check an annotation
   check ctx (EBoolLit x) t = isBool ctx t
   check ctx (ENaturalLit k) t = isNat ctx t
   check ctx other t
