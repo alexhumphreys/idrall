@@ -4,28 +4,23 @@ import Idrall.Expr
 import Idrall.Check
 import Idrall.Parser
 
+eitherIO : Show a => Either a b -> IO (Either () b)
+eitherIO (Left l) = do putStr (show l)
+                       pure (Left ())
+eitherIO (Right r) = pure (Right r)
+
 stringToExpr : String -> IO (Either () Expr)
-stringToExpr x
-  = let e = parseExpr x in
-    (case e of
-          (Left l) => do putStr (show l)
-                         pure (Left ())
-          (Right r) => do pure (Right r))
+stringToExpr x = eitherIO (parseExpr x)
 
 exprToValue : Expr -> IO (Either () Value)
-exprToValue e
-  = let v = eval initEnv e in
-    (case v of
-          (Left l) => do putStr (show l)
-                         pure (Left ())
-          (Right r) => do pure (Right r))
+exprToValue e = eitherIO (eval initEnv e)
 
 checkExpr : Expr -> Value -> IO ()
 checkExpr x y
-  = let res = check initCtx x y in
-    (case res of
-          (Left l) => putStrLn (show l)
-          (Right r) => putStrLn ("Success"))
+  = do res <- eitherIO (check initCtx x y)
+       case res of
+            (Left l) => pure ()
+            (Right r) => putStrLn ("Success")
 
 testBool : IO ()
 testBool = do Right a <- readFile "dhall-lang/tests/type-inference/success/unit/BoolA.dhall"
