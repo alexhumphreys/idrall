@@ -6,7 +6,13 @@ import Lightyear.Strings
 import Idrall.Expr
 import Idrall.BuildExprParser
 
-%access public export
+fNaturalIsZero : Expr
+fNaturalIsZero = ELam "naturalIsZeroParam1" ENatural (ENaturalIsZero (EVar "naturalIsZeroParam1"))
+
+%access export
+builtin : Parser Expr
+builtin = string "Natural/isZero" *> pure fNaturalIsZero
+
 true : Parser Expr
 true = token "True" *> pure (EBoolLit True)
 
@@ -29,7 +35,8 @@ type : Parser Expr
 type = token "Type" *> pure (EConst CType)
 
 value : Parser Expr
-value = true <|> false <|> bool <|>
+value = builtin <|>
+        true <|> false <|> bool <|>
         naturalLit <|> natural <|>
         type
 
