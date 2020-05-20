@@ -56,8 +56,11 @@ var : Parser Expr
 var = do i <- identity
          pure (EVar i)
 
+spacesToken : String -> (a -> a -> a) -> Parser (a -> a -> a) -- TODO gotta be a better way
+spacesToken str e = do token str <|> (spaces *> token str) ; pure e
+
 table : OperatorTable Expr
-table = [[ Infix (do token "&&"; pure EBoolAnd) AssocLeft]]
+table = [[ Infix (spacesToken "&&" EBoolAnd) AssocLeft]]
 
 term : Parser Expr
 term = builtin <|>
@@ -81,7 +84,7 @@ mutual
     pure (ELet i Nothing v e)
 
   expr : Parser Expr
-  expr = letExpr <|> opExpr <|> term
+  expr = letExpr <|> opExpr <|> term <|>| parens expr
 
 parseExpr : String -> Either String Expr
 parseExpr str = parse expr str
