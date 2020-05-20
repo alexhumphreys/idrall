@@ -50,10 +50,10 @@ identShort = do i <- identFirst
                 pure (singleton i)
 
 identity : Parser String
-identity = identLong <|> identShort
+identity = (identLong <|> identShort) <* spaces
 
 var : Parser Expr
-var = do i <- identity <* spaces
+var = do i <- identity
          pure (EVar i)
 
 table : OperatorTable Expr
@@ -80,8 +80,20 @@ mutual
     e <- expr
     pure (ELet i Nothing v e)
 
+  lam : Parser Expr
+  lam = do
+    string "λ(" -- TODO <|> string "\\(")
+    i <- identity
+    token ":"
+    ty <- expr
+    spaces
+    token ")"
+    (token "->" <|> token "→")
+    e <- expr
+    pure (ELam i ty e)
+
   expr : Parser Expr
-  expr = letExpr <|> opExpr <|> term <|>| parens expr
+  expr = letExpr <|> lam <|> opExpr <|> term <|>| parens expr
 
 parseExpr : String -> Either String Expr
 parseExpr str = parse expr str
