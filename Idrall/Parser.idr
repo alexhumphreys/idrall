@@ -34,15 +34,6 @@ where getNatural : List (Fin 10) -> Nat
 type : Parser Expr
 type = token "Type" *> pure (EConst CType)
 
-value : Parser Expr
-value = builtin <|>
-        true <|> false <|> bool <|>
-        naturalLit <|> natural <|>
-        type
-
-expr : Parser Expr
-expr = value
-
 identFirst : Parser Char
 identFirst = letter <|> char '_'
 
@@ -61,16 +52,36 @@ identShort = do i <- identFirst
 identity : Parser String
 identity = identLong <|> identShort
 
-letExpr : Parser Expr -- TODO handle type annotation
-letExpr = token "let" *> do
-  i <- identity
-  spaces
-  token "="
-  v <- expr
-  spaces
-  token "in"
-  e <- expr
-  pure (ELet i Nothing v e)
+var : Parser Expr
+var = do i <- identity
+         pure (EVar i)
+
+table : OperatorTable Expr
+table = [[ Infix (do token "&&"; pure EBoolAnd) AssocLeft]]
+
+term : Parser Expr
+term = builtin <|>
+       true <|> false <|> bool <|>
+       naturalLit <|> natural <|>
+       type <|> var
+
+opExpr : Parser Expr
+opExpr = buildExpressionParser Expr table term
+
+mutual
+  letExpr : Parser Expr -- TODO handle type annotation
+  letExpr = token "let" *> do
+    i <- identity
+    spaces
+    token "="
+    v <- expr
+    spaces
+    token "in"
+    e <- expr
+    pure (ELet i Nothing v e)
+
+  expr : Parser Expr
+  expr = letExpr <|> opExpr <|> term
 
 parseExpr : String -> Either String Expr
 parseExpr str = parse expr str
