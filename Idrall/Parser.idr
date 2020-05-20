@@ -53,14 +53,11 @@ identity : Parser String
 identity = identLong <|> identShort
 
 var : Parser Expr
-var = do i <- identity
+var = do i <- identity <* spaces
          pure (EVar i)
 
-spacesToken : String -> (a -> a -> a) -> Parser (a -> a -> a) -- TODO gotta be a better way
-spacesToken str e = do token str <|> (spaces *> token str) ; pure e
-
 table : OperatorTable Expr
-table = [[ Infix (spacesToken "&&" EBoolAnd) AssocLeft]]
+table = [[ Infix (do token "&&"; pure EBoolAnd) AssocLeft]]
 
 term : Parser Expr
 term = builtin <|>
