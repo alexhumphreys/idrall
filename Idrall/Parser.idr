@@ -59,15 +59,6 @@ var = do i <- identity
 table : OperatorTable Expr
 table = [[ Infix (do token "&&"; pure EBoolAnd) AssocLeft]]
 
-term : Parser Expr
-term = builtin <|>
-       true <|> false <|> bool <|>
-       naturalLit <|> natural <|>
-       type <|> var
-
-opExpr : Parser Expr
-opExpr = buildExpressionParser Expr table term
-
 mutual
   letExpr : Parser Expr -- TODO handle type annotation
   letExpr = token "let" *> do
@@ -115,8 +106,17 @@ mutual
     e <- expr
     pure (ELam i ty e)
 
+  term : Parser Expr
+  term = builtin <|>
+         true <|> false <|> bool <|>
+         naturalLit <|> natural <|>
+         type <|> var <|>| parens expr
+
+  opExpr : Parser Expr
+  opExpr = buildExpressionParser Expr table term
+
   expr : Parser Expr
-  expr = letExpr <|> pi <|> lam <|> opExpr <|> term <|>| parens expr
+  expr = letExpr <|> pi <|> lam <|> opExpr <|> term
 
 parseExpr : String -> Either String Expr
 parseExpr str = parse expr str
