@@ -80,6 +80,29 @@ mutual
     e <- expr
     pure (ELet i Nothing v e)
 
+  piSimple : Parser Expr
+  piSimple = do
+    dom <- expr
+    -- spaces
+    token "->"
+    ran <- expr
+    pure (EPi "_" dom ran)
+
+  piComplex : Parser Expr
+  piComplex = do
+    token "forall("
+    i <- identity
+    token ":"
+    dom <- expr
+    spaces
+    token ")"
+    (token "->" <|> token "→")
+    ran <- expr
+    pure (EPi i dom ran)
+
+  pi : Parser Expr -- TODO add to `expr` without left recursion
+  pi = piComplex <|> piSimple
+
   lam : Parser Expr
   lam = do
     string "λ(" -- TODO <|> string "\\(")
