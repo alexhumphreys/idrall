@@ -82,7 +82,7 @@ mutual
 
   piSimple : Parser Expr
   piSimple = do
-    dom <- expr
+    dom <- term
     -- spaces
     token "->"
     ran <- expr
@@ -100,7 +100,7 @@ mutual
     ran <- expr
     pure (EPi i dom ran)
 
-  pi : Parser Expr -- TODO add to `expr` without left recursion
+  pi : Parser Expr
   pi = piComplex <|> piSimple
 
   lam : Parser Expr
@@ -116,7 +116,7 @@ mutual
     pure (ELam i ty e)
 
   expr : Parser Expr
-  expr = letExpr <|> lam <|> opExpr <|> term <|>| parens expr
+  expr = letExpr <|> pi <|> lam <|> opExpr <|> term <|>| parens expr
 
 parseExpr : String -> Either String Expr
 parseExpr str = parse expr str
