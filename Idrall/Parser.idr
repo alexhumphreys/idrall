@@ -49,15 +49,29 @@ identShort : Parser String
 identShort = do i <- identFirst
                 pure (singleton i)
 
+reservedNames : Parser ()
+reservedNames = do
+  (string "in" <|> string "let" <|> string "->" <|> string "&&" <|> string ":")
+  (do space; pure ()) <|> eof
+
 identity : Parser String
-identity = (identLong <|> identShort) <* spaces
+identity = do
+  _ <- requireFailure reservedNames
+  (identLong <|> identShort) <* spaces
 
 var : Parser Expr
 var = do i <- identity
          pure (EVar i)
 
+appl : Parser (Expr -> Expr -> Expr)
+appl = do spaces
+          _ <- requireFailure reservedNames
+          pure EApp
+
 table : OperatorTable Expr
-table = [[ Infix (do token "&&"; pure EBoolAnd) AssocLeft]]
+table = [ [ Infix appl AssocLeft]
+        , [ Infix (do token ":"; pure EAnnot) AssocLeft]
+        , [ Infix (do token "&&"; pure EBoolAnd) AssocLeft]]
 
 mutual
   letExpr : Parser Expr -- TODO handle type annotation
@@ -75,7 +89,7 @@ mutual
   piSimple = do
     dom <- term
     -- spaces
-    token "->"
+    (token "->" <|> token "→")
     ran <- expr
     pure (EPi "_" dom ran)
 
@@ -107,16 +121,20 @@ mutual
     pure (ELam i ty e)
 
   term : Parser Expr
-  term = builtin <|>
-         true <|> false <|> bool <|>
-         naturalLit <|> natural <|>
-         type <|> var <|>| parens expr
+  term = do
+    i <-(builtin <|>
+     true <|> false <|> bool <|>
+     naturalLit <|> natural <|>
+     type <|> var <|>| parens expr)
+    spaces
+    pure i
 
   opExpr : Parser Expr
   opExpr = buildExpressionParser Expr table term
 
   expr : Parser Expr
   expr = letExpr <|> pi <|> lam <|> opExpr <|> term
+  -- TODO reserved word fix needed: 'f let' is 'EVar f'
 
 parseExpr : String -> Either String Expr
 parseExpr str = parse expr str
