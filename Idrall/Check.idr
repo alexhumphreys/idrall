@@ -164,6 +164,7 @@ data Error
   | EvalApplyErr
   | Unexpected String Value
   | ErrorMessage String
+  | ReadBackError String
   | SortError
 
 partial
@@ -295,8 +296,13 @@ mutual
   readBackTyped ctx VBool (VBoolLit x) = Right (EBoolLit x)
   readBackTyped ctx VNatural (VNaturalLit x) = Right (ENaturalLit x)
   readBackTyped ctx t (VNeutral x z) = readBackNeutral ctx z
-  -- TODO add readback catchall
-  -- TODO add readback (VConst CType) (VPi dom ran)
+  readBackTyped ctx (VConst CType) (VPi aT bT) =
+    let x = freshen (ctxNames ctx) (closureName bT) in
+    do a <- readBackTyped ctx (VConst CType) aT
+       b' <- evalClosure bT (VNeutral aT (NVar x))
+       b <- readBackTyped (extendCtx ctx x aT) (VConst CType) b'
+       Right (EPi x a b)
+  readBackTyped _ t v = Left (ReadBackError ("error reading back: " ++ (show v) ++ " of type: " ++ (show v)))
 
   export
   partial
@@ -351,7 +357,7 @@ mutual
   check ctx (EConst Sort) (VConst Sort) = ?sort -- TODO check what happens here
   check ctx (ELam x ty body) t
     = do (a,b) <- isPi ctx t
-         check ctx ty a
+         -- check ctx ty a TODO use ty?
          xV <- evalClosure b (VNeutral a (NVar x))
          check (extendCtx ctx x a) body xV
   check ctx (EAnnot x y) t
@@ -386,7 +392,8 @@ mutual
     = do funTy <- synth ctx rator
          (a, b) <- isPi ctx funTy
          check ctx rand a
-         synth (extendCtx ctx (closureName b) a) (closureBody b) -- TODO check why paper is different
+         rand' <- eval (mkEnv ctx) rand
+         evalClosure b rand'
   synth ctx (ELet x ann v e)
     = case ann of
            Nothing =>
