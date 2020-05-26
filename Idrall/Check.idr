@@ -167,8 +167,7 @@ data Error
   | ReadBackError String
   | SortError
 
-partial
-export
+public export
 Show Error where
   show (MissingVar x) = "MissingVar: " ++ show x
   show (EvalNaturalIsZeroErr x) = "EvalNaturalIsZero error:" ++ x
@@ -176,6 +175,7 @@ Show Error where
   show EvalApplyErr = "EvalApplyErr"
   show (Unexpected str v) = "Unexpected: " ++ str ++ " value: " ++ show v
   show (ErrorMessage x) = "ErrorMessage: " ++ show x
+  show (ReadBackError x) = "ReadBackError: " ++ x
   show SortError = "SortError"
 
 mutual
@@ -354,7 +354,7 @@ mutual
   check : Ctx -> Expr -> Ty -> Either Error ()
   check ctx (EConst CType) (VConst Kind) = Right ()
   check ctx (EConst Kind) (VConst Sort) = Right ()
-  check ctx (EConst Sort) (VConst Sort) = ?sort -- TODO check what happens here
+  check ctx (EConst Sort) (VConst Sort) = Left SortError -- TODO check what happens here
   check ctx (ELam x ty body) t
     = do (a,b) <- isPi ctx t
          -- check ctx ty a TODO use ty?

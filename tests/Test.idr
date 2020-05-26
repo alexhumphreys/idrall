@@ -4,8 +4,11 @@ import Idrall.Expr
 import Idrall.Check
 import Idrall.Parser
 
+trimString : Nat -> String -> String
+trimString k str = pack (take k (unpack str))
+
 eitherIO : Show a => Either a b -> IO (Either () b)
-eitherIO (Left l) = do putStrLn (show l) -- TODO silence parse errors
+eitherIO (Left l) = do putStrLn (trimString 200 (show l)) -- TODO quite slow
                        pure (Left ())
 eitherIO (Right r) = pure (Right r)
 
@@ -20,15 +23,7 @@ checkExpr x y
   = do res <- eitherIO (check initCtx x y)
        case res of
             (Left l) => pure ()
-            (Right r) => putStrLn ("Success")
-
-testBool : IO ()
-testBool = do Right a <- readFile "dhall-lang/tests/type-inference/success/unit/BoolA.dhall"
-              Right aExpr <- stringToExpr a
-              Right b <- readFile "dhall-lang/tests/type-inference/success/unit/BoolB.dhall"
-              Right bExpr <- stringToExpr b
-              Right bVal <- exprToValue bExpr
-              checkExpr aExpr bVal
+            (Right r) => putStrLn ("SUCCESS")
 
 dirName : String
 dirName = "dhall-lang/tests/type-inference/success/unit/"
@@ -51,19 +46,8 @@ stripSuffix x =
 onlyA : List String -> List String
 onlyA xs = filter (isSuffixOf "A.dhall") xs
 
-test : IO ()
-test = do
-  putStrLn ("Listing directory " ++ dirName)
-  dh <- dirOpen dirName
-  case dh of
-    Left er => putStrLn "directory not found"
-    Right d => do
-      entries <- listDir d []
-      putStrLn (show (map stripSuffix (onlyA (sort entries))))
-      putStrLn "done"
-
-testAB : String -> IO ()
-testAB str =
+testAB' : String -> IO ()
+testAB' str =
   let dir = "dhall-lang/tests/type-inference/success/unit/"
       aFile = dir ++ str ++ "A.dhall"
       bFile = dir ++ str ++ "B.dhall"
@@ -77,11 +61,11 @@ testAB str =
   Right bVal <- exprToValue bExpr | Left x => putStrLn ("eval error: " ++ bFile)
   checkExpr aExpr bVal
 
-testAB' : List String -> IO ()
-testAB' [] = putStrLn "Done"
-testAB' (x :: xs) = do
-  testAB x
-  testAB' xs
+testAB : List String -> IO ()
+testAB [] = do pure ()
+testAB (x :: xs) = do
+  testAB' x
+  testAB xs
 
 testAll : IO ()
 testAll = do
@@ -91,6 +75,13 @@ testAll = do
     Left er => putStrLn "directory not found"
     Right d => do
       entries <- listDir d []
-      -- putStrLn (show (map stripSuffix (onlyA (sort entries))))
-      testAB' (map stripSuffix (onlyA (sort entries)))
+      testAB (map stripSuffix (onlyA (sort entries)))
       putStrLn "done"
+
+expectPass : List String
+expectPass = ["Bool", "Function", "Natural", "TypeAnnotationNormalize", "True", "NaturalIsZero", "NaturalLiteral", "Let", "FunctionTypeTermTerm", "FunctionApplication"]
+
+testGood : IO ()
+testGood
+  = do testAB expectPass
+       putStrLn "done"
