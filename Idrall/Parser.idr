@@ -134,7 +134,12 @@ mutual
 
   expr : Parser Expr
   expr = letExpr <|> pi <|> lam <|> opExpr <|> term
-  -- TODO reserved word fix needed: 'f let' is 'EVar f'
+
+  parseToEnd : Parser Expr
+  parseToEnd = do
+    e <- expr
+    eof
+    pure e
 
 parseExpr : String -> Either String Expr
-parseExpr str = parse expr str
+parseExpr str = parse parseToEnd str
