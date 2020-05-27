@@ -39,9 +39,17 @@ Not sure, need to add some `.ipkg` file I think...
 
 ## Tests
 
-Run with the following:
+So far there's only the type inference tests, you can run them from the repl like so:
 
 ```
+idris -p lightyear tests/Test.idr
+*tests/Test> :exec testAll
+```
+
+They mostly fail, so you can run the ones that should pass with the following:
+
+```
+*tests/Test> :exec testGood
 ```
 
 ## Implementation details￼
