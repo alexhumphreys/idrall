@@ -57,13 +57,13 @@ mutual
   public export
   data Normal = Normal' Ty Value
 
-  partial
-  Show Normal where
-    show (Normal' x y) = "(Normal' " ++ " " ++ show y ++ ")" -- TODO show x
-
   public export
   Ty : Type
   Ty = Value
+
+  partial
+  Show Normal where
+    show (Normal' x y) = "(Normal' " ++ (show x) ++ " " ++ show y ++ ")"
 
   export
   Env : Type -- Now a type alias
@@ -107,7 +107,7 @@ mutual
     | NBoolAnd Neutral Normal
 
   Show Value where
-    show (VLambda x y) = "(VLambda " ++ show x ++ " " ++ show y ++ ")" -- TODO make total
+    show (VLambda x y) = "(VLambda " ++ show x ++ " " ++ show y ++ ")"
     show (VPi x y) = "(VPi " ++ show x ++ " " ++ show y ++ ")"
     show (VConst x) = "(VConst " ++ show x ++ ")"
     show VBool = "VBool"
@@ -311,7 +311,7 @@ mutual
 
 -- helpers
 unexpected : Ctx -> String -> Value -> Either Error a
-unexpected ctx str v = Left (Unexpected str v) -- TODO add value
+unexpected ctx str v = Left (Unexpected str v)
 
 isPi : Ctx -> Value -> Either Error (Ty, Closure)
 isPi _ (VPi a b) = Right (a, b)
