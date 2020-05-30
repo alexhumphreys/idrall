@@ -96,7 +96,7 @@ mutual
 
   piComplex : Parser Expr
   piComplex = do
-    token "forall("
+    (token "forall(" <|> token "∀(")
     i <- identity
     token ":"
     dom <- expr
