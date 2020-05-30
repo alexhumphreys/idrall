@@ -79,7 +79,7 @@ testAll = do
       putStrLn "done"
 
 expectPass : List String
-expectPass = ["Bool", "Function", "Natural", "True", "NaturalIsZero", "NaturalLiteral", "Let", "FunctionTypeTermTerm", "FunctionApplication"]
+expectPass = ["Bool", "Function", "Natural", "True", "NaturalIsZero", "NaturalLiteral", "Let", "FunctionTypeTermTerm", "FunctionApplication", "Equivalence"]
 
 testGood : IO ()
 testGood

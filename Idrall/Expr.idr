@@ -39,6 +39,8 @@ data Expr
   | ELet Name (Maybe Expr) Expr Expr
   -- | > Annot x t ~ x : t
   | EAnnot Expr Expr
+  -- | > x === y
+  | EEquivalent Expr Expr
   -- | > Bool ~ Bool
   | EBool
   -- | > BoolLit b ~ b

@@ -2,7 +2,10 @@ module Idrall.Check
 
 import Idrall.Expr
 
+%default covering
+
 -- alpha equivalence
+total
 aEquivHelper : (i : Integer) ->
                Namespace -> Expr ->
                Namespace -> Expr ->
@@ -92,6 +95,7 @@ mutual
   data Value
     = VLambda Ty Closure
     | VPi Ty Closure
+    | VEquivalent Value Value
     | VConst U
     | VBool
     | VBoolLit Bool
@@ -103,12 +107,14 @@ mutual
   data Neutral
     = NVar Name
     | NNaturalIsZero Neutral
+    | NEquivalent Neutral Normal
     | NApp Neutral Normal
     | NBoolAnd Neutral Normal
 
   Show Value where
     show (VLambda x y) = "(VLambda " ++ show x ++ " " ++ show y ++ ")"
     show (VPi x y) = "(VPi " ++ show x ++ " " ++ show y ++ ")"
+    show (VEquivalent x y) = "(VEquivalent " ++ show x ++ " " ++ show y ++ ")"
     show (VConst x) = "(VConst " ++ show x ++ ")"
     show VBool = "VBool"
     show (VBoolLit x) = "(VBoolLit" ++ show x ++ ")"
@@ -119,6 +125,7 @@ mutual
   Show Neutral where
     show (NVar x) = "(NVar " ++ show x ++ ")"
     show (NNaturalIsZero x) = "(NNaturalIsZero " ++ show x ++ ")"
+    show (NEquivalent x y) = "(NEquivalent " ++ show x ++ " " ++ show y ++ ")"
     show (NApp x y) = "(NApp " ++ show x ++ " " ++ show y ++ ")"
     show (NBoolAnd x y) = "(NBoolAnd " ++ show x ++ " " ++ show y ++ ")"
 
@@ -204,6 +211,10 @@ mutual
   eval env (ELam x ty body)
     = do vTy <- eval env ty
          Right (VLambda vTy (MkClosure env x ty body))
+  eval env (EEquivalent x y) =
+    do xV <- eval env x
+       yV <- eval env y
+       Right (VEquivalent xV yV)
   eval env (EApp rator rand)
     = do rator' <- eval env rator
          rand' <- eval env rand
@@ -278,6 +289,10 @@ mutual
     x' <- readBackNeutral ctx x
     y' <- readBackNormal ctx y
     Right (EBoolAnd x' y')
+  readBackNeutral ctx (NEquivalent x y) = do
+    x' <- readBackNeutral ctx x
+    y' <- readBackNormal ctx y
+    Right (EEquivalent x' y')
 
   partial
   readBackTyped : Ctx -> Ty -> Value -> Either Error Expr
@@ -290,6 +305,10 @@ mutual
        body <- readBackTyped ctx' ty' v'
        eTy <- readBackTyped ctx' (VConst CType) ty' -- TODO check this
        Right (ELam x eTy body)
+  readBackTyped ctx (VConst CType) (VEquivalent x y) = do
+    x' <- readBackTyped ctx (VConst CType) x
+    y' <- readBackTyped ctx (VConst CType) y
+    Right (EEquivalent x' y')
   readBackTyped ctx (VConst x) (VConst y) = Right (EConst y) -- TODO check this
   readBackTyped ctx (VConst CType) VBool = Right EBool
   readBackTyped ctx (VConst CType) VNatural = Right ENatural
@@ -324,6 +343,13 @@ isNat ctx other = unexpected ctx "Not Natural" other
 isBool : Ctx -> Value -> Either Error ()
 isBool _ VBool = Right ()
 isBool ctx other = unexpected ctx "Not Bool" other
+
+isTerm : Ctx -> Value -> Either Error ()
+isTerm _ (VPi _ _) = Right ()
+isTerm _ (VBool) = Right ()
+isTerm _ (VNatural) = Right ()
+isTerm ctx (VNeutral x _) = isTerm ctx x
+isTerm ctx other = unexpected ctx "Not a term" other
 
 lookupType : Ctx -> Name -> Either Error Ty -- didn't use message type
 lookupType [] x = Left (ErrorMessage ("unbound variable: " ++ x))
@@ -366,6 +392,12 @@ mutual
          x' <- readBackTyped ctx xV (VConst CType)
          check ctx x' yV
          check ctx x' t -- TODO double check it makes sense to type check an annotation
+  check ctx (EEquivalent x y) (VConst CType) = do
+    xV <- eval (mkEnv ctx) x
+    yV <- eval (mkEnv ctx) y
+    xTy <- synth ctx x
+    isTerm ctx xTy
+    check ctx y xTy
   check ctx (EBoolLit x) t = isBool ctx t
   check ctx (ENaturalLit k) t = isNat ctx t
   check ctx other t
@@ -419,3 +451,6 @@ mutual
   synth ctx (ENaturalIsZero x)
     = do check ctx x VNatural
          Right (VBool)
+  synth ctx e@(EEquivalent x y) = do
+    check ctx e (VConst CType)
+    Right (VConst CType)

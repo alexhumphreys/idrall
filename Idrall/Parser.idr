@@ -71,6 +71,7 @@ appl = do spaces
 table : OperatorTable Expr
 table = [ [ Infix appl AssocLeft]
         , [ Infix (do token ":"; pure EAnnot) AssocLeft]
+        , [ Infix (do (token "===" <|> token "≡"); pure EEquivalent) AssocLeft]
         , [ Infix (do token "&&"; pure EBoolAnd) AssocLeft]]
 
 mutual
