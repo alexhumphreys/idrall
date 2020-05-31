@@ -50,7 +50,14 @@ aEquivHelper _ _ (EConst x) _ (EConst y) = x == y
 aEquivHelper i ns1 (ENaturalLit x) ns2 (ENaturalLit y) = x == y
 aEquivHelper i ns1 (ENaturalIsZero x) ns2 (ENaturalIsZero y)
   = aEquivHelper i ns1 x ns2 y
+aEquivHelper i ns1 (EEquivalent w x) ns2 (EEquivalent y z)
+  = aEquivHelper i ns1 w ns1 x &&
+    aEquivHelper i ns1 w ns2 y &&
+    aEquivHelper i ns2 y ns2 z
+aEquivHelper i ns1 (EAssert x) ns2 (EAssert y)
+  = aEquivHelper i ns1 x ns2 y
 aEquivHelper _ _ _ _ _ = False
+-- TODO check if assert/equivalent should be in here
 
 aEquiv : Expr -> Expr -> Bool
 aEquiv e1 e2 = aEquivHelper 0 [] e1 [] e2
@@ -96,6 +103,7 @@ mutual
     = VLambda Ty Closure
     | VPi Ty Closure
     | VEquivalent Value Value
+    | VAssert Value
     | VConst U
     | VBool
     | VBoolLit Bool
@@ -108,6 +116,7 @@ mutual
     = NVar Name
     | NNaturalIsZero Neutral
     | NEquivalent Neutral Normal
+    | NAssert Neutral
     | NApp Neutral Normal
     | NBoolAnd Neutral Normal
 
@@ -115,6 +124,7 @@ mutual
     show (VLambda x y) = "(VLambda " ++ show x ++ " " ++ show y ++ ")"
     show (VPi x y) = "(VPi " ++ show x ++ " " ++ show y ++ ")"
     show (VEquivalent x y) = "(VEquivalent " ++ show x ++ " " ++ show y ++ ")"
+    show (VAssert x) = "(VEquivalent " ++ show x ++ ")"
     show (VConst x) = "(VConst " ++ show x ++ ")"
     show VBool = "VBool"
     show (VBoolLit x) = "(VBoolLit" ++ show x ++ ")"
@@ -126,6 +136,7 @@ mutual
     show (NVar x) = "(NVar " ++ show x ++ ")"
     show (NNaturalIsZero x) = "(NNaturalIsZero " ++ show x ++ ")"
     show (NEquivalent x y) = "(NEquivalent " ++ show x ++ " " ++ show y ++ ")"
+    show (NAssert x) = "(NEquivalent " ++ show x ++ ")"
     show (NApp x y) = "(NApp " ++ show x ++ " " ++ show y ++ ")"
     show (NBoolAnd x y) = "(NBoolAnd " ++ show x ++ " " ++ show y ++ ")"
 
@@ -173,6 +184,7 @@ data Error
   | ErrorMessage String
   | ReadBackError String
   | SortError
+  | AssertError String
 
 public export
 Show Error where
@@ -184,6 +196,7 @@ Show Error where
   show (ErrorMessage x) = "ErrorMessage: " ++ show x
   show (ReadBackError x) = "ReadBackError: " ++ x
   show SortError = "SortError"
+  show (AssertError str) = "AssertError" ++ str
 
 mutual
   partial
@@ -215,6 +228,9 @@ mutual
     do xV <- eval env x
        yV <- eval env y
        Right (VEquivalent xV yV)
+  eval env (EAssert x) = do
+    xV <- eval env x
+    doAssert xV
   eval env (EApp rator rand)
     = do rator' <- eval env rator
          rand' <- eval env rand
@@ -262,20 +278,29 @@ mutual
   doBoolAnd (VNeutral VBool v) y = Right (VNeutral VBool (NBoolAnd v (Normal' VBool y)))
   doBoolAnd _ _ = Left EvalBoolAndErr
 
--- fresh names
-nextName : Name -> Name
-nextName x = x ++ "'"
+  doAssert : Value -> Either Error Value
+  doAssert v@(VEquivalent x y) = do
+    xRb <- readBackTyped initCtx (VConst CType) x
+    yRb <- readBackTyped initCtx (VConst CType) y
+    case aEquiv xRb yRb of
+         False => Left (AssertError ("Assert error: " ++ show x))
+         True => Right (VAssert v)
+    -- aEquiv xRb yRb
+  doAssert (VNeutral x y) = ?doAssert_rhs_10
+  doAssert x = Left (AssertError ("Assert error: " ++ show x))
 
--- TODO could possibly fail for a list like [n', n'', n']
-freshen : List Name -> Name -> Name
-freshen [] n = n
-freshen (x :: used) n = case x == n of
-                             False => freshen used n
-                             True => freshen used (nextName n)
+  -- fresh names
+  nextName : Name -> Name
+  nextName x = x ++ "'"
 
--- reading back
-mutual
-  partial
+  -- TODO could possibly fail for a list like [n', n'', n']
+  freshen : List Name -> Name -> Name
+  freshen [] n = n
+  freshen (x :: used) n = case x == n of
+                               False => freshen used n
+                               True => freshen used (nextName n)
+
+  -- reading back
   readBackNeutral : Ctx -> Neutral -> Either Error Expr
   readBackNeutral ctx (NVar x) = Right (EVar x)
   readBackNeutral ctx (NNaturalIsZero x) = do
@@ -293,6 +318,9 @@ mutual
     x' <- readBackNeutral ctx x
     y' <- readBackNormal ctx y
     Right (EEquivalent x' y')
+  readBackNeutral ctx (NAssert x) = do
+    x' <- readBackNeutral ctx x
+    Right (EAssert x')
 
   partial
   readBackTyped : Ctx -> Ty -> Value -> Either Error Expr
@@ -305,10 +333,13 @@ mutual
        body <- readBackTyped ctx' ty' v'
        eTy <- readBackTyped ctx' (VConst CType) ty' -- TODO check this
        Right (ELam x eTy body)
-  readBackTyped ctx (VConst CType) (VEquivalent x y) = do
-    x' <- readBackTyped ctx (VConst CType) x
-    y' <- readBackTyped ctx (VConst CType) y
+  readBackTyped ctx ty (VEquivalent x y) = do
+    x' <- readBackTyped ctx ty x
+    y' <- readBackTyped ctx ty y
     Right (EEquivalent x' y')
+  readBackTyped ctx (VConst CType) (VAssert x) = do
+    x' <- readBackTyped ctx (VConst CType) x
+    Right (EAssert x')
   readBackTyped ctx (VConst x) (VConst y) = Right (EConst y) -- TODO check this
   readBackTyped ctx (VConst CType) VBool = Right EBool
   readBackTyped ctx (VConst CType) VNatural = Right ENatural
@@ -343,6 +374,10 @@ isNat ctx other = unexpected ctx "Not Natural" other
 isBool : Ctx -> Value -> Either Error ()
 isBool _ VBool = Right ()
 isBool ctx other = unexpected ctx "Not Bool" other
+
+isEquivalent : Ctx -> Value -> Either Error (Value, Value)
+isEquivalent ctx (VEquivalent x y) = Right (x, y)
+isEquivalent ctx other = unexpected ctx "Not Equivalent" other
 
 isTerm : Ctx -> Value -> Either Error ()
 isTerm _ (VPi _ _) = Right ()
@@ -398,6 +433,10 @@ mutual
     xTy <- synth ctx x
     isTerm ctx xTy
     check ctx y xTy
+  check ctx (EAssert a@(EEquivalent z w)) b@(VEquivalent x y) = do
+    aTy <- synth ctx z
+    aV <- eval (mkEnv ctx) a
+    convert ctx aTy aV b
   check ctx (EBoolLit x) t = isBool ctx t
   check ctx (ENaturalLit k) t = isNat ctx t
   check ctx other t
@@ -405,7 +444,6 @@ mutual
          convert ctx (VConst CType) t' t
 
   export
-  partial
   synth : Ctx -> Expr -> Either Error Ty
   synth ctx (EVar x) = lookupType ctx x
   synth ctx (EConst x) = axioms x
@@ -454,3 +492,13 @@ mutual
   synth ctx e@(EEquivalent x y) = do
     check ctx e (VConst CType)
     Right (VConst CType)
+  synth ctx (EAssert (EEquivalent x y)) = do
+    xTy <- synth ctx x
+    x' <- eval (mkEnv ctx) x
+    y' <- eval (mkEnv ctx) y
+    xRb <- readBackTyped ctx xTy x'
+    yRb <- readBackTyped ctx xTy y'
+    case aEquiv xRb yRb of
+          False => Left (AssertError ("Not equivalent: " ++ show x ++ " : " ++ show y ++ ")"))
+          True => Right (VEquivalent x' y')
+  synth ctx (EAssert other) = Left (AssertError ("Can't assert for expr: " ++ show other))

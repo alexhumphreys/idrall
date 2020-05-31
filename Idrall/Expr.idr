@@ -41,6 +41,8 @@ data Expr
   | EAnnot Expr Expr
   -- | > x === y
   | EEquivalent Expr Expr
+  -- | > assert : e
+  | EAssert Expr
   -- | > Bool ~ Bool
   | EBool
   -- | > BoolLit b ~ b
@@ -64,6 +66,7 @@ Show Expr where
   show (ELet x y z w) = "(ELet " ++ show x ++ " " ++ show y ++ " " ++ show z ++ " " ++ show w ++ ")"
   show (EAnnot x y) = "(EAnnot " ++ show x ++ " " ++ show y ++ ")"
   show (EEquivalent x y) = "(EEquivalent " ++ show x ++ " " ++ show y ++ ")"
+  show (EAssert x) = "(EAssert " ++ show x ++ ")"
   show EBool = "EBool"
   show (EBoolLit False) = "(EBoolLit False)"
   show (EBoolLit True) = "(EBoolLit True)"
