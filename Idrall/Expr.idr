@@ -63,6 +63,7 @@ Show Expr where
   show (EApp x y) = "(EApp " ++ show x ++ " " ++ show y ++ ")"
   show (ELet x y z w) = "(ELet " ++ show x ++ " " ++ show y ++ " " ++ show z ++ " " ++ show w ++ ")"
   show (EAnnot x y) = "(EAnnot " ++ show x ++ " " ++ show y ++ ")"
+  show (EEquivalent x y) = "(EEquivalent " ++ show x ++ " " ++ show y ++ ")"
   show EBool = "EBool"
   show (EBoolLit False) = "(EBoolLit False)"
   show (EBoolLit True) = "(EBoolLit True)"
