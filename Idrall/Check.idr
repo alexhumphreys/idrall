@@ -333,11 +333,11 @@ mutual
        body <- readBackTyped ctx' ty' v'
        eTy <- readBackTyped ctx' (VConst CType) ty' -- TODO check this
        Right (ELam x eTy body)
-  readBackTyped ctx ty (VEquivalent x y) = do
+  readBackTyped ctx ty (VEquivalent x y) = do -- TODO not sure is `ty` correct
     x' <- readBackTyped ctx ty x
     y' <- readBackTyped ctx ty y
     Right (EEquivalent x' y')
-  readBackTyped ctx (VConst CType) (VAssert x) = do
+  readBackTyped ctx (VConst CType) (VAssert x) = do -- TODO not sure is `VConst CType` correct
     x' <- readBackTyped ctx (VConst CType) x
     Right (EAssert x')
   readBackTyped ctx (VConst x) (VConst y) = Right (EConst y) -- TODO check this
@@ -498,7 +498,7 @@ mutual
     y' <- eval (mkEnv ctx) y
     xRb <- readBackTyped ctx xTy x'
     yRb <- readBackTyped ctx xTy y'
-    case aEquiv xRb yRb of
+    case aEquiv xRb yRb of -- TODO should eventually use CBOR to check
           False => Left (AssertError ("Not equivalent: " ++ show x ++ " : " ++ show y ++ ")"))
           True => Right (VEquivalent x' y')
   synth ctx (EAssert other) = Left (AssertError ("Can't assert for expr: " ++ show other))
