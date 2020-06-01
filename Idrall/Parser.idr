@@ -34,6 +34,12 @@ where getNatural : List (Fin 10) -> Nat
 type : Parser Expr
 type = token "Type" *> pure (EConst CType)
 
+kind : Parser Expr
+kind = token "Kind" *> pure (EConst Kind)
+
+sort : Parser Expr
+sort = token "Sort" *> pure (EConst Sort)
+
 identFirst : Parser Char
 identFirst = letter <|> char '_'
 
@@ -49,9 +55,20 @@ identShort : Parser String
 identShort = do i <- identFirst
                 pure (singleton i)
 
+reservedNames' : List String
+reservedNames' =
+  [ "in", "let", "assert"
+  , "->", "&&", ":"
+  , "List", "Optional", "Natural"
+  , "Type", "Kind", "Sort"]
+
+parseAny : List String -> Parser String
+parseAny [] = string "provideListOfReservedNames" -- TODO find better version of this
+parseAny (x :: xs) = string x <|> (parseAny xs)
+
 reservedNames : Parser ()
 reservedNames = do
-  (string "in" <|> string "let" <|> string "->" <|> string "&&" <|> string ":")
+  parseAny reservedNames'
   (do space; pure ()) <|> eof
 
 identity : Parser String
@@ -127,7 +144,8 @@ mutual
     i <-(builtin <|>
      true <|> false <|> bool <|>
      naturalLit <|> natural <|>
-     type <|> var <|>| parens expr)
+     type <|> kind <|> sort <|>
+     var <|>| parens expr)
     spaces
     pure i
 
