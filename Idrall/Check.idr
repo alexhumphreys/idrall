@@ -285,7 +285,6 @@ mutual
     case aEquiv xRb yRb of
          False => Left (AssertError ("Assert error: " ++ show x))
          True => Right (VAssert v)
-    -- aEquiv xRb yRb
   doAssert (VNeutral x y) = ?doAssert_rhs_10
   doAssert x = Left (AssertError ("Assert error: " ++ show x))
 
@@ -386,6 +385,13 @@ isTerm _ (VNatural) = Right ()
 isTerm ctx (VNeutral x _) = isTerm ctx x
 isTerm ctx other = unexpected ctx "Not a term" other
 
+isTypeKindSort : Ctx -> Value -> Either Error () -- TODO somehow generalise this an isTerm
+isTypeKindSort _ (VConst CType) = Right ()
+isTypeKindSort _ (VConst Kind) = Right ()
+isTypeKindSort _ (VConst Sort) = Right ()
+isTypeKindSort ctx (VNeutral x _) = isTypeKindSort ctx x
+isTypeKindSort ctx other = unexpected ctx "Not type/kind/sort" other
+
 lookupType : Ctx -> Name -> Either Error Ty -- didn't use message type
 lookupType [] x = Left (ErrorMessage ("unbound variable: " ++ x))
 lookupType ((y, e) :: ctx) x =
@@ -448,10 +454,15 @@ mutual
   synth ctx (EVar x) = lookupType ctx x
   synth ctx (EConst x) = axioms x
   synth ctx (EPi x y z)
-    = do check ctx y (VConst CType)
+    = do yTy <- synth ctx y
+         isTypeKindSort ctx yTy
          yV <- eval (mkEnv ctx) y
-         check (extendCtx ctx x yV) z (VConst CType)
-         Right (VConst CType)
+         zV <- eval (mkEnv (extendCtx ctx x yV)) z
+         zTy <- synth (extendCtx ctx x yV) z
+         isTypeKindSort ctx zTy
+         case (yTy, zTy) of -- Feels like a hack. For test `FunctionTypeKindTypeA.dhall`
+              (VConst Sort, VConst Kind) => Right (VConst Sort)
+              _ => Right zTy
   synth ctx (ELam x ty b)
     = do xTy <- eval (mkEnv ctx) ty
          bTy <- synth (extendCtx ctx x xTy) b
