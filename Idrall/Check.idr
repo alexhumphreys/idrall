@@ -4,6 +4,13 @@ import Idrall.Expr
 
 %default covering
 
+mapListEither : List a -> (a -> Either e b) -> Either e (List b)
+mapListEither [] f = Right []
+mapListEither (x :: xs) f =
+  do rest <- mapListEither xs f
+     x' <- f x
+     Right (x' :: rest)
+
 -- alpha equivalence
 mutual
   total
