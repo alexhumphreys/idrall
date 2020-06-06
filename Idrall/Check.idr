@@ -297,7 +297,8 @@ mutual
     case aEquiv xRb yRb of
          False => Left (AssertError ("Assert error: " ++ show x))
          True => Right (VAssert v)
-  doAssert (VNeutral x y) = ?doAssert_rhs_10
+  doAssert (VNeutral (VEquivalent x y) v)
+    = Right (VNeutral (VEquivalent x y) (NAssert v))
   doAssert x = Left (AssertError ("Assert error: " ++ show x))
 
   -- fresh names
