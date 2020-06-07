@@ -5,59 +5,71 @@ import Idrall.Expr
 %default covering
 
 -- alpha equivalence
-total
-aEquivHelper : (i : Integer) ->
-               Namespace -> Expr ->
-               Namespace -> Expr ->
-               Bool
-aEquivHelper i ns1 (EVar x) ns2 (EVar y) =
-  case (lookup x ns1, lookup y ns2) of
-       (Nothing, Nothing) => x == y
-       (Just j, Just k) => i == j
-       _ => False
-aEquivHelper i ns1 (EPi x a1 r1) ns2 (EPi y a2 r2) =
-  aEquivHelper i ns1 a1 ns2 a2 &&
-  aEquivHelper (i+1) ((x, i) :: ns1) r1 ((y, i) :: ns2) r2
-aEquivHelper i ns1 (ELam x ty1 body1) ns2 (ELam y ty2 body2)
-  = let newNs1 = (x, i) :: ns1
-        newNs2 = (y, i) :: ns2 in
-    aEquivHelper i ns1 ty1 ns2 ty2 &&
-    aEquivHelper (i+1) newNs1 body1 newNs2 body2
-aEquivHelper i ns1 (EApp rator1 rand1) ns2 (EApp rator2 rand2)
-  = aEquivHelper i ns1 rator1 ns2 rator2 &&
-    aEquivHelper i ns1 rand1 ns2 rand2
-aEquivHelper i ns1 (ELet x1 t1 r1 e1) ns2 (ELet x2 t2 r2 e2) -- TODO double check this one
-  = let newNs1 = (x1, i) :: ns1
-        newNs2 = (x2, i) :: ns2 in
-    aEquivMaybe t1 t2 &&
-    aEquivHelper i ns1 r1 ns2 r2 &&
-    aEquivHelper i newNs1 e1 newNs2 e2
-  where
-    aEquivMaybe : Maybe Expr -> Maybe Expr -> Bool
-    aEquivMaybe (Just a) (Just b) = aEquivHelper i ns1 a ns2 b
-    aEquivMaybe Nothing Nothing = True
-    aEquivMaybe _ _ = False
-aEquivHelper i ns1 (EAnnot w x) ns2 (EAnnot y z)
-  = aEquivHelper i ns1 w ns2 y &&
-    aEquivHelper i ns1 x ns2 z
-aEquivHelper _ _ EBool _ EBool = True
-aEquivHelper i ns1 (EBoolLit x) ns2 (EBoolLit y) = x == y
-aEquivHelper i ns1 (EBoolAnd w x) ns2 (EBoolAnd y z)
-  = aEquivHelper i ns1 w ns2 y &&
-    aEquivHelper i ns1 x ns2 z
-aEquivHelper _ _ ENatural _ ENatural = True
-aEquivHelper _ _ (EConst x) _ (EConst y) = x == y
-aEquivHelper i ns1 (ENaturalLit x) ns2 (ENaturalLit y) = x == y
-aEquivHelper i ns1 (ENaturalIsZero x) ns2 (ENaturalIsZero y)
-  = aEquivHelper i ns1 x ns2 y
-aEquivHelper i ns1 (EEquivalent w x) ns2 (EEquivalent y z)
-  = aEquivHelper i ns1 w ns1 x &&
-    aEquivHelper i ns1 w ns2 y &&
-    aEquivHelper i ns2 y ns2 z
-aEquivHelper i ns1 (EAssert x) ns2 (EAssert y)
-  = aEquivHelper i ns1 x ns2 y
-aEquivHelper _ _ _ _ _ = False
--- TODO check if assert/equivalent should be in here
+mutual
+  total
+  aEquivHelper : (i : Integer) ->
+                 Namespace -> Expr ->
+                 Namespace -> Expr ->
+                 Bool
+  aEquivHelper i ns1 (EVar x) ns2 (EVar y) =
+    case (lookup x ns1, lookup y ns2) of
+         (Nothing, Nothing) => x == y
+         (Just j, Just k) => i == j
+         _ => False
+  aEquivHelper i ns1 (EPi x a1 r1) ns2 (EPi y a2 r2) =
+    aEquivHelper i ns1 a1 ns2 a2 &&
+    aEquivHelper (i+1) ((x, i) :: ns1) r1 ((y, i) :: ns2) r2
+  aEquivHelper i ns1 (ELam x ty1 body1) ns2 (ELam y ty2 body2)
+    = let newNs1 = (x, i) :: ns1
+          newNs2 = (y, i) :: ns2 in
+      aEquivHelper i ns1 ty1 ns2 ty2 &&
+      aEquivHelper (i+1) newNs1 body1 newNs2 body2
+  aEquivHelper i ns1 (EApp rator1 rand1) ns2 (EApp rator2 rand2)
+    = aEquivHelper i ns1 rator1 ns2 rator2 &&
+      aEquivHelper i ns1 rand1 ns2 rand2
+  aEquivHelper i ns1 (ELet x1 t1 r1 e1) ns2 (ELet x2 t2 r2 e2) -- TODO double check this one
+    = let newNs1 = (x1, i) :: ns1
+          newNs2 = (x2, i) :: ns2 in
+      aEquivMaybe i ns1 t1 ns2 t2 &&
+      aEquivHelper i ns1 r1 ns2 r2 &&
+      aEquivHelper i newNs1 e1 newNs2 e2
+  aEquivHelper i ns1 (EAnnot w x) ns2 (EAnnot y z)
+    = aEquivHelper i ns1 w ns2 y &&
+      aEquivHelper i ns1 x ns2 z
+  aEquivHelper _ _ EBool _ EBool = True
+  aEquivHelper i ns1 (EBoolLit x) ns2 (EBoolLit y) = x == y
+  aEquivHelper i ns1 (EBoolAnd w x) ns2 (EBoolAnd y z)
+    = aEquivHelper i ns1 w ns2 y &&
+      aEquivHelper i ns1 x ns2 z
+  aEquivHelper _ _ ENatural _ ENatural = True
+  aEquivHelper _ _ (EConst x) _ (EConst y) = x == y
+  aEquivHelper i ns1 (ENaturalLit x) ns2 (ENaturalLit y) = x == y
+  aEquivHelper i ns1 (ENaturalIsZero x) ns2 (ENaturalIsZero y)
+    = aEquivHelper i ns1 x ns2 y
+  aEquivHelper i ns1 (EEquivalent w x) ns2 (EEquivalent y z)
+    = aEquivHelper i ns1 w ns1 x &&
+      aEquivHelper i ns1 w ns2 y &&
+      aEquivHelper i ns2 y ns2 z
+  aEquivHelper i ns1 (EAssert x) ns2 (EAssert y)
+    = aEquivHelper i ns1 x ns2 y
+  aEquivHelper _ _ _ _ _ = False
+  -- TODO check if assert/equivalent should be in here
+
+  aEquivMaybe : (i : Integer) ->
+                Namespace -> Maybe Expr ->
+                Namespace -> Maybe Expr -> Bool
+  aEquivMaybe i ns1 (Just a) ns2 (Just b) = aEquivHelper i ns1 a ns2 b
+  aEquivMaybe _ _ Nothing _ Nothing = True
+  aEquivMaybe _ _ _ _ _ = False
+
+  aEquivList : (i : Integer) ->
+                Namespace -> List Expr ->
+                Namespace -> List Expr -> Bool
+  aEquivList i ns1 [] ns2 [] = True
+  aEquivList i ns1 (x :: xs) ns2 (y :: ys) =
+    aEquivHelper i ns1 x ns2 y &&
+    aEquivList i ns1 xs ns2 ys
+  aEquivList i ns1 _ ns2 _ = False
 
 aEquiv : Expr -> Expr -> Bool
 aEquiv e1 e2 = aEquivHelper 0 [] e1 [] e2
