@@ -132,6 +132,33 @@ mutual
   pi : Parser Expr
   pi = piComplex <|> piSimple
 
+  emptyList : Parser Expr
+  emptyList = do
+    token "["
+    token "]"
+    token ":"
+    e <- expr
+    pure (EListLit (Just e) [])
+
+  populatedList : Parser Expr
+  populatedList = do
+    token "["
+    es <- commaSep1 expr
+    token "]"
+    pure (EListLit Nothing es)
+
+  annotatedList : Parser Expr
+  annotatedList = do
+    token "["
+    es <- commaSep1 expr
+    token "]"
+    token ":"
+    e <- expr
+    pure (EListLit (Just e) es)
+
+  list : Parser Expr
+  list = emptyList <|> annotatedList <|> populatedList
+
   lam : Parser Expr
   lam = do
     string "λ(" -- TODO <|> string "\\(")
@@ -150,7 +177,7 @@ mutual
      true <|> false <|> bool <|>
      naturalLit <|> natural <|>
      type <|> kind <|> sort <|>
-     var <|>| parens expr)
+     var <|>| list <|>| parens expr)
     spaces
     pure i
 
