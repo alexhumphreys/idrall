@@ -61,6 +61,9 @@ mutual
     = aEquivHelper i ns1 x ns2 y
   aEquivHelper i ns1 (EList x) ns2 (EList y)
     = aEquivHelper i ns1 x ns2 y
+  aEquivHelper i ns1 (EListLit tx xs) ns2 (EListLit ty ys)
+    = aEquivMaybe i ns1 tx ns2 ty &&
+      aEquivList i ns1 xs ns2 ys
   aEquivHelper _ _ _ _ _ = False
   -- TODO check if assert/equivalent should be in here
 
@@ -131,6 +134,7 @@ mutual
     | VNatural
     | VNaturalLit Nat
     | VList Ty
+    | VListLit (Maybe Ty) (List Value)
     | VNeutral Ty Neutral
 
   export
@@ -154,6 +158,7 @@ mutual
     show VNatural = "VNatural"
     show (VNaturalLit k) = "(VNaturalLit" ++ show k ++ ")"
     show (VList a) = "(VList" ++ show a ++ ")"
+    show (VListLit ty vs) = "(VListLit" ++ show ty ++ show vs ++ ")"
     show (VNeutral x y) = "(VNeutral " ++ show x ++ " " ++ show y ++ ")"
 
   Show Neutral where
@@ -282,6 +287,13 @@ mutual
   eval env (EList a) = do
     a' <- eval env a
     Right (VList a')
+  eval env (EListLit Nothing es) = do
+    vs <- mapListEither es (eval env)
+    Right (VListLit Nothing vs)
+  eval env (EListLit (Just ty) es) = do
+    ty' <- eval env ty
+    vs <- mapListEither es (eval env)
+    Right (VListLit (Just ty') vs)
   eval env (ENaturalIsZero x)
     = do x' <- eval env x
          doNaturalIsZero x'
@@ -353,7 +365,6 @@ mutual
     a' <- readBackNeutral ctx a
     Right (EList a')
 
-  partial
   readBackTyped : Ctx -> Ty -> Value -> Either Error Expr
   readBackTyped ctx (VPi dom ran) fun =
     let x = freshen (ctxNames ctx) (closureName ran)
@@ -386,6 +397,15 @@ mutual
   readBackTyped ctx (VConst CType) (VList a) = do
     a' <- readBackTyped ctx (VConst CType) a
     Right (EList a')
+  readBackTyped ctx (VList a) (VListLit Nothing vs) = do
+    a' <- readBackTyped ctx (VConst CType) a
+    es <- mapListEither vs (readBackTyped ctx a)
+    Right (EListLit (Just a') es)
+  readBackTyped ctx (VList a) (VListLit (Just ty) vs) = do
+    a' <- readBackTyped ctx (VConst CType) a
+    es <- mapListEither vs (readBackTyped ctx ty)
+    -- TODO check if a=ty?
+    Right (EListLit (Just a') es)
   readBackTyped _ t v = Left (ReadBackError ("error reading back: " ++ (show v) ++ " of type: " ++ (show v)))
 
   export
@@ -409,6 +429,10 @@ isBool : Ctx -> Value -> Either Error ()
 isBool _ VBool = Right ()
 isBool ctx other = unexpected ctx "Not Bool" other
 
+isList : Ctx -> Value -> Either Error ()
+isList ctx (VList x) = Right ()
+isList ctx other = unexpected ctx "Not Bool" other
+
 isEquivalent : Ctx -> Value -> Either Error (Value, Value)
 isEquivalent ctx (VEquivalent x y) = Right (x, y)
 isEquivalent ctx other = unexpected ctx "Not Equivalent" other
@@ -417,6 +441,7 @@ isTerm : Ctx -> Value -> Either Error ()
 isTerm _ (VPi _ _) = Right ()
 isTerm _ (VBool) = Right ()
 isTerm _ (VNatural) = Right ()
+isTerm _ (VList _) = Right ()
 isTerm ctx (VNeutral x _) = isTerm ctx x
 isTerm ctx other = unexpected ctx "Not a term" other
 
@@ -480,6 +505,14 @@ mutual
     convert ctx aTy aV b
   check ctx (EBoolLit x) t = isBool ctx t
   check ctx (ENaturalLit k) t = isNat ctx t
+  check ctx (EListLit Nothing xs) (VList a) = do
+    mapListEither xs (\e => check ctx e a)
+    Right ()
+  check ctx (EListLit (Just x) xs) ty@(VList a) = do
+    xV <- eval (mkEnv ctx) x
+    convert ctx (VConst CType) xV ty
+    mapListEither xs (\e => check ctx e a)
+    Right ()
   check ctx other t
     = do t' <- synth ctx other
          convert ctx (VConst CType) t' t
@@ -550,4 +583,23 @@ mutual
   synth ctx (EList x) = do
     check ctx x (VConst CType)
     Right (VConst CType)
+  synth ctx (EListLit Nothing []) = do
+    Left (ErrorMessage ("Empty list needs a type"))
+  synth ctx (EListLit Nothing (x :: xs)) = do
+    ty <- synth ctx x
+    readBackTyped ctx (VConst CType) ty
+    mapListEither xs (\e => check ctx e ty)
+    Right (VList ty)
+  synth ctx (EListLit (Just ty) []) = do
+    check ctx ty (VConst CType)
+    ty' <- eval (mkEnv ctx) ty
+    isList ctx ty'
+    Right (ty')
+  synth ctx (EListLit (Just ty) (x :: xs)) = do
+    tyV <- eval (mkEnv ctx) ty
+    isList ctx tyV
+    xTy <- synth ctx x
+    convert ctx (VConst CType) tyV xTy
+    mapListEither xs (\e => check ctx e xTy)
+    Right (xTy)
   synth ctx (EAssert other) = Left (AssertError ("Can't assert for expr: " ++ show other))
