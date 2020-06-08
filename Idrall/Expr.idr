@@ -80,4 +80,4 @@ Show Expr where
   show (ENaturalIsZero x) = "(ENaturalIsZero " ++ show x ++ ")"
   show (EList x) = "(EList " ++ show x ++ ")"
   show (EListLit Nothing xs) = "(EListLit Nothing " ++ show xs ++ ")"
-  show (EListLit (Just x) xs) = "(EListLit (Just " ++ show x ++ ")" ++ show xs ++ ")"
+  show (EListLit (Just x) xs) = "(EListLit (Just " ++ show x ++ ") " ++ show xs ++ ")"

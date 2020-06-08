@@ -154,11 +154,11 @@ mutual
     show (VAssert x) = "(VEquivalent " ++ show x ++ ")"
     show (VConst x) = "(VConst " ++ show x ++ ")"
     show VBool = "VBool"
-    show (VBoolLit x) = "(VBoolLit" ++ show x ++ ")"
+    show (VBoolLit x) = "(VBoolLit " ++ show x ++ ")"
     show VNatural = "VNatural"
-    show (VNaturalLit k) = "(VNaturalLit" ++ show k ++ ")"
-    show (VList a) = "(VList" ++ show a ++ ")"
-    show (VListLit ty vs) = "(VListLit" ++ show ty ++ show vs ++ ")"
+    show (VNaturalLit k) = "(VNaturalLit " ++ show k ++ ")"
+    show (VList a) = "(VList " ++ show a ++ ")"
+    show (VListLit ty vs) = "(VListLit " ++ show ty ++ show vs ++ ")"
     show (VNeutral x y) = "(VNeutral " ++ show x ++ " " ++ show y ++ ")"
 
   Show Neutral where
