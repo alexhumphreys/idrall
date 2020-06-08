@@ -9,9 +9,14 @@ import Idrall.BuildExprParser
 fNaturalIsZero : Expr
 fNaturalIsZero = ELam "naturalIsZeroParam1" ENatural (ENaturalIsZero (EVar "naturalIsZeroParam1"))
 
+fList : Expr
+fList = ELam "listArg1" (EConst CType) (EList (EVar "listArg1"))
+
 %access export
 builtin : Parser Expr
-builtin = string "Natural/isZero" *> pure fNaturalIsZero
+builtin =
+  (string "Natural/isZero" *> pure fNaturalIsZero) <|>
+  (string "List" *> pure fList)
 
 true : Parser Expr
 true = token "True" *> pure (EBoolLit True)

@@ -55,6 +55,8 @@ data Expr
   | ENaturalLit Nat
   -- | > NaturalIsZero ~ Natural/isZero
   | ENaturalIsZero Expr
+  -- | > EList a ~ List a
+  | EList Expr
 
 export
 Show Expr where
@@ -74,3 +76,4 @@ Show Expr where
   show ENatural = "ENatural"
   show (ENaturalLit k) = "(ENaturalLit " ++ show k ++ ")"
   show (ENaturalIsZero x) = "(ENaturalIsZero " ++ show x ++ ")"
+  show (EList x) = "(EList " ++ show x ++ ")"

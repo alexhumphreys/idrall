@@ -52,6 +52,8 @@ mutual
       aEquivHelper i ns2 y ns2 z
   aEquivHelper i ns1 (EAssert x) ns2 (EAssert y)
     = aEquivHelper i ns1 x ns2 y
+  aEquivHelper i ns1 (EList x) ns2 (EList y)
+    = aEquivHelper i ns1 x ns2 y
   aEquivHelper _ _ _ _ _ = False
   -- TODO check if assert/equivalent should be in here
 
@@ -121,6 +123,7 @@ mutual
     | VBoolLit Bool
     | VNatural
     | VNaturalLit Nat
+    | VList Ty
     | VNeutral Ty Neutral
 
   export
@@ -130,6 +133,7 @@ mutual
     | NEquivalent Neutral Normal
     | NAssert Neutral
     | NApp Neutral Normal
+    | NList Neutral
     | NBoolAnd Neutral Normal
 
   Show Value where
@@ -142,6 +146,7 @@ mutual
     show (VBoolLit x) = "(VBoolLit" ++ show x ++ ")"
     show VNatural = "VNatural"
     show (VNaturalLit k) = "(VNaturalLit" ++ show k ++ ")"
+    show (VList a) = "(VList" ++ show a ++ ")"
     show (VNeutral x y) = "(VNeutral " ++ show x ++ " " ++ show y ++ ")"
 
   Show Neutral where
@@ -150,6 +155,7 @@ mutual
     show (NEquivalent x y) = "(NEquivalent " ++ show x ++ " " ++ show y ++ ")"
     show (NAssert x) = "(NEquivalent " ++ show x ++ ")"
     show (NApp x y) = "(NApp " ++ show x ++ " " ++ show y ++ ")"
+    show (NList x) = "(NList " ++ show x ++ ")"
     show (NBoolAnd x y) = "(NBoolAnd " ++ show x ++ " " ++ show y ++ ")"
 
 extendEnv : Env -> Name -> Value -> Env
@@ -266,6 +272,9 @@ mutual
          doBoolAnd x' y'
   eval env ENatural = Right VNatural
   eval env (ENaturalLit k) = Right (VNaturalLit k)
+  eval env (EList a) = do
+    a' <- eval env a
+    Right (VList a')
   eval env (ENaturalIsZero x)
     = do x' <- eval env x
          doNaturalIsZero x'
@@ -333,6 +342,9 @@ mutual
   readBackNeutral ctx (NAssert x) = do
     x' <- readBackNeutral ctx x
     Right (EAssert x')
+  readBackNeutral ctx (NList a) = do
+    a' <- readBackNeutral ctx a
+    Right (EList a')
 
   partial
   readBackTyped : Ctx -> Ty -> Value -> Either Error Expr
@@ -364,6 +376,9 @@ mutual
        b' <- evalClosure bT (VNeutral aT (NVar x))
        b <- readBackTyped (extendCtx ctx x aT) (VConst CType) b'
        Right (EPi x a b)
+  readBackTyped ctx (VConst CType) (VList a) = do
+    a' <- readBackTyped ctx (VConst CType) a
+    Right (EList a')
   readBackTyped _ t v = Left (ReadBackError ("error reading back: " ++ (show v) ++ " of type: " ++ (show v)))
 
   export
@@ -525,4 +540,7 @@ mutual
     case aEquiv xRb yRb of -- TODO should eventually use CBOR to check
           False => Left (AssertError ("Not equivalent: " ++ show x ++ " : " ++ show y ++ ")"))
           True => Right (VEquivalent x' y')
+  synth ctx (EList x) = do
+    check ctx x (VConst CType)
+    Right (VConst CType)
   synth ctx (EAssert other) = Left (AssertError ("Can't assert for expr: " ++ show other))
