@@ -2,17 +2,16 @@
 
 Dhall bindings for idris.
 
-Parse, evaluate, check/infer types of Dhall expressions￼￼.
+Parse, evaluate, check/infer types of Dhall expressions.
 
 ## Status￼
 
-Very much a work in progress, with many thing missing￼. The plan is to make an end to end compiler for a small goofy subset of Dhall, and gradually and features.￼
+Very much a work in progress, with many thing missing. The plan is to make an end to end compiler for a small goofy subset of Dhall, and gradually and features.￼
 
 ## Missing features
 
 - Types
-  - ￼String
-  - List
+  - String
   - Integer
   - Optional
   - Records
@@ -27,7 +26,7 @@ Very much a work in progress, with many thing missing￼. The plan is to make an
 - `x@1` style variables
 - The rest of this list
 
-Right now you can basically just do you type annotations, ￼create naturals and bools, assigned them with let, and create functions￼.
+Right now you can basically just do you type annotations, create naturals/lists/bools, assigned them with let, and create functions.
 
 ## Dependencies
 
@@ -54,7 +53,9 @@ They mostly fail, so you can run the ones that should pass with the following:
 
 ## Implementation details￼
 
-Type checking and inference (aka synthesis) in Dhall is covered by [these rules](https://github.com/dhall-lang/dhall-lang/blob/master/standard/type-inference.md). The rules are implemented here using a technique called Normalisation by Evaluation (NbE). It is described in [this paper by David Christiansen](http://davidchristiansen.dk/tutorials/implementing-types-hs.pdf), and was also used by [@AndradKovaks](https://github.com/AndrasKovacs) in [their branch](https://github.com/dhall-lang/dhall-haskell/commits/nbe-elaboration) on `dhall-Haskell` (I found [this commit](https://github.com/dhall-lang/dhall-haskell/commit/627a6cdea0170336ff08de34851d8bdf5180571d) particularly useful).
+### Type checking
+
+Type checking and inference (aka synthesis) in Dhall is covered by [these rules](https://github.com/dhall-lang/dhall-lang/blob/master/standard/type-inference.md). The rules are implemented here using a technique called Normalisation by Evaluation (NbE). It is described in [this paper by David Christiansen](http://davidchristiansen.dk/tutorials/implementing-types-hs.pdf), and was also used by [@AndrasKovaks](https://github.com/AndrasKovacs) in [their branch](https://github.com/dhall-lang/dhall-haskell/commits/nbe-elaboration) on `dhall-Haskell` (I found [this commit](https://github.com/dhall-lang/dhall-haskell/commit/627a6cdea0170336ff08de34851d8bdf5180571d) particularly useful).
 
 The general idea of NbE is that you have a data structure that represents￼ the raw syntax￼￼ Language￼, which is called `Expr` here. Expressions can be literals (`3`, `True`), types (`Natural`, `Bool`, `Type`), functions, builtins, operators, etc. You evaluate the `Expr` to a data structure that only represents expressions that cannot be reduced further￼, called `Value` here. Eg, the expression `True && False` can be represented in an `Expr`, but as a `Value` would be reduced to `False`. 
 
@@ -71,6 +72,12 @@ That was a very brief, potentially wrong introduction to the NbE technique used.
 ## Contributions
 
 Any contributions would be appreciated, and anything from the missing list above would be a good place to start￼.
+
+### Examples of adding language features
+
+Adding features generally means editing the `Expr` and `Value` types, the parser, the `eval`/`check`/`synth` functions, the tests etc.
+
+As an example, the `List` type was added via (#1)[https://github.com/alexhumphreys/idrall/pull/1], and literal values of type list (`[1, 2, 3]`) were added via (#2)[https://github.com/alexhumphreys/idrall/pull/2].
 
 ## Future work
 
