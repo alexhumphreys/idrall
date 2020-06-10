@@ -64,6 +64,9 @@ mutual
   aEquivHelper i ns1 (EListLit tx xs) ns2 (EListLit ty ys)
     = aEquivMaybe i ns1 tx ns2 ty &&
       aEquivList i ns1 xs ns2 ys
+  aEquivHelper i ns1 (EListAppend w x) ns2 (EListAppend y z)
+    = aEquivHelper i ns1 w ns2 y &&
+      aEquivHelper i ns1 x ns2 z
   aEquivHelper _ _ _ _ _ = False
   -- TODO check if assert/equivalent should be in here
 
@@ -144,8 +147,9 @@ mutual
     | NEquivalent Neutral Normal
     | NAssert Neutral
     | NApp Neutral Normal
-    | NList Neutral
     | NBoolAnd Neutral Normal
+    | NList Neutral
+    | NListAppend Neutral Normal
 
   Show Value where
     show (VLambda x y) = "(VLambda " ++ show x ++ " " ++ show y ++ ")"
@@ -168,6 +172,7 @@ mutual
     show (NAssert x) = "(NEquivalent " ++ show x ++ ")"
     show (NApp x y) = "(NApp " ++ show x ++ " " ++ show y ++ ")"
     show (NList x) = "(NList " ++ show x ++ ")"
+    show (NListAppend x y) = "(NListAppend " ++ show x ++ " " ++ show y ++ ")"
     show (NBoolAnd x y) = "(NBoolAnd " ++ show x ++ " " ++ show y ++ ")"
 
 extendEnv : Env -> Name -> Value -> Env
@@ -215,6 +220,7 @@ data Error
   | ReadBackError String
   | SortError
   | AssertError String
+  | ListAppendError String
 
 public export
 Show Error where
@@ -227,6 +233,7 @@ Show Error where
   show (ReadBackError x) = "ReadBackError: " ++ x
   show SortError = "SortError"
   show (AssertError str) = "AssertError" ++ str
+  show (ListAppendError str) = "ListAppendError" ++ str
 
 mutual
   partial
@@ -294,6 +301,10 @@ mutual
     ty' <- eval env ty
     vs <- mapListEither es (eval env)
     Right (VListLit (Just ty') vs)
+  eval env (EListAppend x y) = do
+    x' <- eval env x
+    y' <- eval env y
+    doListAppend x' y'
   eval env (ENaturalIsZero x)
     = do x' <- eval env x
          doNaturalIsZero x'
@@ -328,6 +339,13 @@ mutual
   doAssert (VNeutral (VEquivalent x y) v)
     = Right (VNeutral (VEquivalent x y) (NAssert v))
   doAssert x = Left (AssertError ("Assert error: " ++ show x))
+
+  doListAppend : Value -> Value -> Either Error Value
+  doListAppend (VListLit x xs) (VListLit _ ys) =
+    Right (VListLit x (xs ++ ys)) -- TODO dropping type info
+  doListAppend (VNeutral (VList x) v) y =
+    Right (VNeutral (VList x) (NListAppend v (Normal' (VList x) y)))
+  doListAppend x y = Left (ListAppendError (show x ++ " " ++ show y))
 
   -- fresh names
   nextName : Name -> Name
@@ -364,6 +382,10 @@ mutual
   readBackNeutral ctx (NList a) = do
     a' <- readBackNeutral ctx a
     Right (EList a')
+  readBackNeutral ctx (NListAppend x y) = do
+    x' <- readBackNeutral ctx x
+    y' <- readBackNormal ctx y
+    Right (EListAppend x' y')
 
   readBackTyped : Ctx -> Ty -> Value -> Either Error Expr
   readBackTyped ctx (VPi dom ran) fun =
@@ -431,7 +453,7 @@ isBool ctx other = unexpected ctx "Not Bool" other
 
 isList : Ctx -> Value -> Either Error ()
 isList ctx (VList x) = Right ()
-isList ctx other = unexpected ctx "Not Bool" other
+isList ctx other = unexpected ctx "Not List" other
 
 isEquivalent : Ctx -> Value -> Either Error (Value, Value)
 isEquivalent ctx (VEquivalent x y) = Right (x, y)
@@ -603,3 +625,9 @@ mutual
     mapListEither xs (\e => check ctx e xTy)
     Right (xTy)
   synth ctx (EAssert other) = Left (AssertError ("Can't assert for expr: " ++ show other))
+  synth ctx (EListAppend x y) = do
+    xTy <- synth ctx x
+    yTy <- synth ctx y
+    isList ctx xTy
+    convert ctx (VConst CType) xTy yTy
+    Right (xTy)

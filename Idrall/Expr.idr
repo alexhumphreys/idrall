@@ -59,6 +59,8 @@ data Expr
   | EList Expr
   -- | > EList (Some e) [e', ...] ~ [] : List a
   | EListLit (Maybe Expr) (List Expr)
+  -- | > x # y
+  | EListAppend Expr Expr
 
 export
 Show Expr where
@@ -81,3 +83,4 @@ Show Expr where
   show (EList x) = "(EList " ++ show x ++ ")"
   show (EListLit Nothing xs) = "(EListLit Nothing " ++ show xs ++ ")"
   show (EListLit (Just x) xs) = "(EListLit (Just " ++ show x ++ ") " ++ show xs ++ ")"
+  show (EListAppend x y) = "(EListAppend " ++ show x ++ " " ++ show y ++ ")"
