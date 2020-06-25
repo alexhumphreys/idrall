@@ -1,6 +1,8 @@
 module Idrall.Check
 
 import Idrall.Expr
+import Idrall.Error
+import Idrall.Value
 
 %default covering
 
@@ -15,8 +17,8 @@ mapListEither (x :: xs) f =
 mutual
   total
   aEquivHelper : (i : Integer) ->
-                 Namespace -> Expr ->
-                 Namespace -> Expr ->
+                 Namespace -> Expr Void ->
+                 Namespace -> Expr Void ->
                  Bool
   aEquivHelper i ns1 (EVar x) ns2 (EVar y) =
     case (lookup x ns1, lookup y ns2) of
@@ -71,109 +73,28 @@ mutual
   -- TODO check if assert/equivalent should be in here
 
   aEquivMaybe : (i : Integer) ->
-                Namespace -> Maybe Expr ->
-                Namespace -> Maybe Expr -> Bool
+                Namespace -> Maybe (Expr Void) ->
+                Namespace -> Maybe (Expr Void) -> Bool
   aEquivMaybe i ns1 (Just a) ns2 (Just b) = aEquivHelper i ns1 a ns2 b
   aEquivMaybe _ _ Nothing _ Nothing = True
   aEquivMaybe _ _ _ _ _ = False
 
   aEquivList : (i : Integer) ->
-                Namespace -> List Expr ->
-                Namespace -> List Expr -> Bool
+                Namespace -> List (Expr Void) ->
+                Namespace -> List (Expr Void) -> Bool
   aEquivList i ns1 [] ns2 [] = True
   aEquivList i ns1 (x :: xs) ns2 (y :: ys) =
     aEquivHelper i ns1 x ns2 y &&
     aEquivList i ns1 xs ns2 ys
   aEquivList i ns1 _ ns2 _ = False
 
-aEquiv : Expr -> Expr -> Bool
+aEquiv : Expr Void -> Expr Void -> Bool
 aEquiv e1 e2 = aEquivHelper 0 [] e1 [] e2
 
--- values
-mutual
-  public export
-  data Normal = Normal' Ty Value
-
-  public export
-  Ty : Type
-  Ty = Value
-
-  partial
-  Show Normal where
-    show (Normal' x y) = "(Normal' " ++ (show x) ++ " " ++ show y ++ ")"
-
-  export
-  Env : Type -- Now a type alias
-  Env = List (Name,Value)
-  %name Env env, env1, env2
-
-  export
-  initEnv : Env
-  initEnv = []
-
-  export
-  record Closure where
-    constructor MkClosure
-    closureEnv : Env
-    closureName : Name
-    closureType : Expr
-    closureBody : Expr
-
-  Show Closure where
-    show (MkClosure closureEnv closureName closureType closureBody)
-      = "(MkClosure " ++ show closureEnv ++ " " ++ closureName ++ " " ++ show closureType
-         ++ " " ++ show closureBody ++ ")"
-
-  -- Values
-  export
-  data Value
-    = VLambda Ty Closure
-    | VPi Ty Closure
-    | VEquivalent Value Value
-    | VAssert Value
-    | VConst U
-    | VBool
-    | VBoolLit Bool
-    | VNatural
-    | VNaturalLit Nat
-    | VList Ty
-    | VListLit (Maybe Ty) (List Value)
-    | VNeutral Ty Neutral
-
-  export
-  data Neutral
-    = NVar Name
-    | NNaturalIsZero Neutral
-    | NEquivalent Neutral Normal
-    | NAssert Neutral
-    | NApp Neutral Normal
-    | NBoolAnd Neutral Normal
-    | NList Neutral
-    | NListAppend Neutral Normal
-
-  Show Value where
-    show (VLambda x y) = "(VLambda " ++ show x ++ " " ++ show y ++ ")"
-    show (VPi x y) = "(VPi " ++ show x ++ " " ++ show y ++ ")"
-    show (VEquivalent x y) = "(VEquivalent " ++ show x ++ " " ++ show y ++ ")"
-    show (VAssert x) = "(VEquivalent " ++ show x ++ ")"
-    show (VConst x) = "(VConst " ++ show x ++ ")"
-    show VBool = "VBool"
-    show (VBoolLit x) = "(VBoolLit " ++ show x ++ ")"
-    show VNatural = "VNatural"
-    show (VNaturalLit k) = "(VNaturalLit " ++ show k ++ ")"
-    show (VList a) = "(VList " ++ show a ++ ")"
-    show (VListLit ty vs) = "(VListLit " ++ show ty ++ show vs ++ ")"
-    show (VNeutral x y) = "(VNeutral " ++ show x ++ " " ++ show y ++ ")"
-
-  Show Neutral where
-    show (NVar x) = "(NVar " ++ show x ++ ")"
-    show (NNaturalIsZero x) = "(NNaturalIsZero " ++ show x ++ ")"
-    show (NEquivalent x y) = "(NEquivalent " ++ show x ++ " " ++ show y ++ ")"
-    show (NAssert x) = "(NEquivalent " ++ show x ++ ")"
-    show (NApp x y) = "(NApp " ++ show x ++ " " ++ show y ++ ")"
-    show (NList x) = "(NList " ++ show x ++ ")"
-    show (NListAppend x y) = "(NListAppend " ++ show x ++ " " ++ show y ++ ")"
-    show (NBoolAnd x y) = "(NBoolAnd " ++ show x ++ " " ++ show y ++ ")"
+-- env
+export
+initEnv : Env
+initEnv = []
 
 extendEnv : Env -> Name -> Value -> Env
 extendEnv env x v = ((x, v) :: env)
@@ -209,32 +130,6 @@ mkEnv ((x, e) :: ctx) =
                        (x, v) :: env)
 
 -- evaluator
-public export
-data Error
-  = MissingVar String
-  | EvalNaturalIsZeroErr String
-  | EvalBoolAndErr
-  | EvalApplyErr
-  | Unexpected String Value
-  | ErrorMessage String
-  | ReadBackError String
-  | SortError
-  | AssertError String
-  | ListAppendError String
-
-public export
-Show Error where
-  show (MissingVar x) = "MissingVar: " ++ show x
-  show (EvalNaturalIsZeroErr x) = "EvalNaturalIsZero error:" ++ x
-  show EvalBoolAndErr = "EvalBoolAndErr"
-  show EvalApplyErr = "EvalApplyErr"
-  show (Unexpected str v) = "Unexpected: " ++ str ++ " value: " ++ show v
-  show (ErrorMessage x) = "ErrorMessage: " ++ show x
-  show (ReadBackError x) = "ReadBackError: " ++ x
-  show SortError = "SortError"
-  show (AssertError str) = "AssertError" ++ str
-  show (ListAppendError str) = "ListAppendError" ++ str
-
 mutual
   partial
   evalClosure : Closure -> Value -> Either Error Value
@@ -251,7 +146,7 @@ mutual
 
   export
   partial
-  eval : Env -> Expr -> Either Error Value
+  eval : Env -> Expr Void -> Either Error Value
   eval env (EConst x) = Right (VConst x)
   eval env (EVar x)
     = evalVar env x
@@ -359,7 +254,7 @@ mutual
                                True => freshen used (nextName n)
 
   -- reading back
-  readBackNeutral : Ctx -> Neutral -> Either Error Expr
+  readBackNeutral : Ctx -> Neutral -> Either Error (Expr Void)
   readBackNeutral ctx (NVar x) = Right (EVar x)
   readBackNeutral ctx (NNaturalIsZero x) = do
     x' <- readBackNeutral ctx x
@@ -387,7 +282,7 @@ mutual
     y' <- readBackNormal ctx y
     Right (EListAppend x' y')
 
-  readBackTyped : Ctx -> Ty -> Value -> Either Error Expr
+  readBackTyped : Ctx -> Ty -> Value -> Either Error (Expr Void)
   readBackTyped ctx (VPi dom ran) fun =
     let x = freshen (ctxNames ctx) (closureName ran)
         xVal = VNeutral dom (NVar x)
@@ -432,7 +327,7 @@ mutual
 
   export
   partial
-  readBackNormal : Ctx -> Normal -> Either Error Expr
+  readBackNormal : Ctx -> Normal -> Either Error (Expr Void)
   readBackNormal ctx (Normal' t v) = readBackTyped ctx t v
 
 -- helpers
@@ -500,7 +395,7 @@ mutual
 
   export
   partial
-  check : Ctx -> Expr -> Ty -> Either Error ()
+  check : Ctx -> Expr Void -> Ty -> Either Error ()
   check ctx (EConst CType) (VConst Kind) = Right ()
   check ctx (EConst Kind) (VConst Sort) = Right ()
   check ctx (EConst Sort) (VConst Sort) = Left SortError -- TODO check what happens here
@@ -540,7 +435,7 @@ mutual
          convert ctx (VConst CType) t' t
 
   export
-  synth : Ctx -> Expr -> Either Error Ty
+  synth : Ctx -> Expr Void -> Either Error Ty
   synth ctx (EVar x) = lookupType ctx x
   synth ctx (EConst x) = axioms x
   synth ctx (EPi x y z)
