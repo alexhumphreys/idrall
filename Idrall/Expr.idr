@@ -24,46 +24,50 @@ Show U where
   show Kind = "Kind"
 -- expressions
 
+data ImportStatement
+  = LocalFile String
+  | EnvVar String
+
 public export
-data Expr
+data Expr a
   -- x
   = EVar Name
   | EConst U
-  | EPi Name Expr Expr
+  | EPi Name (Expr a) (Expr a)
   -- | Lam x A b ~ λ(x : A) -> b
-  | ELam Name Expr Expr
+  | ELam Name (Expr a) (Expr a)
   -- | > App f a ~ f a
-  | EApp Expr Expr
+  | EApp (Expr a) (Expr a)
   -- | > Let x Nothing r e ~ let x = r in e
   --   > Let x (Just t) r e ~ let x : t = r in e
-  | ELet Name (Maybe Expr) Expr Expr
+  | ELet Name (Maybe (Expr a)) (Expr a) (Expr a)
   -- | > Annot x t ~ x : t
-  | EAnnot Expr Expr
+  | EAnnot (Expr a) (Expr a)
   -- | > x === y
-  | EEquivalent Expr Expr
+  | EEquivalent (Expr a) (Expr a)
   -- | > assert : e
-  | EAssert Expr
+  | EAssert (Expr a)
   -- | > Bool ~ Bool
   | EBool
   -- | > BoolLit b ~ b
   | EBoolLit Bool
   -- | > BoolAnd x y ~ x && y
-  | EBoolAnd Expr Expr
+  | EBoolAnd (Expr a) (Expr a)
   -- | > Natural ~ Natural
   | ENatural
   -- | > NaturalLit n ~ n
   | ENaturalLit Nat
   -- | > NaturalIsZero ~ Natural/isZero
-  | ENaturalIsZero Expr
+  | ENaturalIsZero (Expr a)
   -- | > EList a ~ List a
-  | EList Expr
+  | EList (Expr a)
   -- | > EList (Some e) [e', ...] ~ [] : List a
-  | EListLit (Maybe Expr) (List Expr)
+  | EListLit (Maybe (Expr a)) (List (Expr a))
   -- | > x # y
-  | EListAppend Expr Expr
+  | EListAppend (Expr a) (Expr a)
 
 export
-Show Expr where
+Show (Expr a) where
   show (EVar x) = "(EVar " ++ show x ++ ")"
   show (EConst x) = "(EConst " ++ show x ++ ")"
   show (EPi x y z) = "(EPi " ++ show x ++ " " ++ show y ++ " " ++ show z ++ ")"
