@@ -6,43 +6,43 @@ import Lightyear.Strings
 import Idrall.Expr
 import Idrall.BuildExprParser
 
-fNaturalIsZero : Expr
+fNaturalIsZero : (Expr ImportStatement)
 fNaturalIsZero = ELam "naturalIsZeroParam1" ENatural (ENaturalIsZero (EVar "naturalIsZeroParam1"))
 
-fList : Expr
+fList : (Expr ImportStatement)
 fList = ELam "listArg1" (EConst CType) (EList (EVar "listArg1"))
 
 %access export
-builtin : Parser Expr
+builtin : Parser (Expr ImportStatement)
 builtin =
   (string "Natural/isZero" *> pure fNaturalIsZero) <|>
   (string "List" *> pure fList)
 
-true : Parser Expr
+true : Parser (Expr ImportStatement)
 true = token "True" *> pure (EBoolLit True)
 
-false : Parser Expr
+false : Parser (Expr ImportStatement)
 false = token "False" *> pure (EBoolLit False)
 
-bool : Parser Expr
+bool : Parser (Expr ImportStatement)
 bool = token "Bool" *> pure (EBool)
 
-natural : Parser Expr
+natural : Parser (Expr ImportStatement)
 natural = token "Natural" *> pure (ENatural)
 
-naturalLit : Parser Expr
+naturalLit : Parser (Expr ImportStatement)
 naturalLit = do n <- some digit
                 pure (ENaturalLit (getNatural n))
 where getNatural : List (Fin 10) -> Nat
       getNatural = foldl (\a => \b => 10 * a + cast b) 0
 
-type : Parser Expr
+type : Parser (Expr ImportStatement)
 type = token "Type" *> pure (EConst CType)
 
-kind : Parser Expr
+kind : Parser (Expr ImportStatement)
 kind = token "Kind" *> pure (EConst Kind)
 
-sort : Parser Expr
+sort : Parser (Expr ImportStatement)
 sort = token "Sort" *> pure (EConst Sort)
 
 identFirst : Parser Char
@@ -81,16 +81,16 @@ identity = do
   _ <- requireFailure reservedNames
   (identLong <|> identShort) <* spaces
 
-var : Parser Expr
+var : Parser (Expr ImportStatement)
 var = do i <- identity
          pure (EVar i)
 
-appl : Parser (Expr -> Expr -> Expr)
+appl : Parser ((Expr ImportStatement) -> (Expr ImportStatement) -> (Expr ImportStatement))
 appl = do spaces
           _ <- requireFailure reservedNames
           pure EApp
 
-table : OperatorTable Expr
+table : OperatorTable (Expr ImportStatement)
 table = [ [ Infix appl AssocLeft]
         , [ Infix (do token ":"; pure EAnnot) AssocLeft]
         , [ Infix (do (token "===" <|> token "≡"); pure EEquivalent) AssocLeft]
@@ -99,7 +99,7 @@ table = [ [ Infix appl AssocLeft]
         , [ Infix (do token "#"; pure EListAppend) AssocLeft]]
 
 mutual
-  letExpr : Parser Expr -- TODO handle type annotation
+  letExpr : Parser (Expr ImportStatement) -- TODO handle type annotation
   letExpr = token "let" *> do
     i <- identity
     spaces
@@ -110,7 +110,7 @@ mutual
     e <- expr
     pure (ELet i Nothing v e)
 
-  piSimple : Parser Expr
+  piSimple : Parser (Expr ImportStatement)
   piSimple = do
     dom <- term
     -- spaces
@@ -118,7 +118,7 @@ mutual
     ran <- expr
     pure (EPi "_" dom ran)
 
-  piComplex : Parser Expr
+  piComplex : Parser (Expr ImportStatement)
   piComplex = do
     (token "forall(" <|> token "∀(")
     i <- identity
@@ -130,10 +130,10 @@ mutual
     ran <- expr
     pure (EPi i dom ran)
 
-  pi : Parser Expr
+  pi : Parser (Expr ImportStatement)
   pi = piComplex <|> piSimple
 
-  emptyList : Parser Expr
+  emptyList : Parser (Expr ImportStatement)
   emptyList = do
     token "["
     token "]"
@@ -141,14 +141,14 @@ mutual
     e <- expr
     pure (EListLit (Just e) [])
 
-  populatedList : Parser Expr
+  populatedList : Parser (Expr ImportStatement)
   populatedList = do
     token "["
     es <- commaSep1 expr
     token "]"
     pure (EListLit Nothing es)
 
-  annotatedList : Parser Expr
+  annotatedList : Parser (Expr ImportStatement)
   annotatedList = do
     token "["
     es <- commaSep1 expr
@@ -157,10 +157,10 @@ mutual
     e <- expr
     pure (EListLit (Just e) es)
 
-  list : Parser Expr
+  list : Parser (Expr ImportStatement)
   list = emptyList <|> annotatedList <|> populatedList
 
-  lam : Parser Expr
+  lam : Parser (Expr ImportStatement)
   lam = do
     string "λ(" -- TODO <|> string "\\(")
     i <- identity
@@ -172,7 +172,7 @@ mutual
     e <- expr
     pure (ELam i ty e)
 
-  term : Parser Expr
+  term : Parser (Expr ImportStatement)
   term = do
     i <-(builtin <|>
      true <|> false <|> bool <|>
@@ -182,17 +182,17 @@ mutual
     spaces
     pure i
 
-  opExpr : Parser Expr
-  opExpr = buildExpressionParser Expr table term
+  opExpr : Parser (Expr ImportStatement)
+  opExpr = buildExpressionParser (Expr ImportStatement) table term
 
-  expr : Parser Expr
+  expr : Parser (Expr ImportStatement)
   expr = letExpr <|> pi <|> lam <|> opExpr <|> term
 
-  parseToEnd : Parser Expr
+  parseToEnd : Parser (Expr ImportStatement)
   parseToEnd = do
     e <- expr
     eof
     pure e
 
-parseExpr : String -> Either String Expr
+parseExpr : String -> Either String (Expr ImportStatement)
 parseExpr str = parse parseToEnd str
