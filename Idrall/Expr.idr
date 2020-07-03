@@ -24,15 +24,25 @@ Show U where
   show Kind = "Kind"
 -- expressions
 
+public export
+data FilePath
+  = Relative String
+  | Absolute String
+
+public export
+Show FilePath where
+  show (Relative x) = ("Relative " ++ x)
+  show (Absolute x) = ("Absolute " ++ x)
+
 mutual
   public export
   data ImportStatement
-    = LocalFile String
+    = LocalFile FilePath
     | EnvVar String
 
   public export
-  data Import
-    = Raw ImportStatement
+  data Import a
+    = Raw a
     | Resolved (Expr Void)
 
   public export
@@ -72,17 +82,17 @@ mutual
     | EListLit (Maybe (Expr a)) (List (Expr a))
     -- | > x # y
     | EListAppend (Expr a) (Expr a)
-    | EEmbed Import
+    | EEmbed (Import a)
 
 export
 Show ImportStatement where
-  show (LocalFile x) = "(LocalFile " ++ x ++ ")"
+  show (LocalFile x) = "(LocalFile " ++ show x ++ ")"
   show (EnvVar x) = "(EnvVar " ++ x ++ ")"
 
 mutual
   export
-  Show Import where
-    show (Raw x) = "(Raw" ++ show x ++ ")"
+  Show (Import a) where
+    show (Raw x) = "(Raw)" -- TODO show x
     show (Resolved x) = "(Resolved " ++ show x ++ ")"
 
   export

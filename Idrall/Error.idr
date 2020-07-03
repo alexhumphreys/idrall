@@ -16,6 +16,7 @@ data Error
   | SortError
   | AssertError String
   | ListAppendError String
+  | ReadFileError String
 
 public export
 Show Error where
@@ -29,3 +30,4 @@ Show Error where
   show SortError = "SortError"
   show (AssertError str) = "AssertError" ++ str
   show (ListAppendError str) = "ListAppendError" ++ str
+  show (ReadFileError str) = "ReadFileError" ++ str

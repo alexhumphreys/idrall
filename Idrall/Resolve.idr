@@ -3,8 +3,47 @@ module Idrall.Resolve
 import Idrall.Error
 import Idrall.Expr
 import Idrall.IOEither
+import Idrall.Parser
+
+liftEither : Either e a -> IOEither e a
+liftEither = MkIOEither . pure
+
+liftIO : IO a -> IOEither e a
+liftIO = MkIOEither . map Right
+
+mapErr : (e -> e') -> IOEither e a -> IOEither e' a
+mapErr f (MkIOEither x) = MkIOEither (do
+  x' <- x
+  (case x' of
+        (Left l) => pure (Left (f l))
+        (Right r) => pure (Right r)))
+
+fileErrorHandler : FileError -> Error
+fileErrorHandler x = ReadFileError (show x)
+
+readFile' : String -> IOEither Error String
+readFile' x =
+  let c = MkIOEither (readFile x)
+      contents = mapErr (fileErrorHandler) c in
+  contents
+
+parseErrorHandler : String -> Error
+parseErrorHandler x = ErrorMessage (x)
 
 mutual
+  canonicalFilePath : FilePath -> String -- TODO finish properly
+  canonicalFilePath (Relative x) = x
+  canonicalFilePath (Absolute x) = x
+
+  resolveLocalFile : FilePath -> IOEither Error (Expr Void)
+  resolveLocalFile x = go (canonicalFilePath x)
+    where
+    go : (x : String) -> IOEither Error (Expr Void)
+    go x = do
+      c <- readFile' x
+      e <- mapErr (parseErrorHandler) (liftEither (parseExpr c))
+      resolve e
+
   export
   resolve : Expr ImportStatement -> IOEither Error (Expr Void)
   resolve e@(EVar x) = pure e
@@ -66,6 +105,9 @@ mutual
     x' <- resolve x
     y' <- resolve y
     pure (EListAppend x' y')
+  resolve (EEmbed (Raw (LocalFile x))) = resolveLocalFile x
+  resolve (EEmbed (Raw (EnvVar x))) = MkIOEither (pure (Left (ErrorMessage "TODO not implemented")))
+  resolve (EEmbed (Resolved x)) = MkIOEither (pure (Left (ErrorMessage "Already resolved")))
 
   resolveList : List (Expr ImportStatement) ->
                  IOEither Error (List (Expr Void))
