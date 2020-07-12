@@ -1,3 +1,5 @@
+import Idrall.Path
+
 public export
 Name : Type
 Name = String
@@ -24,20 +26,10 @@ Show U where
   show Kind = "Kind"
 -- expressions
 
-public export
-data FilePath
-  = Relative String
-  | Absolute String
-
-public export
-Show FilePath where
-  show (Relative x) = ("Relative " ++ x)
-  show (Absolute x) = ("Absolute " ++ x)
-
 mutual
   public export
   data ImportStatement
-    = LocalFile FilePath
+    = LocalFile Path
     | EnvVar String
 
   public export

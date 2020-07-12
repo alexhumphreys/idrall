@@ -7,6 +7,7 @@ import Idrall.Check
 import Idrall.Parser
 import Idrall.Resolve
 import Idrall.IOEither
+import Idrall.Path
 
 trimString : Nat -> String -> String
 trimString k str = pack (take k (unpack str))
@@ -20,7 +21,7 @@ stringToExpr : String -> IO (Either () (Expr ImportStatement))
 stringToExpr x = eitherIO (parseExpr x)
 
 resolveExpr : Expr ImportStatement -> IO (Either () (Expr Void))
-resolveExpr x = let xRes = resolve x in
+resolveExpr x = let xRes = resolve Nothing x in
   (case xRes of
         (MkIOEither x') => do x'' <- x'
                               eitherIO x'')
