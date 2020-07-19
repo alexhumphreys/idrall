@@ -98,3 +98,9 @@ testGood : IO ()
 testGood
   = do testAB expectPass
        putStrLn "done"
+
+testImport : IO ()
+testImport = do
+  Right expr <- stringToExpr "/tmp/bar.dhall" | Left x => do putStrLn ("Parse error")
+  Right aRes <- resolveExpr expr | Left x => do putStrLn ("Resolve error: " ++ (show expr))
+  putStrLn (show aRes)

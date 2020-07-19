@@ -44,8 +44,8 @@ pathForIO (Relative xs) = (addSlashes xs)
 
 record FilePath where
   constructor MkFilePath
-  fileName : String
   dir : Dir
+  fileName : Maybe String
 
 public export
 getFile : Dir -> (List String, Maybe String)
@@ -55,7 +55,7 @@ getFile (x :: xs) =
   let (dir, file) = getFile xs in
       (x :: dir, file)
 
-filePathFromPath : Path -> FilePath
-filePathFromPath (Home xs) = ?filePathFromPath_rhs_1
-filePathFromPath (Absolute xs) = ?filePathFromPath_rhs_2
-filePathFromPath (Relative xs) = ?filePathFromPath_rhs_3
+filePathFromPath : Path -> FilePath -- TODO dry
+filePathFromPath (Home xs) = let x = getFile xs in (MkFilePath (fst x) (snd x))
+filePathFromPath (Absolute xs) = let x = getFile xs in (MkFilePath (fst x) (snd x))
+filePathFromPath (Relative xs) = let x = getFile xs in (MkFilePath (fst x) (snd x))

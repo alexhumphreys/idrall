@@ -31,19 +31,20 @@ readFile' x =
 parseErrorHandler : String -> Error
 parseErrorHandler x = ErrorMessage (x)
 
-nextCurrentPath : (next : Path) -> (current : Path) -> Path
-nextCurrentPath p@(Absolute xs) _ = p
-nextCurrentPath p@(Home xs) _ = p
-nextCurrentPath (Relative xs) (Home ys) = Home (ys ++ xs)
-nextCurrentPath (Relative xs) (Absolute ys) = Absolute (ys ++ xs)
-nextCurrentPath (Relative xs) (Relative ys) = Relative (ys ++ xs)
+nextCurrentPath : (current : Maybe Path) -> (next : Path) -> Path
+nextCurrentPath _ p@(Absolute xs) = p
+nextCurrentPath _ p@(Home xs) = p
+nextCurrentPath Nothing p@(Home xs) = p
+nextCurrentPath (Just (Home xs)) (Relative ys) = Home (xs ++ ys)
+nextCurrentPath (Just (Absolute xs)) (Relative ys) = Absolute (xs ++ ys)
+nextCurrentPath (Just (Relative xs)) (Relative ys) = Relative (xs ++ ys)
 
 mutual
   canonicalFilePath : Path -> String -- TODO finish properly
   canonicalFilePath x = pathForIO x
 
-  resolveLocalFile : Path -> IOEither Error (Expr Void)
-  resolveLocalFile x = go (canonicalFilePath x)
+  resolveLocalFile : (current : Maybe Path) -> (next : Path) -> IOEither Error (Expr Void)
+  resolveLocalFile w x = go (canonicalFilePath x)
     where
     go : String -> IOEither Error (Expr Void)
     go y = do
@@ -112,7 +113,7 @@ mutual
     x' <- resolve p x
     y' <- resolve p y
     pure (EListAppend x' y')
-  resolve p (EEmbed (Raw (LocalFile x))) = resolveLocalFile x
+  resolve p (EEmbed (Raw (LocalFile x))) = resolveLocalFile p x
   resolve p (EEmbed (Raw (EnvVar x))) = MkIOEither (pure (Left (ErrorMessage "TODO not implemented")))
   resolve p (EEmbed (Resolved x)) = MkIOEither (pure (Left (ErrorMessage "Already resolved")))
 
