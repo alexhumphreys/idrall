@@ -192,7 +192,7 @@ mutual
   pathTerm : Parser (Expr ImportStatement)
   pathTerm = do
     ex <- relPath <|> homePath <|> absolutePath
-    pure (EEmbed (Raw (LocalFile ex)))
+    pure (EEmbed (Raw (LocalFile (filePathFromPath ex))))
 
   lam : Parser (Expr ImportStatement)
   lam = do

@@ -42,20 +42,35 @@ pathForIO (Home xs) = "~/" ++ (addSlashes xs)
 pathForIO (Absolute xs) = "/" ++ (addSlashes xs)
 pathForIO (Relative xs) = (addSlashes xs)
 
+public export
 record FilePath where
   constructor MkFilePath
-  dir : Dir
+  path : Path
   fileName : Maybe String
 
 public export
-getFile : Dir -> (List String, Maybe String)
-getFile [] = ([], Nothing)
-getFile [x] = ([], Just x)
-getFile (x :: xs) =
-  let (dir, file) = getFile xs in
+Show FilePath where
+  show x = "(MkFilePath " ++ (show (path x)) ++ " " ++ (show (fileName x)) ++ ")"
+
+public export
+splitOnFile : Dir -> (Dir, Maybe String)
+splitOnFile [] = ([], Nothing)
+splitOnFile [x] = ([], Just x)
+splitOnFile (x :: xs) =
+  let (dir, file) = splitOnFile xs in
       (x :: dir, file)
 
+public export
+mkFilePath : (Dir, Maybe String) -> (Dir -> Path) -> FilePath
+mkFilePath (a, b) f = MkFilePath (f a) b
+
+public export
 filePathFromPath : Path -> FilePath -- TODO dry
-filePathFromPath (Home xs) = let x = getFile xs in (MkFilePath (fst x) (snd x))
-filePathFromPath (Absolute xs) = let x = getFile xs in (MkFilePath (fst x) (snd x))
-filePathFromPath (Relative xs) = let x = getFile xs in (MkFilePath (fst x) (snd x))
+filePathFromPath (Home xs) = mkFilePath (splitOnFile xs) (Home)
+filePathFromPath (Absolute xs) = mkFilePath (splitOnFile xs) (Absolute)
+filePathFromPath (Relative xs) = mkFilePath (splitOnFile xs) (Relative)
+
+public export
+filePathForIO : FilePath -> String -- TODO Check how this handles empty paths
+filePathForIO (MkFilePath path Nothing) = pathForIO path
+filePathForIO (MkFilePath path (Just x)) = (pathForIO path) ++ "/" ++ x

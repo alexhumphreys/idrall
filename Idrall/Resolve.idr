@@ -19,41 +19,48 @@ mapErr f (MkIOEither x) = MkIOEither (do
         (Left l) => pure (Left (f l))
         (Right r) => pure (Right r)))
 
-fileErrorHandler : FileError -> Error
-fileErrorHandler x = ReadFileError (show x)
+fileErrorHandler : String -> FileError -> Error
+fileErrorHandler x y = ReadFileError (show y ++ " " ++ x)
 
 readFile' : String -> IOEither Error String
 readFile' x =
   let c = MkIOEither (readFile x)
-      contents = mapErr (fileErrorHandler) c in
+      contents = mapErr (fileErrorHandler x) c in
   contents
 
 parseErrorHandler : String -> Error
 parseErrorHandler x = ErrorMessage (x)
 
 nextCurrentPath : (current : Maybe Path) -> (next : Path) -> Path
-nextCurrentPath _ p@(Absolute xs) = p
-nextCurrentPath _ p@(Home xs) = p
-nextCurrentPath Nothing p@(Home xs) = p
 nextCurrentPath (Just (Home xs)) (Relative ys) = Home (xs ++ ys)
 nextCurrentPath (Just (Absolute xs)) (Relative ys) = Absolute (xs ++ ys)
 nextCurrentPath (Just (Relative xs)) (Relative ys) = Relative (xs ++ ys)
+nextCurrentPath _ p = p
+
+combinePaths : Maybe FilePath -> FilePath -> FilePath
+combinePaths Nothing y = y
+combinePaths (Just (MkFilePath pathX fileNameX)) (MkFilePath pathY fileNameY) =
+  let nextPath = nextCurrentPath (Just pathX) pathY
+  in
+  MkFilePath nextPath fileNameY
 
 mutual
-  canonicalFilePath : Path -> String -- TODO finish properly
-  canonicalFilePath x = pathForIO x
+  canonicalFilePath : FilePath -> String -- TODO finish properly
+  canonicalFilePath x = filePathForIO x
 
-  resolveLocalFile : (current : Maybe Path) -> (next : Path) -> IOEither Error (Expr Void)
-  resolveLocalFile w x = go (canonicalFilePath x)
+  resolveLocalFile : (current : Maybe FilePath) -> (next : FilePath) -> IOEither Error (Expr Void)
+  resolveLocalFile w x =
+    let combinedFilePaths = combinePaths w x in
+        go combinedFilePaths
     where
-    go : String -> IOEither Error (Expr Void)
+    go : FilePath -> IOEither Error (Expr Void)
     go y = do
-      c <- readFile' y
+      c <- readFile' (canonicalFilePath y)
       e <- mapErr (parseErrorHandler) (liftEither (parseExpr c))
-      resolve (Just x) e -- TODO fix x
+      resolve (Just y) e
 
   export
-  resolve : Maybe Path -> Expr ImportStatement -> IOEither Error (Expr Void)
+  resolve : Maybe FilePath -> Expr ImportStatement -> IOEither Error (Expr Void)
   resolve p e@(EVar x) = pure e
   resolve p e@(EConst x) = pure e
   resolve p (EPi x y z) = do
@@ -117,7 +124,7 @@ mutual
   resolve p (EEmbed (Raw (EnvVar x))) = MkIOEither (pure (Left (ErrorMessage "TODO not implemented")))
   resolve p (EEmbed (Resolved x)) = MkIOEither (pure (Left (ErrorMessage "Already resolved")))
 
-  resolveList : Maybe Path -> List (Expr ImportStatement) ->
+  resolveList : Maybe FilePath -> List (Expr ImportStatement) ->
                  IOEither Error (List (Expr Void))
   resolveList p [] = MkIOEither (pure (Right []))
   resolveList p (x :: xs) =

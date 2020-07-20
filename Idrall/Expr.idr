@@ -29,7 +29,7 @@ Show U where
 mutual
   public export
   data ImportStatement
-    = LocalFile Path
+    = LocalFile FilePath
     | EnvVar String
 
   public export
