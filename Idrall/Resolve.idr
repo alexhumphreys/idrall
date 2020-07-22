@@ -9,15 +9,15 @@ import Idrall.Path
 liftEither : Either e a -> IOEither e a
 liftEither = MkIOEither . pure
 
-liftIO : IO a -> IOEither e a
-liftIO = MkIOEither . map Right
-
 mapErr : (e -> e') -> IOEither e a -> IOEither e' a
 mapErr f (MkIOEither x) = MkIOEither (do
   x' <- x
   (case x' of
         (Left l) => pure (Left (f l))
         (Right r) => pure (Right r)))
+
+parseErrorHandler : String -> Error
+parseErrorHandler x = ErrorMessage (x)
 
 fileErrorHandler : String -> FileError -> Error
 fileErrorHandler x y = ReadFileError (show y ++ " " ++ x)
@@ -27,9 +27,6 @@ readFile' x =
   let c = MkIOEither (readFile x)
       contents = mapErr (fileErrorHandler x) c in
   contents
-
-parseErrorHandler : String -> Error
-parseErrorHandler x = ErrorMessage (x)
 
 nextCurrentPath : (current : Maybe Path) -> (next : Path) -> Path
 nextCurrentPath (Just (Home xs)) (Relative ys) = Home (xs ++ ys)
@@ -44,20 +41,20 @@ combinePaths (Just (MkFilePath pathX fileNameX)) (MkFilePath pathY fileNameY) =
   in
   MkFilePath nextPath fileNameY
 
-mutual
-  canonicalFilePath : FilePath -> String -- TODO finish properly
-  canonicalFilePath x = filePathForIO x
+canonicalFilePath : FilePath -> String -- TODO finish properly
+canonicalFilePath x = filePathForIO x
 
+mutual
   resolveLocalFile : (current : Maybe FilePath) -> (next : FilePath) -> IOEither Error (Expr Void)
-  resolveLocalFile w x =
-    let combinedFilePaths = combinePaths w x in
+  resolveLocalFile current next =
+    let combinedFilePaths = combinePaths current next in
         go combinedFilePaths
     where
     go : FilePath -> IOEither Error (Expr Void)
-    go y = do
-      c <- readFile' (canonicalFilePath y)
-      e <- mapErr (parseErrorHandler) (liftEither (parseExpr c))
-      resolve (Just y) e
+    go p = do
+      str <- readFile' (canonicalFilePath p)
+      expr <- mapErr (parseErrorHandler) (liftEither (parseExpr str))
+      resolve (Just p) expr
 
   export
   resolve : Maybe FilePath -> Expr ImportStatement -> IOEither Error (Expr Void)
