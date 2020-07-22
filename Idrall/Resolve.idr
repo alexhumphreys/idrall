@@ -44,88 +44,96 @@ combinePaths (Just (MkFilePath pathX fileNameX)) (MkFilePath pathY fileNameY) =
 canonicalFilePath : FilePath -> String -- TODO finish properly
 canonicalFilePath x = filePathForIO x
 
+alreadyImported : List FilePath -> FilePath -> Either Error () -- TODO check is correct
+alreadyImported xs x = case elem x xs of
+                            False => Right ()
+                            True => Left (CyclicImportError ((show x) ++ " in " ++ (show xs)))
+
 mutual
-  resolveLocalFile : (current : Maybe FilePath) -> (next : FilePath) -> IOEither Error (Expr Void)
-  resolveLocalFile current next =
+  resolveLocalFile : (history : List FilePath) -> (current : Maybe FilePath) -> (next : FilePath) -> IOEither Error (Expr Void)
+  resolveLocalFile h current next =
     let combinedFilePaths = combinePaths current next in
         go combinedFilePaths
     where
     go : FilePath -> IOEither Error (Expr Void)
     go p = do
+      liftEither (alreadyImported h (normaliseFilePath p))
       str <- readFile' (canonicalFilePath p)
       expr <- mapErr (parseErrorHandler) (liftEither (parseExpr str))
-      resolve (Just p) expr
+      resolve (normaliseFilePath p :: h) (Just p) expr
 
   export
-  resolve : Maybe FilePath -> Expr ImportStatement -> IOEither Error (Expr Void)
-  resolve p e@(EVar x) = pure e
-  resolve p e@(EConst x) = pure e
-  resolve p (EPi x y z) = do
-    y' <- resolve p y
-    z' <- resolve p z
+  resolve : (history : List FilePath) -> Maybe FilePath -> Expr ImportStatement -> IOEither Error (Expr Void)
+  resolve h p e@(EVar x) = pure e
+  resolve h p e@(EConst x) = pure e
+  resolve h p (EPi x y z) = do
+    y' <- resolve h p y
+    z' <- resolve h p z
     pure (EPi x y' z')
-  resolve p (ELam x y z) = do
-    y' <- resolve p y
-    z' <- resolve p z
+  resolve h p (ELam x y z) = do
+    y' <- resolve h p y
+    z' <- resolve h p z
     pure (ELam x y' z')
-  resolve p (EApp x y) = do
-    x' <- resolve p x
-    y' <- resolve p y
+  resolve h p (EApp x y) = do
+    x' <- resolve h p x
+    y' <- resolve h p y
     pure (EApp x' y')
-  resolve p (ELet x Nothing z w) = do
-    z' <- resolve p z
-    w' <- resolve p w
+  resolve h p (ELet x Nothing z w) = do
+    z' <- resolve h p z
+    w' <- resolve h p w
     pure (ELet x Nothing z' w')
-  resolve p (ELet x (Just y) z w) = do
-    y' <- resolve p y
-    z' <- resolve p z
-    w' <- resolve p w
+  resolve h p (ELet x (Just y) z w) = do
+    y' <- resolve h p y
+    z' <- resolve h p z
+    w' <- resolve h p w
     pure (ELet x (Just y') z' w')
-  resolve p (EAnnot x y) = do
-    x' <- resolve p x
-    y' <- resolve p y
+  resolve h p (EAnnot x y) = do
+    x' <- resolve h p x
+    y' <- resolve h p y
     pure (EAnnot x' y')
-  resolve p (EEquivalent x y) = do
-    x' <- resolve p x
-    y' <- resolve p y
+  resolve h p (EEquivalent x y) = do
+    x' <- resolve h p x
+    y' <- resolve h p y
     pure (EEquivalent x' y')
-  resolve p (EAssert x) = do
-    x' <- resolve p x
+  resolve h p (EAssert x) = do
+    x' <- resolve h p x
     pure (EAssert x')
-  resolve p e@EBool = pure e
-  resolve p e@(EBoolLit x) = pure e
-  resolve p (EBoolAnd x y) = do
-    x' <- resolve p x
-    y' <- resolve p y
+  resolve h p e@EBool = pure e
+  resolve h p e@(EBoolLit x) = pure e
+  resolve h p (EBoolAnd x y) = do
+    x' <- resolve h p x
+    y' <- resolve h p y
     pure (EBoolAnd x' y')
-  resolve p e@ENatural = pure e
-  resolve p e@(ENaturalLit k) = pure e
-  resolve p (ENaturalIsZero x) = do
-    x' <- resolve p x
+  resolve h p e@ENatural = pure e
+  resolve h p e@(ENaturalLit k) = pure e
+  resolve h p (ENaturalIsZero x) = do
+    x' <- resolve h p x
     pure (ENaturalIsZero x')
-  resolve p (EList x) = do
-    x' <- resolve p x
+  resolve h p (EList x) = do
+    x' <- resolve h p x
     pure (EList x')
-  resolve p (EListLit Nothing xs) = do
-    xs' <- resolveList p xs
+  resolve h p (EListLit Nothing xs) = do
+    xs' <- resolveList h p xs
     pure (EListLit Nothing xs')
-  resolve p (EListLit (Just x) xs) = do
-    x' <- resolve p x
-    xs' <- resolveList p xs
+  resolve h p (EListLit (Just x) xs) = do
+    x' <- resolve h p x
+    xs' <- resolveList h p xs
     pure (EListLit (Just x') xs')
-  resolve p (EListAppend x y) = do
-    x' <- resolve p x
-    y' <- resolve p y
+  resolve h p (EListAppend x y) = do
+    x' <- resolve h p x
+    y' <- resolve h p y
     pure (EListAppend x' y')
-  resolve p (EEmbed (Raw (LocalFile x))) = resolveLocalFile p x
-  resolve p (EEmbed (Raw (EnvVar x))) = MkIOEither (pure (Left (ErrorMessage "TODO not implemented")))
-  resolve p (EEmbed (Resolved x)) = MkIOEither (pure (Left (ErrorMessage "Already resolved")))
+  resolve h p (EEmbed (Raw (LocalFile x))) = resolveLocalFile h p x
+  resolve h p (EEmbed (Raw (EnvVar x))) = MkIOEither (pure (Left (ErrorMessage "TODO not implemented")))
+  resolve h p (EEmbed (Resolved x)) = MkIOEither (pure (Left (ErrorMessage "Already resolved")))
 
-  resolveList : Maybe FilePath -> List (Expr ImportStatement) ->
-                 IOEither Error (List (Expr Void))
-  resolveList p [] = MkIOEither (pure (Right []))
-  resolveList p (x :: xs) =
-    let rest = resolveList p xs in
+  resolveList :  (history : List FilePath)
+              -> Maybe FilePath
+              -> List (Expr ImportStatement)
+              -> IOEither Error (List (Expr Void))
+  resolveList h p [] = MkIOEither (pure (Right []))
+  resolveList h p (x :: xs) =
+    let rest = resolveList h p xs in
     do rest' <- rest
-       x' <- resolve p x
+       x' <- resolve h p x
        MkIOEither (pure (Right (x' :: rest')))

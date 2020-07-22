@@ -27,12 +27,25 @@ Show FilePath where
   show x = "(MkFilePath " ++ (show (path x)) ++ " " ++ (show (fileName x)) ++ ")"
 
 public export
+Eq FilePath where
+  (==) (MkFilePath (Home xs) fileName) (MkFilePath (Home ys) x) = (xs == ys) && (fileName == x)
+  (==) (MkFilePath (Absolute xs) fileName) (MkFilePath (Absolute ys) x) = (xs == ys) && (fileName == x)
+  (==) (MkFilePath (Relative xs) fileName) (MkFilePath (Relative ys) x) = (xs == ys) && (fileName == x)
+  (==) _ _ = False
+
+public export
 normalisePath : Dir -> Dir
 normalisePath [] = []
 normalisePath ("." :: xs) = normalisePath xs
 normalisePath (".." :: xs) = normalisePath xs
 normalisePath (x :: ".." :: xs) = normalisePath xs
 normalisePath (x :: xs) = x :: normalisePath xs
+
+public export
+normaliseFilePath : FilePath -> FilePath
+normaliseFilePath (MkFilePath (Home xs) fileName) = MkFilePath (Home (normalisePath xs)) fileName
+normaliseFilePath (MkFilePath (Absolute xs) fileName) = MkFilePath (Absolute (normalisePath xs)) fileName
+normaliseFilePath (MkFilePath (Relative xs) fileName) = MkFilePath (Relative (normalisePath xs)) fileName
 
 public export
 pathFromDir : Dir -> Path
