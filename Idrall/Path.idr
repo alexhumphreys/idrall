@@ -17,6 +17,16 @@ Show Path where
   show (Relative xs) = "(Relative " ++ show xs ++ ")"
 
 public export
+record FilePath where
+  constructor MkFilePath
+  path : Path
+  fileName : Maybe String
+
+public export
+Show FilePath where
+  show x = "(MkFilePath " ++ (show (path x)) ++ " " ++ (show (fileName x)) ++ ")"
+
+public export
 normalisePath : Dir -> Dir
 normalisePath [] = []
 normalisePath ("." :: xs) = normalisePath xs
@@ -37,20 +47,10 @@ addSlashes : Dir -> String
 addSlashes x = concat (intersperse "/" x)
 
 public export
-pathForIO : Path -> String
-pathForIO (Home xs) = "~/" ++ (addSlashes xs)
-pathForIO (Absolute xs) = "/" ++ (addSlashes xs)
-pathForIO (Relative xs) = (addSlashes xs)
-
-public export
-record FilePath where
-  constructor MkFilePath
-  path : Path
-  fileName : Maybe String
-
-public export
-Show FilePath where
-  show x = "(MkFilePath " ++ (show (path x)) ++ " " ++ (show (fileName x)) ++ ")"
+prettyPrintPath : Path -> String
+prettyPrintPath (Home xs) = "~/" ++ (addSlashes xs)
+prettyPrintPath (Absolute xs) = "/" ++ (addSlashes xs)
+prettyPrintPath (Relative xs) = (addSlashes xs)
 
 public export
 splitOnFile : Dir -> (Dir, Maybe String)
@@ -72,5 +72,5 @@ filePathFromPath (Relative xs) = mkFilePath (splitOnFile xs) (Relative)
 
 public export
 filePathForIO : FilePath -> String -- TODO Check how this handles empty paths
-filePathForIO (MkFilePath path Nothing) = pathForIO path
-filePathForIO (MkFilePath path (Just x)) = (pathForIO path) ++ "/" ++ x
+filePathForIO (MkFilePath path Nothing) = prettyPrintPath path
+filePathForIO (MkFilePath path (Just x)) = (prettyPrintPath path) ++ "/" ++ x
