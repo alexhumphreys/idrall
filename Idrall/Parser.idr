@@ -161,14 +161,12 @@ mutual
   list : Parser (Expr ImportStatement)
   list = emptyList <|> annotatedList <|> populatedList
 
-  dirCharacters : Parser String
-  dirCharacters = do
-    c <- alphaNum
-    ?dirCharacters_rhs
+  dirCharacters : Parser Char
+  dirCharacters = alphaNum <|> (char '.')
 
   dirs : Parser (List String)
   dirs = do
-    dirs <- sepBy (some (alphaNum <|> (char '.'))) (char '/') -- TODO handle spaces
+    dirs <- sepBy (some dirCharacters) (char '/') -- TODO handle spaces
     pure (map pack dirs)
 
   absolutePath : Parser Path
