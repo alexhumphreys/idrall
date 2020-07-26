@@ -10,21 +10,31 @@ Very much a work in progress, with many thing missing. The plan is to make an en
 
 ## Missing features
 
+- Fuctions [x]
 - Types
-  - String
-  - Integer
-  - Optional
-  - Records
+  - Bool [x]
+  - Natural [x]
+  - List [x]
+  - Equivalent [x]
+  - String []
+  - Integer []
+  - Optional []
+  - Records []
 - Operators
-  - `\\`
-  - `/\`
-  - `::`
+  - `&&` [x]
+  - `#` [x]
+  - `\\` []
+  - `/\` []
+  - `::` []
   - etc.
 - Builtins
   - All except `Natural/IsZero`
 - Imports
-- `x@1` style variables
-- The rest of this list
+  - local files [x]
+  - Env []
+  - http []
+- `x@1` style variables []
+- The rest of this list []
 
 Right now you can basically just do you type annotations, create naturals/lists/bools, assigned them with let, and create functions.
 
