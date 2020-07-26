@@ -12,9 +12,9 @@ liftEither = MkIOEither . pure
 mapErr : (e -> e') -> IOEither e a -> IOEither e' a
 mapErr f (MkIOEither x) = MkIOEither (do
   x' <- x
-  (case x' of
+  case x' of
         (Left l) => pure (Left (f l))
-        (Right r) => pure (Right r)))
+        (Right r) => pure (Right r))
 
 parseErrorHandler : String -> Error
 parseErrorHandler x = ErrorMessage (x)
@@ -24,9 +24,8 @@ fileErrorHandler x y = ReadFileError (show y ++ " " ++ x)
 
 readFile' : String -> IOEither Error String
 readFile' x =
-  let c = MkIOEither (readFile x)
-      contents = mapErr (fileErrorHandler x) c in
-  contents
+  let contents = MkIOEither (readFile x) in
+      mapErr (fileErrorHandler x) contents
 
 nextCurrentPath : (current : Maybe Path) -> (next : Path) -> Path
 nextCurrentPath (Just (Home xs)) (Relative ys) = Home (xs ++ ys)
@@ -59,7 +58,7 @@ mutual
     go p = do
       liftEither (alreadyImported h (normaliseFilePath p))
       str <- readFile' (canonicalFilePath p)
-      expr <- mapErr (parseErrorHandler) (liftEither (parseExpr str))
+      expr <- mapErr parseErrorHandler (liftEither (parseExpr str))
       resolve (normaliseFilePath p :: h) (Just p) expr
 
   export
@@ -133,7 +132,6 @@ mutual
               -> IOEither Error (List (Expr Void))
   resolveList h p [] = MkIOEither (pure (Right []))
   resolveList h p (x :: xs) =
-    let rest = resolveList h p xs in
-    do rest' <- rest
+    do rest <- resolveList h p xs
        x' <- resolve h p x
-       MkIOEither (pure (Right (x' :: rest')))
+       MkIOEither (pure (Right (x' :: rest)))
