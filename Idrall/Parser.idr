@@ -5,6 +5,7 @@ import Lightyear.Strings
 
 import Idrall.Expr
 import Idrall.BuildExprParser
+import Idrall.Path
 
 fNaturalIsZero : (Expr ImportStatement)
 fNaturalIsZero = ELam "naturalIsZeroParam1" ENatural (ENaturalIsZero (EVar "naturalIsZeroParam1"))
@@ -160,6 +161,37 @@ mutual
   list : Parser (Expr ImportStatement)
   list = emptyList <|> annotatedList <|> populatedList
 
+  dirCharacters : Parser Char
+  dirCharacters = alphaNum <|> (char '.')
+
+  dirs : Parser (List String)
+  dirs = do
+    dirs <- sepBy (some dirCharacters) (char '/') -- TODO handle spaces
+    pure (map pack dirs)
+
+  absolutePath : Parser Path
+  absolutePath = do
+    string "/"
+    d <- dirs
+    pure (Absolute d)
+
+  homePath : Parser Path
+  homePath = do
+    string "~"
+    d <- dirs
+    pure (Home ("~" :: d))
+
+  relPath : Parser Path
+  relPath = do
+    str <- ((string "." <* char '/') <|> (string ".." <* char '/'))
+    d <- dirs
+    pure (Relative (str :: d))
+
+  pathTerm : Parser (Expr ImportStatement)
+  pathTerm = do
+    ex <- relPath <|> homePath <|> absolutePath
+    pure (EEmbed (Raw (LocalFile (filePathFromPath ex))))
+
   lam : Parser (Expr ImportStatement)
   lam = do
     string "λ(" -- TODO <|> string "\\(")
@@ -178,6 +210,7 @@ mutual
      true <|> false <|> bool <|>
      naturalLit <|> natural <|>
      type <|> kind <|> sort <|>
+     pathTerm <|>
      var <|>| list <|>| parens expr)
     spaces
     pure i

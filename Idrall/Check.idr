@@ -203,6 +203,8 @@ mutual
   eval env (ENaturalIsZero x)
     = do x' <- eval env x
          doNaturalIsZero x'
+  eval env (EEmbed (Raw x)) = absurd x
+  eval env (EEmbed (Resolved x)) = eval initEnv x
 
   partial
   doApply : Value -> Value -> Either Error Value
@@ -526,3 +528,5 @@ mutual
     isList ctx xTy
     convert ctx (VConst CType) xTy yTy
     Right (xTy)
+  synth ctx (EEmbed (Raw x)) = absurd x
+  synth ctx (EEmbed (Resolved x)) = synth initCtx x

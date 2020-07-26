@@ -16,6 +16,8 @@ data Error
   | SortError
   | AssertError String
   | ListAppendError String
+  | ReadFileError String
+  | CyclicImportError String
 
 public export
 Show Error where
@@ -27,5 +29,7 @@ Show Error where
   show (ErrorMessage x) = "ErrorMessage: " ++ show x
   show (ReadBackError x) = "ReadBackError: " ++ x
   show SortError = "SortError"
-  show (AssertError str) = "AssertError" ++ str
-  show (ListAppendError str) = "ListAppendError" ++ str
+  show (AssertError str) = "AssertError: " ++ str
+  show (ListAppendError str) = "ListAppendError: " ++ str
+  show (ReadFileError str) = "ReadFileError: " ++ str
+  show (CyclicImportError str) = "CyclicImportError: " ++ str
