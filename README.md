@@ -16,25 +16,25 @@ Very much a work in progress, with many thing missing. The plan is to make an en
   - [x] Natural
   - [x] List
   - [x] Equivalent
-  - [] String
-  - [] Integer
-  - [] Optional
-  - [] Records
+  - [ ] String
+  - [ ] Integer
+  - [ ] Optional
+  - [ ] Records
 - Operators
   - [x] `&&`
   - [x] `#`
-  - [] `\\`
-  - [] `/\`
-  - [] `::`
+  - [ ] `\\`
+  - [ ] `/\`
+  - [ ] `::`
   - etc.
 - Builtins
-  - [] `Natural/IsZero`
-  - [] Everything else
+  - [x] `Natural/IsZero`
+  - [ ] Everything else
 - Imports
   - [x] local files
-  - [] Env
-  - [] http
-- [] `x@1` style variables
+  - [ ] Env
+  - [ ] http
+- [ ] `x@1` style variables
 - Anything to do with caching
 - CBOR representation
 - The rest of this list
