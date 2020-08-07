@@ -529,4 +529,4 @@ mutual
     convert ctx (VConst CType) xTy yTy
     Right (xTy)
   synth ctx (EEmbed (Raw x)) = absurd x
-  synth ctx (EEmbed (Resolved x)) = synth initCtx x
+  synth ctx (EEmbed (Resolved x)) = synth initCtx x -- TODO initCtx here for fresh context. Could be replace with proper scope checking phase

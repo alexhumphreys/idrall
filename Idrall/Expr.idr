@@ -110,3 +110,5 @@ mutual
     show (EListLit (Just x) xs) = "(EListLit (Just " ++ show x ++ ") " ++ show xs ++ ")"
     show (EListAppend x y) = "(EListAppend " ++ show x ++ " " ++ show y ++ ")"
     show (EEmbed x) = "(EEmbed " ++ show x ++ ")"
+
+  -- TODO add Traversible for Expr a

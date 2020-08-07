@@ -26,6 +26,7 @@ public export
 Show FilePath where
   show x = "(MkFilePath " ++ (show (path x)) ++ " " ++ (show (fileName x)) ++ ")"
 
+-- TODO replace with new Normal type that takes PWD and $HOME
 public export
 Eq FilePath where
   (==) (MkFilePath (Home xs) fileName) (MkFilePath (Home ys) x) = (xs == ys) && (fileName == x)
