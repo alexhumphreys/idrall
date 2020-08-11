@@ -69,6 +69,8 @@ mutual
   aEquivHelper i ns1 (EListAppend w x) ns2 (EListAppend y z)
     = aEquivHelper i ns1 w ns2 y &&
       aEquivHelper i ns1 x ns2 z
+  aEquivHelper i ns1 (EOptional x) ns2 (EOptional y)
+    = aEquivHelper i ns1 x ns2 y
   aEquivHelper _ _ _ _ _ = False
   -- TODO check if assert/equivalent should be in here
 
@@ -203,6 +205,7 @@ mutual
   eval env (ENaturalIsZero x)
     = do x' <- eval env x
          doNaturalIsZero x'
+  eval env (EOptional a) = Right (VOptional !(eval env a))
   eval env (EEmbed (Raw x)) = absurd x
   eval env (EEmbed (Resolved x)) = eval initEnv x
 
@@ -283,6 +286,9 @@ mutual
     x' <- readBackNeutral ctx x
     y' <- readBackNormal ctx y
     Right (EListAppend x' y')
+  readBackNeutral ctx (NOptional a) = do
+    a' <- readBackNeutral ctx a
+    Right (EOptional a')
 
   readBackTyped : Ctx -> Ty -> Value -> Either Error (Expr Void)
   readBackTyped ctx (VPi dom ran) fun =
@@ -325,6 +331,9 @@ mutual
     es <- mapListEither vs (readBackTyped ctx ty)
     -- TODO check if a=ty?
     Right (EListLit (Just a') es)
+  readBackTyped ctx (VConst CType) (VOptional a) = do
+    a' <- readBackTyped ctx (VConst CType) a
+    Right (EOptional a')
   readBackTyped _ t v = Left (ReadBackError ("error reading back: " ++ (show v) ++ " of type: " ++ (show v)))
 
   export
@@ -528,5 +537,8 @@ mutual
     isList ctx xTy
     convert ctx (VConst CType) xTy yTy
     Right (xTy)
+  synth ctx (EOptional x) = do
+    check ctx x (VConst CType)
+    Right (VConst CType)
   synth ctx (EEmbed (Raw x)) = absurd x
   synth ctx (EEmbed (Resolved x)) = synth initCtx x -- TODO initCtx here for fresh context. Could be replace with proper scope checking phase

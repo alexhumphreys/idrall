@@ -13,11 +13,15 @@ fNaturalIsZero = ELam "naturalIsZeroParam1" ENatural (ENaturalIsZero (EVar "natu
 fList : (Expr ImportStatement)
 fList = ELam "listArg1" (EConst CType) (EList (EVar "listArg1"))
 
+fOptional : (Expr ImportStatement)
+fOptional = ELam "optionalArg1" (EConst CType) (EList (EVar "optionalArg1"))
+
 %access export
 builtin : Parser (Expr ImportStatement)
 builtin =
   (string "Natural/isZero" *> pure fNaturalIsZero) <|>
-  (string "List" *> pure fList)
+  (string "List" *> pure fList) <|>
+  (string "Optional" *> pure fOptional)
 
 true : Parser (Expr ImportStatement)
 true = token "True" *> pure (EBoolLit True)
