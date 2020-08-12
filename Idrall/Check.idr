@@ -71,6 +71,8 @@ mutual
       aEquivHelper i ns1 x ns2 z
   aEquivHelper i ns1 (EOptional x) ns2 (EOptional y)
     = aEquivHelper i ns1 x ns2 y
+  aEquivHelper i ns1 (ENone x) ns2 (ENone y)
+    = aEquivHelper i ns1 x ns2 y
   aEquivHelper _ _ _ _ _ = False
   -- TODO check if assert/equivalent should be in here
 
@@ -206,6 +208,7 @@ mutual
     = do x' <- eval env x
          doNaturalIsZero x'
   eval env (EOptional a) = Right (VOptional !(eval env a))
+  eval env (ENone a) = Right (VNone !(eval env a))
   eval env (EEmbed (Raw x)) = absurd x
   eval env (EEmbed (Resolved x)) = eval initEnv x
 
@@ -289,6 +292,9 @@ mutual
   readBackNeutral ctx (NOptional a) = do
     a' <- readBackNeutral ctx a
     Right (EOptional a')
+  readBackNeutral ctx (NNone a) = do
+    a' <- readBackNeutral ctx a
+    Right (ENone a')
 
   readBackTyped : Ctx -> Ty -> Value -> Either Error (Expr Void)
   readBackTyped ctx (VPi dom ran) fun =
@@ -334,7 +340,13 @@ mutual
   readBackTyped ctx (VConst CType) (VOptional a) = do
     a' <- readBackTyped ctx (VConst CType) a
     Right (EOptional a')
-  readBackTyped _ t v = Left (ReadBackError ("error reading back: " ++ (show v) ++ " of type: " ++ (show v)))
+  readBackTyped ctx (VOptional ty) (VNone ty') = do
+    ety <- readBackTyped ctx (VConst CType) ty
+    ety' <- readBackTyped ctx (VConst CType) ty'
+    case aEquiv ety ety' of
+      True => Right (ENone ety')
+      False => Left (ReadBackError ("error reading back None: " ++ (show ety) ++ " is not alpha equivalent to " ++ (show ety')))
+  readBackTyped _ t v = Left (ReadBackError ("error reading back: " ++ (show v) ++ " of type: " ++ (show t)))
 
   export
   partial
@@ -360,6 +372,10 @@ isBool ctx other = unexpected ctx "Not Bool" other
 isList : Ctx -> Value -> Either Error ()
 isList ctx (VList x) = Right ()
 isList ctx other = unexpected ctx "Not List" other
+
+isOptional : Ctx -> Value -> Either Error ()
+isOptional ctx (VOptional x) = Right ()
+isOptional ctx other = unexpected ctx "Not Optional" other
 
 isEquivalent : Ctx -> Value -> Either Error (Value, Value)
 isEquivalent ctx (VEquivalent x y) = Right (x, y)
@@ -540,5 +556,9 @@ mutual
   synth ctx (EOptional x) = do
     check ctx x (VConst CType)
     Right (VConst CType)
+  synth ctx (ENone ty) = do
+    check ctx ty (VConst CType)
+    ty' <- eval (mkEnv ctx) ty
+    Right (VOptional ty')
   synth ctx (EEmbed (Raw x)) = absurd x
   synth ctx (EEmbed (Resolved x)) = synth initCtx x -- TODO initCtx here for fresh context. Could be replace with proper scope checking phase

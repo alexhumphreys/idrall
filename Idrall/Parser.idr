@@ -14,13 +14,17 @@ fList : (Expr ImportStatement)
 fList = ELam "listArg1" (EConst CType) (EList (EVar "listArg1"))
 
 fOptional : (Expr ImportStatement)
-fOptional = ELam "optionalArg1" (EConst CType) (EList (EVar "optionalArg1"))
+fOptional = ELam "optionalArg1" (EConst CType) (EOptional (EVar "optionalArg1"))
+
+fNone : (Expr ImportStatement)
+fNone = ELam "noneArg1" (EConst CType) (ENone (EVar "noneArg1"))
 
 %access export
 builtin : Parser (Expr ImportStatement)
 builtin =
   (string "Natural/isZero" *> pure fNaturalIsZero) <|>
   (string "List" *> pure fList) <|>
+  (string "None" *> pure fNone) <|>
   (string "Optional" *> pure fOptional)
 
 true : Parser (Expr ImportStatement)
@@ -70,6 +74,7 @@ reservedNames' =
   [ "in", "let", "assert"
   , "->", "&&", ":"
   , "List", "Optional", "Natural"
+  , "Some", "None"
   , "Type", "Kind", "Sort"]
 
 parseAny : List String -> Parser String

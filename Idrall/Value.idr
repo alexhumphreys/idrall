@@ -49,6 +49,7 @@ mutual
     | VList Ty
     | VListLit (Maybe Ty) (List Value)
     | VOptional Ty
+    | VNone Ty
     | VNeutral Ty Neutral
 
   public export
@@ -61,6 +62,7 @@ mutual
     | NBoolAnd Neutral Normal
     | NList Neutral
     | NOptional Neutral
+    | NNone Neutral
     | NListAppend Neutral Normal
 
   public export
@@ -77,6 +79,7 @@ mutual
     show (VList a) = "(VList " ++ show a ++ ")"
     show (VListLit ty vs) = "(VListLit " ++ show ty ++ show vs ++ ")"
     show (VOptional a) = "(VOptional " ++ show a ++ ")"
+    show (VNone a) = "(VNone " ++ show a ++ ")"
     show (VNeutral x y) = "(VNeutral " ++ show x ++ " " ++ show y ++ ")"
 
   public export
@@ -89,4 +92,5 @@ mutual
     show (NList x) = "(NList " ++ show x ++ ")"
     show (NListAppend x y) = "(NListAppend " ++ show x ++ " " ++ show y ++ ")"
     show (NOptional x) = "(NOptional " ++ show x ++ ")"
+    show (NNone x) = "(NNone " ++ show x ++ ")"
     show (NBoolAnd x y) = "(NBoolAnd " ++ show x ++ " " ++ show y ++ ")"
