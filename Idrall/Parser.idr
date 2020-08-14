@@ -213,13 +213,19 @@ mutual
     e <- expr
     pure (ELam i ty e)
 
+  esome : Parser (Expr ImportStatement)
+  esome = do
+    token "Some"
+    e <- expr
+    pure (ESome e)
+
   term : Parser (Expr ImportStatement)
   term = do
     i <-(builtin <|>
      true <|> false <|> bool <|>
      naturalLit <|> natural <|>
      type <|> kind <|> sort <|>
-     pathTerm <|>
+     pathTerm <|> esome <|>
      var <|>| list <|>| parens expr)
     spaces
     pure i

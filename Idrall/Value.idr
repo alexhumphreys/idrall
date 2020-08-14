@@ -10,7 +10,7 @@ mutual
   Ty : Type
   Ty = Value
 
-  partial
+  covering
   public export
   Show Normal where
     show (Normal' x y) = "(Normal' " ++ (show x) ++ " " ++ show y ++ ")"
@@ -50,6 +50,7 @@ mutual
     | VListLit (Maybe Ty) (List Value)
     | VOptional Ty
     | VNone Ty
+    | VSome Ty
     | VNeutral Ty Neutral
 
   public export
@@ -63,6 +64,7 @@ mutual
     | NList Neutral
     | NOptional Neutral
     | NNone Neutral
+    | NSome Neutral
     | NListAppend Neutral Normal
 
   public export
@@ -80,6 +82,7 @@ mutual
     show (VListLit ty vs) = "(VListLit " ++ show ty ++ show vs ++ ")"
     show (VOptional a) = "(VOptional " ++ show a ++ ")"
     show (VNone a) = "(VNone " ++ show a ++ ")"
+    show (VSome a) = "(VSome " ++ show a ++ ")"
     show (VNeutral x y) = "(VNeutral " ++ show x ++ " " ++ show y ++ ")"
 
   public export
@@ -93,4 +96,5 @@ mutual
     show (NListAppend x y) = "(NListAppend " ++ show x ++ " " ++ show y ++ ")"
     show (NOptional x) = "(NOptional " ++ show x ++ ")"
     show (NNone x) = "(NNone " ++ show x ++ ")"
+    show (NSome x) = "(NSome " ++ show x ++ ")"
     show (NBoolAnd x y) = "(NBoolAnd " ++ show x ++ " " ++ show y ++ ")"

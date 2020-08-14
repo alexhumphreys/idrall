@@ -73,6 +73,8 @@ mutual
     = aEquivHelper i ns1 x ns2 y
   aEquivHelper i ns1 (ENone x) ns2 (ENone y)
     = aEquivHelper i ns1 x ns2 y
+  aEquivHelper i ns1 (ESome x) ns2 (ESome y)
+    = aEquivHelper i ns1 x ns2 y
   aEquivHelper _ _ _ _ _ = False
   -- TODO check if assert/equivalent should be in here
 
@@ -209,6 +211,7 @@ mutual
          doNaturalIsZero x'
   eval env (EOptional a) = Right (VOptional !(eval env a))
   eval env (ENone a) = Right (VNone !(eval env a))
+  eval env (ESome a) = Right (VSome !(eval env a))
   eval env (EEmbed (Raw x)) = absurd x
   eval env (EEmbed (Resolved x)) = eval initEnv x
 
@@ -295,6 +298,9 @@ mutual
   readBackNeutral ctx (NNone a) = do
     a' <- readBackNeutral ctx a
     Right (ENone a')
+  readBackNeutral ctx (NSome a) = do
+    a' <- readBackNeutral ctx a
+    Right (ESome a')
 
   readBackTyped : Ctx -> Ty -> Value -> Either Error (Expr Void)
   readBackTyped ctx (VPi dom ran) fun =
@@ -346,6 +352,9 @@ mutual
     case aEquiv ety ety' of
       True => Right (ENone ety')
       False => Left (ReadBackError ("error reading back None: " ++ (show ety) ++ " is not alpha equivalent to " ++ (show ety')))
+  readBackTyped ctx (VOptional ty) (VSome a) = do
+    a' <- readBackTyped ctx ty a
+    Right (ESome a')
   readBackTyped _ t v = Left (ReadBackError ("error reading back: " ++ (show v) ++ " of type: " ++ (show t)))
 
   export
@@ -386,6 +395,7 @@ isTerm _ (VPi _ _) = Right ()
 isTerm _ (VBool) = Right ()
 isTerm _ (VNatural) = Right ()
 isTerm _ (VList _) = Right ()
+isTerm _ (VOptional _) = Right ()
 isTerm ctx (VNeutral x _) = isTerm ctx x
 isTerm ctx other = unexpected ctx "Not a term" other
 
@@ -560,5 +570,10 @@ mutual
     check ctx ty (VConst CType)
     ty' <- eval (mkEnv ctx) ty
     Right (VOptional ty')
+  synth ctx (ESome x) = do
+    x' <- eval (mkEnv ctx) x
+    xTy' <- synth ctx x
+    isTerm ctx xTy'
+    Right (VOptional xTy')
   synth ctx (EEmbed (Raw x)) = absurd x
   synth ctx (EEmbed (Resolved x)) = synth initCtx x -- TODO initCtx here for fresh context. Could be replace with proper scope checking phase

@@ -128,6 +128,9 @@ mutual
   resolve h p (ENone x) = do
     x' <- resolve h p x
     pure (ENone x')
+  resolve h p (ESome x) = do
+    x' <- resolve h p x
+    pure (ESome x')
   resolve h p (EEmbed (Raw (LocalFile x))) = resolveLocalFile h p x
   resolve h p (EEmbed (Raw (EnvVar x))) = MkIOEither (pure (Left (ErrorMessage "TODO not implemented")))
   resolve h p (EEmbed (Resolved x)) = MkIOEither (pure (Left (ErrorMessage "Already resolved")))
