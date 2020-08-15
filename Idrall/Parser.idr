@@ -13,6 +13,11 @@ fNaturalIsZero = ELam "naturalIsZeroParam1" ENatural (ENaturalIsZero (EVar "natu
 fList : (Expr ImportStatement)
 fList = ELam "listArg1" (EConst CType) (EList (EVar "listArg1"))
 
+fListHead : (Expr ImportStatement)
+fListHead = ELam "listHeadArg1" (EConst CType)
+              (ELam "listHeadArg2" (EList (EVar "listHeadArg1"))
+                (EListHead (EVar "listHeadArg1") (EVar "listHeadArg2")))
+
 fOptional : (Expr ImportStatement)
 fOptional = ELam "optionalArg1" (EConst CType) (EOptional (EVar "optionalArg1"))
 
@@ -23,6 +28,7 @@ fNone = ELam "noneArg1" (EConst CType) (ENone (EVar "noneArg1"))
 builtin : Parser (Expr ImportStatement)
 builtin =
   (string "Natural/isZero" *> pure fNaturalIsZero) <|>
+  (string "List/head" *> pure fListHead) <|>
   (string "List" *> pure fList) <|>
   (string "None" *> pure fNone) <|>
   (string "Optional" *> pure fOptional)
@@ -97,11 +103,11 @@ var = do i <- identity
 
 appl : Parser ((Expr ImportStatement) -> (Expr ImportStatement) -> (Expr ImportStatement))
 appl = do spaces
-          _ <- requireFailure reservedNames
           pure EApp
 
 table : OperatorTable (Expr ImportStatement)
 table = [ [ Infix appl AssocLeft]
+        , [ Infix (do (token "->" <|> token "→") ; pure (EPi "_")) AssocLeft ]
         , [ Infix (do token ":"; pure EAnnot) AssocLeft]
         , [ Infix (do (token "===" <|> token "≡"); pure EEquivalent) AssocLeft]
         , [ Prefix (do token "assert"; token ":"; pure EAssert)]
@@ -120,14 +126,6 @@ mutual
     e <- expr
     pure (ELet i Nothing v e)
 
-  piSimple : Parser (Expr ImportStatement)
-  piSimple = do
-    dom <- term
-    -- spaces
-    (token "->" <|> token "→")
-    ran <- expr
-    pure (EPi "_" dom ran)
-
   piComplex : Parser (Expr ImportStatement)
   piComplex = do
     (token "forall(" <|> token "∀(")
@@ -141,7 +139,7 @@ mutual
     pure (EPi i dom ran)
 
   pi : Parser (Expr ImportStatement)
-  pi = piComplex <|> piSimple
+  pi = piComplex
 
   emptyList : Parser (Expr ImportStatement)
   emptyList = do
@@ -222,8 +220,8 @@ mutual
   term : Parser (Expr ImportStatement)
   term = do
     i <-(builtin <|>
-     true <|> false <|> bool <|>
-     naturalLit <|> natural <|>
+     true <|> false <|> bool <|> natural <|>
+     naturalLit <|>
      type <|> kind <|> sort <|>
      pathTerm <|> esome <|>
      var <|>| list <|>| parens expr)

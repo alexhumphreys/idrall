@@ -62,10 +62,11 @@ mutual
     | NApp Neutral Normal
     | NBoolAnd Neutral Normal
     | NList Neutral
+    | NListAppend Neutral Normal
+    | NListHead Neutral Normal
     | NOptional Neutral
     | NNone Neutral
     | NSome Neutral
-    | NListAppend Neutral Normal
 
   public export
   Show Value where
@@ -94,6 +95,7 @@ mutual
     show (NApp x y) = "(NApp " ++ show x ++ " " ++ show y ++ ")"
     show (NList x) = "(NList " ++ show x ++ ")"
     show (NListAppend x y) = "(NListAppend " ++ show x ++ " " ++ show y ++ ")"
+    show (NListHead x y) = "(NListHead " ++ show x ++ " " ++ show y ++ ")"
     show (NOptional x) = "(NOptional " ++ show x ++ ")"
     show (NNone x) = "(NNone " ++ show x ++ ")"
     show (NSome x) = "(NSome " ++ show x ++ ")"

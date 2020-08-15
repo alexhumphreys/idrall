@@ -69,6 +69,9 @@ mutual
   aEquivHelper i ns1 (EListAppend w x) ns2 (EListAppend y z)
     = aEquivHelper i ns1 w ns2 y &&
       aEquivHelper i ns1 x ns2 z
+  aEquivHelper i ns1 (EListHead w x) ns2 (EListHead y z)
+    = aEquivHelper i ns1 w ns2 y &&
+      aEquivHelper i ns1 x ns2 z
   aEquivHelper i ns1 (EOptional x) ns2 (EOptional y)
     = aEquivHelper i ns1 x ns2 y
   aEquivHelper i ns1 (ENone x) ns2 (ENone y)
@@ -206,6 +209,10 @@ mutual
     x' <- eval env x
     y' <- eval env y
     doListAppend x' y'
+  eval env (EListHead x y) = do
+    x' <- eval env x
+    y' <- eval env y
+    doListHead x' y'
   eval env (ENaturalIsZero x)
     = do x' <- eval env x
          doNaturalIsZero x'
@@ -253,6 +260,22 @@ mutual
     Right (VNeutral (VList x) (NListAppend v (Normal' (VList x) y)))
   doListAppend x y = Left (ListAppendError (show x ++ " " ++ show y))
 
+  doListHead' : Value -> List Value -> Either Error Value
+  doListHead' ty [] = Right (VNone ty)
+  doListHead' ty (v :: vs) = Right (VSome v)
+
+  doListHead : Value -> Value -> Either Error Value -- TODO dry
+  doListHead ty@(VPi x z) (VListLit _ ys) = doListHead' ty ys
+  doListHead ty@(VEquivalent x z) (VListLit _ ys) = doListHead' ty ys
+  doListHead ty@VBool (VListLit _ ys) = doListHead' ty ys
+  doListHead ty@VNatural (VListLit _ ys) = doListHead' ty ys
+  doListHead ty@(VList x) (VListLit _ ys) = doListHead' ty ys
+  doListHead ty@(VListLit x xs) (VListLit _ ys) = doListHead' ty ys
+  doListHead ty@(VOptional x) (VListLit _ ys) = doListHead' ty ys
+  doListHead (VNeutral (VConst CType) v) y =
+    Right (VNeutral (VConst CType) (NListHead v (Normal' (VList (VNeutral (VConst CType) v)) y))) -- TODO double  check
+  doListHead x y = Left (ListHeadError (show x ++ " " ++ show y))
+
   -- fresh names
   nextName : Name -> Name
   nextName x = x ++ "'"
@@ -292,6 +315,10 @@ mutual
     x' <- readBackNeutral ctx x
     y' <- readBackNormal ctx y
     Right (EListAppend x' y')
+  readBackNeutral ctx (NListHead x y) = do
+    x' <- readBackNeutral ctx x
+    y' <- readBackNormal ctx y
+    Right (EListHead x' y')
   readBackNeutral ctx (NOptional a) = do
     a' <- readBackNeutral ctx a
     Right (EOptional a')
@@ -378,8 +405,8 @@ isBool : Ctx -> Value -> Either Error ()
 isBool _ VBool = Right ()
 isBool ctx other = unexpected ctx "Not Bool" other
 
-isList : Ctx -> Value -> Either Error ()
-isList ctx (VList x) = Right ()
+isList : Ctx -> Value -> Either Error Ty -- TODO make return type more obvious
+isList ctx (VList x) = Right x
 isList ctx other = unexpected ctx "Not List" other
 
 isOptional : Ctx -> Value -> Either Error ()
@@ -563,6 +590,14 @@ mutual
     isList ctx xTy
     convert ctx (VConst CType) xTy yTy
     Right (xTy)
+  synth ctx (EListHead x y) = do
+    xTy <- synth ctx x
+    check ctx x (VConst CType)
+    xVal <- eval (mkEnv ctx) x
+    yTy <- synth ctx y
+    check ctx y (VList xVal)
+    ty <- isList ctx yTy
+    Right (VOptional ty)
   synth ctx (EOptional x) = do
     check ctx x (VConst CType)
     Right (VConst CType)

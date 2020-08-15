@@ -16,6 +16,7 @@ data Error
   | SortError
   | AssertError String
   | ListAppendError String
+  | ListHeadError String
   | ReadFileError String
   | CyclicImportError String
 
@@ -31,5 +32,6 @@ Show Error where
   show SortError = "SortError"
   show (AssertError str) = "AssertError: " ++ str
   show (ListAppendError str) = "ListAppendError: " ++ str
+  show (ListHeadError str) = "ListHeadError: " ++ str
   show (ReadFileError str) = "ReadFileError: " ++ str
   show (CyclicImportError str) = "CyclicImportError: " ++ str
