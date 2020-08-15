@@ -74,6 +74,10 @@ mutual
     | EListLit (Maybe (Expr a)) (List (Expr a))
     -- | > x # y
     | EListAppend (Expr a) (Expr a)
+    -- | > EOptional a ~ Optional a
+    | EOptional (Expr a)
+    | ENone (Expr a)
+    | ESome (Expr a)
     | EEmbed (Import a)
 
 export
@@ -109,6 +113,9 @@ mutual
     show (EListLit Nothing xs) = "(EListLit Nothing " ++ show xs ++ ")"
     show (EListLit (Just x) xs) = "(EListLit (Just " ++ show x ++ ") " ++ show xs ++ ")"
     show (EListAppend x y) = "(EListAppend " ++ show x ++ " " ++ show y ++ ")"
+    show (EOptional x) = "(EOptional " ++ show x ++ ")"
+    show (ENone x) = "(ENone " ++ show x ++ ")"
+    show (ESome x) = "(ESome " ++ show x ++ ")"
     show (EEmbed x) = "(EEmbed " ++ show x ++ ")"
 
   -- TODO add Traversible for Expr a
