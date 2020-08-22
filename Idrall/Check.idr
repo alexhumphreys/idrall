@@ -4,8 +4,6 @@ import Idrall.Expr
 import Idrall.Error
 import Idrall.Value
 
-%default covering
-
 mapListEither : List a -> (a -> Either e b) -> Either e (List b)
 mapListEither [] f = Right []
 mapListEither (x :: xs) f =
@@ -15,7 +13,6 @@ mapListEither (x :: xs) f =
 
 -- alpha equivalence
 mutual
-  total
   aEquivHelper : (i : Integer) ->
                  Namespace -> Expr Void ->
                  Namespace -> Expr Void ->
@@ -140,7 +137,7 @@ mkEnv ((x, e) :: ctx) =
 
 -- evaluator
 mutual
-  partial
+  covering
   evalClosure : Closure -> Value -> Either Error Value
   evalClosure (MkClosure env x ty e) v
     = do ty' <- eval env ty -- TODO not using this type info
@@ -154,7 +151,7 @@ mutual
            False => evalVar env x
 
   export
-  partial
+  covering
   eval : Env -> Expr Void -> Either Error Value
   eval env (EConst x) = Right (VConst x)
   eval env (EVar x)
@@ -222,7 +219,7 @@ mutual
   eval env (EEmbed (Raw x)) = absurd x
   eval env (EEmbed (Resolved x)) = eval initEnv x
 
-  partial
+  covering
   doApply : Value -> Value -> Either Error Value
   doApply (VLambda ty closure) arg =
     evalClosure closure arg
@@ -231,7 +228,6 @@ mutual
        Right (VNeutral arg' (NApp neu (Normal' dom arg)))
   doApply _ _ = Left EvalApplyErr
 
-  partial
   doNaturalIsZero : Value -> Either Error Value
   doNaturalIsZero (VNaturalLit k) = Right (VBoolLit (k == 0))
   doNaturalIsZero (VNeutral VNatural neu) = Right (VNeutral VBool (NNaturalIsZero neu))
@@ -242,6 +238,7 @@ mutual
   doBoolAnd (VNeutral VBool v) y = Right (VNeutral VBool (NBoolAnd v (Normal' VBool y)))
   doBoolAnd _ _ = Left EvalBoolAndErr
 
+  covering
   doAssert : Value -> Either Error Value
   doAssert v@(VEquivalent x y) = do
     xRb <- readBackTyped initCtx (VConst CType) x
@@ -288,6 +285,7 @@ mutual
                                True => freshen used (nextName n)
 
   -- reading back
+  covering
   readBackNeutral : Ctx -> Neutral -> Either Error (Expr Void)
   readBackNeutral ctx (NVar x) = Right (EVar x)
   readBackNeutral ctx (NNaturalIsZero x) = do
@@ -329,6 +327,7 @@ mutual
     a' <- readBackNeutral ctx a
     Right (ESome a')
 
+  covering
   readBackTyped : Ctx -> Ty -> Value -> Either Error (Expr Void)
   readBackTyped ctx (VPi dom ran) fun =
     let x = freshen (ctxNames ctx) (closureName ran)
@@ -384,8 +383,8 @@ mutual
     Right (ESome a')
   readBackTyped _ t v = Left (ReadBackError ("error reading back: " ++ (show v) ++ " of type: " ++ (show t)))
 
+  covering
   export
-  partial
   readBackNormal : Ctx -> Normal -> Either Error (Expr Void)
   readBackNormal ctx (Normal' t v) = readBackTyped ctx t v
 
@@ -448,7 +447,7 @@ axioms Kind = Right (VConst Sort)
 axioms Sort = Left SortError
 
 mutual
-  partial
+  covering
   convert : Ctx -> Ty -> Value -> Value -> Either Error ()
   convert ctx t v1 v2
     = do e1 <- readBackTyped ctx t v1
@@ -458,7 +457,7 @@ mutual
             else Left (ErrorMessage ("not alpha equivalent: " ++ show e1 ++ " : " ++ show e2))
 
   export
-  partial
+  covering
   check : Ctx -> Expr Void -> Ty -> Either Error ()
   check ctx (EConst CType) (VConst Kind) = Right ()
   check ctx (EConst Kind) (VConst Sort) = Right ()
@@ -499,6 +498,7 @@ mutual
          convert ctx (VConst CType) t' t
 
   export
+  covering
   synth : Ctx -> Expr Void -> Either Error Ty
   synth ctx (EVar x) = lookupType ctx x
   synth ctx (EConst x) = axioms x
