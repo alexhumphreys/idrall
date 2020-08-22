@@ -122,6 +122,10 @@ mutual
     x' <- resolve h p x
     y' <- resolve h p y
     pure (EListAppend x' y')
+  resolve h p (EListHead x y) = do
+    x' <- resolve h p x
+    y' <- resolve h p y
+    pure (EListHead x' y')
   resolve h p (EOptional x) = do
     x' <- resolve h p x
     pure (EOptional x')
