@@ -48,6 +48,7 @@ mutual
     = aEquivHelper i ns1 w ns2 y &&
       aEquivHelper i ns1 x ns2 z
   aEquivHelper _ _ ENatural _ ENatural = True
+  aEquivHelper _ _ EInteger _ EInteger = True
   aEquivHelper _ _ (EConst x) _ (EConst y) = x == y
   aEquivHelper i ns1 (ENaturalLit x) ns2 (ENaturalLit y) = x == y
   aEquivHelper i ns1 (ENaturalIsZero x) ns2 (ENaturalIsZero y)
@@ -191,6 +192,7 @@ mutual
          y' <- eval env y
          doBoolAnd x' y'
   eval env ENatural = Right VNatural
+  eval env EInteger = Right VInteger
   eval env (ENaturalLit k) = Right (VNaturalLit k)
   eval env (EList a) = do
     a' <- eval env a
@@ -348,6 +350,7 @@ mutual
   readBackTyped ctx (VConst x) (VConst y) = Right (EConst y) -- TODO check this
   readBackTyped ctx (VConst CType) VBool = Right EBool
   readBackTyped ctx (VConst CType) VNatural = Right ENatural
+  readBackTyped ctx (VConst CType) VInteger = Right EInteger
   readBackTyped ctx VBool (VBoolLit x) = Right (EBoolLit x)
   readBackTyped ctx VNatural (VNaturalLit x) = Right (ENaturalLit x)
   readBackTyped ctx t (VNeutral x z) = readBackNeutral ctx z
@@ -420,6 +423,7 @@ isTerm : Ctx -> Value -> Either Error ()
 isTerm _ (VPi _ _) = Right ()
 isTerm _ (VBool) = Right ()
 isTerm _ (VNatural) = Right ()
+isTerm _ (VInteger) = Right ()
 isTerm _ (VList _) = Right ()
 isTerm _ (VOptional _) = Right ()
 isTerm ctx (VNeutral x _) = isTerm ctx x
@@ -545,6 +549,7 @@ mutual
          check ctx y VBool
          Right (VBool)
   synth ctx ENatural = Right (VConst CType)
+  synth ctx EInteger = Right (VConst CType)
   synth ctx (ENaturalLit k) = Right (VNatural)
   synth ctx (ENaturalIsZero x)
     = do check ctx x VNatural
