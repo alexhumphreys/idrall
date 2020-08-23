@@ -49,6 +49,7 @@ mutual
       aEquivHelper i ns1 x ns2 z
   aEquivHelper _ _ ENatural _ ENatural = True
   aEquivHelper _ _ EInteger _ EInteger = True
+  aEquivHelper i ns1 (EIntegerLit x) ns2 (EIntegerLit y) = x == y
   aEquivHelper _ _ (EConst x) _ (EConst y) = x == y
   aEquivHelper i ns1 (ENaturalLit x) ns2 (ENaturalLit y) = x == y
   aEquivHelper i ns1 (ENaturalIsZero x) ns2 (ENaturalIsZero y)
@@ -191,8 +192,9 @@ mutual
     = do x' <- eval env x
          y' <- eval env y
          doBoolAnd x' y'
-  eval env ENatural = Right VNatural
   eval env EInteger = Right VInteger
+  eval env (EIntegerLit k) = Right (VIntegerLit k)
+  eval env ENatural = Right VNatural
   eval env (ENaturalLit k) = Right (VNaturalLit k)
   eval env (EList a) = do
     a' <- eval env a
@@ -352,6 +354,7 @@ mutual
   readBackTyped ctx (VConst CType) VNatural = Right ENatural
   readBackTyped ctx (VConst CType) VInteger = Right EInteger
   readBackTyped ctx VBool (VBoolLit x) = Right (EBoolLit x)
+  readBackTyped ctx VInteger (VIntegerLit x) = Right (EIntegerLit x)
   readBackTyped ctx VNatural (VNaturalLit x) = Right (ENaturalLit x)
   readBackTyped ctx t (VNeutral x z) = readBackNeutral ctx z
   readBackTyped ctx (VConst CType) (VPi aT bT) =
@@ -398,6 +401,10 @@ unexpected ctx str v = Left (Unexpected str v)
 isPi : Ctx -> Value -> Either Error (Ty, Closure)
 isPi _ (VPi a b) = Right (a, b)
 isPi ctx other = unexpected ctx "Not a Pi type" other
+
+isInteger : Ctx -> Value -> Either Error ()
+isInteger _ VInteger = Right ()
+isInteger ctx other = unexpected ctx "Not Integer" other
 
 isNat : Ctx -> Value -> Either Error ()
 isNat _ VNatural = Right ()
@@ -488,6 +495,7 @@ mutual
     aV <- eval (mkEnv ctx) a
     convert ctx aTy aV b
   check ctx (EBoolLit x) t = isBool ctx t
+  check ctx (EIntegerLit k) t = isInteger ctx t
   check ctx (ENaturalLit k) t = isNat ctx t
   check ctx (EListLit Nothing xs) (VList a) = do
     mapListEither xs (\e => check ctx e a)
@@ -548,8 +556,9 @@ mutual
     = do check ctx x VBool
          check ctx y VBool
          Right (VBool)
-  synth ctx ENatural = Right (VConst CType)
   synth ctx EInteger = Right (VConst CType)
+  synth ctx (EIntegerLit k) = Right (VInteger)
+  synth ctx ENatural = Right (VConst CType)
   synth ctx (ENaturalLit k) = Right (VNatural)
   synth ctx (ENaturalIsZero x)
     = do check ctx x VNatural

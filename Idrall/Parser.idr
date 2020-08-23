@@ -45,6 +45,16 @@ bool = token "Bool" *> pure (EBool)
 integer : Parser (Expr ImportStatement)
 integer = token "Integer" *> pure (EInteger)
 
+integerLit : Parser (Expr ImportStatement)
+integerLit = do op <- (char '-' <|> char '+')
+                x <- some digit
+                case op of
+                     '+' => pure (EIntegerLit (getInteger x))
+                     '-' => pure (EIntegerLit ((getInteger x)*(-1)))
+                     _ => fail "not an Integer"
+where getInteger : List (Fin 10) -> Integer
+      getInteger = foldl (\a => \b => 10 * a + cast b) 0
+
 natural : Parser (Expr ImportStatement)
 natural = token "Natural" *> pure (ENatural)
 
@@ -225,7 +235,7 @@ mutual
     i <-(builtin <|>
      true <|> false <|> bool <|>
      natural <|> naturalLit <|>
-     integer <|>
+     integer <|> integerLit <|>
      type <|> kind <|> sort <|>
      pathTerm <|> esome <|>
      var <|>| list <|>| parens expr)
