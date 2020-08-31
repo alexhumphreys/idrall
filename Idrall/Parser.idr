@@ -42,6 +42,19 @@ false = token "False" *> pure (EBoolLit False)
 bool : Parser (Expr ImportStatement)
 bool = token "Bool" *> pure (EBool)
 
+integer : Parser (Expr ImportStatement)
+integer = token "Integer" *> pure (EInteger)
+
+integerLit : Parser (Expr ImportStatement)
+integerLit = do op <- (char '-' <|> char '+')
+                x <- some digit
+                case op of
+                     '+' => pure (EIntegerLit (getInteger x))
+                     '-' => pure (EIntegerLit ((getInteger x)*(-1)))
+                     _ => fail "not an Integer"
+where getInteger : List (Fin 10) -> Integer
+      getInteger = foldl (\a => \b => 10 * a + cast b) 0
+
 natural : Parser (Expr ImportStatement)
 natural = token "Natural" *> pure (ENatural)
 
@@ -79,7 +92,7 @@ reservedNames' : List String
 reservedNames' =
   [ "in", "let", "assert"
   , "->", "&&", ":"
-  , "List", "Optional", "Natural"
+  , "List", "Optional", "Natural", "Integer"
   , "Some", "None"
   , "Type", "Kind", "Sort"]
 
@@ -220,8 +233,9 @@ mutual
   term : Parser (Expr ImportStatement)
   term = do
     i <-(builtin <|>
-     true <|> false <|> bool <|> natural <|>
-     naturalLit <|>
+     true <|> false <|> bool <|>
+     natural <|> naturalLit <|>
+     integer <|> integerLit <|>
      type <|> kind <|> sort <|>
      pathTerm <|> esome <|>
      var <|>| list <|>| parens expr)

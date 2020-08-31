@@ -44,6 +44,8 @@ mutual
     | VConst U
     | VBool
     | VBoolLit Bool
+    | VInteger
+    | VIntegerLit Integer
     | VNatural
     | VNaturalLit Nat
     | VList Ty
@@ -77,6 +79,8 @@ mutual
     show (VConst x) = "(VConst " ++ show x ++ ")"
     show VBool = "VBool"
     show (VBoolLit x) = "(VBoolLit " ++ show x ++ ")"
+    show VInteger = "VInteger"
+    show (VIntegerLit x) = "(VIntegerLit " ++ show x ++ ")"
     show VNatural = "VNatural"
     show (VNaturalLit k) = "(VNaturalLit " ++ show k ++ ")"
     show (VList a) = "(VList " ++ show a ++ ")"

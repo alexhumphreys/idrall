@@ -62,6 +62,10 @@ mutual
     | EBoolLit Bool
     -- | > BoolAnd x y ~ x && y
     | EBoolAnd (Expr a) (Expr a)
+    -- | > Integer ~ Integer
+    | EInteger
+    -- | > EIntegerLit i ~ i
+    | EIntegerLit Integer
     -- | > Natural ~ Natural
     | ENatural
     -- | > NaturalLit n ~ n
@@ -108,6 +112,8 @@ mutual
     show (EBoolLit False) = "(EBoolLit False)"
     show (EBoolLit True) = "(EBoolLit True)"
     show (EBoolAnd x y) = "(EBoolAnd " ++ show x ++ " " ++ show y ++ ")"
+    show EInteger = "EInteger"
+    show (EIntegerLit x) = "(EIntegerLit " ++ show x ++ ")"
     show ENatural = "ENatural"
     show (ENaturalLit k) = "(ENaturalLit " ++ show k ++ ")"
     show (ENaturalIsZero x) = "(ENaturalIsZero " ++ show x ++ ")"

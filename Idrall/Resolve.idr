@@ -103,6 +103,8 @@ mutual
     x' <- resolve h p x
     y' <- resolve h p y
     pure (EBoolAnd x' y')
+  resolve h p e@EInteger = pure e
+  resolve h p e@(EIntegerLit k) = pure e
   resolve h p e@ENatural = pure e
   resolve h p e@(ENaturalLit k) = pure e
   resolve h p (ENaturalIsZero x) = do
