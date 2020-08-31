@@ -14,12 +14,13 @@ Very much a work in progress, with many thing missing. The plan is to make an en
 - [x] Types
   - [x] Bool
   - [x] Natural
+  - [x] Integer
   - [x] List
+  - [x] Optional
   - [x] Equivalent
   - [ ] String
-  - [ ] Integer
-  - [ ] Optional
   - [ ] Records
+  - [ ] Union
 - Operators
   - [x] `&&`
   - [x] `#`
@@ -28,7 +29,8 @@ Very much a work in progress, with many thing missing. The plan is to make an en
   - [ ] `::`
   - etc.
 - Builtins
-  - [x] `Natural/IsZero`
+  - [x] `Natural/isZero`
+  - [x] `List/head`
   - [ ] Everything else
 - Imports
   - [x] local files
