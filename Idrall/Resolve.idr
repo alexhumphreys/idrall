@@ -110,6 +110,9 @@ mutual
   resolve h p (ENaturalIsZero x) = do
     x' <- resolve h p x
     pure (ENaturalIsZero x')
+  resolve h p (EIntegerNegate x) = do
+    x' <- resolve h p x
+    pure (EIntegerNegate x')
   resolve h p (EList x) = do
     x' <- resolve h p x
     pure (EList x')

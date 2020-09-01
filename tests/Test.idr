@@ -92,7 +92,7 @@ testAll = do
       putStrLn "done"
 
 expectPass : List String
-expectPass = ["AssertTrivial", "Bool", "Function", "Natural", "True", "NaturalIsZero", "NaturalLiteral", "Let", "FunctionTypeTermTerm", "FunctionApplication", "Equivalence", "FunctionDependentType1", "List", "ListLiteralOne", "ListLiteralEmpty", "ListHead", "OperatorListConcatenate", "Optional", "None", "SomeTrue", "Integer", "IntegerLiteral"]
+expectPass = ["AssertTrivial", "Bool", "Function", "Natural", "True", "NaturalIsZero", "NaturalLiteral", "Let", "FunctionTypeTermTerm", "FunctionApplication", "Equivalence", "FunctionDependentType1", "List", "ListLiteralOne", "ListLiteralEmpty", "ListHead", "OperatorListConcatenate", "Optional", "None", "SomeTrue", "Integer", "IntegerLiteral", "IntegerNegate"]
 
 testGood : IO ()
 testGood
@@ -110,3 +110,14 @@ testImportFail = do
   Right expr <- stringToExpr "/tmp/importFailA.dhall" | Left x => do putStrLn ("Parse error")
   Right aRes <- resolveExpr expr | Left x => do putStrLn ("Resolve error: " ++ (show expr))
   putStrLn (show aRes)
+
+roundTripEval : String -> IO ()
+roundTripEval str = do
+  Right aExpr <- stringToExpr str | Left x => do putStrLn ("Parse error: " ++ str)
+  Right aRes <- resolveExpr aExpr | Left x => do putStrLn ("Resolve error: " ++ (show aExpr))
+  Right aVal <- exprToValue aRes | Left x => putStrLn ("eval error: " ++ (show aRes))
+  putStrLn (show aVal)
+
+roundTripSynth : String -> IO ()
+
+roundTripCheck : String -> String -> IO ()

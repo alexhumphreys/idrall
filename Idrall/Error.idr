@@ -7,6 +7,7 @@ import Idrall.Value
 public export
 data Error
   = MissingVar String
+  | EvalIntegerNegateErr String
   | EvalNaturalIsZeroErr String
   | EvalBoolAndErr
   | EvalApplyErr
@@ -23,7 +24,8 @@ data Error
 public export
 Show Error where
   show (MissingVar x) = "MissingVar: " ++ show x
-  show (EvalNaturalIsZeroErr x) = "EvalNaturalIsZero error:" ++ x
+  show (EvalIntegerNegateErr x) = "EvalIntegerNegateErr:" ++ x
+  show (EvalNaturalIsZeroErr x) = "EvalNaturalIsZeroErr:" ++ x
   show EvalBoolAndErr = "EvalBoolAndErr"
   show EvalApplyErr = "EvalApplyErr"
   show (Unexpected str v) = "Unexpected: " ++ str ++ " value: " ++ show v

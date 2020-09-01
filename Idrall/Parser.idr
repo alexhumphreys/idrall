@@ -7,6 +7,9 @@ import Idrall.Expr
 import Idrall.BuildExprParser
 import Idrall.Path
 
+fIntegerNegate : (Expr ImportStatement)
+fIntegerNegate = ELam "integerNegateParam1" EInteger (EIntegerNegate (EVar "integerNegateParam1"))
+
 fNaturalIsZero : (Expr ImportStatement)
 fNaturalIsZero = ELam "naturalIsZeroParam1" ENatural (ENaturalIsZero (EVar "naturalIsZeroParam1"))
 
@@ -27,6 +30,7 @@ fNone = ELam "noneArg1" (EConst CType) (ENone (EVar "noneArg1"))
 %access export
 builtin : Parser (Expr ImportStatement)
 builtin =
+  (string "Integer/negate" *> pure fIntegerNegate) <|>
   (string "Natural/isZero" *> pure fNaturalIsZero) <|>
   (string "List/head" *> pure fListHead) <|>
   (string "List" *> pure fList) <|>

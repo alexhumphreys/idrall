@@ -59,6 +59,7 @@ mutual
   data Neutral
     = NVar Name
     | NNaturalIsZero Neutral
+    | NIntegerNegate Neutral
     | NEquivalent Neutral Normal
     | NAssert Neutral
     | NApp Neutral Normal
@@ -94,6 +95,7 @@ mutual
   Show Neutral where
     show (NVar x) = "(NVar " ++ show x ++ ")"
     show (NNaturalIsZero x) = "(NNaturalIsZero " ++ show x ++ ")"
+    show (NIntegerNegate x) = "(NIntegerNegate " ++ show x ++ ")"
     show (NEquivalent x y) = "(NEquivalent " ++ show x ++ " " ++ show y ++ ")"
     show (NAssert x) = "(NEquivalent " ++ show x ++ ")"
     show (NApp x y) = "(NApp " ++ show x ++ " " ++ show y ++ ")"

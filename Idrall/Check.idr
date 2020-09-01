@@ -50,6 +50,8 @@ mutual
   aEquivHelper _ _ ENatural _ ENatural = True
   aEquivHelper _ _ EInteger _ EInteger = True
   aEquivHelper i ns1 (EIntegerLit x) ns2 (EIntegerLit y) = x == y
+  aEquivHelper i ns1 (EIntegerNegate x) ns2 (EIntegerNegate y)
+    = aEquivHelper i ns1 x ns2 y
   aEquivHelper _ _ (EConst x) _ (EConst y) = x == y
   aEquivHelper i ns1 (ENaturalLit x) ns2 (ENaturalLit y) = x == y
   aEquivHelper i ns1 (ENaturalIsZero x) ns2 (ENaturalIsZero y)
@@ -194,6 +196,9 @@ mutual
          doBoolAnd x' y'
   eval env EInteger = Right VInteger
   eval env (EIntegerLit k) = Right (VIntegerLit k)
+  eval env (EIntegerNegate x)
+    = do x' <- eval env x
+         doIntegerNegate x'
   eval env ENatural = Right VNatural
   eval env (ENaturalLit k) = Right (VNaturalLit k)
   eval env (EList a) = do
@@ -231,6 +236,11 @@ mutual
     do arg' <- evalClosure ran arg
        Right (VNeutral arg' (NApp neu (Normal' dom arg)))
   doApply _ _ = Left EvalApplyErr
+
+  doIntegerNegate : Value -> Either Error Value
+  doIntegerNegate (VIntegerLit x) = Right (VIntegerLit (x*(-1)))
+  doIntegerNegate (VNeutral VInteger neu) = Right (VNeutral VInteger (NIntegerNegate neu))
+  doIntegerNegate x = Left (EvalIntegerNegateErr (show x))
 
   doNaturalIsZero : Value -> Either Error Value
   doNaturalIsZero (VNaturalLit k) = Right (VBoolLit (k == 0))
@@ -292,6 +302,9 @@ mutual
   covering
   readBackNeutral : Ctx -> Neutral -> Either Error (Expr Void)
   readBackNeutral ctx (NVar x) = Right (EVar x)
+  readBackNeutral ctx (NIntegerNegate x) = do
+    x' <- readBackNeutral ctx x
+    Right (EIntegerNegate x')
   readBackNeutral ctx (NNaturalIsZero x) = do
     x' <- readBackNeutral ctx x
     Right (ENaturalIsZero x')
@@ -558,6 +571,9 @@ mutual
          Right (VBool)
   synth ctx EInteger = Right (VConst CType)
   synth ctx (EIntegerLit k) = Right (VInteger)
+  synth ctx (EIntegerNegate x)
+    = do check ctx x VInteger
+         Right (VInteger)
   synth ctx ENatural = Right (VConst CType)
   synth ctx (ENaturalLit k) = Right (VNatural)
   synth ctx (ENaturalIsZero x)
