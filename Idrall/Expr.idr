@@ -38,6 +38,9 @@ mutual
     | Resolved (Expr Void)
 
   public export
+  data RawExpr a
+
+  public export
   data Expr a
     -- x
     = EVar Name
@@ -128,3 +131,6 @@ mutual
     show (EEmbed x) = "(EEmbed " ++ show x ++ ")"
 
   -- TODO add Traversible for Expr a
+
+  scopeCheck : scope -> RawExpr a -> Expr a
+
