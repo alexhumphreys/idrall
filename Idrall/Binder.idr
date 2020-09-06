@@ -20,9 +20,9 @@ data Var : List Name -> Type where
      MkVar : (n : Name) -> (k : Nat) -> IsVar n k ns -> Var ns
 
 data RawExpr a
-  = RLocal String Nat
-  | RLet String (RawExpr a) (RawExpr a)
-  | RLam String (RawExpr a) (RawExpr a)
+  = RLocal Name Nat
+  | RLet Name (RawExpr a) (RawExpr a)
+  | RLam Name (RawExpr a) (RawExpr a)
   | RBool
   | RBoolLit Bool
 
@@ -42,24 +42,32 @@ recurse r = LaterMatch r
 
 checkLocal : (n : Name) -> (k : Nat) -> (ns : List Name) -> Either String (IsVar n k ns)
 checkLocal n Z [] = Left "Not in empty"
-checkLocal n Z (x :: xs) = case decEq n x of
-                                (Yes Refl) => Right First
-                                (No contra) => Left ?checkLocal_rhs_3
+checkLocal n Z (x :: xs) with (decEq n x)
+  checkLocal x Z (x :: xs) | (Yes Refl) = Right First
+  checkLocal n Z (x :: xs) | (No contra) =
+    let rest = checkLocal n Z xs in
+    (case rest of
+          (Left l) => Left "Not in list at all"
+          (Right r) => Right (LaterNotMatch r))
 checkLocal n (S k) [] = Left "Definitely not in empty"
 checkLocal n (S k) (x :: xs) with (decEq n x)
   checkLocal x (S k) (x :: xs) | (Yes Refl) =
     let rest = checkLocal x k xs in
     case rest of
-         (Left l) => Left ?checkLocal_rhs_4
-         (Right r) => Right (recurse r)
+         (Left l) => Left "Match but not in rest of list"
+         (Right r) => Right (LaterMatch r)
   checkLocal n (S k) (x :: xs) | (No contra) =
     let rest = checkLocal n (S k) xs in
         (case rest of
-              (Left l) => Left ?foo_1
+              (Left l) => Left "No match and not in rest of list"
               (Right r) => Right (LaterNotMatch r))
 
 checkScope : (ns : List Name) -> RawExpr a -> Either String (Expr ns a)
-checkScope ns (RLocal x k) = ?checkScope_rhs_1
+checkScope ns (RLocal x k) =
+  let scp = checkLocal x k ns in
+      (case scp of
+            (Left l) => Left "Scope error"
+            (Right r) => Right (ELocal x k r))
 checkScope ns (RLet x y z) = ?checkScope_rhs_2
 checkScope ns (RLam x y z) = ?checkScope_rhs_3
 checkScope ns RBool = ?checkScope_rhs_4
