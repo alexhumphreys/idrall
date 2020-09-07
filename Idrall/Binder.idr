@@ -23,6 +23,7 @@ data RawExpr a
   = RLocal Name Nat
   | RLet Name (RawExpr a) (RawExpr a)
   | RLam Name (RawExpr a) (RawExpr a)
+  | RApp (RawExpr a) (RawExpr a)
   | RBool
   | RBoolLit Bool
 
@@ -30,6 +31,7 @@ data Expr : (ns : List Name) -> a -> Type where
      ELocal : (n : Name) -> (idx : Nat) -> (p : IsVar n idx ns) -> Expr ns a
      ELet : (n : Name) -> (Expr ns a) -> (Expr (n :: ns) a) -> Expr ns a
      ELam : (n : Name) -> (Expr ns a) -> (Expr (n :: ns) a) -> Expr ns a
+     EApp : Expr ns a -> Expr ns a -> Expr ns a
      EBool : Expr ns a
      EBoolLit : Bool -> Expr ns a
 
@@ -68,7 +70,17 @@ checkScope ns (RLocal x k) =
       (case scp of
             (Left l) => Left "Scope error"
             (Right r) => Right (ELocal x k r))
-checkScope ns (RLet x y z) = ?checkScope_rhs_2
-checkScope ns (RLam x y z) = ?checkScope_rhs_3
-checkScope ns RBool = ?checkScope_rhs_4
-checkScope ns (RBoolLit x) = ?checkScope_rhs_5
+checkScope ns (RLet x y z) = do
+  y' <- checkScope ns y
+  z' <- checkScope (x :: ns) z
+  Right (ELet x y' z')
+checkScope ns (RLam x y z) = do
+  y' <- checkScope ns y
+  z' <- checkScope (x :: ns) z
+  Right (ELam x y' z')
+checkScope ns RBool = Right EBool
+checkScope ns (RBoolLit x) = Right (EBoolLit x)
+checkScope ns (RApp x y) = do
+  x' <- checkScope ns x
+  y' <- checkScope ns y
+  Right (EApp x' y')
