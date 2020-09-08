@@ -35,13 +35,6 @@ data Expr : (ns : List Name) -> a -> Type where
      EBool : Expr ns a
      EBoolLit : Bool -> Expr ns a
 
-inversion : IsVar n (S k) (v :: vs) -> IsVar n k vs
-inversion x = ?inversion_rhs
-
-recurse : (r : IsVar x k xs) -> IsVar x (S k) (x :: xs)
-recurse First = LaterMatch First
-recurse r = LaterMatch r
-
 checkLocal : (n : Name) -> (k : Nat) -> (ns : List Name) -> Either String (IsVar n k ns)
 checkLocal n Z [] = Left "Not in empty"
 checkLocal n Z (x :: xs) with (decEq n x)
@@ -84,3 +77,62 @@ checkScope ns (RApp x y) = do
   x' <- checkScope ns x
   y' <- checkScope ns y
   Right (EApp x' y')
+
+mutual
+  data Normal : Type where
+       MkNormal : Ty -> Val -> Normal
+
+  Ty : Type
+  Ty = Val
+
+  Env : Type
+  Env = List (Name, Val)
+
+  record Closure where
+    constructor MkClosure
+    closureEnv : Env
+    closureName : Name
+    closureParamType : Expr ns Void
+    closureBody : Expr ns Void
+
+  data Neutral : Type where
+       NVar : Name -> Neutral
+       NApp : Neutral -> Normal -> Neutral
+
+  data Val : Type where
+       VLam : (n : Name) -> Ty -> Closure -> Val
+       VBool : Val
+       VBoolLit : Bool -> Val
+       VNeutral : Ty -> Neutral -> Val
+
+-- eval
+initEnv : Env
+initEnv = []
+
+data CtxEntry
+  = Def Ty Val
+  | IsA Ty
+
+Ctx : Type
+Ctx = List (Name, CtxEntry)
+
+ctxNames : Ctx -> List Name
+ctxNames ctx = map fst ctx
+
+extendCtx : Ctx -> Name -> Ty -> Ctx
+extendCtx ctx x t = (x, (IsA t)) :: ctx
+
+define : Ctx -> Name -> Ty -> Val -> Ctx
+define ctx x t v = (x, Def t v) :: ctx
+
+mkEnv : Ctx -> Env
+mkEnv [] = []
+mkEnv ((x, e) :: ctx) =
+  let env = mkEnv ctx in
+  (case e of
+        (Def _ v) => (x, v) :: env
+        (IsA t) => let v = VNeutral t (NVar x) in
+                       (x, v) :: env)
+
+evalVar : (env : Env) -> Name -> Nat -> (p : IsVar n idx ns) -> Either String Val
+
