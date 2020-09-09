@@ -96,7 +96,7 @@ mutual
 
   data Env : List Name -> Type where
        Nil : Env []
-       Append : EnvEntry n -> Env ns -> Env (n :: ns)
+       (::) : EnvEntry n -> Env ns -> Env (n :: ns)
 
   data Closure : List Name -> Type where
        MkClosure : (n : Name) ->
@@ -111,7 +111,7 @@ mutual
 
 -- eval
 initEnv : Env []
-initEnv = ?empty
+initEnv = Nil
 
 data CtxEntry
   = Def Ty Val
@@ -131,23 +131,20 @@ define ctx x t v = (x, Def t v) :: ctx
 
 mutual
   evalLocal : (n : Name) -> (idx : Nat) -> (prf : IsVar n idx ns) -> (env : Env ns) -> Val
-  evalLocal n Z First (Append (MkEnvEntry x) y) = x
-  evalLocal n Z (LaterNotMatch p) (Append y z) = evalLocal n Z p z
-  evalLocal n (S k) (LaterMatch p) (Append y z) = evalLocal n k p z
-  evalLocal n (S k) (LaterNotMatch p) (Append y z) = evalLocal n (S k) p z
+  evalLocal n Z First ((MkEnvEntry x) :: y) = x
+  evalLocal n Z (LaterNotMatch p) (y :: z) = evalLocal n Z p z
+  evalLocal n (S k) (LaterMatch p) (y :: z) = evalLocal n k p z
+  evalLocal n (S k) (LaterNotMatch p) (y :: z) = evalLocal n (S k) p z
 
   eval : (env : Env ns) -> Expr ns a -> Either String Val
   eval env (ELocal n k p) = Right (evalLocal n k p env)
   eval env (ELet n x y) = do
-    -- x' <- eval env x
-    -- y' <- eval ((n, x') :: env) y
-    -- Right y'
-    ?foo
-  eval env (ELam n ty body) =
-    -- let nextEnv = n :: env in do
-    -- ty' <- eval env ty
-    -- Right (VLam n ty' (MkClosure n nextEnv ty body))
-    ?bar
+    x' <- eval env x
+    y' <- eval ((MkEnvEntry x') :: env) y
+    Right y'
+  eval env (ELam n ty body) = do
+    ty' <- eval env ty
+    Right (VLam n ty' (MkClosure n (MkEnvEntry ty' :: env) ty body))
   eval env (EApp x y) = do
     x' <- eval env x
     y' <- eval env y
