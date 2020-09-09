@@ -85,29 +85,33 @@ mutual
   Ty : Type
   Ty = Val
 
-  Env : Type
-  Env = List (Name, Val)
+  data Val : Type where
+       VLam : (n : Name) -> Ty -> Closure ns -> Val
+       VBool : Val
+       VBoolLit : Bool -> Val
+       VNeutral : Ty -> Neutral -> Val
 
-  record Closure where
-    constructor MkClosure
-    closureEnv : Env
-    closureName : Name
-    closureParamType : Expr ns Void
-    closureBody : Expr ns Void
+  data EnvEntry : (n : Name) -> Type where
+       MkEnvEntry : Val -> EnvEntry n
+
+  data Env : List Name -> Type where
+       Nil : Env []
+       Append : EnvEntry n -> Env ns -> Env (n :: ns)
+
+  data Closure : List Name -> Type where
+       MkClosure : (n : Name) ->
+                   Env (n :: ns) ->
+                   Expr ns a ->
+                   Expr (n :: ns) a ->
+                   Closure ns
 
   data Neutral : Type where
        NVar : Name -> Neutral
        NApp : Neutral -> Normal -> Neutral
 
-  data Val : Type where
-       VLam : (n : Name) -> Ty -> Closure -> Val
-       VBool : Val
-       VBoolLit : Bool -> Val
-       VNeutral : Ty -> Neutral -> Val
-
 -- eval
-initEnv : Env
-initEnv = []
+initEnv : Env []
+initEnv = ?empty
 
 data CtxEntry
   = Def Ty Val
@@ -125,14 +129,30 @@ extendCtx ctx x t = (x, (IsA t)) :: ctx
 define : Ctx -> Name -> Ty -> Val -> Ctx
 define ctx x t v = (x, Def t v) :: ctx
 
-mkEnv : Ctx -> Env
-mkEnv [] = []
-mkEnv ((x, e) :: ctx) =
-  let env = mkEnv ctx in
-  (case e of
-        (Def _ v) => (x, v) :: env
-        (IsA t) => let v = VNeutral t (NVar x) in
-                       (x, v) :: env)
+mutual
+  evalLocal : (n : Name) -> (idx : Nat) -> (prf : IsVar n idx ns) -> (env : Env ns) -> Val
+  evalLocal n Z First (Append (MkEnvEntry x) y) = x
+  evalLocal n Z (LaterNotMatch p) (Append y z) = evalLocal n Z p z
+  evalLocal n (S k) (LaterMatch p) (Append y z) = evalLocal n k p z
+  evalLocal n (S k) (LaterNotMatch p) (Append y z) = evalLocal n (S k) p z
 
-evalVar : (env : Env) -> Name -> Nat -> (p : IsVar n idx ns) -> Either String Val
+  eval : (env : Env ns) -> Expr ns a -> Either String Val
+  eval env (ELocal n k p) = Right (evalLocal n k p env)
+  eval env (ELet n x y) = do
+    -- x' <- eval env x
+    -- y' <- eval ((n, x') :: env) y
+    -- Right y'
+    ?foo
+  eval env (ELam n ty body) =
+    -- let nextEnv = n :: env in do
+    -- ty' <- eval env ty
+    -- Right (VLam n ty' (MkClosure n nextEnv ty body))
+    ?bar
+  eval env (EApp x y) = do
+    x' <- eval env x
+    y' <- eval env y
+    doApply x' y'
+  eval env EBool = Right VBool
+  eval env (EBoolLit x) = Right (VBoolLit x)
 
+  doApply : Val -> Val -> Either String Val
