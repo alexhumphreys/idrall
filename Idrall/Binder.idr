@@ -107,24 +107,12 @@ mutual
        NApp : Neutral -> Normal -> Neutral
 
 -- eval
-data CtxEntry
+data Ctx
   = Def Ty Val
-  | IsA Ty
-
-Ctx : Type
-Ctx = List (Name, CtxEntry)
-
-ctxNames : Ctx -> List Name
-ctxNames ctx = map fst ctx
-
-extendCtx : Ctx -> Name -> Ty -> Ctx
-extendCtx ctx x t = (x, (IsA t)) :: ctx
-
-define : Ctx -> Name -> Ty -> Val -> Ctx
-define ctx x t v = (x, Def t v) :: ctx
+  | IsA Name Ty
 
 mutual
-  envLookup : (n : Name) -> (idx : Nat) -> (prf : IsVar n idx ns) -> (env : Env Val ns) -> Val
+  envLookup : (n : Name) -> (idx : Nat) -> (prf : IsVar n idx ns) -> (env : Env a ns) -> a
   envLookup n Z First (x :: y) = x
   envLookup n Z (LaterNotMatch p) (y :: z) = envLookup n Z p z
   envLookup n (S k) (LaterMatch p) (y :: z) = envLookup n k p z
@@ -147,3 +135,22 @@ mutual
   eval env (EBoolLit x) = Right (VBoolLit x)
 
   doApply : Val -> Val -> Either String Val
+
+  mkEnv : Env Ctx ns -> Env Val ns
+  mkEnv [] = []
+  mkEnv ((IsA y z) :: x) = z :: mkEnv x
+  mkEnv ((Def _ z) :: x) = z :: mkEnv x
+
+  synth : (ctx : Env Ctx ns) -> Expr ns a -> Either String Val
+  synth ctx (ELocal n idx p) =
+    let v = envLookup n idx p ctx in
+        (case v of
+              (Def x y) => Right x
+              (IsA x y) => Right y)
+  synth ctx (ELet n x y) = ?synth_rhs_2
+  synth ctx (ELam n ty body) = do
+    tyV <- eval (mkEnv ctx) ty
+    ?synth_rhs_3
+  synth ctx (EApp x y) = ?synth_rhs_4
+  synth ctx EBool = ?synth_rhs_5
+  synth ctx (EBoolLit x) = ?synth_rhs_6
