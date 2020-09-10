@@ -91,12 +91,9 @@ mutual
        VBoolLit : Bool -> Val
        VNeutral : Ty -> Neutral -> Val
 
-  data EnvEntry : (n : Name) -> Type where
-       MkEnvEntry : Val -> EnvEntry n
-
   data Env : (tm : Type) -> List Name -> Type where
        Nil : Env tm []
-       (::) : Val -> Env tm ns -> Env tm (n :: ns)
+       (::) : (a : tm) -> Env tm ns -> Env tm (n :: ns)
 
   data Closure : List Name -> Type where
        MkClosure : (n : Name) ->
@@ -127,14 +124,14 @@ define : Ctx -> Name -> Ty -> Val -> Ctx
 define ctx x t v = (x, Def t v) :: ctx
 
 mutual
-  evalLocal : (n : Name) -> (idx : Nat) -> (prf : IsVar n idx ns) -> (env : Env Val ns) -> Val
-  evalLocal n Z First (x :: y) = x
-  evalLocal n Z (LaterNotMatch p) (y :: z) = evalLocal n Z p z
-  evalLocal n (S k) (LaterMatch p) (y :: z) = evalLocal n k p z
-  evalLocal n (S k) (LaterNotMatch p) (y :: z) = evalLocal n (S k) p z
+  envLookup : (n : Name) -> (idx : Nat) -> (prf : IsVar n idx ns) -> (env : Env Val ns) -> Val
+  envLookup n Z First (x :: y) = x
+  envLookup n Z (LaterNotMatch p) (y :: z) = envLookup n Z p z
+  envLookup n (S k) (LaterMatch p) (y :: z) = envLookup n k p z
+  envLookup n (S k) (LaterNotMatch p) (y :: z) = envLookup n (S k) p z
 
   eval : (env : Env Val ns) -> Expr ns a -> Either String Val
-  eval env (ELocal n k p) = Right (evalLocal n k p env)
+  eval env (ELocal n k p) = Right (envLookup n k p env)
   eval env (ELet n x y) = do
     x' <- eval env x
     y' <- eval (x' :: env) y
