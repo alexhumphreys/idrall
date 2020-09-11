@@ -22,16 +22,20 @@ data Var : List Name -> Type where
 data RawExpr a
   = RLocal Name Nat
   | RLet Name (RawExpr a) (RawExpr a)
+  | RPi Name (RawExpr a) (RawExpr a)
   | RLam Name (RawExpr a) (RawExpr a)
   | RApp (RawExpr a) (RawExpr a)
+  | RType
   | RBool
   | RBoolLit Bool
 
 data Expr : (ns : List Name) -> a -> Type where
      ELocal : (n : Name) -> (idx : Nat) -> (p : IsVar n idx ns) -> Expr ns a
      ELet : (n : Name) -> (Expr ns a) -> (Expr (n :: ns) a) -> Expr ns a
+     EPi : (n : Name) -> (Expr ns a) -> (Expr (n :: ns) a) -> Expr ns a
      ELam : (n : Name) -> (Expr ns a) -> (Expr (n :: ns) a) -> Expr ns a
      EApp : Expr ns a -> Expr ns a -> Expr ns a
+     EType : Expr ns a
      EBool : Expr ns a
      EBoolLit : Bool -> Expr ns a
 
@@ -67,6 +71,10 @@ checkScope ns (RLet x y z) = do
   y' <- checkScope ns y
   z' <- checkScope (x :: ns) z
   Right (ELet x y' z')
+checkScope ns (RPi x y z) = do
+  y' <- checkScope ns y
+  z' <- checkScope (x :: ns) z
+  Right (EPi x y' z')
 checkScope ns (RLam x y z) = do
   y' <- checkScope ns y
   z' <- checkScope (x :: ns) z
@@ -77,6 +85,7 @@ checkScope ns (RApp x y) = do
   x' <- checkScope ns x
   y' <- checkScope ns y
   Right (EApp x' y')
+checkScope ns RType = Right EType
 
 mutual
   data Normal : Type where
@@ -86,7 +95,9 @@ mutual
   Ty = Val
 
   data Val : Type where
+       VPi : (n : Name) -> Ty -> Closure ns -> Val
        VLam : (n : Name) -> Ty -> Closure ns -> Val
+       VType : Val
        VBool : Val
        VBoolLit : Bool -> Val
        VNeutral : Ty -> Neutral -> Val
@@ -124,6 +135,9 @@ mutual
     x' <- eval env x
     y' <- eval (x' :: env) y
     Right y'
+  eval env (EPi n ty body) = do
+    ty' <- eval env ty
+    Right (VPi n ty' (MkClosure n (ty' :: env) ty body))
   eval env (ELam n ty body) = do
     ty' <- eval env ty
     Right (VLam n ty' (MkClosure n (ty' :: env) ty body))
@@ -131,6 +145,7 @@ mutual
     x' <- eval env x
     y' <- eval env y
     doApply x' y'
+  eval env EType = Right VType
   eval env EBool = Right VBool
   eval env (EBoolLit x) = Right (VBoolLit x)
 
@@ -148,9 +163,11 @@ mutual
               (Def x y) => Right x
               (IsA x y) => Right y)
   synth ctx (ELet n x y) = ?synth_rhs_2
+  synth ctx (EPi n x y) = ?synth_rhs_1
   synth ctx (ELam n ty body) = do
     tyV <- eval (mkEnv ctx) ty
     ?synth_rhs_3
   synth ctx (EApp x y) = ?synth_rhs_4
+  synth ctx EType = ?synth_rhs_7
   synth ctx EBool = ?synth_rhs_5
   synth ctx (EBoolLit x) = ?synth_rhs_6
