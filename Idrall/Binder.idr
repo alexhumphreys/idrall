@@ -1,4 +1,4 @@
-%hide Language.Reflection.Var
+import Decidable.Equality
 
 data Name : Type where
      MkName : String -> Name
@@ -19,6 +19,11 @@ data IsVar : Name -> Nat -> List Name -> Type where
 data Var : List Name -> Type where
      MkVar : (n : Name) -> (k : Nat) -> IsVar n k ns -> Var ns
 
+data Bindr : Type -> Type where
+     Lam : ty -> Bindr ty
+     Pi : ty -> Bindr ty
+     Let : ty -> Bindr ty
+
 data RawExpr a
   = RLocal Name Nat
   | RLet Name (RawExpr a) (RawExpr a)
@@ -29,15 +34,47 @@ data RawExpr a
   | RBool
   | RBoolLit Bool
 
-data Expr : (ns : List Name) -> a -> Type where
-     ELocal : (n : Name) -> (idx : Nat) -> (p : IsVar n idx ns) -> Expr ns a
-     ELet : (n : Name) -> (Expr ns a) -> (Expr (n :: ns) a) -> Expr ns a
-     EPi : (n : Name) -> (Expr ns a) -> (Expr (n :: ns) a) -> Expr ns a
-     ELam : (n : Name) -> (Expr ns a) -> (Expr (n :: ns) a) -> Expr ns a
-     EApp : Expr ns a -> Expr ns a -> Expr ns a
-     EType : Expr ns a
-     EBool : Expr ns a
-     EBoolLit : Bool -> Expr ns a
+data Expr : (ns : List Name) -> Type where
+     ELocal : (n : Name) -> (idx : Nat) -> (p : IsVar n idx ns) -> Expr ns
+     EBind : (n : Name) -> Bindr (Expr ns) -> (scope: Expr (n :: ns)) -> Expr ns
+     EApp : Expr ns -> Expr ns -> Expr ns
+     EType : Expr ns
+     EBool : Expr ns
+     EBoolLit : Bool -> Expr ns
+
+data Env : (tm : List Name -> Type) -> List Name -> Type where
+     Nil : Env tm []
+     (::) : Bindr (tm vars) -> Env tm vars -> Env tm (x :: vars)
+
+mutual
+  data LocalEnv : List Name -> List Name -> Type where
+       EmptyLE : LocalEnv free []
+       AppendLE : Closure free -> LocalEnv free vars -> LocalEnv free (x :: vars)
+
+  data Closure : List Name -> Type where
+       MkClosure : {vars : _} ->
+                   LocalEnv free vars ->
+                   Env Expr free ->
+                   Expr (vars ++ free) -> Closure free
+
+mutual
+  data Val : List Name -> Type where
+       VBind : (x : Name) -> Bindr (Val vars) ->
+               (Closure vars -> Val vars) -> Val vars
+       VType : Val vars
+       VBool : Val vars
+       VBoolLit : Bool -> Val vars
+       VNeutral : Ty vars -> Neutral vars -> Val vars
+
+  Ty : List Name -> Type
+  Ty vars = Val vars
+
+  data Neutral : List Name -> Type where
+       NLocal : (n : Name) -> (idx : Nat) -> (p : IsVar n idx ns) -> Neutral vars
+       NApp : Neutral vars -> Normal vars -> Neutral vars
+
+  data Normal : List Name -> Type where
+       MkNormal : Ty vars -> Val vars -> Normal vars
 
 checkLocal : (n : Name) -> (k : Nat) -> (ns : List Name) -> Either String (IsVar n k ns)
 checkLocal n Z [] = Left "Not in empty"
@@ -61,7 +98,7 @@ checkLocal n (S k) (x :: xs) with (decEq n x)
               (Left l) => Left "No match and not in rest of list"
               (Right r) => Right (LaterNotMatch r))
 
-checkScope : (ns : List Name) -> RawExpr a -> Either String (Expr ns a)
+checkScope : (ns : List Name) -> RawExpr a -> Either String (Expr ns)
 checkScope ns (RLocal x k) =
   let scp = checkLocal x k ns in
       (case scp of
@@ -70,15 +107,15 @@ checkScope ns (RLocal x k) =
 checkScope ns (RLet x y z) = do
   y' <- checkScope ns y
   z' <- checkScope (x :: ns) z
-  Right (ELet x y' z')
+  Right (EBind x (Let y') z')
 checkScope ns (RPi x y z) = do
   y' <- checkScope ns y
   z' <- checkScope (x :: ns) z
-  Right (EPi x y' z')
+  Right (EBind x (Pi y') z')
 checkScope ns (RLam x y z) = do
   y' <- checkScope ns y
   z' <- checkScope (x :: ns) z
-  Right (ELam x y' z')
+  Right (EBind x (Lam y') z')
 checkScope ns RBool = Right EBool
 checkScope ns (RBoolLit x) = Right (EBoolLit x)
 checkScope ns (RApp x y) = do
@@ -86,6 +123,8 @@ checkScope ns (RApp x y) = do
   y' <- checkScope ns y
   Right (EApp x' y')
 checkScope ns RType = Right EType
+
+{-
 
 mutual
   data Normal : Type where
@@ -171,3 +210,4 @@ mutual
   synth ctx EType = ?synth_rhs_7
   synth ctx EBool = ?synth_rhs_5
   synth ctx (EBoolLit x) = ?synth_rhs_6
+  -}
