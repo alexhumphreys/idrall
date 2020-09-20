@@ -124,6 +124,74 @@ checkScope ns (RApp x y) = do
   Right (EApp x' y')
 checkScope ns RType = Right EType
 
+mutual
+  evalLocClosure : {free : _} ->
+                   Env Expr free ->
+                   Closure free ->
+                   Val free
+  evalLocClosure env (MkClosure locs' env' tm') =
+    eval env' locs' tm'
+
+  evalLocal : {free, vars : _} ->
+              Env Expr free ->
+              (idx : Nat) -> (p : IsVar name idx (vars ++ free)) ->
+              LocalEnv free vars ->
+              Val free
+  evalLocal {vars = []} (x :: y) Z First EmptyLE = VBind (MkName ?foo_3) (Lam VType) ?foo_5
+  evalLocal {vars = []} env (S k) (LaterMatch x) EmptyLE = ?foo_4
+  evalLocal {vars = []} env idx (LaterNotMatch x) EmptyLE = ?foo_2
+  evalLocal env Z prf (AppendLE x locs) = evalLocClosure env x
+  evalLocal {vars = (x :: xs)} {free}
+            env (S idx) (LaterMatch p) (AppendLE _ locs) = evalLocal env idx p locs
+  evalLocal {vars = (x :: xs)} {free}
+            env (S idx) (LaterNotMatch p) (AppendLE _ locs) = evalLocal env (S idx) p locs
+
+  eval : {free, vars : _} ->
+         Env Expr free -> LocalEnv free vars ->
+         Expr (vars ++ free) -> Val free
+  eval env locs (ELocal n idx p) = ?eval_rhs_1
+  eval env locs (EBind n x scope) = ?eval_rhs_2
+  eval env locs (EApp x y) = ?eval_rhs_3
+  eval env locs EType = ?eval_rhs_4
+  eval env locs EBool = ?eval_rhs_5
+  eval env locs (EBoolLit x) = ?eval_rhs_6
+
+ex1 : RawExpr ()
+ex1 = RLet (MkName "x") (RBoolLit True) (RLocal (MkName "x") 0)
+
+ex2 : RawExpr ()
+ex2 = RLet (MkName "x") (RBoolLit True) (RLet (MkName "x") (RBoolLit False) (RLocal (MkName "x") 1))
+
+ex3 : RawExpr ()
+ex3 = RLet (MkName "x") (RBoolLit True)
+      (RLet (MkName "y") (RBoolLit False)
+        (RLet (MkName "f")
+          (RLam (MkName "x") (RBool) (RLocal (MkName "x") 0))
+        (RLocal (MkName "x") 0)))
+
+emptyNames : List Name
+emptyNames = []
+
+partial
+discarder : Either String (Expr ns) -> (Expr ns)
+discarder x = case x of
+                   (Left y) => ?discarder_rhs_1
+                   (Right y) => y
+
+partial
+ex1S : (Expr Main.emptyNames)
+ex1S = (discarder (checkScope emptyNames ex1))
+
+partial
+ex2S : (Expr Main.emptyNames)
+ex2S = (discarder (checkScope emptyNames ex2))
+
+partial
+ex3S : (Expr Main.emptyNames)
+ex3S = (discarder (checkScope emptyNames ex3))
+
+--- ex1S = checkScope [] ex1
+
 {-
 
 mutual
