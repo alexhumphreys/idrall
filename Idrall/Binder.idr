@@ -1,4 +1,4 @@
-%hide Language.Reflection.Var
+import Decidable.Equality
 
 data Name : Type where
      MkName : String -> Name
@@ -88,59 +88,64 @@ checkScope ns (RApp x y) = do
 checkScope ns RType = Right EType
 
 mutual
-  data Normal : Type where
-       MkNormal : Ty -> Val -> Normal
+  data Normal : List Name -> Type where
+       MkNormal : Ty vars -> Val vars -> Normal vars
 
-  Ty : Type
-  Ty = Val
+  Ty : List Name -> Type
+  Ty vars = Val vars
 
-  data Val : Type where
-       VPi : (n : Name) -> Ty -> Closure ns -> Val
-       VLam : (n : Name) -> Ty -> Closure ns -> Val
-       VType : Val
-       VBool : Val
-       VBoolLit : Bool -> Val
-       VNeutral : Ty -> Neutral -> Val
+  data Val : List Name -> Type where
+       VPi : (n : Name) -> Ty vars -> Closure (n :: vars) -> Val vars
+       VLam : (n : Name) -> Ty vars -> Closure (n :: vars) -> Val vars
+       VType : Val vars
+       VBool : Val vars
+       VBoolLit : Bool -> Val vars
+       VNeutral : Ty vars -> Neutral vars -> Val vars
 
-  data Env : (tm : Type) -> List Name -> Type where
+  data Env : (tm : List Name -> Type) -> List Name -> Type where
        Nil : Env tm []
-       (::) : (a : tm) -> Env tm ns -> Env tm (n :: ns)
+       (::) : (a : tm ns) -> Env tm ns -> Env tm (n :: ns)
 
   data Closure : List Name -> Type where
        MkClosure : (n : Name) ->
-                   Env Val (n :: ns) ->
+                   Env Val (ns) ->
                    Expr ns a ->
                    Expr (n :: ns) a ->
                    Closure ns
 
-  data Neutral : Type where
-       NVar : Name -> Neutral
-       NApp : Neutral -> Normal -> Neutral
+  data Neutral : List Name -> Type where
+       NVar : Name -> Neutral vars
+       NApp : Neutral vars -> Normal vars -> Neutral vars
 
 -- eval
 data Ctx
-  = Def Ty Val
-  | IsA Name Ty
+  = Def (Ty vars) (Val vars)
+  | IsA Name (Ty vars)
+
+weaken : Val ns -> Val (n :: ns)
 
 mutual
-  envLookup : (n : Name) -> (idx : Nat) -> (prf : IsVar n idx ns) -> (env : Env a ns) -> a
-  envLookup n Z First (x :: y) = x
-  envLookup n Z (LaterNotMatch p) (y :: z) = envLookup n Z p z
-  envLookup n (S k) (LaterMatch p) (y :: z) = envLookup n k p z
-  envLookup n (S k) (LaterNotMatch p) (y :: z) = envLookup n (S k) p z
+  envLookup : (n : Name) -> (idx : Nat) -> (prf : IsVar n idx ns) -> (env : Env Val ns) -> Val ns
+  {- envLookup n Z First (x :: y) = weaken x
+  envLookup n Z (LaterNotMatch p) (y :: z) = weaken (envLookup n Z p z)
+  envLookup n (S k) (LaterMatch p) (y :: z) = weaken (envLookup n k p z)
+  envLookup n (S k) (LaterNotMatch p) (y :: z) = weaken (envLookup n (S k) p z) -}
 
-  eval : (env : Env Val ns) -> Expr ns a -> Either String Val
-  eval env (ELocal n k p) = Right (envLookup n k p env)
+  eval : (env : Env (\os => Val (os ++ ns)) ms) -> Expr ns a -> Either String (Val ns)
+  eval env (ELocal n k p) = ?eeee -- Right (envLookup n k p env)
   eval env (ELet n x y) = do
     x' <- eval env x
     y' <- eval (x' :: env) y
-    Right y'
+    Right ?foo
+    -- Right y'
   eval env (EPi n ty body) = do
     ty' <- eval env ty
-    Right (VPi n ty' (MkClosure n (ty' :: env) ty body))
+    --Right (VPi n ty' (MkClosure n (ty' :: env) ty body))
+    ?bar1
   eval env (ELam n ty body) = do
     ty' <- eval env ty
-    Right (VLam n ty' (MkClosure n (ty' :: env) ty body))
+    ?bar2
+    --Right (VLam n ty' (MkClosure n (ty' :: env) ty body))
   eval env (EApp x y) = do
     x' <- eval env x
     y' <- eval env y
@@ -149,8 +154,9 @@ mutual
   eval env EBool = Right VBool
   eval env (EBoolLit x) = Right (VBoolLit x)
 
-  doApply : Val -> Val -> Either String Val
+  doApply : Val vars -> Val vars -> Either String (Val vars)
 
+{-
   mkEnv : Env Ctx ns -> Env Val ns
   mkEnv [] = []
   mkEnv ((IsA y z) :: x) = z :: mkEnv x
@@ -171,3 +177,4 @@ mutual
   synth ctx EType = ?synth_rhs_7
   synth ctx EBool = ?synth_rhs_5
   synth ctx (EBoolLit x) = ?synth_rhs_6
+-}
