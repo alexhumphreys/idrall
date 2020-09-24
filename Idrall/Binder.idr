@@ -188,6 +188,15 @@ mutual
 
   doApply : Val vars -> Val vars -> Either String (Val vars)
 
+ex1 : Expr [] ()
+ex1 = ELet (MkName "x") (EBoolLit True) (ELocal (MkName "x") 0 First)
+
+ex2 : Expr [] ()
+ex2 = ELet (MkName "x") (EBoolLit True)
+        (ELet (MkName "y") (EBoolLit False)
+          (ELocal (MkName "x") 0 (LaterNotMatch First))
+        )
+
 {-
   mkEnv : Env Ctx ns -> Env Val ns
   mkEnv [] = []
