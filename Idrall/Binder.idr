@@ -144,8 +144,28 @@ mutual
   localLookup n 0 (LaterNotMatch x) env locs = ?localLookup_rhs_4
   localLookup n (S k) prf env locs = ?localLookup_rhs_2
 
-  eval : (env : Env Val ns) -> (locs : LocalEnv ns ms) -> Expr (ms ++ ns) () -> Either String (Val ns)
-  eval env locs (ELocal n k p) = ?eeee -- Right (envLookup n k p env)
+  ll : {ns,ms : List Name} -> IsVar n idx (ms ++ ns) -> LocalEnv ns ms -> Env Val ns -> Val ns
+  ll {ms = []} First EmptyLE (a :: ns) = weaken a
+  ll {ms = []} (LaterMatch p) EmptyLE (_ :: env) = weaken (ll p EmptyLE env)
+  ll {ms = []} (LaterNotMatch p) EmptyLE (_ :: env) = weaken (ll p EmptyLE env)
+  ll {ns = []} First (AppendLE y locs) z = y
+  ll {ns = []} (LaterMatch x) (AppendLE _ locs) z = ll x locs z
+  ll {ns = []} (LaterNotMatch x) (AppendLE _ locs) z = ll x locs z
+  ll First (AppendLE y w) (a :: x) = weaken a
+  ll (LaterMatch p) (AppendLE y w) env = ll p w env
+  ll (LaterNotMatch p) (AppendLE y w) env = ll p w env
+  -- unreachable
+  ll (LaterMatch x) (AppendLE y w) [] = ?ll_rhs1_8
+  ll First (AppendLE y w) [] = ?ll_rhs1_7
+  ll First EmptyLE (a :: x) = weaken a
+  ll (LaterMatch x) EmptyLE (a :: y) = weaken (ll x EmptyLE y)
+  ll (LaterNotMatch x) EmptyLE (a :: y) = ?ll_rhs1_6
+  ll First EmptyLE [] impossible
+  ll (LaterMatch x) EmptyLE [] impossible
+  ll (LaterNotMatch x) EmptyLE [] impossible
+
+  eval : {ns,ms : List Name} -> (env : Env Val ns) -> (locs : LocalEnv ns ms) -> Expr (ms ++ ns) () -> Either String (Val ns)
+  eval env locs (ELocal n idx p) = Right (ll p locs env)
   eval env locs (ELet n x y) = do
     x' <- eval env locs x
     y' <- eval env (AppendLE x' locs) y
