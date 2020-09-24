@@ -124,35 +124,47 @@ data Ctx
 
 weaken : Val ns -> Val (n :: ns)
 
+data LocalEnv : List Name -> List Name -> Type where
+     EmptyLE : LocalEnv ns []
+     AppendLE : Val ns -> LocalEnv ns ms -> LocalEnv ns (n :: ms)
+
 mutual
   envLookup : (n : Name) -> (idx : Nat) -> (prf : IsVar n idx ns) -> (env : Env Val ns) -> Val ns
-  {- envLookup n Z First (x :: y) = weaken x
+  envLookup n Z First (x :: y) = weaken x
   envLookup n Z (LaterNotMatch p) (y :: z) = weaken (envLookup n Z p z)
   envLookup n (S k) (LaterMatch p) (y :: z) = weaken (envLookup n k p z)
-  envLookup n (S k) (LaterNotMatch p) (y :: z) = weaken (envLookup n (S k) p z) -}
+  envLookup n (S k) (LaterNotMatch p) (y :: z) = weaken (envLookup n (S k) p z)
 
-  eval : (env : Env (\os => Val (os ++ ns)) ms) -> Expr ns a -> Either String (Val ns)
-  eval env (ELocal n k p) = ?eeee -- Right (envLookup n k p env)
-  eval env (ELet n x y) = do
-    x' <- eval env x
-    y' <- eval (x' :: env) y
-    Right ?foo
-    -- Right y'
-  eval env (EPi n ty body) = do
-    ty' <- eval env ty
+  localLookup : (n : Name)
+              -> (idx : Nat)
+              -> (prf : IsVar n idx ns)
+              -> (env : Env Val ns)
+              -> (locs : LocalEnv ns ms) -> Val ns
+  localLookup n 0 First (a :: x) locs = ?localLookup_rhs_5
+  localLookup n 0 (LaterNotMatch x) env locs = ?localLookup_rhs_4
+  localLookup n (S k) prf env locs = ?localLookup_rhs_2
+
+  eval : (env : Env Val ns) -> (locs : LocalEnv ns ms) -> Expr (ms ++ ns) () -> Either String (Val ns)
+  eval env locs (ELocal n k p) = ?eeee -- Right (envLookup n k p env)
+  eval env locs (ELet n x y) = do
+    x' <- eval env locs x
+    y' <- eval env (AppendLE x' locs) y
+    Right y'
+  eval env locs (EPi n ty body) = do
+    ty' <- eval env locs ty
     --Right (VPi n ty' (MkClosure n (ty' :: env) ty body))
     ?bar1
-  eval env (ELam n ty body) = do
-    ty' <- eval env ty
+  eval env locs (ELam n ty body) = do
+    ty' <- eval env locs ty
     ?bar2
     --Right (VLam n ty' (MkClosure n (ty' :: env) ty body))
-  eval env (EApp x y) = do
-    x' <- eval env x
-    y' <- eval env y
+  eval env locs (EApp x y) = do
+    x' <- eval env locs x
+    y' <- eval env locs y
     doApply x' y'
-  eval env EType = Right VType
-  eval env EBool = Right VBool
-  eval env (EBoolLit x) = Right (VBoolLit x)
+  eval env locs EType = Right VType
+  eval env locs EBool = Right VBool
+  eval env locs (EBoolLit x) = Right (VBoolLit x)
 
   doApply : Val vars -> Val vars -> Either String (Val vars)
 
