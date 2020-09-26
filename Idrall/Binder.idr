@@ -94,6 +94,10 @@ mutual
   Ty : List Name -> Type
   Ty vars = Val vars
 
+  data LocalEnv : List Name -> List Name -> Type where
+       EmptyLE : LocalEnv ns []
+       AppendLE : Val ns -> LocalEnv ns ms -> LocalEnv ns (n :: ms)
+
   data Val : List Name -> Type where
        VPi : (n : Name) -> Ty vars -> Closure (n :: vars) -> Val vars
        VLam : (n : Name) -> Ty vars -> Closure (n :: vars) -> Val vars
@@ -107,10 +111,11 @@ mutual
        (::) : (a : tm ns) -> Env tm ns -> Env tm (n :: ns)
 
   data Closure : List Name -> Type where
-       MkClosure : (n : Name) ->
+       MkClosure : {mss: _} -> (n : Name) ->
+                   LocalEnv ns mss ->
                    Env Val (ns) ->
-                   Expr ns a ->
-                   Expr (n :: ns) a ->
+                   Expr ns () ->
+                   Expr (mss ++ ns) () ->
                    Closure ns
 
   data Neutral : List Name -> Type where
@@ -123,10 +128,6 @@ data Ctx
   | IsA Name (Ty vars)
 
 weaken : Val ns -> Val (n :: ns)
-
-data LocalEnv : List Name -> List Name -> Type where
-     EmptyLE : LocalEnv ns []
-     AppendLE : Val ns -> LocalEnv ns ms -> LocalEnv ns (n :: ms)
 
 mutual
   envLookup : (n : Name) -> (idx : Nat) -> (prf : IsVar n idx ns) -> (env : Env Val ns) -> Val ns
@@ -181,12 +182,28 @@ mutual
   eval env locs (EApp x y) = do
     x' <- eval env locs x
     y' <- eval env locs y
-    doApply x' y'
+    doApply env locs x' y'
   eval env locs EType = Right VType
   eval env locs EBool = Right VBool
   eval env locs (EBoolLit x) = Right (VBoolLit x)
 
-  doApply : Val vars -> Val vars -> Either String (Val vars)
+  doApply : {ns, ms : List Name} -> (env : Env Val ns) -> (locs : LocalEnv ns ms) -> Val ns -> Val ns -> Either String (Val ns)
+  doApply {ms} env locs (VLam n ty (MkClosure y locs' env' v e)) arg = do
+    x <- eval env' ?thisRightHere e
+    ?asdf
+  doApply env locs f a = ?doApply_rhs_11
+
+  pExpr : Expr vars a -> Expr vars ()
+  pExpr (ELocal n idx p) = ELocal n idx p
+  pExpr (ELet n x y) = ELet n (pExpr x) (pExpr y)
+  pExpr (EPi n x y) = EPi n (pExpr x) (pExpr y)
+  pExpr (ELam n x y) = ELam n (pExpr x) (pExpr y)
+  pExpr (EApp x y) = EApp (pExpr x) (pExpr y)
+  pExpr EType = EType
+  pExpr EBool = EBool
+  pExpr (EBoolLit x) = EBoolLit x
+
+  evalClosure : Closure vars -> Val vars -> Either String (Val vars)
 
 ex1 : Expr [] ()
 ex1 = ELet (MkName "x") (EBoolLit True) (ELocal (MkName "x") 0 First)
