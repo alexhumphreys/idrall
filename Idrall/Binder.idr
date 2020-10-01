@@ -197,8 +197,21 @@ mutual
     eval env' (AppendLE arg locs') (weakenExpr n body)
   doApply f a = ?doApply_rhs_11
 
+  weakenInner : {ns : _} -> (x : _) -> Expr (n :: ns) () -> Expr (n :: (x :: ns)) ()
+
   weakenExpr : {ns : _} -> (n : _) -> Expr ns () -> Expr (n :: ns) ()
-  weakenExpr {ns} n x = ?weakenExpr_rhs
+  weakenExpr n (ELocal x idx p) with (decEq n x)
+    weakenExpr x (ELocal x idx p) | (Yes Refl) = ELocal x (S idx) (LaterMatch p)
+    weakenExpr n (ELocal x idx p) | (No contra) = ELocal x (idx) (LaterNotMatch p)
+  weakenExpr n (ELet x y z) = ELet x (weakenExpr n y) (weakenInner n z)
+  weakenExpr n (EPi x y z) = let z' = weakenInner n z in
+                                 EPi x (weakenExpr n y) z'
+  weakenExpr n (ELam x y z) = let z' = weakenInner n z in
+                                  ELam x (weakenExpr n y) z'
+  weakenExpr n (EApp x y) = EApp (weakenExpr n x) (weakenExpr n y)
+  weakenExpr n EType = EType
+  weakenExpr n EBool = EBool
+  weakenExpr n (EBoolLit x) = EBoolLit x
 
 ex1 : Expr [] ()
 ex1 = ELet (MkName "x") (EBoolLit True) (ELocal (MkName "x") 0 First)
