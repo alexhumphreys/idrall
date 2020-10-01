@@ -99,8 +99,8 @@ mutual
        AppendLE : Val ns -> LocalEnv ns ms -> LocalEnv ns (n :: ms)
 
   data Val : List Name -> Type where
-       VPi : (n : Name) -> Ty vars -> Closure (n :: vars) -> Val vars
-       VLam : (n : Name) -> Ty vars -> Closure (n :: vars) -> Val vars
+       VPi : (n : Name) -> Ty vars -> Closure (vars) -> Val vars
+       VLam : (n : Name) -> Ty vars -> Closure (vars) -> Val vars
        VType : Val vars
        VBool : Val vars
        VBoolLit : Bool -> Val vars
@@ -111,7 +111,7 @@ mutual
        (::) : (a : tm ns) -> Env tm ns -> Env tm (n :: ns)
 
   data Closure : List Name -> Type where
-       MkClosure : {mss: _} -> (n : Name) ->
+       MkClosure : {mss: _} ->
                    LocalEnv ns mss ->
                    Env Val (ns) ->
                    Expr ns () ->
@@ -127,39 +127,44 @@ data Ctx
   = Def (Ty vars) (Val vars)
   | IsA Name (Ty vars)
 
-weaken : Val ns -> Val (n :: ns)
+interface Weaken (tm : List Name -> Type) where
+  weaken : {n, vars : _} -> tm vars -> tm (n :: vars)
+  weakenNs : {vars : _} -> (ns : List Name) -> tm vars -> tm (ns ++ vars)
+
+  weakenNs [] t = t
+  weakenNs (n :: ns) t = weaken (weakenNs ns t)
+
+  weaken = weakenNs [_]
+
+{-
+Weaken Expr where
+  weakenNs ns tm = insertNames {outer = []} ns tm
+  -}
+
+weaken' : Val ns -> Val (n :: ns)
 
 mutual
   envLookup : (n : Name) -> (idx : Nat) -> (prf : IsVar n idx ns) -> (env : Env Val ns) -> Val ns
-  envLookup n Z First (x :: y) = weaken x
-  envLookup n Z (LaterNotMatch p) (y :: z) = weaken (envLookup n Z p z)
-  envLookup n (S k) (LaterMatch p) (y :: z) = weaken (envLookup n k p z)
-  envLookup n (S k) (LaterNotMatch p) (y :: z) = weaken (envLookup n (S k) p z)
-
-  localLookup : (n : Name)
-              -> (idx : Nat)
-              -> (prf : IsVar n idx ns)
-              -> (env : Env Val ns)
-              -> (locs : LocalEnv ns ms) -> Val ns
-  localLookup n 0 First (a :: x) locs = ?localLookup_rhs_5
-  localLookup n 0 (LaterNotMatch x) env locs = ?localLookup_rhs_4
-  localLookup n (S k) prf env locs = ?localLookup_rhs_2
+  envLookup n Z First (x :: y) = weaken' x
+  envLookup n Z (LaterNotMatch p) (y :: z) = weaken' (envLookup n Z p z)
+  envLookup n (S k) (LaterMatch p) (y :: z) = weaken' (envLookup n k p z)
+  envLookup n (S k) (LaterNotMatch p) (y :: z) = weaken' (envLookup n (S k) p z)
 
   ll : {ns,ms : List Name} -> IsVar n idx (ms ++ ns) -> LocalEnv ns ms -> Env Val ns -> Val ns
-  ll {ms = []} First EmptyLE (a :: ns) = weaken a
-  ll {ms = []} (LaterMatch p) EmptyLE (_ :: env) = weaken (ll p EmptyLE env)
-  ll {ms = []} (LaterNotMatch p) EmptyLE (_ :: env) = weaken (ll p EmptyLE env)
+  ll {ms = []} First EmptyLE (a :: ns) = weaken' a
+  ll {ms = []} (LaterMatch p) EmptyLE (_ :: env) = weaken' (ll p EmptyLE env)
+  ll {ms = []} (LaterNotMatch p) EmptyLE (_ :: env) = weaken' (ll p EmptyLE env)
   ll {ns = []} First (AppendLE y locs) z = y
   ll {ns = []} (LaterMatch x) (AppendLE _ locs) z = ll x locs z
   ll {ns = []} (LaterNotMatch x) (AppendLE _ locs) z = ll x locs z
-  ll First (AppendLE y w) (a :: x) = weaken a
+  ll First (AppendLE y w) (a :: x) = weaken' a
   ll (LaterMatch p) (AppendLE y w) env = ll p w env
   ll (LaterNotMatch p) (AppendLE y w) env = ll p w env
   -- unreachable
   ll (LaterMatch x) (AppendLE y w) [] = ?ll_rhs1_8
   ll First (AppendLE y w) [] = ?ll_rhs1_7
-  ll First EmptyLE (a :: x) = weaken a
-  ll (LaterMatch x) EmptyLE (a :: y) = weaken (ll x EmptyLE y)
+  ll First EmptyLE (a :: x) = weaken' a
+  ll (LaterMatch x) EmptyLE (a :: y) = weaken' (ll x EmptyLE y)
   ll (LaterNotMatch x) EmptyLE (a :: y) = ?ll_rhs1_6
   ll First EmptyLE [] impossible
   ll (LaterMatch x) EmptyLE [] impossible
@@ -182,28 +187,18 @@ mutual
   eval env locs (EApp x y) = do
     x' <- eval env locs x
     y' <- eval env locs y
-    doApply env locs x' y'
+    doApply x' y'
   eval env locs EType = Right VType
   eval env locs EBool = Right VBool
   eval env locs (EBoolLit x) = Right (VBoolLit x)
 
-  doApply : {ns, ms : List Name} -> (env : Env Val ns) -> (locs : LocalEnv ns ms) -> Val ns -> Val ns -> Either String (Val ns)
-  doApply {ms} env locs (VLam n ty (MkClosure y locs' env' v e)) arg = do
-    x <- eval env' ?thisRightHere e
-    ?asdf
-  doApply env locs f a = ?doApply_rhs_11
+  doApply : {ns : _} -> Val ns -> Val ns -> Either String (Val ns)
+  doApply (VLam n ty (MkClosure locs' env' ty' body)) arg = do
+    eval env' (AppendLE arg locs') (weakenExpr n body)
+  doApply f a = ?doApply_rhs_11
 
-  pExpr : Expr vars a -> Expr vars ()
-  pExpr (ELocal n idx p) = ELocal n idx p
-  pExpr (ELet n x y) = ELet n (pExpr x) (pExpr y)
-  pExpr (EPi n x y) = EPi n (pExpr x) (pExpr y)
-  pExpr (ELam n x y) = ELam n (pExpr x) (pExpr y)
-  pExpr (EApp x y) = EApp (pExpr x) (pExpr y)
-  pExpr EType = EType
-  pExpr EBool = EBool
-  pExpr (EBoolLit x) = EBoolLit x
-
-  evalClosure : Closure vars -> Val vars -> Either String (Val vars)
+  weakenExpr : {ns : _} -> (n : _) -> Expr ns () -> Expr (n :: ns) ()
+  weakenExpr {ns} n x = ?weakenExpr_rhs
 
 ex1 : Expr [] ()
 ex1 = ELet (MkName "x") (EBoolLit True) (ELocal (MkName "x") 0 First)
