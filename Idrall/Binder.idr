@@ -99,8 +99,8 @@ mutual
        AppendLE : Val ns -> LocalEnv ns ms -> LocalEnv ns (n :: ms)
 
   data Val : List Name -> Type where
-       VPi : (n : Name) -> Ty vars -> Closure (vars) -> Val vars
-       VLam : (n : Name) -> Ty vars -> Closure (vars) -> Val vars
+       VPi : (n : Name) -> Ty vars -> Closure n (vars) -> Val vars
+       VLam : (n : Name) -> Ty vars -> Closure n (vars) -> Val vars
        VType : Val vars
        VBool : Val vars
        VBoolLit : Bool -> Val vars
@@ -110,13 +110,13 @@ mutual
        Nil : Env tm []
        (::) : (a : tm ns) -> Env tm ns -> Env tm (n :: ns)
 
-  data Closure : List Name -> Type where
+  data Closure : Name -> List Name -> Type where
        MkClosure : {mss: _} ->
+                   (n : Name) ->
                    LocalEnv ns mss ->
                    Env Val (ns) ->
-                   Expr ns () ->
-                   Expr (mss ++ ns) () ->
-                   Closure ns
+                   Expr (n :: (mss ++ ns)) () ->
+                   Closure n ns
 
   data Neutral : List Name -> Type where
        NVar : Name -> Neutral vars
@@ -154,21 +154,9 @@ mutual
   ll {ms = []} First EmptyLE (a :: ns) = weaken' a
   ll {ms = []} (LaterMatch p) EmptyLE (_ :: env) = weaken' (ll p EmptyLE env)
   ll {ms = []} (LaterNotMatch p) EmptyLE (_ :: env) = weaken' (ll p EmptyLE env)
-  ll {ns = []} First (AppendLE y locs) z = y
-  ll {ns = []} (LaterMatch x) (AppendLE _ locs) z = ll x locs z
-  ll {ns = []} (LaterNotMatch x) (AppendLE _ locs) z = ll x locs z
-  ll First (AppendLE y w) (a :: x) = weaken' a
+  ll First (AppendLE y w) env = y
   ll (LaterMatch p) (AppendLE y w) env = ll p w env
   ll (LaterNotMatch p) (AppendLE y w) env = ll p w env
-  -- unreachable
-  ll (LaterMatch x) (AppendLE y w) [] = ?ll_rhs1_8
-  ll First (AppendLE y w) [] = ?ll_rhs1_7
-  ll First EmptyLE (a :: x) = weaken' a
-  ll (LaterMatch x) EmptyLE (a :: y) = weaken' (ll x EmptyLE y)
-  ll (LaterNotMatch x) EmptyLE (a :: y) = ?ll_rhs1_6
-  ll First EmptyLE [] impossible
-  ll (LaterMatch x) EmptyLE [] impossible
-  ll (LaterNotMatch x) EmptyLE [] impossible
 
   eval : {ns,ms : List Name} -> (env : Env Val ns) -> (locs : LocalEnv ns ms) -> Expr (ms ++ ns) () -> Either String (Val ns)
   eval env locs (ELocal n idx p) = Right (ll p locs env)
@@ -178,12 +166,10 @@ mutual
     Right y'
   eval env locs (EPi n ty body) = do
     ty' <- eval env locs ty
-    --Right (VPi n ty' (MkClosure n (ty' :: env) ty body))
-    ?bar1
+    Right (VPi n ty' (MkClosure n locs (env) body))
   eval env locs (ELam n ty body) = do
     ty' <- eval env locs ty
-    ?bar2
-    --Right (VLam n ty' (MkClosure n (ty' :: env) ty body))
+    Right (VLam n ty' (MkClosure n locs (env) body))
   eval env locs (EApp x y) = do
     x' <- eval env locs x
     y' <- eval env locs y
@@ -193,8 +179,9 @@ mutual
   eval env locs (EBoolLit x) = Right (VBoolLit x)
 
   doApply : {ns : _} -> Val ns -> Val ns -> Either String (Val ns)
-  doApply (VLam n ty (MkClosure locs' env' ty' body)) arg = do
-    eval env' (AppendLE arg locs') (weakenExpr n body)
+  doApply (VLam n ty (MkClosure n locs' env' body)) arg = do
+    eval env' (AppendLE arg locs') body
+    -- eval env' (AppendLE arg locs') (weakenExpr n body)
   doApply f a = ?doApply_rhs_11
 
   weakenInner : {ns : _} -> (x : _) -> Expr (n :: ns) () -> Expr (n :: (x :: ns)) ()
@@ -220,6 +207,17 @@ ex2 : Expr [] ()
 ex2 = ELet (MkName "x") (EBoolLit True)
         (ELet (MkName "y") (EBoolLit False)
           (ELocal (MkName "x") 0 (LaterNotMatch First))
+        )
+
+ex3 : Expr [] ()
+ex3 = ELet (MkName "x") (EBoolLit True)
+        (ELet (MkName "f")
+          (ELam (MkName "y") (EBool)
+            (ELocal (MkName "y") 0 (First))
+          )
+          (EApp (ELocal (MkName "f") 0 (First))
+                (ELocal (MkName "x") 0 (LaterNotMatch First))
+          )
         )
 
 {-
