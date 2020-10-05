@@ -141,16 +141,77 @@ Weaken Expr where
   weakenNs ns tm = insertNames {outer = []} ns tm
   -}
 
-weaken' : Val ns -> Val (n :: ns)
+mutual
+  -- combos
+  -- ns
+  -- n :: ns
+  -- n :: (x :: ns)
+  -- n :: (mss ++ ns)
+  -- n :: (mss ++ (n :: ns))
+  -- (y :: (n :: (mss ++ ns)))
+  -- (y :: (n :: (mss ++ (n :: ns))))
+  weakenExpr : {ns : _} -> (n : _) -> Expr ns () -> Expr (n :: ns) ()
+  weakenExpr n (ELocal x idx p) with (decEq n x)
+    weakenExpr x (ELocal x idx p) | (Yes Refl) = ELocal x (S idx) (LaterMatch p)
+    weakenExpr n (ELocal x idx p) | (No contra) = ELocal x (idx) (LaterNotMatch p)
+  weakenExpr n (ELet x y z) = ELet x (weakenExpr n y) (weakenInner {mss=[]} {n=n} z)
+  weakenExpr n (EPi x y z) = let z' = weakenInner {mss=[]} {n=n} z in
+                                 EPi x (weakenExpr n y) z'
+  weakenExpr n (ELam x y z) = let z' = weakenInner {mss=[]} {n=n} z in
+                                  ELam x (weakenExpr n y) z'
+  weakenExpr n (EApp x y) = EApp (weakenExpr n x) (weakenExpr n y)
+  weakenExpr n EType = EType
+  weakenExpr n EBool = EBool
+  weakenExpr n (EBoolLit x) = EBoolLit x
+
+  weakenLocs : {n:_} -> LocalEnv ns ms -> LocalEnv (n :: ns) ms
+  weakenLocs EmptyLE = EmptyLE
+  weakenLocs (AppendLE x y) = AppendLE (weaken' x) (weakenLocs y)
+
+  weakenEnv : {n:_} -> Val ns -> Env Val ns -> Env Val (n :: ns) -- TODO not sure about this, or weakenClosure
+  weakenEnv v [] = [v]
+  weakenEnv v (a :: x) = v :: (a :: x)
+
+  weakenInner : {x,n,mss : _} -> Expr (x :: (mss ++ ns)) () -> Expr (x :: (mss ++ (n :: ns))) ()
+  weakenInner (ELocal y idx p) with (decEq x y)
+    weakenInner (ELocal y idx p) | (Yes prf) = ELocal x (S idx) ?bar
+    weakenInner (ELocal y idx p) | (No contra) = ELocal x (idx) ?foo
+  weakenInner (ELet y z w) = ELet y (weakenInner z) (weakenInner {mss=(x::mss)} w)
+  weakenInner (EPi y z w) = EPi y (weakenInner z) (weakenInner {mss=(x::mss)} w)
+  weakenInner (ELam y z w) = ELam y (weakenInner z) (weakenInner {mss=(x::mss)} w)
+  weakenInner (EApp y z) = EApp (weakenInner y) (weakenInner z)
+  weakenInner EType = EType
+  weakenInner EBool = EBool
+  weakenInner (EBoolLit y) = EBoolLit y
+
+  weakenClosure : {n:_} -> Val ns -> Closure x ns -> Closure x (n :: ns)
+  weakenClosure ty (MkClosure x locs env body) = MkClosure x (weakenLocs locs) (weakenEnv ty env) (weakenInner {n} body)
+
+  weakenNeutral : {n:_} -> Neutral ns -> Neutral (n :: ns)
+  weakenNeutral (NVar x) = NVar x
+  weakenNeutral (NApp x y) = NApp (weakenNeutral x) (weakenNormal y)
+
+  weakenNormal : {n:_} -> Normal ns -> Normal (n :: ns)
+  weakenNormal (MkNormal x y) = MkNormal (weaken' x) (weaken' y)
+
+  weaken' : {n:_} -> Val ns -> Val (n :: ns)
+  weaken' (VPi x ty z) = VPi x (weaken' ty) (weakenClosure ty z)
+  weaken' (VLam x ty z) = VLam x (weaken' ty) (weakenClosure ty z)
+  weaken' VType = VType
+  weaken' VBool = VBool
+  weaken' (VBoolLit x) = VBoolLit x
+  weaken' (VNeutral x y) = VNeutral (weaken' x) (weakenNeutral y)
 
 mutual
+  {-
   envLookup : (n : Name) -> (idx : Nat) -> (prf : IsVar n idx ns) -> (env : Env Val ns) -> Val ns
   envLookup n Z First (x :: y) = weaken' x
   envLookup n Z (LaterNotMatch p) (y :: z) = weaken' (envLookup n Z p z)
   envLookup n (S k) (LaterMatch p) (y :: z) = weaken' (envLookup n k p z)
   envLookup n (S k) (LaterNotMatch p) (y :: z) = weaken' (envLookup n (S k) p z)
+  -}
 
-  ll : {ns,ms : List Name} -> IsVar n idx (ms ++ ns) -> LocalEnv ns ms -> Env Val ns -> Val ns
+  ll : {n,ns,ms : _} -> IsVar n idx (ms ++ ns) -> LocalEnv ns ms -> Env Val ns -> Val ns
   ll {ms = []} First EmptyLE (a :: ns) = weaken' a
   ll {ms = []} (LaterMatch p) EmptyLE (_ :: env) = weaken' (ll p EmptyLE env)
   ll {ms = []} (LaterNotMatch p) EmptyLE (_ :: env) = weaken' (ll p EmptyLE env)
@@ -184,21 +245,6 @@ mutual
     -- eval env' (AppendLE arg locs') (weakenExpr n body)
   doApply f a = ?doApply_rhs_11
 
-  weakenInner : {ns : _} -> (x : _) -> Expr (n :: ns) () -> Expr (n :: (x :: ns)) ()
-
-  weakenExpr : {ns : _} -> (n : _) -> Expr ns () -> Expr (n :: ns) ()
-  weakenExpr n (ELocal x idx p) with (decEq n x)
-    weakenExpr x (ELocal x idx p) | (Yes Refl) = ELocal x (S idx) (LaterMatch p)
-    weakenExpr n (ELocal x idx p) | (No contra) = ELocal x (idx) (LaterNotMatch p)
-  weakenExpr n (ELet x y z) = ELet x (weakenExpr n y) (weakenInner n z)
-  weakenExpr n (EPi x y z) = let z' = weakenInner n z in
-                                 EPi x (weakenExpr n y) z'
-  weakenExpr n (ELam x y z) = let z' = weakenInner n z in
-                                  ELam x (weakenExpr n y) z'
-  weakenExpr n (EApp x y) = EApp (weakenExpr n x) (weakenExpr n y)
-  weakenExpr n EType = EType
-  weakenExpr n EBool = EBool
-  weakenExpr n (EBoolLit x) = EBoolLit x
 
 ex1 : Expr [] ()
 ex1 = ELet (MkName "x") (EBoolLit True) (ELocal (MkName "x") 0 First)
