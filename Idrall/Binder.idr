@@ -154,10 +154,10 @@ mutual
   weakenExpr n (ELocal x idx p) with (decEq n x)
     weakenExpr x (ELocal x idx p) | (Yes Refl) = ELocal x (S idx) (LaterMatch p)
     weakenExpr n (ELocal x idx p) | (No contra) = ELocal x (idx) (LaterNotMatch p)
-  weakenExpr n (ELet x y z) = ELet x (weakenExpr n y) (weakenInner {mss=[]} {n=n} z)
-  weakenExpr n (EPi x y z) = let z' = weakenInner {mss=[]} {n=n} z in
+  weakenExpr n (ELet x y z) = ELet x (weakenExpr n y) (weakenInner {mss=[x]} {n=n} z)
+  weakenExpr n (EPi x y z) = let z' = weakenInner {mss=[x]} {n=n} z in
                                  EPi x (weakenExpr n y) z'
-  weakenExpr n (ELam x y z) = let z' = weakenInner {mss=[]} {n=n} z in
+  weakenExpr n (ELam x y z) = let z' = weakenInner {mss=[x]} {n=n} z in
                                   ELam x (weakenExpr n y) z'
   weakenExpr n (EApp x y) = EApp (weakenExpr n x) (weakenExpr n y)
   weakenExpr n EType = EType
@@ -172,20 +172,25 @@ mutual
   weakenEnv v [] = [v]
   weakenEnv v (a :: x) = v :: (a :: x)
 
-  weakenInner : {x,n,mss : _} -> Expr (x :: (mss ++ ns)) () -> Expr (x :: (mss ++ (n :: ns))) ()
-  weakenInner (ELocal y idx p) with (decEq x y)
-    weakenInner (ELocal y idx p) | (Yes prf) = ELocal x (S idx) ?bar
-    weakenInner (ELocal y idx p) | (No contra) = ELocal x (idx) ?foo
-  weakenInner (ELet y z w) = ELet y (weakenInner z) (weakenInner {mss=(x::mss)} w)
-  weakenInner (EPi y z w) = EPi y (weakenInner z) (weakenInner {mss=(x::mss)} w)
-  weakenInner (ELam y z w) = ELam y (weakenInner z) (weakenInner {mss=(x::mss)} w)
+  -- TODO code gen made this, double check
+  weakenVar : (mss : List Name) -> IsVar y idx (mss ++ ns) -> IsVar y idx (mss ++ (n :: ns))
+  weakenVar [] x = LaterNotMatch x
+  weakenVar (_ :: xs) First = First
+  weakenVar (_ :: xs) (LaterMatch x) = LaterMatch (weakenVar xs x)
+  weakenVar (y :: xs) (LaterNotMatch x) = LaterNotMatch (weakenVar xs x)
+
+  weakenInner : {n,mss : _} -> Expr (mss ++ ns) () -> Expr (mss ++ (n :: ns)) ()
+  weakenInner (ELocal y idx p) = ELocal y idx (weakenVar mss p)
+  weakenInner (ELet y z w) = ELet y (weakenInner z) (weakenInner {mss=(y::mss)} w)
+  weakenInner (EPi y z w) = EPi y (weakenInner z) (weakenInner {mss=(y::mss)} w)
+  weakenInner (ELam y z w) = ELam y (weakenInner z) (weakenInner {mss=(y::mss)} w)
   weakenInner (EApp y z) = EApp (weakenInner y) (weakenInner z)
   weakenInner EType = EType
   weakenInner EBool = EBool
   weakenInner (EBoolLit y) = EBoolLit y
 
-  weakenClosure : {n:_} -> Val ns -> Closure x ns -> Closure x (n :: ns)
-  weakenClosure ty (MkClosure x locs env body) = MkClosure x (weakenLocs locs) (weakenEnv ty env) (weakenInner {n} body)
+  weakenClosure : {x,n:_} -> Val ns -> Closure x ns -> Closure x (n :: ns)
+  weakenClosure ty (MkClosure {mss} x locs env body) = MkClosure x (weakenLocs locs) (weakenEnv ty env) (weakenInner {mss=(x::mss)} body)
 
   weakenNeutral : {n:_} -> Neutral ns -> Neutral (n :: ns)
   weakenNeutral (NVar x) = NVar x
