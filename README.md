@@ -8,7 +8,9 @@ Parse, evaluate, check/infer types of Dhall expressions.
 
 Very much a work in progress, with many thing missing. The plan is to make an end to end compiler for a small goofy subset of Dhall, and gradually and features.￼
 
-## Missing features
+## Features
+
+Features marked with a tick should work for parsing, type checking and evaluation.
 
 - [x] Fuctions
 - [x] Types
@@ -31,6 +33,7 @@ Very much a work in progress, with many thing missing. The plan is to make an en
 - Builtins
   - [x] `Natural/isZero`
   - [x] `List/head`
+  - [x] `Integer/negate`
   - [ ] Everything else
 - Imports
   - [x] local files
@@ -40,8 +43,6 @@ Very much a work in progress, with many thing missing. The plan is to make an en
 - Anything to do with caching
 - CBOR representation
 - The rest of this list
-
-Right now you can basically just do you type annotations, create naturals/lists/bools, assigned them with let, and create functions.
 
 ## Dependencies
 
@@ -97,6 +98,7 @@ As an example, the `List` type was added via [#1](https://github.com/alexhumphre
 ## Future work
 
 - Add the things from the missing list above
-- ￼Upgrade to Idris2￼ (need to see what's up with Lightyear for this)
+- Upgrade to Idris2￼ (will need to swap Lightyear for `Data/String/Parser` in contrib)
 - Improved parsing (Not really sure what I'm doing here)￼
 - Think about what api/types to expose so as to make this as nice as possible to use
+- Scope checking as found in [Tiny Idris](https://github.com/edwinb/SPLV20)
