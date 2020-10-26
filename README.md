@@ -40,9 +40,9 @@ Features marked with a tick should work for parsing, type checking and evaluatio
   - [ ] Env
   - [ ] http
 - [ ] `x@1` style variables
-- Anything to do with caching
-- CBOR representation
-- The rest of this list
+- [ ] Anything to do with caching
+- [ ] CBOR representation
+- [ ] The rest of this list
 
 ## Dependencies
 
