@@ -79,6 +79,10 @@ mutual
     = aEquivHelper i ns1 x ns2 y
   aEquivHelper i ns1 (ESome x) ns2 (ESome y)
     = aEquivHelper i ns1 x ns2 y
+  aEquivHelper i ns1 (EUnion x) ns2 (EUnion y) =
+    let xs = toList x
+        ys = toList y in
+    aEquivUnion i ns1 xs ns2 ys
   aEquivHelper _ _ _ _ _ = False
   -- TODO check if assert/equivalent should be in here
 
@@ -90,13 +94,25 @@ mutual
   aEquivMaybe _ _ _ _ _ = False
 
   aEquivList : (i : Integer) ->
-                Namespace -> List (Expr Void) ->
-                Namespace -> List (Expr Void) -> Bool
+               Namespace -> List (Expr Void) ->
+               Namespace -> List (Expr Void) -> Bool
   aEquivList i ns1 [] ns2 [] = True
   aEquivList i ns1 (x :: xs) ns2 (y :: ys) =
     aEquivHelper i ns1 x ns2 y &&
     aEquivList i ns1 xs ns2 ys
   aEquivList i ns1 _ ns2 _ = False
+
+  aEquivUnion : (i : Integer) ->
+                Namespace -> List (String, (Maybe (Expr Void))) ->
+                Namespace -> List (String, (Maybe (Expr Void))) -> Bool
+  aEquivUnion i ns1 [] ns2 [] = True
+  aEquivUnion i ns1 ((k, Nothing) :: xs) ns2 ((k', Nothing) :: ys) =
+    k == k' && aEquivUnion i ns1 xs ns2 ys
+  aEquivUnion i ns1 ((k, Just v) :: xs) ns2 ((k', Just v') :: ys) =
+    k == k' &&
+    aEquivHelper i ns1 v ns2 v' &&
+    aEquivUnion i ns1 xs ns2 ys
+  aEquivUnion i ns1 _ ns2 _ = False
 
 aEquiv : Expr Void -> Expr Void -> Bool
 aEquiv e1 e2 = aEquivHelper 0 [] e1 [] e2
@@ -225,6 +241,14 @@ mutual
   eval env (EOptional a) = Right (VOptional !(eval env a))
   eval env (ENone a) = Right (VNone !(eval env a))
   eval env (ESome a) = Right (VSome !(eval env a))
+  eval env (EUnion x) =
+    let xs = toList x in
+    do xs' <- traverse go xs
+       Right (VUnion (fromList xs'))
+    where
+      go : (String, (Maybe (Expr Void))) -> Either Error (String, (Maybe Value))
+      go x@(k, Nothing) = Right x
+      go (k, Just v) = Right (k, Just !(eval env v))
   eval env (EEmbed (Raw x)) = absurd x
   eval env (EEmbed (Resolved x)) = eval initEnv x
 
@@ -364,7 +388,7 @@ mutual
     Right (EAssert x')
   readBackTyped ctx (VConst x) (VConst y) = Right (EConst y) -- TODO check this
   readBackTyped ctx (VConst CType) VBool = Right EBool
-  readBackTyped ctx (VConst CType) VNatural = Right ENatural
+  readBackTyped ctx (VConst CType) VNatural = Right ENatural -- TODO do any of these need (VConst CType)?
   readBackTyped ctx (VConst CType) VInteger = Right EInteger
   readBackTyped ctx VBool (VBoolLit x) = Right (EBoolLit x)
   readBackTyped ctx VInteger (VIntegerLit x) = Right (EIntegerLit x)
@@ -399,7 +423,15 @@ mutual
   readBackTyped ctx (VOptional ty) (VSome a) = do
     a' <- readBackTyped ctx ty a
     Right (ESome a')
+  readBackTyped ctx (VConst _) (VUnion a) = do
+    a' <- traverse (readBackUnion ctx) (toList a)
+    Right (EUnion (fromList a'))
   readBackTyped _ t v = Left (ReadBackError ("error reading back: " ++ (show v) ++ " of type: " ++ (show t)))
+
+  readBackUnion : Ctx -> (String, Maybe Value) -> Either Error (String, Maybe (Expr Void))
+  readBackUnion ctx (k, Nothing) = Right (k, Nothing)
+  readBackUnion ctx (k, Just v) = Right (k, Just !(readBackTyped ctx (VConst CType) v))
+    -- TODO is (VConst CType) always right here ^^^? Looks like rBT ignores the Ty param when reading back VConsts so maybe?
 
   covering
   export
@@ -438,6 +470,8 @@ isEquivalent : Ctx -> Value -> Either Error (Value, Value)
 isEquivalent ctx (VEquivalent x y) = Right (x, y)
 isEquivalent ctx other = unexpected ctx "Not Equivalent" other
 
+isTermLit : Ctx -> Value -> Either Error ()
+
 isTerm : Ctx -> Value -> Either Error ()
 isTerm _ (VPi _ _) = Right ()
 isTerm _ (VBool) = Right ()
@@ -448,7 +482,25 @@ isTerm _ (VOptional _) = Right ()
 isTerm ctx (VNeutral x _) = isTerm ctx x
 isTerm ctx other = unexpected ctx "Not a term" other
 
-isTypeKindSort : Ctx -> Value -> Either Error () -- TODO somehow generalise this an isTerm
+isTypeKind : Ctx -> Value -> Either Error ()
+isTypeKind _ (VConst CType) = Right ()
+isTypeKind _ (VConst Kind) = Right ()
+isTypeKind ctx (VNeutral x _) = isTypeKind ctx x
+isTypeKind ctx other = unexpected ctx "Not a type or kind" other
+
+isTermTypeKind : Ctx -> Value -> Either Error ()
+isTermTypeKind _ (VPi _ _) = Right ()
+isTermTypeKind _ (VBool) = Right ()
+isTermTypeKind _ (VNatural) = Right ()
+isTermTypeKind _ (VInteger) = Right ()
+isTermTypeKind _ (VList _) = Right ()
+isTermTypeKind _ (VOptional _) = Right ()
+isTermTypeKind _ (VConst CType) = Right ()
+isTermTypeKind _ (VConst Kind) = Right ()
+isTermTypeKind ctx (VNeutral x _) = isTerm ctx x
+isTermTypeKind ctx x = (isTypeKind ctx x)
+
+isTypeKindSort : Ctx -> Value -> Either Error () -- TODO add Alternative Either
 isTypeKindSort _ (VConst CType) = Right ()
 isTypeKindSort _ (VConst Kind) = Right ()
 isTypeKindSort _ (VConst Sort) = Right ()
@@ -633,5 +685,23 @@ mutual
     xTy' <- synth ctx x
     isTerm ctx xTy'
     Right (VOptional xTy')
+  synth ctx (EUnion x) =
+    let kvs = toList x in do -- TODO use SortedMap Traversable with idris2
+      types <- traverse synthUnion kvs
+      ty <- foldl getHighestType (Right (VConst CType)) (map snd types)
+      Right ty
+    where
+      synthUnion : (String, Maybe (Expr Void)) -> Either Error (String, Maybe Ty)
+      synthUnion (k, Nothing) = Right (k, Nothing)
+      synthUnion (k, Just b) = do
+        b' <- synth ctx b
+        isTypeKindSort ctx b'
+        Right (k, Just b')
+      getHighestType : (acc : Either Error Ty) -> Maybe Ty -> Either Error Ty
+      getHighestType e@(Left _) _ = e
+      getHighestType (Right (VConst CType)) (Just (VConst Kind)) = Right (VConst Kind)
+      getHighestType (Right _) (Just (VConst Sort)) = Right (VConst Sort)
+      getHighestType acc@(Right _) _ = acc -- relying on acc starting as (VConst CType)
+
   synth ctx (EEmbed (Raw x)) = absurd x
   synth ctx (EEmbed (Resolved x)) = synth initCtx x -- Using initCtx here to ensure fresh context.

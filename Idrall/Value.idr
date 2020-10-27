@@ -53,6 +53,7 @@ mutual
     | VOptional Ty
     | VNone Ty
     | VSome Ty
+    | VUnion (SortedMap String (Maybe (Value)))
     | VNeutral Ty Neutral
 
   public export
@@ -89,6 +90,7 @@ mutual
     show (VOptional a) = "(VOptional " ++ show a ++ ")"
     show (VNone a) = "(VNone " ++ show a ++ ")"
     show (VSome a) = "(VSome " ++ show a ++ ")"
+    show (VUnion a) = "(VUnion " ++ show a ++ ")"
     show (VNeutral x y) = "(VNeutral " ++ show x ++ " " ++ show y ++ ")"
 
   public export
