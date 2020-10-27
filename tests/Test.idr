@@ -29,6 +29,9 @@ resolveExpr x = let xRes = resolve [] Nothing x in
 exprToValue : Expr Void -> IO (Either () Value)
 exprToValue e = eitherIO (eval initEnv e)
 
+synthTypeFromExpr : Expr Void -> IO (Either () Value)
+synthTypeFromExpr e = eitherIO (synth initCtx e)
+
 checkExpr : Expr Void -> Value -> IO ()
 checkExpr x y
   = do res <- eitherIO (check initCtx x y)
@@ -92,7 +95,7 @@ testAll = do
       putStrLn "done"
 
 expectPass : List String
-expectPass = ["AssertTrivial", "Bool", "Function", "Natural", "True", "NaturalIsZero", "NaturalLiteral", "Let", "FunctionTypeTermTerm", "FunctionApplication", "Equivalence", "FunctionDependentType1", "List", "ListLiteralOne", "ListLiteralEmpty", "ListHead", "OperatorListConcatenate", "Optional", "None", "SomeTrue", "Integer", "IntegerLiteral", "IntegerNegate"]
+expectPass = ["AssertTrivial", "Bool", "Function", "Natural", "True", "NaturalIsZero", "NaturalLiteral", "Let", "FunctionTypeTermTerm", "FunctionApplication", "Equivalence", "FunctionDependentType1", "List", "ListLiteralOne", "ListLiteralEmpty", "ListHead", "OperatorListConcatenate", "Optional", "None", "SomeTrue", "Integer", "IntegerLiteral", "IntegerNegate", "UnionTypeType", "UnionTypeOne", "UnionTypeMixedKinds4", "UnionTypeMixedKinds3", "UnionTypeMixedKinds2", "UnionTypeMixedKinds1", "UnionTypeKind", "UnionTypeEmpty" ]
 
 testGood : IO ()
 testGood
@@ -119,5 +122,10 @@ roundTripEval str = do
   putStrLn (show aVal)
 
 roundTripSynth : String -> IO ()
+roundTripSynth str = do
+  Right aExpr <- stringToExpr str | Left x => do putStrLn ("Parse error: " ++ str)
+  Right aRes <- resolveExpr aExpr | Left x => do putStrLn ("Resolve error: " ++ (show aExpr))
+  Right aVal <- synthTypeFromExpr aRes | Left x => putStrLn ("synth error: " ++ (show aRes))
+  putStrLn (show aVal)
 
 roundTripCheck : String -> String -> IO ()

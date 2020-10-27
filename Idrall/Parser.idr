@@ -134,6 +134,28 @@ table = [ [ Infix appl AssocLeft]
         , [ Infix (do token "#"; pure EListAppend) AssocLeft]]
 
 mutual
+  unionSimpleElem : Parser (String, Maybe (Expr ImportStatement))
+  unionSimpleElem = do
+    k <- identity
+    pure (k, Nothing)
+
+  unionComplexElem : Parser (String, Maybe (Expr ImportStatement))
+  unionComplexElem = do
+    k <- identity
+    token ":"
+    e <- expr
+    pure (k, Just e)
+
+  unionElem : Parser (String, Maybe (Expr ImportStatement))
+  unionElem = unionComplexElem <|> unionSimpleElem
+
+  union : Parser (Expr ImportStatement)
+  union = do
+    token "<"
+    xs <- unionElem `sepBy` (token "|")
+    token ">"
+    pure (EUnion (fromList xs))
+
   letExpr : Parser (Expr ImportStatement)
   letExpr = token "let" *> do
     i <- identity
@@ -244,6 +266,7 @@ mutual
      integer <|> integerLit <|>
      type <|> kind <|> sort <|>
      pathTerm <|> esome <|>
+     union <|>
      var <|>| list <|>| parens expr)
     spaces
     pure i

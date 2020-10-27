@@ -1,5 +1,7 @@
 import Idrall.Path
 
+import public Data.SortedMap
+
 public export
 Name : Type
 Name = String
@@ -86,6 +88,7 @@ mutual
     | EOptional (Expr a)
     | ENone (Expr a)
     | ESome (Expr a)
+    | EUnion (SortedMap String (Maybe (Expr a)))
     | EEmbed (Import a)
 
 export
@@ -128,6 +131,7 @@ mutual
     show (EOptional x) = "(EOptional " ++ show x ++ ")"
     show (ENone x) = "(ENone " ++ show x ++ ")"
     show (ESome x) = "(ESome " ++ show x ++ ")"
+    show (EUnion x) = "(EUnion " ++ show x ++ ")"
     show (EEmbed x) = "(EEmbed " ++ show x ++ ")"
 
   -- TODO add Traversible for Expr a

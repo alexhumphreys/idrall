@@ -52,6 +52,7 @@ mutual
       resolve (normaliseFilePath p :: h) (Just p) expr
 
   export
+  covering
   resolve : (history : List FilePath) -> Maybe FilePath -> Expr ImportStatement -> IOEither Error (Expr Void)
   resolve h p e@(EVar x) = pure e
   resolve h p e@(EConst x) = pure e
@@ -130,9 +131,24 @@ mutual
   resolve h p (ESome x) = do
     x' <- resolve h p x
     pure (ESome x')
+  resolve h p (EUnion x) =
+    let kv = toList x in do
+      kv' <- resolveUnion h p kv
+      pure (EUnion (fromList kv'))
   resolve h p (EEmbed (Raw (LocalFile x))) = resolveLocalFile h p x
   resolve h p (EEmbed (Raw (EnvVar x))) = MkIOEither (pure (Left (ErrorMessage "TODO not implemented")))
   resolve h p (EEmbed (Resolved x)) = MkIOEither (pure (Left (ErrorMessage "Already resolved")))
+
+  resolveUnion :  (history : List FilePath) -- TODO try use traverse instead?
+               -> Maybe FilePath
+               -> List (String, Maybe (Expr ImportStatement))
+               -> IOEither Error (List (String, Maybe (Expr Void)))
+  resolveUnion h p [] = MkIOEither (pure (Right []))
+  resolveUnion h p ((k,v) :: xs) = do
+    rest <- resolveUnion h p xs
+    case v of
+         Nothing => MkIOEither (pure (Right ((k, Nothing) :: rest)))
+         (Just x) => MkIOEither (pure (Right ((k, Just (!(resolve h p x))) :: rest)))
 
   resolveList :  (history : List FilePath)
               -> Maybe FilePath
