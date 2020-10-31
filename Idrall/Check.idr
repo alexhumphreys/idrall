@@ -83,7 +83,9 @@ mutual
     let xs = toList x
         ys = toList y in
     aEquivUnion i ns1 xs ns2 ys
-  aEquivHelper i ns1 (EField x k) ns2 (EField y j) = ?aEquivField
+  aEquivHelper i ns1 (EField x k) ns2 (EField y j) =
+    aEquivHelper i ns1 x ns2 y &&
+    k == j
   aEquivHelper _ _ _ _ _ = False
   -- TODO check if assert/equivalent should be in here
 
@@ -155,6 +157,12 @@ mkEnv ((x, e) :: ctx) =
         (Def _ v) => (x, v) :: env
         (IsA t) => let v = VNeutral t (NVar x) in
                        (x, v) :: env)
+
+-- TODO check is there some FP magic for this
+mapUnion : (a -> Either e b) -> (k, Maybe a) -> Either e (k, (Maybe b))
+mapUnion f (k, Just x) =
+  Right (k, Just !(f x))
+mapUnion f x@(k, Nothing) = Right x
 
 -- evaluator
 mutual
@@ -244,13 +252,17 @@ mutual
   eval env (ESome a) = Right (VSome !(eval env a))
   eval env (EUnion x) =
     let xs = toList x in
-    do xs' <- traverse go xs
+    do xs' <- traverse (mapUnion (eval env)) xs
        Right (VUnion (fromList xs'))
-    where
-      go : (String, (Maybe (Expr Void))) -> Either Error (String, (Maybe Value))
-      go x@(k, Nothing) = Right x
-      go (k, Just v) = Right (k, Just !(eval env v))
-  eval env (EField x y) = ?evalField
+  eval env (EField (EUnion x) k) =
+    let xs = toList x in do
+      x' <- traverse (mapUnion (eval env)) xs
+      case lookup k x' of
+           Nothing => ?error
+           (Just Nothing) => Right (VInject (fromList x') k Nothing)
+           (Just (Just v)) => Right (VInject (fromList x') k (Just v))
+  eval env (EField _ k) = do
+    ?error
   eval env (EEmbed (Raw x)) = absurd x
   eval env (EEmbed (Resolved x)) = eval initEnv x
 
@@ -705,6 +717,13 @@ mutual
       getHighestType (Right (VConst CType)) (Just (VConst Kind)) = Right (VConst Kind)
       getHighestType (Right _) (Just (VConst Sort)) = Right (VConst Sort)
       getHighestType acc@(Right _) _ = acc -- relying on acc starting as (VConst CType)
-  synth ctx (EField x k) = ?synthField
+  synth ctx (EField u@(EUnion x) k) = do
+    synth ctx u
+    u' <- eval (mkEnv ctx) u
+    case lookup k x of
+         Nothing => ?error3
+         (Just Nothing) => Right u'
+         (Just (Just x)) => ?vPrimFun
+  synth ctx (EField _ k) = ?error2
   synth ctx (EEmbed (Raw x)) = absurd x
   synth ctx (EEmbed (Resolved x)) = synth initCtx x -- Using initCtx here to ensure fresh context.
