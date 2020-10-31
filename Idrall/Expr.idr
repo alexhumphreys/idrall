@@ -89,6 +89,7 @@ mutual
     | ENone (Expr a)
     | ESome (Expr a)
     | EUnion (SortedMap String (Maybe (Expr a)))
+    | EField (Expr a) String
     | EEmbed (Import a)
 
 export
@@ -132,6 +133,7 @@ mutual
     show (ENone x) = "(ENone " ++ show x ++ ")"
     show (ESome x) = "(ESome " ++ show x ++ ")"
     show (EUnion x) = "(EUnion " ++ show x ++ ")"
+    show (EField x y) = "(EField " ++ show x ++ " " ++ show y ++ ")"
     show (EEmbed x) = "(EEmbed " ++ show x ++ ")"
 
   -- TODO add Traversible for Expr a

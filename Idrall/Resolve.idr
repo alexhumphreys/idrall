@@ -135,6 +135,8 @@ mutual
     let kv = toList x in do
       kv' <- resolveUnion h p kv
       pure (EUnion (fromList kv'))
+  resolve h p (EField x y) = do
+    pure (EField !(resolve h p x) y)
   resolve h p (EEmbed (Raw (LocalFile x))) = resolveLocalFile h p x
   resolve h p (EEmbed (Raw (EnvVar x))) = MkIOEither (pure (Left (ErrorMessage "TODO not implemented")))
   resolve h p (EEmbed (Resolved x)) = MkIOEither (pure (Left (ErrorMessage "Already resolved")))
