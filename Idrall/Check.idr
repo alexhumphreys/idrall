@@ -83,6 +83,7 @@ mutual
     let xs = toList x
         ys = toList y in
     aEquivUnion i ns1 xs ns2 ys
+  aEquivHelper i ns1 (EField x k) ns2 (EField y j) = ?aEquivField
   aEquivHelper _ _ _ _ _ = False
   -- TODO check if assert/equivalent should be in here
 
@@ -249,6 +250,7 @@ mutual
       go : (String, (Maybe (Expr Void))) -> Either Error (String, (Maybe Value))
       go x@(k, Nothing) = Right x
       go (k, Just v) = Right (k, Just !(eval env v))
+  eval env (EField x y) = ?evalField
   eval env (EEmbed (Raw x)) = absurd x
   eval env (EEmbed (Resolved x)) = eval initEnv x
 
@@ -426,6 +428,7 @@ mutual
   readBackTyped ctx (VConst _) (VUnion a) = do
     a' <- traverse (readBackUnion ctx) (toList a)
     Right (EUnion (fromList a'))
+  readBackTyped ctx (VUnion _) (VInject a k b) = do ?rBTInject
   readBackTyped _ t v = Left (ReadBackError ("error reading back: " ++ (show v) ++ " of type: " ++ (show t)))
 
   readBackUnion : Ctx -> (String, Maybe Value) -> Either Error (String, Maybe (Expr Void))
@@ -702,6 +705,6 @@ mutual
       getHighestType (Right (VConst CType)) (Just (VConst Kind)) = Right (VConst Kind)
       getHighestType (Right _) (Just (VConst Sort)) = Right (VConst Sort)
       getHighestType acc@(Right _) _ = acc -- relying on acc starting as (VConst CType)
-
+  synth ctx (EField x k) = ?synthField
   synth ctx (EEmbed (Raw x)) = absurd x
   synth ctx (EEmbed (Resolved x)) = synth initCtx x -- Using initCtx here to ensure fresh context.
