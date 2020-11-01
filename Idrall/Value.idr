@@ -89,7 +89,7 @@ mutual
   public export
   Show Value where
     show (VLambda x y) = "(VLambda " ++ show x ++ " " ++ show y ++ ")"
-    show (VHLam i x) = "(VHLam " ++ show i ++ " " ++ "TODO find some way to show" ++ ")"
+    show (VHLam i x) = "(VHLam " ++ show i ++ " " ++ "TODO find some way to show VHLam arg" ++ ")"
     show (VPi x y) = "(VPi " ++ show x ++ " " ++ show y ++ ")"
     show (VEquivalent x y) = "(VEquivalent " ++ show x ++ " " ++ show y ++ ")"
     show (VAssert x) = "(VEquivalent " ++ show x ++ ")"
