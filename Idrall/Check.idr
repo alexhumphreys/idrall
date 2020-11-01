@@ -392,7 +392,7 @@ mutual
     do ty' <- evalClosure ran xVal
        v' <- doApply fun xVal
        body <- readBackTyped ctx' ty' v'
-       eTy <- readBackTyped ctx' (VConst CType) ty' -- TODO check this
+       eTy <- readBackTyped ctx (VConst CType) ty'
        Right (ELam x eTy body)
   readBackTyped ctx ty (VEquivalent x y) = do -- TODO not sure is `ty` correct
     x' <- readBackTyped ctx ty x
