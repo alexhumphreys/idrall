@@ -260,7 +260,7 @@ mutual
       case lookup k x' of
            Nothing => ?error
            (Just Nothing) => Right (VInject (fromList x') k Nothing)
-           (Just (Just v)) => Right (VInject (fromList x') k (Just v))
+           (Just (Just _)) => Right (VPrim $ \u => VInject (fromList x') k (Just u))
   eval env (EField _ k) = do
     ?error
   eval env (EEmbed (Raw x)) = absurd x
@@ -414,6 +414,11 @@ mutual
        b' <- evalClosure bT (VNeutral aT (NVar x))
        b <- readBackTyped (extendCtx ctx x aT) (VConst CType) b'
        Right (EPi x a b)
+  readBackTyped ctx (VPi aT bT) (VHLam i f) =
+    let x = freshen (ctxNames ctx) (closureName bT) in do
+      b' <- evalClosure bT (VNeutral aT (NVar x))
+      case i of
+           Prim => readBackTyped ctx b' (f VPrimVar) -- TODO double check b' here
   readBackTyped ctx (VConst CType) (VList a) = do
     a' <- readBackTyped ctx (VConst CType) a
     Right (EList a')
