@@ -40,6 +40,7 @@ mutual
     = VLambda Ty Closure
     | VHLam HLamInfo (Value -> Value)
     | VPi Ty Closure
+    | VHPi String Value (Value -> Value)
     | VEquivalent Value Value
     | VAssert Value
     | VConst U
@@ -71,6 +72,10 @@ mutual
   VPrim f = VHLam Prim f
 
   public export
+  vFun : Value -> Value -> Value
+  vFun a b = VHPi "_" a (\_ => b)
+
+  public export
   data Neutral
     = NVar Name
     | NNaturalIsZero Neutral
@@ -91,6 +96,7 @@ mutual
     show (VLambda x y) = "(VLambda " ++ show x ++ " " ++ show y ++ ")"
     show (VHLam i x) = "(VHLam " ++ show i ++ " " ++ "TODO find some way to show VHLam arg" ++ ")"
     show (VPi x y) = "(VPi " ++ show x ++ " " ++ show y ++ ")"
+    show (VHPi i x y) = "(VHPi " ++ show i ++ " " ++ show x ++ "TODO find some way to show VHPi arg" ++ ")"
     show (VEquivalent x y) = "(VEquivalent " ++ show x ++ " " ++ show y ++ ")"
     show (VAssert x) = "(VEquivalent " ++ show x ++ ")"
     show (VConst x) = "(VConst " ++ show x ++ ")"
