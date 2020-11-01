@@ -38,6 +38,7 @@ mutual
   public export
   data Value
     = VLambda Ty Closure
+    | VHLam HLamInfo (Value -> Value)
     | VPi Ty Closure
     | VEquivalent Value Value
     | VAssert Value
@@ -55,7 +56,19 @@ mutual
     | VSome Ty
     | VUnion (SortedMap String (Maybe Value))
     | VInject (SortedMap String (Maybe Value)) String (Maybe Value)
+    | VPrimVar
     | VNeutral Ty Neutral
+
+  public export
+  data HLamInfo
+    = Prim
+
+  Show HLamInfo where
+    show Prim = "Prim"
+
+  public export
+  VPrim : (Value -> Value) -> Value
+  VPrim f = VHLam Prim f
 
   public export
   data Neutral
@@ -76,6 +89,7 @@ mutual
   public export
   Show Value where
     show (VLambda x y) = "(VLambda " ++ show x ++ " " ++ show y ++ ")"
+    show (VHLam i x) = "(VHLam " ++ show i ++ " " ++ "TODO find some way to show" ++ ")"
     show (VPi x y) = "(VPi " ++ show x ++ " " ++ show y ++ ")"
     show (VEquivalent x y) = "(VEquivalent " ++ show x ++ " " ++ show y ++ ")"
     show (VAssert x) = "(VEquivalent " ++ show x ++ ")"
@@ -93,6 +107,7 @@ mutual
     show (VSome a) = "(VSome " ++ show a ++ ")"
     show (VUnion a) = "(VUnion " ++ show a ++ ")"
     show (VInject a k v) = "(VUnion " ++ show a ++ " " ++ show k ++ " " ++ show v ++ ")"
+    show (VPrimVar) = "VPrimVar"
     show (VNeutral x y) = "(VNeutral " ++ show x ++ " " ++ show y ++ ")"
 
   public export
