@@ -553,12 +553,12 @@ mutual
     = case ann of
            Nothing =>
               do xTy <- synth ctx v
-                 synth (extendCtx ctx x xTy) e
+                 synth (define ctx x xTy !(eval (mkEnv ctx) v)) e
            (Just ann') =>
               do check ctx ann' (VConst CType)
                  xTy <- eval (mkEnv ctx) ann'
                  check ctx v xTy
-                 synth (extendCtx ctx x xTy) e
+                 synth (define ctx x xTy !(eval (mkEnv ctx) v)) e
   synth ctx (EAnnot e t)
     = do tV <- synth ctx t
          check ctx e tV
