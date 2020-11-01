@@ -270,6 +270,7 @@ mutual
   doApply : Value -> Value -> Either Error Value
   doApply (VLambda ty closure) arg =
     evalClosure closure arg
+  doApply (VHLam i f) arg = Right (f arg)
   doApply (VNeutral (VPi dom ran) neu) arg =
     do arg' <- evalClosure ran arg
        Right (VNeutral arg' (NApp neu (Normal' dom arg)))
@@ -722,13 +723,22 @@ mutual
       getHighestType (Right (VConst CType)) (Just (VConst Kind)) = Right (VConst Kind)
       getHighestType (Right _) (Just (VConst Sort)) = Right (VConst Sort)
       getHighestType acc@(Right _) _ = acc -- relying on acc starting as (VConst CType)
-  synth ctx (EField u@(EUnion x) k) = do
-    synth ctx u
-    u' <- eval (mkEnv ctx) u
-    case lookup k x of
-         Nothing => ?error3
-         (Just Nothing) => Right u'
-         (Just (Just x)) => ?vPrimFun
+  synth ctx (EField u@(EUnion x) k) =
+    let xs = toList x in do
+      synth ctx u
+      xs' <- traverse (mapUnion (eval (mkEnv ctx))) xs
+      xsRb <- traverse (mapUnion (readBackTyped ctx (VConst CType))) xs'
+      case lookup k xs' of
+           Nothing => ?error3
+           (Just Nothing) => Right (VUnion (fromList xs'))
+           (Just (Just x')) =>
+              -- TODO making those closures by hand ain't fun, I can see why Andras used VHPi
+              -- not sure it works here since his type was `Value -> Value`, but here the type
+              -- would be `Value -> Either Error Value`
+              Right (VPi x'
+                      (MkClosure (mkEnv ctx) "sooo"
+                                 !(readBackTyped ctx (VConst CType) x') -- TODO check CType here
+                                 (EUnion (fromList xsRb))))
   synth ctx (EField _ k) = ?error2
   synth ctx (EEmbed (Raw x)) = absurd x
   synth ctx (EEmbed (Resolved x)) = synth initCtx x -- Using initCtx here to ensure fresh context.
