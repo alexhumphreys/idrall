@@ -415,6 +415,12 @@ mutual
        b' <- evalClosure bT (VNeutral aT (NVar x))
        b <- readBackTyped (extendCtx ctx x aT) (VConst CType) b'
        Right (EPi x a b)
+  readBackTyped ctx (VConst CType) (VHPi i ty f) =
+    let i' = freshen (ctxNames ctx) i in
+    do a <- readBackTyped ctx (VConst CType) ty
+       body' <- readBackTyped ctx (VConst CType) (f (VNeutral ty (NVar i')))
+       -- TODO not remotely sure about this ^^^, especially the CType
+       Right (EPi i' a body')
   readBackTyped ctx (VPi aT bT) (VHLam i f) =
     let x = freshen (ctxNames ctx) (closureName bT) in do
       b' <- evalClosure bT (VNeutral aT (NVar x))
@@ -732,13 +738,7 @@ mutual
            Nothing => ?error3
            (Just Nothing) => Right (VUnion (fromList xs'))
            (Just (Just x')) =>
-              -- TODO making those closures by hand ain't fun, I can see why Andras used VHPi
-              -- not sure it works here since his type was `Value -> Value`, but here the type
-              -- would be `Value -> Either Error Value`
-              Right (VPi x'
-                      (MkClosure (mkEnv ctx) "sooo"
-                                 !(readBackTyped ctx (VConst CType) x') -- TODO check CType here
-                                 (EUnion (fromList xsRb))))
+              Right (vFun x' (VUnion (fromList xs')))
   synth ctx (EField _ k) = ?error2
   synth ctx (EEmbed (Raw x)) = absurd x
   synth ctx (EEmbed (Resolved x)) = synth initCtx x -- Using initCtx here to ensure fresh context.
