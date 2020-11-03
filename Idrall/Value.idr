@@ -56,7 +56,7 @@ mutual
     | VNone Ty
     | VSome Ty
     | VUnion (SortedMap String (Maybe Value))
-    | VInject (SortedMap String (Maybe Value)) String (Maybe Value)
+    | VInject (SortedMap String (Maybe Value)) String (Maybe Value) -- TODO proof that key is in SM?
     | VPrimVar
     | VNeutral Ty Neutral
 

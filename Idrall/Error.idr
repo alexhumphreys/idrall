@@ -18,6 +18,9 @@ data Error
   | AssertError String
   | ListAppendError String
   | ListHeadError String
+  | FieldNotFoundError String
+  | FieldArgMismatchError String
+  | InvalidFieldType String
   | ReadFileError String
   | CyclicImportError String
 
@@ -35,5 +38,7 @@ Show Error where
   show (AssertError str) = "AssertError: " ++ str
   show (ListAppendError str) = "ListAppendError: " ++ str
   show (ListHeadError str) = "ListHeadError: " ++ str
+  show (FieldNotFoundError str) = "FieldNotFoundError: " ++ str
+  show (InvalidFieldType str) = "InvalidFieldType: " ++ str
   show (ReadFileError str) = "ReadFileError: " ++ str
   show (CyclicImportError str) = "CyclicImportError: " ++ str
