@@ -21,3 +21,16 @@ Monad (IOEither a) where
                                                 (Right r) => let MkIOEither g = f r in
                                                                  g))
   join x = x >>= id
+
+export
+liftEither : Either e a -> IOEither e a
+liftEither = MkIOEither . pure
+
+export
+mapErr : (e -> e') -> IOEither e a -> IOEither e' a
+mapErr f (MkIOEither x) = MkIOEither (do
+  x' <- x
+  case x' of
+        (Left l) => pure (Left (f l))
+        (Right r) => pure (Right r))
+

@@ -6,16 +6,6 @@ import Idrall.IOEither
 import Idrall.Parser
 import Idrall.Path
 
-liftEither : Either e a -> IOEither e a
-liftEither = MkIOEither . pure
-
-mapErr : (e -> e') -> IOEither e a -> IOEither e' a
-mapErr f (MkIOEither x) = MkIOEither (do
-  x' <- x
-  case x' of
-        (Left l) => pure (Left (f l))
-        (Right r) => pure (Right r))
-
 parseErrorHandler : String -> Error
 parseErrorHandler x = ErrorMessage (x)
 

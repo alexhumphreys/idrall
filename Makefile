@@ -6,7 +6,7 @@ repl-test:
 	echo './bar.dhall' > /tmp/foo.dhall
 	echo './importFailA.dhall' > /tmp/importFailB.dhall
 	echo './importFailB.dhall' > /tmp/importFailA.dhall
-	idris -p lightyear tests/Test.idr
+	idris -p contrib -p lightyear tests/Test2.idr
 
 clean:
 	rm -f tests/*.idr~

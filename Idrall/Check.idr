@@ -457,7 +457,7 @@ isTypeKindSort ctx (VNeutral x _) = isTypeKindSort ctx x
 isTypeKindSort ctx other = unexpected ctx "Not type/kind/sort" other
 
 lookupType : Ctx -> Name -> Either Error Ty -- didn't use message type
-lookupType [] x = Left (ErrorMessage ("unbound variable: " ++ x))
+lookupType [] x = Left (MissingVar x)
 lookupType ((y, e) :: ctx) x =
   (case x == y of
         False => lookupType ctx x
