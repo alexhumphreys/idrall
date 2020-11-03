@@ -258,11 +258,10 @@ mutual
     let xs = toList x in do
       x' <- traverse (mapUnion (eval env)) xs
       case lookup k x' of
-           Nothing => ?error
+           Nothing => Left (FieldNotFoundError "k")
            (Just Nothing) => Right (VInject (fromList x') k Nothing)
            (Just (Just _)) => Right (VPrim $ \u => VInject (fromList x') k (Just u))
-  eval env (EField _ k) = do
-    ?error
+  eval env (EField x k) = Left (InvalidFieldType (show x))
   eval env (EEmbed (Raw x)) = absurd x
   eval env (EEmbed (Resolved x)) = eval initEnv x
 
@@ -452,7 +451,17 @@ mutual
   readBackTyped ctx (VConst _) (VUnion a) = do
     a' <- traverse (readBackUnion ctx) (toList a)
     Right (EUnion (fromList a'))
-  readBackTyped ctx (VUnion _) (VInject a k b) = do ?rBTInject
+  readBackTyped ctx (VUnion _) (VInject a k arg) = -- TODO refactor nested cases
+    let kV = lookup k a in
+    case (kV, arg) of
+         (Just (Just k'), Just arg') =>
+           do aRB <- traverse (readBackUnion ctx) (toList a)
+              arg'' <- readBackTyped ctx k' arg'
+              Right (EApp (EField (EUnion (fromList aRB)) k) (arg''))
+         (Just Nothing, Just arg') => Left (FieldArgMismatchError ("No type for param " ++ k))
+         (Just _, _) => Right (EField
+                                      (EUnion (fromList !(traverse (readBackUnion ctx) (toList a)))) k)
+         (Nothing, _) => Left (FieldNotFoundError k)
   readBackTyped _ t v = Left (ReadBackError ("error reading back: " ++ (show v) ++ " of type: " ++ (show t)))
 
   readBackUnion : Ctx -> (String, Maybe Value) -> Either Error (String, Maybe (Expr Void))
@@ -735,10 +744,10 @@ mutual
       xs' <- traverse (mapUnion (eval (mkEnv ctx))) xs
       xsRb <- traverse (mapUnion (readBackTyped ctx (VConst CType))) xs'
       case lookup k xs' of
-           Nothing => ?error3
+           Nothing => Left (FieldNotFoundError "k")
            (Just Nothing) => Right (VUnion (fromList xs'))
            (Just (Just x')) =>
               Right (vFun x' (VUnion (fromList xs')))
-  synth ctx (EField _ k) = ?error2
+  synth ctx (EField x k) = Left (InvalidFieldType (show x))
   synth ctx (EEmbed (Raw x)) = absurd x
   synth ctx (EEmbed (Resolved x)) = synth initCtx x -- Using initCtx here to ensure fresh context.
