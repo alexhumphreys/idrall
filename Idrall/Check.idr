@@ -491,12 +491,6 @@ mutual
          -- check ctx ty a TODO use ty?
          xV <- evalClosure b (VNeutral a (NVar x))
          check (extendCtx ctx x a) body xV
-  check ctx (EAnnot x y) t
-    = do xV <- synth ctx x
-         yV <- eval (mkEnv ctx) y
-         x' <- readBackTyped ctx xV (VConst CType)
-         check ctx x' yV
-         check ctx x' t -- TODO double check it makes sense to type check an annotation
   check ctx (EEquivalent x y) (VConst CType) = do
     xV <- eval (mkEnv ctx) x
     yV <- eval (mkEnv ctx) y
@@ -560,7 +554,7 @@ mutual
                  check ctx v xTy
                  synth (define ctx x xTy !(eval (mkEnv ctx) v)) e
   synth ctx (EAnnot e t)
-    = do tV <- synth ctx t
+    = do tV <- eval (mkEnv ctx) t
          check ctx e tV
          Right tV
   synth ctx EBool = Right (VConst CType)
