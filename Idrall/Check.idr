@@ -451,7 +451,7 @@ mutual
   readBackTyped ctx (VConst _) (VUnion a) = do
     a' <- traverse (readBackUnion ctx) (toList a)
     Right (EUnion (fromList a'))
-  readBackTyped ctx (VUnion _) (VInject a k arg) = -- TODO refactor nested cases
+  readBackTyped ctx (VUnion _) (VInject a k arg) =
     let kV = lookup k a in
     case (kV, arg) of
          (Just (Just k'), Just arg') =>
@@ -477,10 +477,6 @@ mutual
 -- helpers
 unexpected : Ctx -> String -> Value -> Either Error a
 unexpected ctx str v = Left (Unexpected str v)
-
-isPi : Ctx -> Value -> Either Error (Ty, Closure)
-isPi _ (VPi a b) = Right (a, b)
-isPi ctx other = unexpected ctx "Not a Pi type" other
 
 isInteger : Ctx -> Value -> Either Error ()
 isInteger _ VInteger = Right ()
@@ -573,11 +569,13 @@ mutual
   check ctx (EConst CType) (VConst Kind) = Right ()
   check ctx (EConst Kind) (VConst Sort) = Right ()
   check ctx (EConst Sort) (VConst Sort) = Left SortError -- TODO check what happens here
-  check ctx (ELam x ty body) t
-    = do (a,b) <- isPi ctx t
-         -- check ctx ty a TODO use ty?
+  check ctx (ELam x ty body) (VPi a b)
+    = do -- TODO use ty?
          xV <- evalClosure b (VNeutral a (NVar x))
          check (extendCtx ctx x a) body xV
+  check ctx (ELam x ty body) (VHPi i ty' f) = do
+    check (extendCtx ctx x ty') body (f ty')
+  check ctx (ELam x ty body) other = unexpected ctx "Not a Pi type" other
   check ctx (EEquivalent x y) (VConst CType) = do
     xV <- eval (mkEnv ctx) x
     yV <- eval (mkEnv ctx) y
@@ -626,10 +624,16 @@ mutual
          Right (VPi xTy (MkClosure (mkEnv ctx) x tyRb bRb))
   synth ctx (EApp rator rand)
     = do funTy <- synth ctx rator
-         (a, b) <- isPi ctx funTy
-         check ctx rand a
-         rand' <- eval (mkEnv ctx) rand
-         evalClosure b rand'
+         case funTy of
+              (VPi a b) => do
+                 check ctx rand a
+                 rand' <- eval (mkEnv ctx) rand
+                 evalClosure b rand'
+              (VHPi i b f) => do
+                 check ctx rand b
+                 rand' <- eval (mkEnv ctx) rand
+                 Right (f rand')
+              other => unexpected ctx "Not a Pi type" other
   synth ctx (ELet x ann v e)
     = case ann of
            Nothing =>
