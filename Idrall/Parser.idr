@@ -131,11 +131,11 @@ field = do
   pure (\e => (EField e i))
 
 table : OperatorTable (Expr ImportStatement)
-table = [ [ Infix appl AssocLeft]
+table = [ [ Postfix field]
+        , [ Infix appl AssocLeft]
         , [ Infix (do (token "->" <|> token "→") ; pure (EPi "_")) AssocLeft ]
         , [ Infix (do token ":"; pure EAnnot) AssocLeft]
         , [ Infix (do (token "===" <|> token "≡"); pure EEquivalent) AssocLeft]
-        , [ Postfix field]
         , [ Prefix (do token "assert"; token ":"; pure EAssert)]
         , [ Infix (do token "&&"; pure EBoolAnd) AssocLeft]
         , [ Infix (do token "#"; pure EListAppend) AssocLeft]]
