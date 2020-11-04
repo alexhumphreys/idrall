@@ -83,9 +83,11 @@ identFirst = letter <|> char '_'
 identRest : Parser Char
 identRest = alphaNum <|> char '-' <|> char '/' <|> char '_'
 
+-- TODO identBackticks : Parser String
+
 identLong : Parser String
 identLong = do f <- identFirst
-               r <- some identRest -- TODO check for reservered words, back ticks
+               r <- some identRest
                pure (pack (f :: r))
 
 identShort : Parser String
@@ -101,7 +103,7 @@ reservedNames' =
   , "Type", "Kind", "Sort"]
 
 parseAny : List String -> Parser String
-parseAny [] = string "provideListOfReservedNames" -- TODO find better version of this
+parseAny [] = string "provideListOfReservedNames" -- TODO use List1 in idris2 to remove this case
 parseAny (x :: xs) = string x <|> (parseAny xs)
 
 reservedNames : Parser ()
@@ -132,16 +134,16 @@ table = [ [ Infix appl AssocLeft]
         , [ Infix (do token "#"; pure EListAppend) AssocLeft]]
 
 mutual
-  letExpr : Parser (Expr ImportStatement) -- TODO handle type annotation
+  letExpr : Parser (Expr ImportStatement)
   letExpr = token "let" *> do
     i <- identity
-    spaces
+    t <- opt (do token ":"; expr)
     token "="
     v <- expr
     spaces
     token "in"
     e <- expr
-    pure (ELet i Nothing v e)
+    pure (ELet i t v e)
 
   piComplex : Parser (Expr ImportStatement)
   piComplex = do
@@ -218,7 +220,7 @@ mutual
 
   lam : Parser (Expr ImportStatement)
   lam = do
-    string "λ(" -- TODO <|> string "\\(")
+    (string "λ(" <|> string "\\(")
     i <- identity
     token ":"
     ty <- expr
