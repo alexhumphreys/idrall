@@ -385,8 +385,7 @@ mutual
     Right (EListLit (Just a') es)
   readBackTyped ctx (VList a) (VListLit (Just ty) vs) = do
     a' <- readBackTyped ctx (VConst CType) a
-    es <- mapListEither vs (readBackTyped ctx ty)
-    -- TODO check if a=ty?
+    es <- mapListEither vs (readBackTyped ctx a) -- Passing a here should confirm ty=a
     Right (EListLit (Just a') es)
   readBackTyped ctx (VConst CType) (VOptional a) = do
     a' <- readBackTyped ctx (VConst CType) a
