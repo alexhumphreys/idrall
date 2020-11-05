@@ -33,12 +33,12 @@ mutual
   aEquivHelper i ns1 (EApp rator1 rand1) ns2 (EApp rator2 rand2)
     = aEquivHelper i ns1 rator1 ns2 rator2 &&
       aEquivHelper i ns1 rand1 ns2 rand2
-  aEquivHelper i ns1 (ELet x1 t1 r1 e1) ns2 (ELet x2 t2 r2 e2) -- TODO double check this one
+  aEquivHelper i ns1 (ELet x1 t1 r1 e1) ns2 (ELet x2 t2 r2 e2)
     = let newNs1 = (x1, i) :: ns1
           newNs2 = (x2, i) :: ns2 in
-      aEquivMaybe i ns1 t1 ns2 t2 &&
+      aEquivMaybe i ns1 t1 ns2 t2 && -- TODO not sure the type annotations matter for aEquiv-ness
       aEquivHelper i ns1 r1 ns2 r2 &&
-      aEquivHelper i newNs1 e1 newNs2 e2
+      aEquivHelper i newNs1 e1 newNs2 e2 -- TODO double check this, might need (i+1)
   aEquivHelper i ns1 (EAnnot w x) ns2 (EAnnot y z)
     = aEquivHelper i ns1 w ns2 y &&
       aEquivHelper i ns1 x ns2 z
