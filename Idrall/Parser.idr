@@ -3,9 +3,15 @@ import Lightyear.Core
 import Lightyear.Char
 import Lightyear.Strings
 
+import Idrall.Lexer
 import Idrall.Expr
 import Idrall.BuildExprParser
 import Idrall.Path
+
+import Data.Bits
+
+%hide Prelude.Stream.(::)
+%hide Data.Vect.replicate
 
 fIntegerNegate : (Expr ImportStatement)
 fIntegerNegate = ELam "integerNegateParam1" EInteger (EIntegerNegate (EVar "integerNegateParam1"))
@@ -45,6 +51,9 @@ false = token "False" *> pure (EBoolLit False)
 
 bool : Parser (Expr ImportStatement)
 bool = token "Bool" *> pure (EBool)
+
+text : Parser (Expr ImportStatement)
+text = token "Text" *> pure (EText)
 
 integer : Parser (Expr ImportStatement)
 integer = token "Integer" *> pure (EInteger)
@@ -98,7 +107,7 @@ reservedNames' : List String
 reservedNames' =
   [ "in", "let", "assert"
   , "->", "&&", ":"
-  , "List", "Optional", "Natural", "Integer"
+  , "List", "Text", "Optional", "Natural", "Integer"
   , "Some", "None"
   , "Type", "Kind", "Sort"]
 
@@ -163,6 +172,8 @@ mutual
     token ">"
     pure (EUnion (fromList xs))
 
+  -- TODO for multi-let the last let MUST have an `in`, the rest are optional.
+  -- Need to parse this somehow.
   letExpr : Parser (Expr ImportStatement)
   letExpr = token "let" *> do
     i <- identity
@@ -170,7 +181,7 @@ mutual
     token "="
     v <- expr
     spaces
-    token "in"
+    opt (token "in")
     e <- expr
     pure (ELet i t v e)
 
@@ -216,6 +227,8 @@ mutual
   list : Parser (Expr ImportStatement)
   list = emptyList <|> annotatedList <|> populatedList
 
+  -- https://github.com/dhall-lang/dhall-haskell/blob/56bf1163a1331f72f7a55c06ab5ef77a60960630/dhall/src/Dhall/Syntax.hs#L1107
+  -- https://github.com/dhall-lang/dhall-haskell/blob/56bf1163a1331f72f7a55c06ab5ef77a60960630/dhall/src/Dhall/Parser/Token.hs#L584
   dirCharacters : Parser Char
   dirCharacters = alphaNum <|> (char '.')
 
@@ -271,12 +284,68 @@ mutual
      true <|> false <|> bool <|>
      natural <|> naturalLit <|>
      integer <|> integerLit <|>
+     text <|> textLiteral <|>
      type <|> kind <|> sort <|>
      pathTerm <|> esome <|>
      union <|>
      var <|>| list <|>| parens expr)
     spaces
     pure i
+
+  interpolation : Parser (Chunks ImportStatement)
+  interpolation = do
+    string "${"
+    e <- expr
+    char '}'
+    pure (MkChunks [(neutral, e)] neutral)
+
+  unescapedCharacterFast : Parser (Chunks ImportStatement)
+  unescapedCharacterFast = do x <- takeWhile1 predicate
+                              pure (MkChunks [] x)
+  where
+    predicate : Char -> Bool
+    predicate c = (  ('\x20' <= c && c <= '\x21')
+                  || ('\x23' <= c && c <= '\x5B')
+                  || ('\x5D' <= c && c <= '\x10FFFF')
+                  ) && c /= '$'
+
+  unescapedCharacterSlow : Parser (Chunks ImportStatement)
+  unescapedCharacterSlow = do
+                char '$'
+                pure (MkChunks [] "$")
+
+  escapedCharacter : Parser (Chunks ImportStatement)
+  escapedCharacter =
+            do  _ <- char '\\'
+                c <- choice
+                    (the (List (Parser Char))
+                    [ char '"' -- quotationMark
+                    , char '$' -- dollarSign
+                    , char '\\' -- backslash
+                    , char '/' -- forwardslash
+                    , do char 'b'; pure '\b' -- backSpace
+                    , do char 'f'; pure '\f' -- formFeed
+                    , do char 'n'; pure '\n' -- lineFeed
+                    , do char 'r'; pure '\r' -- carriageReturn
+                    , do char 't'; pure '\t' -- tab
+                    , unicode
+                    ])
+                pure (MkChunks [] (singleton c))
+
+  doubleQuotedChunk : Parser (Chunks ImportStatement)
+  doubleQuotedChunk = interpolation <|> unescapedCharacterFast <|> unescapedCharacterSlow <|> escapedCharacter
+
+  doubleQuotedLiteral : Parser (Chunks ImportStatement)
+  doubleQuotedLiteral = do
+            char '"'
+            chunks <- many doubleQuotedChunk
+            char '"'
+            pure (concat chunks)
+
+  textLiteral : Parser (Expr ImportStatement)
+  textLiteral = (do
+            literal <- doubleQuotedLiteral
+            pure (ETextLit literal) ) <?> "literal"
 
   opExpr : Parser (Expr ImportStatement)
   opExpr = buildExpressionParser (Expr ImportStatement) table term

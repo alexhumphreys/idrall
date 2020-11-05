@@ -122,6 +122,10 @@ mutual
     x' <- resolve h p x
     y' <- resolve h p y
     pure (EListHead x' y')
+  resolve h p e@EText = pure e
+  resolve h p (ETextLit (MkChunks xs x)) = do
+    xs' <- resolveChunks h p xs
+    pure (ETextLit (MkChunks xs' x))
   resolve h p (EOptional x) = do
     x' <- resolve h p x
     pure (EOptional x')
@@ -161,3 +165,13 @@ mutual
     do rest <- resolveList h p xs
        x' <- resolve h p x
        MkIOEither (pure (Right (x' :: rest)))
+
+  resolveChunks :  (history : List FilePath)
+                -> Maybe FilePath
+                -> List (String, Expr ImportStatement)
+                -> IOEither Error (List (String, Expr Void))
+  resolveChunks h p [] = MkIOEither $ pure (Right [])
+  resolveChunks h p ((a, x) :: xs) = do
+    rest <- resolveChunks h p xs
+    x' <- resolve h p x
+    MkIOEither (pure (Right ((a, x') :: rest)))

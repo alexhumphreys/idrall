@@ -21,6 +21,9 @@ mutual
   %name Env env, env1, env2
 
   public export
+  data VChunks = MkVChunks (List (String, Value)) String
+
+  public export
   record Closure where
     constructor MkClosure
     closureEnv : Env
@@ -52,6 +55,8 @@ mutual
     | VNaturalLit Nat
     | VList Ty
     | VListLit (Maybe Ty) (List Value)
+    | VText
+    | VTextLit VChunks
     | VOptional Ty
     | VNone Ty
     | VSome Ty
@@ -92,13 +97,17 @@ mutual
     | NSome Neutral
 
   public export
+  Show VChunks where
+    show (MkVChunks xs x) = "(MkVChunks " ++ show xs ++ " " ++ show x ++ ")"
+
+  public export
   Show Value where
     show (VLambda x y) = "(VLambda " ++ show x ++ " " ++ show y ++ ")"
     show (VHLam i x) = "(VHLam " ++ show i ++ " " ++ "TODO find some way to show VHLam arg" ++ ")"
     show (VPi x y) = "(VPi " ++ show x ++ " " ++ show y ++ ")"
     show (VHPi i x y) = "(VHPi " ++ show i ++ " " ++ show x ++ "TODO find some way to show VHPi arg" ++ ")"
     show (VEquivalent x y) = "(VEquivalent " ++ show x ++ " " ++ show y ++ ")"
-    show (VAssert x) = "(VEquivalent " ++ show x ++ ")"
+    show (VAssert x) = "(VAssert " ++ show x ++ ")"
     show (VConst x) = "(VConst " ++ show x ++ ")"
     show VBool = "VBool"
     show (VBoolLit x) = "(VBoolLit " ++ show x ++ ")"
@@ -108,6 +117,8 @@ mutual
     show (VNaturalLit k) = "(VNaturalLit " ++ show k ++ ")"
     show (VList a) = "(VList " ++ show a ++ ")"
     show (VListLit ty vs) = "(VListLit " ++ show ty ++ show vs ++ ")"
+    show (VText) = "VText"
+    show (VTextLit x) = "(VTextLit " ++ show x ++ ")"
     show (VOptional a) = "(VOptional " ++ show a ++ ")"
     show (VNone a) = "(VNone " ++ show a ++ ")"
     show (VSome a) = "(VSome " ++ show a ++ ")"
@@ -131,3 +142,12 @@ mutual
     show (NNone x) = "(NNone " ++ show x ++ ")"
     show (NSome x) = "(NSome " ++ show x ++ ")"
     show (NBoolAnd x y) = "(NBoolAnd " ++ show x ++ " " ++ show y ++ ")"
+
+public export
+Semigroup VChunks where
+  (<+>) (MkVChunks xys z) (MkVChunks [] z') = MkVChunks xys (z <+> z')
+  (<+>) (MkVChunks xys z) (MkVChunks ((x', y') :: xys') z') = MkVChunks (xys ++ ((z <+> x', y') :: xys')) z'
+
+public export
+Monoid VChunks where
+  neutral = MkVChunks neutral neutral

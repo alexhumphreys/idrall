@@ -55,6 +55,9 @@ mutual
     | Resolved (Expr Void)
 
   public export
+  data Chunks a = MkChunks (List (String, Expr a)) String
+
+  public export
   data Expr a
     -- x
     = EVar Name
@@ -99,11 +102,20 @@ mutual
     | EListAppend (Expr a) (Expr a)
     -- | > List/Head A [a]
     | EListHead (Expr a) (Expr a)
+    -- | > EText ~ Text
+    | EText
+    -- | > ETextLit (Chunks [(t1, e1), (t2, e2)] t3) ~  "t1${e1}t2${e2}t3"
+    | ETextLit (Chunks a)
     -- | > EOptional a ~ Optional a
     | EOptional (Expr a)
+    -- | > None a
     | ENone (Expr a)
+    -- | > Some a
     | ESome (Expr a)
+    -- | > EUnion (fromList ((MkFieldName "Foo"), Nothing)) ~ < Foo >
+    -- | > EUnion (fromList ((MkFieldName "Foo"), Just EBool)) ~ < Foo : Bool >
     | EUnion (SortedMap FieldName (Maybe (Expr a)))
+    -- | > EField (EVar "x") (MkFieldName "Foo") ~ x.Foo
     | EField (Expr a) FieldName
     | EEmbed (Import a)
 
@@ -144,6 +156,8 @@ mutual
     show (EListLit (Just x) xs) = "(EListLit (Just " ++ show x ++ ") " ++ show xs ++ ")"
     show (EListAppend x y) = "(EListAppend " ++ show x ++ " " ++ show y ++ ")"
     show (EListHead x y) = "(EListHead " ++ show x ++ " " ++ show y ++ ")"
+    show EText = "EText"
+    show (ETextLit x) = "(ETextLit " ++ show x ++ ")"
     show (EOptional x) = "(EOptional " ++ show x ++ ")"
     show (ENone x) = "(ENone " ++ show x ++ ")"
     show (ESome x) = "(ESome " ++ show x ++ ")"
@@ -151,4 +165,18 @@ mutual
     show (EField x y) = "(EField " ++ show x ++ " " ++ show y ++ ")"
     show (EEmbed x) = "(EEmbed " ++ show x ++ ")"
 
+  public export
+  Show (Chunks a) where
+    show (MkChunks xs x) = "MkChunks " ++ (show xs) ++ " " ++ show x
+
   -- TODO add Traversible for Expr a
+
+public export
+Semigroup (Chunks a) where
+  (<+>) (MkChunks xysL zL) (MkChunks [] zR) = MkChunks xysL (zL <+> zR)
+  (<+>) (MkChunks xysL zL) (MkChunks ((x, y) :: xysR) zR) =
+    MkChunks (xysL ++ (zL <+> x, y)::xysR) zR
+
+public export
+Monoid (Chunks a) where
+  neutral = MkChunks [] neutral
