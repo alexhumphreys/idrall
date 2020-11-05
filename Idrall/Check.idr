@@ -4,6 +4,11 @@ import Idrall.Expr
 import Idrall.Error
 import Idrall.Value
 
+%hide Language.Reflection.Elab.Tactics.check
+
+mapChunks : (a -> Either e b) -> (k, a) -> Either e (k, b)
+mapChunks f (k, a) = Right (k, !(f a))
+
 mapListEither : List a -> (a -> Either e b) -> Either e (List b)
 mapListEither [] f = Right []
 mapListEither (x :: xs) f =
@@ -74,6 +79,12 @@ mutual
   aEquivHelper i ns1 (EListHead w x) ns2 (EListHead y z)
     = aEquivHelper i ns1 w ns2 y &&
       aEquivHelper i ns1 x ns2 z
+  aEquivHelper _ _ EText _ EText = True
+  aEquivHelper i ns1 (ETextLit a@(MkChunks xys z)) ns2 (ETextLit b@(MkChunks xys' z')) =
+    -- TODO Not confindent that this is correct for all cases
+    case (stringFromETextLit xys, stringFromETextLit xys') of
+         (Just a, Just b) => ((a ++ z) == (b ++ z'))
+         _ => aEquivTextLit i ns1 a ns2 b
   aEquivHelper i ns1 (EOptional x) ns2 (EOptional y)
     = aEquivHelper i ns1 x ns2 y
   aEquivHelper i ns1 (ENone x) ns2 (ENone y)
@@ -116,6 +127,28 @@ mutual
     aEquivHelper i ns1 v ns2 v' &&
     aEquivUnion i ns1 xs ns2 ys
   aEquivUnion i ns1 _ ns2 _ = False
+
+  aEquivTextLit : (i : Integer) ->
+                  Namespace -> Chunks Void ->
+                  Namespace -> Chunks Void -> Bool
+  aEquivTextLit i ns1 (MkChunks [] x) ns2 (MkChunks [] y) = x == y
+  aEquivTextLit i ns1 (MkChunks xs x) ns2 (MkChunks ys y) =
+    let xexprs = map snd xs
+        yexprs = map snd ys
+        exprsRes = aEquivList i ns1 xexprs ns2 yexprs
+        strx = map fst xs
+        stry = map fst ys
+        strsRes = strx == stry
+        in
+    x == y && exprsRes && strsRes
+
+  stringFromETextLit : List (String, Expr Void) -> Maybe String
+  stringFromETextLit [] = Just neutral
+  stringFromETextLit ((a, ETextLit (MkChunks xys z)) :: xs) = do
+    rest <- stringFromETextLit xs
+    mid <- stringFromETextLit xys
+    Just (a ++ mid ++ z ++ rest)
+  stringFromETextLit ((a, _) :: xs) = Nothing
 
 aEquiv : Expr Void -> Expr Void -> Bool
 aEquiv e1 e2 = aEquivHelper 0 [] e1 [] e2
@@ -244,6 +277,10 @@ mutual
     x' <- eval env x
     y' <- eval env y
     doListHead x' y'
+  eval env EText = Right VText
+  eval env (ETextLit (MkChunks xs x)) = do
+    xs' <- traverse (mapChunks (eval env)) xs
+    Right (VTextLit (MkVChunks xs' x))
   eval env (ENaturalIsZero x)
     = do x' <- eval env x
          doNaturalIsZero x'
@@ -293,14 +330,16 @@ mutual
   covering
   doAssert : Value -> Either Error Value
   doAssert v@(VEquivalent x y) = do
+    -- TODO VConst CType here fails for `assert : "foo${"1"}" === "foo1"`
+    -- as it would need to read back as VText
     xRb <- readBackTyped initCtx (VConst CType) x
     yRb <- readBackTyped initCtx (VConst CType) y
     case aEquiv xRb yRb of
-         False => Left (AssertError ("Assert error: " ++ show x))
+         False => Left (AssertError (show xRb ++ " not equivalent to " ++ show yRb))
          True => Right (VAssert v)
   doAssert (VNeutral (VEquivalent x y) v)
     = Right (VNeutral (VEquivalent x y) (NAssert v))
-  doAssert x = Left (AssertError ("Assert error: " ++ show x))
+  doAssert x = Left (AssertError ("not an equivalence type: " ++ show x))
 
   doListAppend : Value -> Value -> Either Error Value
   doListAppend (VListLit x xs) (VListLit _ ys) =
@@ -436,13 +475,19 @@ mutual
     a' <- readBackTyped ctx (VConst CType) a
     es <- mapListEither vs (readBackTyped ctx a) -- Passing a here should confirm ty=a
     Right (EListLit (Just a') es)
+  readBackTyped ctx (VConst CType) VText = Right EText
+  readBackTyped ctx VText (VTextLit (MkVChunks xs x)) =
+    let f = mapChunks (readBackTyped ctx VText) in
+    do
+    xs' <- traverse f xs
+    Right (ETextLit (MkChunks xs' x))
   readBackTyped ctx (VConst CType) (VOptional a) = do
     a' <- readBackTyped ctx (VConst CType) a
     Right (EOptional a')
   readBackTyped ctx (VOptional ty) (VNone ty') = do
     ety <- readBackTyped ctx (VConst CType) ty
     ety' <- readBackTyped ctx (VConst CType) ty'
-    case aEquiv ety ety' of
+    case aEquiv ety ety' of -- TODO should this check be happening here?
       True => Right (ENone ety')
       False => Left (ReadBackError ("error reading back None: " ++ (show ety) ++ " is not alpha equivalent to " ++ (show ety')))
   readBackTyped ctx (VOptional ty) (VSome a) = do
@@ -493,6 +538,10 @@ isBool ctx other = unexpected ctx "Not Bool" other
 isList : Ctx -> Value -> Either Error Ty -- TODO make return type more obvious
 isList ctx (VList x) = Right x
 isList ctx other = unexpected ctx "Not List" other
+
+isText : Ctx -> Value -> Either Error ()
+isText _ VText = Right ()
+isText ctx other = unexpected ctx "Not Text" other
 
 isOptional : Ctx -> Value -> Either Error ()
 isOptional ctx (VOptional x) = Right ()
@@ -711,6 +760,11 @@ mutual
     check ctx y (VList xVal)
     ty <- isList ctx yTy
     Right (VOptional ty)
+  synth ctx EText = Right (VConst CType)
+  synth ctx (ETextLit (MkChunks xs x)) =
+    let go = mapChunks (\e => check ctx e VText) in do
+    traverse go xs
+    Right VText
   synth ctx (EOptional x) = do
     check ctx x (VConst CType)
     Right (VConst CType)
