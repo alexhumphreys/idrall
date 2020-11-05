@@ -284,7 +284,7 @@ mutual
   doListHead ty@(VListLit x xs) (VListLit _ ys) = doListHead' ty ys
   doListHead ty@(VOptional x) (VListLit _ ys) = doListHead' ty ys
   doListHead (VNeutral (VConst CType) v) y =
-    Right (VNeutral (VConst CType) (NListHead v (Normal' (VList (VNeutral (VConst CType) v)) y))) -- TODO double  check
+    Right (VNeutral (VConst CType) (NListHead v (Normal' (VList (VNeutral (VConst CType) v)) y))) -- TODO double check
   doListHead x y = Left (ListHeadError (show x ++ " " ++ show y))
 
   -- fresh names
