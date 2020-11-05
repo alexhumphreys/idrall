@@ -635,4 +635,4 @@ mutual
     isTerm ctx xTy'
     Right (VOptional xTy')
   synth ctx (EEmbed (Raw x)) = absurd x
-  synth ctx (EEmbed (Resolved x)) = synth initCtx x -- TODO initCtx here for fresh context. Could be replace with proper scope checking phase
+  synth ctx (EEmbed (Resolved x)) = synth initCtx x -- Using initCtx here to ensure fresh context.
