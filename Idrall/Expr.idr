@@ -7,6 +7,21 @@ Name : Type
 Name = String
 
 public export
+data FieldName = MkFieldName String
+
+public export
+Show FieldName where
+  show (MkFieldName x) = "(MkFieldName " ++ x
+
+public export
+Eq FieldName where
+  (==) (MkFieldName x) (MkFieldName y) = x == y
+
+public export
+Ord FieldName where
+  compare (MkFieldName x) (MkFieldName y) = compare x y
+
+public export
 Namespace : Type
 Namespace = List (Name, Integer)
 %name Namespace ns1, ns2, ns3
@@ -88,8 +103,8 @@ mutual
     | EOptional (Expr a)
     | ENone (Expr a)
     | ESome (Expr a)
-    | EUnion (SortedMap String (Maybe (Expr a)))
-    | EField (Expr a) String
+    | EUnion (SortedMap FieldName (Maybe (Expr a)))
+    | EField (Expr a) FieldName
     | EEmbed (Import a)
 
 export

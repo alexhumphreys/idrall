@@ -128,7 +128,7 @@ field : Parser ((Expr ImportStatement) -> (Expr ImportStatement))
 field = do
   token "."
   i <- identity
-  pure (\e => (EField e i))
+  pure (\e => (EField e (MkFieldName i)))
 
 table : OperatorTable (Expr ImportStatement)
 table = [ [ Postfix field]
@@ -141,19 +141,19 @@ table = [ [ Postfix field]
         , [ Infix (do token "#"; pure EListAppend) AssocLeft]]
 
 mutual
-  unionSimpleElem : Parser (String, Maybe (Expr ImportStatement))
+  unionSimpleElem : Parser (FieldName, Maybe (Expr ImportStatement))
   unionSimpleElem = do
     k <- identity
-    pure (k, Nothing)
+    pure (MkFieldName k, Nothing)
 
-  unionComplexElem : Parser (String, Maybe (Expr ImportStatement))
+  unionComplexElem : Parser (FieldName, Maybe (Expr ImportStatement))
   unionComplexElem = do
     k <- identity
     token ":"
     e <- expr
-    pure (k, Just e)
+    pure (MkFieldName k, Just e)
 
-  unionElem : Parser (String, Maybe (Expr ImportStatement))
+  unionElem : Parser (FieldName, Maybe (Expr ImportStatement))
   unionElem = unionComplexElem <|> unionSimpleElem
 
   union : Parser (Expr ImportStatement)

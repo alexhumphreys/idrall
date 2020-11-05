@@ -106,8 +106,8 @@ mutual
   aEquivList i ns1 _ ns2 _ = False
 
   aEquivUnion : (i : Integer) ->
-                Namespace -> List (String, (Maybe (Expr Void))) ->
-                Namespace -> List (String, (Maybe (Expr Void))) -> Bool
+                Namespace -> List (FieldName, (Maybe (Expr Void))) ->
+                Namespace -> List (FieldName, (Maybe (Expr Void))) -> Bool
   aEquivUnion i ns1 [] ns2 [] = True
   aEquivUnion i ns1 ((k, Nothing) :: xs) ns2 ((k', Nothing) :: ys) =
     k == k' && aEquivUnion i ns1 xs ns2 ys
@@ -459,13 +459,13 @@ mutual
            do aRB <- traverse (readBackUnion ctx) (toList a)
               arg'' <- readBackTyped ctx k' arg'
               Right (EApp (EField (EUnion (fromList aRB)) k) (arg''))
-         (Just Nothing, Just arg') => Left (FieldArgMismatchError ("No type for param " ++ k))
+         (Just Nothing, Just arg') => Left (FieldArgMismatchError ("No type for param " ++ show k))
          (Just _, _) => Right (EField
                                       (EUnion (fromList !(traverse (readBackUnion ctx) (toList a)))) k)
-         (Nothing, _) => Left (FieldNotFoundError k)
+         (Nothing, _) => Left (FieldNotFoundError (show k))
   readBackTyped _ t v = Left (ReadBackError ("error reading back: " ++ (show v) ++ " of type: " ++ (show t)))
 
-  readBackUnion : Ctx -> (String, Maybe Value) -> Either Error (String, Maybe (Expr Void))
+  readBackUnion : Ctx -> (FieldName, Maybe Value) -> Either Error (FieldName, Maybe (Expr Void))
   readBackUnion ctx (k, Nothing) = Right (k, Nothing)
   readBackUnion ctx (k, Just v) = Right (k, Just !(readBackTyped ctx (VConst CType) v))
     -- TODO is (VConst CType) always right here ^^^? Looks like rBT ignores the Ty param when reading back VConsts so maybe?
@@ -732,7 +732,7 @@ mutual
       ty <- foldl getHighestType (Right (VConst CType)) (map snd types)
       Right ty
     where
-      synthUnion : (String, Maybe (Expr Void)) -> Either Error (String, Maybe Ty)
+      synthUnion : (FieldName, Maybe (Expr Void)) -> Either Error (FieldName, Maybe Ty)
       synthUnion (k, Nothing) = Right (k, Nothing)
       synthUnion (k, Just b) = do
         b' <- synth ctx b
