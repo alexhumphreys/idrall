@@ -57,6 +57,7 @@ mutual
   aEquivHelper i ns1 (ENaturalIsZero x) ns2 (ENaturalIsZero y)
     = aEquivHelper i ns1 x ns2 y
   aEquivHelper i ns1 (EEquivalent w x) ns2 (EEquivalent y z)
+    -- TODO should use CBOR encoding eventually
     = aEquivHelper i ns1 w ns1 x &&
       aEquivHelper i ns1 w ns2 y &&
       aEquivHelper i ns2 y ns2 z
@@ -87,7 +88,6 @@ mutual
     aEquivHelper i ns1 x ns2 y &&
     k == j
   aEquivHelper _ _ _ _ _ = False
-  -- TODO check if assert/equivalent should be in here
 
   aEquivMaybe : (i : Integer) ->
                 Namespace -> Maybe (Expr Void) ->
@@ -169,7 +169,9 @@ mutual
   covering
   evalClosure : Closure -> Value -> Either Error Value
   evalClosure (MkClosure env x ty e) v
-    = do ty' <- eval env ty -- TODO not using this type info
+    -- TODO not using this type info, Andras doesn't even store type
+    -- info as part of Closure
+    = do ty' <- eval env ty
          eval (extendEnv env x v) e
 
   evalVar : Env -> Name -> Either Error Value
@@ -187,7 +189,7 @@ mutual
     = evalVar env x
   eval env (EPi x dom ran)
     = do ty <- eval env dom
-         Right (VPi ty (MkClosure env x dom ran)) -- TODO double check
+         Right (VPi ty (MkClosure env x dom ran))
   eval env (ELam x ty body)
     = do vTy <- eval env ty
          Right (VLambda vTy (MkClosure env x ty body))
@@ -208,11 +210,10 @@ mutual
                          eval (extendEnv env x vr) e
            (Just ty') => do vTy <- eval env ty' -- TODO not using this type info
                             vr <- eval env r
-                            eval (extendEnv env x vr) e -- TODO change Env to use Binding?
-  eval env (EAnnot x y)
+                            eval (extendEnv env x vr) e
+  eval env (EAnnot x _)
     = do x' <- eval env x
-         y' <- eval env y
-         Right x' -- TODO check this
+         Right x'
   eval env EBool = Right VBool
   eval env (EBoolLit x) = Right (VBoolLit x)
   eval env (EBoolAnd x y)
