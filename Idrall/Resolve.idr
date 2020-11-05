@@ -143,8 +143,8 @@ mutual
 
   resolveUnion :  (history : List FilePath) -- TODO try use traverse instead?
                -> Maybe FilePath
-               -> List (String, Maybe (Expr ImportStatement))
-               -> IOEither Error (List (String, Maybe (Expr Void)))
+               -> List (FieldName, Maybe (Expr ImportStatement))
+               -> IOEither Error (List (FieldName, Maybe (Expr Void)))
   resolveUnion h p [] = MkIOEither (pure (Right []))
   resolveUnion h p ((k,v) :: xs) = do
     rest <- resolveUnion h p xs
