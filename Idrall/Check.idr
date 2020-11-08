@@ -158,7 +158,6 @@ mkEnv ((x, e) :: ctx) =
         (IsA t) => let v = VNeutral t (NVar x) in
                        (x, v) :: env)
 
--- TODO check is there some FP magic for this
 mapUnion : (a -> Either e b) -> (k, Maybe a) -> Either e (k, (Maybe b))
 mapUnion f (k, Just x) =
   Right (k, Just !(f x))
@@ -419,7 +418,7 @@ mutual
     let i' = freshen (ctxNames ctx) i in
     do a <- readBackTyped ctx (VConst CType) ty
        body' <- readBackTyped ctx (VConst CType) (f (VNeutral ty (NVar i')))
-       -- TODO not remotely sure about this ^^^, especially the CType
+       -- CType is _probably_ fine here ^^^^^
        Right (EPi i' a body')
   readBackTyped ctx (VPi aT bT) (VHLam i f) =
     let x = freshen (ctxNames ctx) (closureName bT) in do
@@ -502,8 +501,6 @@ isOptional ctx other = unexpected ctx "Not Optional" other
 isEquivalent : Ctx -> Value -> Either Error (Value, Value)
 isEquivalent ctx (VEquivalent x y) = Right (x, y)
 isEquivalent ctx other = unexpected ctx "Not Equivalent" other
-
-isTermLit : Ctx -> Value -> Either Error ()
 
 isTerm : Ctx -> Value -> Either Error ()
 isTerm _ (VPi _ _) = Right ()
