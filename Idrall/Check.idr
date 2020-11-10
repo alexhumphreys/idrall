@@ -95,6 +95,10 @@ mutual
     let xs = toList x
         ys = toList y in
     aEquivRecord i ns1 xs ns2 ys
+  aEquivHelper i ns1 (ERecordLit x) ns2 (ERecordLit y) =
+    let xs = toList x
+        ys = toList y in
+    aEquivRecord i ns1 xs ns2 ys
   aEquivHelper i ns1 (EUnion x) ns2 (EUnion y) =
     let xs = toList x
         ys = toList y in
@@ -308,6 +312,10 @@ mutual
     let xs = toList x in
     do xs' <- traverse (mapRecord (eval env)) xs
        Right (VRecord (fromList xs'))
+  eval env (ERecordLit x) =
+    let xs = toList x in
+    do xs' <- traverse (mapRecord (eval env)) xs
+       Right (VRecordLit (fromList xs'))
   eval env (EUnion x) =
     let xs = toList x in
     do xs' <- traverse (mapUnion (eval env)) xs
@@ -517,6 +525,10 @@ mutual
   readBackTyped ctx (VConst _) (VRecord a) = do
     a' <- traverse (mapRecord (readBackTyped ctx (VConst CType))) (toList a)
     Right (ERecord (fromList a'))
+  readBackTyped ctx (VRecord a) (VRecordLit b) =
+    let as = toList a
+        bs = toList b in
+    Right (ERecordLit (fromList !(readBackRecordLit ctx as bs)))
   readBackTyped ctx (VConst _) (VUnion a) = do
     a' <- traverse (readBackUnion ctx) (toList a)
     Right (EUnion (fromList a'))
@@ -532,6 +544,18 @@ mutual
                                       (EUnion (fromList !(traverse (readBackUnion ctx) (toList a)))) k)
          (Nothing, _) => Left (FieldNotFoundError (show k))
   readBackTyped _ t v = Left (ReadBackError ("error reading back: " ++ (show v) ++ " of type: " ++ (show t)))
+
+  readBackRecordLit : Ctx
+                   -> List (FieldName, Value)
+                   -> List (FieldName, Value)
+                   -> Either Error (List (FieldName, (Expr Void)))
+  readBackRecordLit ctx [] [] = Right []
+  readBackRecordLit ctx ((k, v) :: xs) ((k', v') :: ys) =
+    case k == k' of -- TODO may be unecessary, or could be done better
+         False => Left (ReadBackError ("keys don't match: " ++ show k ++ " and " ++ show k'))
+         True => do rest <- readBackRecordLit ctx xs ys
+                    Right ((k, !(readBackTyped ctx v v')) :: rest)
+  readBackRecordLit ctx _ _ = Left (ReadBackError ("wrong type for record: " ++ " ")) -- TODO improve this error
 
   readBackUnion : Ctx -> (FieldName, Maybe Value) -> Either Error (FieldName, Maybe (Expr Void))
   readBackUnion ctx (k, Nothing) = Right (k, Nothing)
@@ -801,6 +825,10 @@ mutual
     xTy' <- synth ctx x
     isTerm ctx xTy'
     Right (VOptional xTy')
+  synth ctx (ERecordLit x) =
+    let xs = toList x in
+    do xs' <- traverse (mapRecord (synth ctx)) xs
+       Right (VRecord (fromList xs'))
   synth ctx (ERecord x) =
     let xs = toList x in -- TODO triple traverse here, might be slow
     do xs' <- traverse (mapRecord (synth ctx)) xs

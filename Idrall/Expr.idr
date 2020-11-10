@@ -114,6 +114,8 @@ mutual
     | ESome (Expr a)
     -- | > ERecord (fromList ((MkFieldName "Foo"), EBool)) ~ { Foo : Bool }
     | ERecord (SortedMap FieldName (Expr a))
+    -- | > ERecordLit (fromList ((MkFieldName "Foo"), EBool)) ~ { Foo = Bool }
+    | ERecordLit (SortedMap FieldName (Expr a))
     -- | > EUnion (fromList ((MkFieldName "Foo"), Nothing)) ~ < Foo >
     -- | > EUnion (fromList ((MkFieldName "Foo"), Just EBool)) ~ < Foo : Bool >
     | EUnion (SortedMap FieldName (Maybe (Expr a)))
@@ -165,6 +167,7 @@ mutual
     show (ENone x) = "(ENone " ++ show x ++ ")"
     show (ESome x) = "(ESome " ++ show x ++ ")"
     show (ERecord x) = "(ERecord " ++ show x ++ ")"
+    show (ERecordLit x) = "(ERecordLit " ++ show x ++ ")"
     show (EUnion x) = "(EUnion " ++ show x ++ ")"
     show (EField x y) = "(EField " ++ show x ++ " " ++ show y ++ ")"
     show (EEmbed x) = "(EEmbed " ++ show x ++ ")"
