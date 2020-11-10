@@ -805,14 +805,14 @@ mutual
     let xs = toList x in -- TODO triple traverse here, might be slow
     do xs' <- traverse (mapRecord (synth ctx)) xs
        traverse (mapRecord (isTypeKindSort ctx)) xs'
-       ty <- foldl getHighestType (Right (VConst CType)) (map snd xs')
+       ty <- foldl getHighestType' (Right (VConst CType)) (map snd xs')
        Right ty
     where
-      getHighestType : (acc : Either Error Ty) -> Ty -> Either Error Ty -- TODO DRY with below
-      getHighestType e@(Left _) _ = e
-      getHighestType (Right (VConst CType)) (VConst Kind) = Right (VConst Kind)
-      getHighestType (Right _) (VConst Sort) = Right (VConst Sort)
-      getHighestType acc@(Right _) _ = acc -- relying on acc starting as (VConst CType)
+      getHighestType' : (acc : Either Error Ty) -> Ty -> Either Error Ty -- TODO DRY with below
+      getHighestType' e@(Left _) _ = e
+      getHighestType' (Right (VConst CType)) (VConst Kind) = Right (VConst Kind)
+      getHighestType' (Right _) (VConst Sort) = Right (VConst Sort)
+      getHighestType' acc@(Right _) _ = acc -- relying on acc starting as (VConst CType)
   synth ctx (EUnion x) =
     let kvs = toList x in do -- TODO use SortedMap Traversable with idris2
       types <- traverse synthUnion kvs
