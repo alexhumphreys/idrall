@@ -91,6 +91,10 @@ mutual
     = aEquivHelper i ns1 x ns2 y
   aEquivHelper i ns1 (ESome x) ns2 (ESome y)
     = aEquivHelper i ns1 x ns2 y
+  aEquivHelper i ns1 (ERecord x) ns2 (ERecord y) =
+    let xs = toList x
+        ys = toList y in
+    aEquivRecord i ns1 xs ns2 ys
   aEquivHelper i ns1 (EUnion x) ns2 (EUnion y) =
     let xs = toList x
         ys = toList y in
@@ -115,6 +119,16 @@ mutual
     aEquivHelper i ns1 x ns2 y &&
     aEquivList i ns1 xs ns2 ys
   aEquivList i ns1 _ ns2 _ = False
+
+  aEquivRecord : (i : Integer) ->
+                Namespace -> List (FieldName, Expr Void) ->
+                Namespace -> List (FieldName, Expr Void) -> Bool
+  aEquivRecord i ns1 [] ns2 [] = True
+  aEquivRecord i ns1 ((k, v) :: xs) ns2 ((k', v') :: ys) =
+    k == k'
+    && aEquivHelper i ns1 v ns2 v'
+    && aEquivRecord i ns1 xs ns2 ys
+  aEquivRecord i ns1 _ ns2 _ = False
 
   aEquivUnion : (i : Integer) ->
                 Namespace -> List (FieldName, (Maybe (Expr Void))) ->
@@ -190,6 +204,9 @@ mkEnv ((x, e) :: ctx) =
         (Def _ v) => (x, v) :: env
         (IsA t) => let v = VNeutral t (NVar x) in
                        (x, v) :: env)
+
+mapRecord : (a -> Either e b) -> (k, a) -> Either e (k, b)
+mapRecord f (k, x) = Right (k, !(f x))
 
 mapUnion : (a -> Either e b) -> (k, Maybe a) -> Either e (k, (Maybe b))
 mapUnion f (k, Just x) =
@@ -287,6 +304,10 @@ mutual
   eval env (EOptional a) = Right (VOptional !(eval env a))
   eval env (ENone a) = Right (VNone !(eval env a))
   eval env (ESome a) = Right (VSome !(eval env a))
+  eval env (ERecord x) =
+    let xs = toList x in
+    do xs' <- traverse (mapRecord (eval env)) xs
+       Right (VRecord (fromList xs'))
   eval env (EUnion x) =
     let xs = toList x in
     do xs' <- traverse (mapUnion (eval env)) xs
@@ -493,6 +514,9 @@ mutual
   readBackTyped ctx (VOptional ty) (VSome a) = do
     a' <- readBackTyped ctx ty a
     Right (ESome a')
+  readBackTyped ctx (VConst _) (VRecord a) = do
+    a' <- traverse (mapRecord (readBackTyped ctx (VConst CType))) (toList a)
+    Right (ERecord (fromList a'))
   readBackTyped ctx (VConst _) (VUnion a) = do
     a' <- traverse (readBackUnion ctx) (toList a)
     Right (EUnion (fromList a'))
@@ -777,6 +801,18 @@ mutual
     xTy' <- synth ctx x
     isTerm ctx xTy'
     Right (VOptional xTy')
+  synth ctx (ERecord x) =
+    let xs = toList x in -- TODO triple traverse here, might be slow
+    do xs' <- traverse (mapRecord (synth ctx)) xs
+       traverse (mapRecord (isTypeKindSort ctx)) xs'
+       ty <- foldl getHighestType (Right (VConst CType)) (map snd xs')
+       Right ty
+    where
+      getHighestType : (acc : Either Error Ty) -> Ty -> Either Error Ty -- TODO DRY with below
+      getHighestType e@(Left _) _ = e
+      getHighestType (Right (VConst CType)) (VConst Kind) = Right (VConst Kind)
+      getHighestType (Right _) (VConst Sort) = Right (VConst Sort)
+      getHighestType acc@(Right _) _ = acc -- relying on acc starting as (VConst CType)
   synth ctx (EUnion x) =
     let kvs = toList x in do -- TODO use SortedMap Traversable with idris2
       types <- traverse synthUnion kvs

@@ -60,6 +60,7 @@ mutual
     | VOptional Ty
     | VNone Ty
     | VSome Ty
+    | VRecord (SortedMap FieldName Value)
     | VUnion (SortedMap FieldName (Maybe Value))
     | VInject (SortedMap FieldName (Maybe Value)) FieldName (Maybe Value) -- TODO proof that key is in SM?
     | VPrimVar
@@ -122,6 +123,7 @@ mutual
     show (VOptional a) = "(VOptional " ++ show a ++ ")"
     show (VNone a) = "(VNone " ++ show a ++ ")"
     show (VSome a) = "(VSome " ++ show a ++ ")"
+    show (VRecord a) = "(VRecord " ++ show a ++ ")"
     show (VUnion a) = "(VUnion " ++ show a ++ ")"
     show (VInject a k v) = "(VUnion " ++ show a ++ " " ++ show k ++ " " ++ show v ++ ")"
     show (VPrimVar) = "VPrimVar"

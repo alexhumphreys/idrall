@@ -135,6 +135,10 @@ mutual
   resolve h p (ESome x) = do
     x' <- resolve h p x
     pure (ESome x')
+  resolve h p (ERecord x) =
+    let kv = toList x in do
+      kv' <- resolveRecord h p kv
+      pure (ERecord (fromList kv'))
   resolve h p (EUnion x) =
     let kv = toList x in do
       kv' <- resolveUnion h p kv
@@ -144,6 +148,15 @@ mutual
   resolve h p (EEmbed (Raw (LocalFile x))) = resolveLocalFile h p x
   resolve h p (EEmbed (Raw (EnvVar x))) = MkIOEither (pure (Left (ErrorMessage "TODO not implemented")))
   resolve h p (EEmbed (Resolved x)) = MkIOEither (pure (Left (ErrorMessage "Already resolved")))
+
+  resolveRecord :  (history : List FilePath)
+               -> Maybe FilePath
+               -> List (FieldName, Expr ImportStatement)
+               -> IOEither Error (List (FieldName, Expr Void))
+  resolveRecord h p [] =  MkIOEither (pure (Right []))
+  resolveRecord h p ((k, v) :: xs) = do
+    rest <- resolveRecord h p xs
+    MkIOEither (pure (Right ((k, !(resolve h p v)) :: rest)))
 
   resolveUnion :  (history : List FilePath) -- TODO try use traverse instead?
                -> Maybe FilePath
