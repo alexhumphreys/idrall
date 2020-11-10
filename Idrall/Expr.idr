@@ -112,6 +112,8 @@ mutual
     | ENone (Expr a)
     -- | > Some a
     | ESome (Expr a)
+    -- | > ERecord (fromList ((MkFieldName "Foo"), EBool)) ~ { Foo : Bool }
+    | ERecord (SortedMap FieldName (Expr a))
     -- | > EUnion (fromList ((MkFieldName "Foo"), Nothing)) ~ < Foo >
     -- | > EUnion (fromList ((MkFieldName "Foo"), Just EBool)) ~ < Foo : Bool >
     | EUnion (SortedMap FieldName (Maybe (Expr a)))
@@ -130,6 +132,7 @@ mutual
     show (Raw x) = "(Raw)" -- TODO show x
     show (Resolved x) = "(Resolved " ++ show x ++ ")"
 
+  covering -- TODO Maybe idris2 thinks this is total?
   export
   Show (Expr a) where
     show (EVar x) = "(EVar " ++ show x ++ ")"
@@ -161,6 +164,7 @@ mutual
     show (EOptional x) = "(EOptional " ++ show x ++ ")"
     show (ENone x) = "(ENone " ++ show x ++ ")"
     show (ESome x) = "(ESome " ++ show x ++ ")"
+    show (ERecord x) = "(ERecord " ++ show x ++ ")"
     show (EUnion x) = "(EUnion " ++ show x ++ ")"
     show (EField x y) = "(EField " ++ show x ++ " " ++ show y ++ ")"
     show (EEmbed x) = "(EEmbed " ++ show x ++ ")"

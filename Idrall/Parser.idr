@@ -150,6 +150,20 @@ table = [ [ Postfix field]
         , [ Infix (do token "#"; pure EListAppend) AssocLeft]]
 
 mutual
+  recordTypeElem : Parser (FieldName, Expr ImportStatement)
+  recordTypeElem = do
+    k <- identity
+    token ":"
+    e <- expr
+    pure (MkFieldName k, e)
+
+  recordType : Parser (Expr ImportStatement)
+  recordType = do
+    token "{"
+    xs <- recordTypeElem `sepBy` (token ",")
+    token "}"
+    pure (ERecord (fromList xs))
+
   unionSimpleElem : Parser (FieldName, Maybe (Expr ImportStatement))
   unionSimpleElem = do
     k <- identity
@@ -287,6 +301,7 @@ mutual
      text <|> textLiteral <|>
      type <|> kind <|> sort <|>
      pathTerm <|> esome <|>
+     recordType <|>
      union <|>
      var <|>| list <|>| parens expr)
     spaces
