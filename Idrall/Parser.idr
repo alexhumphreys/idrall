@@ -157,12 +157,47 @@ mutual
     e <- expr
     pure (MkFieldName k, e)
 
-  recordType : Parser (Expr ImportStatement)
-  recordType = do
+  recordTypeEmpty : Parser (Expr ImportStatement)
+  recordTypeEmpty = do
+    token "{"
+    token "}"
+    pure (ERecord (fromList []))
+
+  recordTypeNonEmpty : Parser (Expr ImportStatement)
+  recordTypeNonEmpty = do
     token "{"
     xs <- recordTypeElem `sepBy` (token ",")
     token "}"
     pure (ERecord (fromList xs))
+
+  recordType : Parser (Expr ImportStatement)
+  recordType = do
+    recordTypeEmpty <|> recordTypeNonEmpty
+
+  recordLitElem : Parser (FieldName, Expr ImportStatement)
+  recordLitElem = do
+    k <- identity
+    token "="
+    e <- expr
+    pure (MkFieldName k, e)
+
+  recordLitEmpty : Parser (Expr ImportStatement)
+  recordLitEmpty = do
+    token "{"
+    token "="
+    token "}"
+    pure (ERecordLit (fromList []))
+
+  recordLitNonEmpty : Parser (Expr ImportStatement)
+  recordLitNonEmpty = do
+    token "{"
+    xs <- recordLitElem `sepBy` (token ",")
+    token "}"
+    pure (ERecordLit (fromList xs))
+
+  recordLit : Parser (Expr ImportStatement)
+  recordLit = do
+    recordLitEmpty <|> recordLitNonEmpty
 
   unionSimpleElem : Parser (FieldName, Maybe (Expr ImportStatement))
   unionSimpleElem = do
@@ -301,7 +336,7 @@ mutual
      text <|> textLiteral <|>
      type <|> kind <|> sort <|>
      pathTerm <|> esome <|>
-     recordType <|>
+     recordType <|> recordLit <|>
      union <|>
      var <|>| list <|>| parens expr)
     spaces
