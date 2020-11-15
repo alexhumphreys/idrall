@@ -94,6 +94,10 @@ mutual
     | ENaturalLit Nat
     -- | > NaturalIsZero ~ Natural/isZero
     | ENaturalIsZero (Expr a)
+    -- | > Double ~ Double
+    | EDouble
+    -- | > DoubleLit n ~ n
+    | EDoubleLit Double
     -- | > EList a ~ List a
     | EList (Expr a)
     -- | > EList (Some e) [e', ...] ~ [] : List a
@@ -156,6 +160,8 @@ mutual
     show ENatural = "ENatural"
     show (ENaturalLit k) = "(ENaturalLit " ++ show k ++ ")"
     show (ENaturalIsZero x) = "(ENaturalIsZero " ++ show x ++ ")"
+    show EDouble = "EDouble"
+    show (EDoubleLit k) = "(EDoubleLit " ++ show k ++ ")"
     show (EList x) = "(EList " ++ show x ++ ")"
     show (EListLit Nothing xs) = "(EListLit Nothing " ++ show xs ++ ")"
     show (EListLit (Just x) xs) = "(EListLit (Just " ++ show x ++ ") " ++ show xs ++ ")"
