@@ -61,6 +61,8 @@ mutual
   aEquivHelper i ns1 (ENaturalLit x) ns2 (ENaturalLit y) = x == y
   aEquivHelper i ns1 (ENaturalIsZero x) ns2 (ENaturalIsZero y)
     = aEquivHelper i ns1 x ns2 y
+  aEquivHelper _ _ EDouble _ EDouble = True
+  aEquivHelper i _ (EDoubleLit x) _ (EDoubleLit y) = x == y
   aEquivHelper i ns1 (EEquivalent w x) ns2 (EEquivalent y z)
     -- TODO should use CBOR encoding eventually
     = aEquivHelper i ns1 w ns1 x &&
@@ -280,6 +282,8 @@ mutual
          doIntegerNegate x'
   eval env ENatural = Right VNatural
   eval env (ENaturalLit k) = Right (VNaturalLit k)
+  eval env EDouble = Right VDouble
+  eval env (EDoubleLit k) = Right (VDoubleLit k)
   eval env (EList a) = do
     a' <- eval env a
     Right (VList a')
@@ -475,6 +479,8 @@ mutual
   readBackTyped ctx VBool (VBoolLit x) = Right (EBoolLit x)
   readBackTyped ctx VInteger (VIntegerLit x) = Right (EIntegerLit x)
   readBackTyped ctx VNatural (VNaturalLit x) = Right (ENaturalLit x)
+  readBackTyped ctx (VConst CType) VDouble = Right EDouble
+  readBackTyped ctx VDouble (VDoubleLit x) = Right (EDoubleLit x)
   readBackTyped ctx t (VNeutral x z) = readBackNeutral ctx z
   readBackTyped ctx (VConst CType) (VPi aT bT) =
     let x = freshen (ctxNames ctx) (closureName bT) in
@@ -579,6 +585,10 @@ isNat : Ctx -> Value -> Either Error ()
 isNat _ VNatural = Right ()
 isNat ctx other = unexpected ctx "Not Natural" other
 
+isDouble : Ctx -> Value -> Either Error ()
+isDouble _ VDouble = Right ()
+isDouble ctx other = unexpected ctx "Not Double" other
+
 isBool : Ctx -> Value -> Either Error ()
 isBool _ VBool = Right ()
 isBool ctx other = unexpected ctx "Not Bool" other
@@ -604,6 +614,7 @@ isTerm _ (VPi _ _) = Right ()
 isTerm _ (VBool) = Right ()
 isTerm _ (VNatural) = Right ()
 isTerm _ (VInteger) = Right ()
+isTerm _ (VDouble) = Right ()
 isTerm _ (VList _) = Right ()
 isTerm _ (VOptional _) = Right ()
 isTerm ctx (VNeutral x _) = isTerm ctx x
@@ -620,6 +631,7 @@ isTermTypeKind _ (VPi _ _) = Right ()
 isTermTypeKind _ (VBool) = Right ()
 isTermTypeKind _ (VNatural) = Right ()
 isTermTypeKind _ (VInteger) = Right ()
+isTermTypeKind _ (VDouble) = Right ()
 isTermTypeKind _ (VList _) = Right ()
 isTermTypeKind _ (VOptional _) = Right ()
 isTermTypeKind _ (VConst CType) = Right ()
@@ -684,6 +696,7 @@ mutual
   check ctx (EBoolLit x) t = isBool ctx t
   check ctx (EIntegerLit k) t = isInteger ctx t
   check ctx (ENaturalLit k) t = isNat ctx t
+  check ctx (EDoubleLit k) t = isDouble ctx t
   check ctx (EListLit Nothing xs) (VList a) = do
     mapListEither xs (\e => check ctx e a)
     Right ()
@@ -759,6 +772,8 @@ mutual
   synth ctx (ENaturalIsZero x)
     = do check ctx x VNatural
          Right (VBool)
+  synth ctx EDouble = Right (VConst CType)
+  synth ctx (EDoubleLit k) = Right (VDouble)
   synth ctx e@(EEquivalent x y) = do
     check ctx e (VConst CType)
     Right (VConst CType)

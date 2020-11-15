@@ -71,11 +71,41 @@ where getInteger : List (Fin 10) -> Integer
 natural : Parser (Expr ImportStatement)
 natural = token "Natural" *> pure (ENatural)
 
+double : Parser (Expr ImportStatement)
+double = token "Double" *> pure (EDouble)
+
 naturalLit : Parser (Expr ImportStatement)
 naturalLit = do n <- some digit
                 pure (ENaturalLit (getNatural n))
 where getNatural : List (Fin 10) -> Nat
       getNatural = foldl (\a => \b => 10 * a + cast b) 0
+
+-- From lightyear JSON parser
+record Scientific where
+  constructor MkScientific
+  coefficient : Integer
+  exponent : Integer
+
+scientificToDouble : Scientific -> Double
+scientificToDouble (MkScientific c e) = fromInteger c * exp
+  where exp = if e < 0 then 1 / pow 10 (fromIntegerNat (- e))
+                       else pow 10 (fromIntegerNat e)
+
+parseScientific : Parser Scientific
+parseScientific = do sign <- maybe 1 (const (-1)) `map` opt (char '-') -- TODO handle '+'
+                     digits <- some digit
+                     char '.'
+                     decimals <- some digit
+                     hasExponent <- isJust `map` opt (char 'e')
+                     exponent <- if hasExponent then integer else pure 0
+                     pure $ MkScientific (sign * fromDigits (digits ++ decimals))
+                                         (exponent - cast (length decimals))
+  where fromDigits : List (Fin 10) -> Integer
+        fromDigits = foldl (\a, b => 10 * a + cast b) 0
+
+doubleLit : Parser (Expr ImportStatement)
+doubleLit = do k <- map scientificToDouble parseScientific
+               pure (EDoubleLit k)
 
 type : Parser (Expr ImportStatement)
 type = token "Type" *> pure (EConst CType)
@@ -107,7 +137,7 @@ reservedNames' : List String
 reservedNames' =
   [ "in", "let", "assert"
   , "->", "&&", ":"
-  , "List", "Text", "Optional", "Natural", "Integer"
+  , "List", "Text", "Optional", "Natural", "Integer", "Double"
   , "Some", "None"
   , "Type", "Kind", "Sort"]
 
@@ -331,6 +361,7 @@ mutual
   term = do
     i <-(builtin <|>
      true <|> false <|> bool <|>
+     double <|> doubleLit <|>
      natural <|> naturalLit <|>
      integer <|> integerLit <|>
      text <|> textLiteral <|>

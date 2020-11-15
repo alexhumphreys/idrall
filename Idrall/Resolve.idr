@@ -101,6 +101,8 @@ mutual
   resolve h p (ENaturalIsZero x) = do
     x' <- resolve h p x
     pure (ENaturalIsZero x')
+  resolve h p e@EDouble = pure e
+  resolve h p e@(EDoubleLit k) = pure e
   resolve h p (EIntegerNegate x) = do
     x' <- resolve h p x
     pure (EIntegerNegate x')

@@ -53,6 +53,8 @@ mutual
     | VIntegerLit Integer
     | VNatural
     | VNaturalLit Nat
+    | VDouble
+    | VDoubleLit Double
     | VList Ty
     | VListLit (Maybe Ty) (List Value)
     | VText
@@ -117,6 +119,8 @@ mutual
     show (VIntegerLit x) = "(VIntegerLit " ++ show x ++ ")"
     show VNatural = "VNatural"
     show (VNaturalLit k) = "(VNaturalLit " ++ show k ++ ")"
+    show VDouble = "VDouble"
+    show (VDoubleLit k) = "(VDoubleLit " ++ show k ++ ")"
     show (VList a) = "(VList " ++ show a ++ ")"
     show (VListLit ty vs) = "(VListLit " ++ show ty ++ show vs ++ ")"
     show (VText) = "VText"
