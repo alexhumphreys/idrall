@@ -4,9 +4,9 @@
 
 Parse, evaluate, check/infer types of Dhall expressions.
 
-## Status￼
+## Status
 
-Very much a work in progress, with many thing missing. The plan is to make an end to end compiler for a small goofy subset of Dhall, and gradually and features.￼
+Very much a work in progress, with many thing missing. The plan is to make an end to end compiler for a small goofy subset of Dhall, and gradually and features.
 
 ## Features
 
