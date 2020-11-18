@@ -2,8 +2,6 @@ module Idrall.Error
 
 import Idrall.Value
 
-%hide Error
-
 public export
 data Error
   = MissingVar String
@@ -39,6 +37,7 @@ Show Error where
   show (ListAppendError str) = "ListAppendError: " ++ str
   show (ListHeadError str) = "ListHeadError: " ++ str
   show (FieldNotFoundError str) = "FieldNotFoundError: " ++ str
+  show (FieldArgMismatchError str) = "FieldArgMismatchError: " ++ str
   show (InvalidFieldType str) = "InvalidFieldType: " ++ str
   show (ReadFileError str) = "ReadFileError: " ++ str
   show (CyclicImportError str) = "CyclicImportError: " ++ str

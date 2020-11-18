@@ -1,13 +1,12 @@
 module Idrall.Lexer
 
-import Lightyear.Combinators
-import Lightyear.Core
-import Lightyear.Char
-import Lightyear.Strings
+import Control.Monad.Identity
+import Control.Monad.Trans
 
-import Idrall.Expr
-
-import Data.Bits
+import Data.Vect
+import Data.List
+import Data.Nat
+import Data.String.Parser
 
 -- Not a real Lexer, more a collection of small parsing utilities.
 
@@ -39,18 +38,30 @@ isSurrogate x =
   ((0xD800 <= x) && (x <= 0xDBFF))
     || ((0xDC00 <= x) && (x <= 0xDFFF))
 
+{- TODO fix when idris2 has `Bits`
 public export
 bitAnd : Int -> Int -> Bits 1
 bitAnd x y = and (cast (toInteger x)) (cast (toInteger y))
 where
   toInteger : Int -> Integer
   toInteger x = cast x
+  -}
 
 public export
 validCodepoint : Int -> Bool
 validCodepoint c = not (isSurrogate c
-                       || (bitsToInt (bitAnd c 0xFFFE)) == 0xFFFE
-                       || (bitsToInt (bitAnd c 0xFFFF)) == 0xFFFF)
+                       --  TODO fix when idris2 has `Bits`
+                       || True -- (bitsToInt (bitAnd c 0xFFFE)) == 0xFFFE
+                       || True) -- (bitsToInt (bitAnd c 0xFFFF)) == 0xFFFF)
+
+infixr 3 ::.
+private
+(::.) : a -> Vect n a -> Vect (S n) a
+(::.) x xs = x :: xs
+
+ntimes : (n : Nat) -> Parser a -> Parser (Vect n a)
+ntimes    Z  p = pure Vect.Nil
+ntimes (S n) p = [| p ::. ntimes n p |]
 
 public export
 unicode : Parser Char
