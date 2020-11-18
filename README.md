@@ -75,7 +75,7 @@ They mostly fail, so you can run the ones that should pass with the following:
 
 Type checking and inference (aka synthesis) in Dhall is covered by [these rules](https://github.com/dhall-lang/dhall-lang/blob/master/standard/type-inference.md). The rules are implemented here using a technique called Normalisation by Evaluation (NbE). It is described in [this paper by David Christiansen](http://davidchristiansen.dk/tutorials/implementing-types-hs.pdf), and was also used by [@AndrasKovaks](https://github.com/AndrasKovacs) in [their branch](https://github.com/dhall-lang/dhall-haskell/commits/nbe-elaboration) on `dhall-Haskell` (I found [this commit](https://github.com/dhall-lang/dhall-haskell/commit/627a6cdea0170336ff08de34851d8bdf5180571d) particularly useful).
 
-The general idea of NbE is that you have a data structure that represents the raw syntax Language, which is called `Expr` here. Expressions can be literals (`3`, `True`), types (`Natural`, `Bool`, `Type`), functions, builtins, operators, etc. You evaluate the `Expr` to a data structure that only represents expressions that cannot be reduced further￼, called `Value` here. Eg, the expression `True && False` can be represented in an `Expr`, but as a `Value` would be reduced to `False`. 
+The general idea of NbE is that you have a data structure that represents the raw syntax Language, which is called `Expr` here. Expressions can be literals (`3`, `True`), types (`Natural`, `Bool`, `Type`), functions, builtins, operators, etc. You evaluate the `Expr` to a data structure that only represents expressions that cannot be reduced further, called `Value` here. Eg, the expression `True && False` can be represented in an `Expr`, but as a `Value` would be reduced to `False`. 
 
 To convert a `Value` back to an `Expr` is called "reading back" or "quoting".
 
@@ -85,11 +85,11 @@ Type synthesis (or type inference) takes an `Expr` and returns its type as a `Va
 
 Type checking checks an `Expr` against a type given as a `Value`. A `Value` is synthesised for the type of the `Expr`, and both this `Value` and the provided type `Value` are read back to `Expr`s. This ensures there are no reducible expressions in either. Now you can compare the types using an alpha equivalence check to see if they match.
 
-That was a very brief, potentially wrong introduction to the NbE technique used. I'm glossing over a bunch of details about closures, neutral values, the environment/context, etc. but this should be enough to get started with. See the above paper for a full description, and check out the code to see it in action.￼
+That was a very brief, potentially wrong introduction to the NbE technique used. I'm glossing over a bunch of details about closures, neutral values, the environment/context, etc. but this should be enough to get started with. See the above paper for a full description, and check out the code to see it in action.
 
 ## Contributions
 
-Any contributions would be appreciated, and anything from the missing list above would be a good place to start￼.
+Any contributions would be appreciated, and anything from the missing list above would be a good place to start.
 
 ### Examples of adding language features
 
@@ -100,7 +100,7 @@ As an example, the `List` type was added via [#1](https://github.com/alexhumphre
 ## Future work
 
 - Add the things from the missing list above
-- Upgrade to Idris2￼ (will need to swap Lightyear for `Data/String/Parser` in contrib)
-- Improved parsing (Not really sure what I'm doing here)￼
+- Upgrade to Idris2 (will need to swap Lightyear for `Data/String/Parser` in contrib)
+- Improved parsing (Not really sure what I'm doing here)
 - Think about what api/types to expose so as to make this as nice as possible to use
 - Scope checking as found in [Tiny Idris](https://github.com/edwinb/SPLV20)
