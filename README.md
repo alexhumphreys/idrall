@@ -20,12 +20,14 @@ Features marked with a tick should work for parsing, type checking and evaluatio
   - [x] List
   - [x] Optional
   - [x] Equivalent
-  - [ ] String
-  - [ ] Records
-  - [ ] Union
+  - [x] String
+  - [x] Records
+  - [x] Union
+  - [x] Double
 - Operators
   - [x] `&&`
   - [x] `#`
+  - [x] `.` (Field operator)
   - [ ] `\\`
   - [ ] `/\`
   - [ ] `::`
