@@ -69,7 +69,7 @@ They mostly fail, so you can run the ones that should pass with the following:
 *tests/Test> :exec testGood
 ```
 
-## Implementation details￼
+## Implementation details
 
 ### Type checking
 
