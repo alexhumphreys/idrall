@@ -1,0 +1,7 @@
+package idrall
+
+depends = contrib
+
+sourcedir = "src"
+
+executable = idris2

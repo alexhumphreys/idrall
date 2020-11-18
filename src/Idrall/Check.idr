@@ -4,7 +4,7 @@ import Idrall.Expr
 import Idrall.Error
 import Idrall.Value
 
-%hide Language.Reflection.Elab.Tactics.check
+import Data.List
 
 mapChunks : (a -> Either e b) -> (k, a) -> Either e (k, b)
 mapChunks f (k, a) = Right (k, !(f a))
@@ -217,7 +217,7 @@ mapRecord f (k, x) = Right (k, !(f x))
 mapUnion : (a -> Either e b) -> (k, Maybe a) -> Either e (k, (Maybe b))
 mapUnion f (k, Just x) =
   Right (k, Just !(f x))
-mapUnion f x@(k, Nothing) = Right x
+mapUnion f (k, Nothing) = Right (k, Nothing)
 
 -- evaluator
 mutual
@@ -857,9 +857,10 @@ mutual
       getHighestType' (Right _) (VConst Sort) = Right (VConst Sort)
       getHighestType' acc@(Right _) _ = acc -- relying on acc starting as (VConst CType)
   synth ctx (EUnion x) =
-    let kvs = toList x in do -- TODO use SortedMap Traversable with idris2
+    let kvs = SortedMap.toList x in do -- TODO use SortedMap Traversable with idris2
       types <- traverse synthUnion kvs
       ty <- foldl getHighestType (Right (VConst CType)) (map snd types)
+      ?foo
       Right ty
     where
       synthUnion : (FieldName, Maybe (Expr Void)) -> Either Error (FieldName, Maybe Ty)

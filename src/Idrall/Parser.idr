@@ -1,17 +1,16 @@
-import Lightyear.Combinators
-import Lightyear.Core
-import Lightyear.Char
-import Lightyear.Strings
+module Idrall.Parser
+
+import Control.Monad.Identity
+import Control.Monad.Trans
+
+import Data.Fin
+import Data.Nat
+import Data.String.Parser
+import Data.String.Parser.Expression
 
 import Idrall.Lexer
 import Idrall.Expr
-import Idrall.BuildExprParser
 import Idrall.Path
-
-import Data.Bits
-
-%hide Prelude.Stream.(::)
-%hide Data.Vect.replicate
 
 fIntegerNegate : (Expr ImportStatement)
 fIntegerNegate = ELam "integerNegateParam1" EInteger (EIntegerNegate (EVar "integerNegateParam1"))
@@ -33,7 +32,6 @@ fOptional = ELam "optionalArg1" (EConst CType) (EOptional (EVar "optionalArg1"))
 fNone : (Expr ImportStatement)
 fNone = ELam "noneArg1" (EConst CType) (ENone (EVar "noneArg1"))
 
-%access export
 builtin : Parser (Expr ImportStatement)
 builtin =
   (string "Integer/negate" *> pure fIntegerNegate) <|>
@@ -88,15 +86,16 @@ record Scientific where
 
 scientificToDouble : Scientific -> Double
 scientificToDouble (MkScientific c e) = fromInteger c * exp
-  where exp = if e < 0 then 1 / pow 10 (fromIntegerNat (- e))
+  where exp : integer
+        exp = if e < 0 then 1 / pow 10 (fromIntegerNat (- e))
                        else pow 10 (fromIntegerNat e)
 
 parseScientific : Parser Scientific
-parseScientific = do sign <- maybe 1 (const (-1)) `map` opt (char '-') -- TODO handle '+'
+parseScientific = do sign <- maybe 1 (const (-1)) `map` optional (char '-') -- TODO handle '+'
                      digits <- some digit
                      char '.'
                      decimals <- some digit
-                     hasExponent <- isJust `map` opt (char 'e')
+                     hasExponent <- isJust `map` optional (char 'e')
                      exponent <- if hasExponent then integer else pure 0
                      pure $ MkScientific (sign * fromDigits (digits ++ decimals))
                                          (exponent - cast (length decimals))
@@ -115,6 +114,12 @@ kind = token "Kind" *> pure (EConst Kind)
 
 sort : Parser (Expr ImportStatement)
 sort = token "Sort" *> pure (EConst Sort)
+
+alphaNum : ParseT Identity Char
+alphaNum = satisfy isAlphaNum <?> "letter or digit"
+
+letter : ParseT Identity Char
+letter = satisfy isAlpha <?> "letter"
 
 identFirst : Parser Char
 identFirst = letter <|> char '_'
@@ -256,11 +261,11 @@ mutual
   letExpr : Parser (Expr ImportStatement)
   letExpr = token "let" *> do
     i <- identity
-    t <- opt (do token ":"; expr)
+    t <- optional (do token ":"; expr)
     token "="
     v <- expr
     spaces
-    opt (token "in")
+    optional (token "in")
     e <- expr
     pure (ELet i t v e)
 
@@ -369,7 +374,7 @@ mutual
      pathTerm <|> esome <|>
      recordType <|> recordLit <|>
      union <|>
-     var <|>| list <|>| parens expr)
+     var <|> list <|> parens expr)
     spaces
     pure i
 
@@ -440,5 +445,6 @@ mutual
     eof
     pure e
 
+public export
 parseExpr : String -> Either String (Expr ImportStatement)
 parseExpr str = parse parseToEnd str

@@ -10,33 +10,6 @@ mutual
   Ty : Type
   Ty = Value
 
-  covering
-  public export
-  Show Normal where
-    show (Normal' x y) = "(Normal' " ++ (show x) ++ " " ++ show y ++ ")"
-
-  public export
-  Env : Type -- Now a type alias
-  Env = List (Name,Value)
-  %name Env env, env1, env2
-
-  public export
-  data VChunks = MkVChunks (List (String, Value)) String
-
-  public export
-  record Closure where
-    constructor MkClosure
-    closureEnv : Env
-    closureName : Name
-    closureType : Expr Void
-    closureBody : Expr Void
-
-  public export
-  Show Closure where
-    show (MkClosure closureEnv closureName closureType closureBody)
-      = "(MkClosure " ++ show closureEnv ++ " " ++ closureName ++ " " ++ show closureType
-         ++ " " ++ show closureBody ++ ")"
-
   -- Values
   public export
   data Value
@@ -70,11 +43,24 @@ mutual
     | VNeutral Ty Neutral
 
   public export
+  Env : Type -- Now a type alias
+  Env = List (Name,Value)
+  %name Env env, env1, env2
+
+  public export
+  data VChunks = MkVChunks (List (String, Value)) String
+
+  public export
+  record Closure where
+    constructor MkClosure
+    closureEnv : Env
+    closureName : Name
+    closureType : Expr Void
+    closureBody : Expr Void
+
+  public export
   data HLamInfo
     = Prim
-
-  Show HLamInfo where
-    show Prim = "Prim"
 
   public export
   VPrim : (Value -> Value) -> Value
@@ -99,6 +85,21 @@ mutual
     | NOptional Neutral
     | NNone Neutral
     | NSome Neutral
+
+mutual
+  covering
+  public export
+  Show Normal where
+    show (Normal' x y) = "(Normal' " ++ (show x) ++ " " ++ show y ++ ")"
+
+  Show HLamInfo where
+    show Prim = "Prim"
+
+  public export
+  Show Closure where
+    show (MkClosure closureEnv closureName closureType closureBody)
+      = "(MkClosure " ++ show closureEnv ++ " " ++ closureName ++ " " ++ show closureType
+         ++ " " ++ show closureBody ++ ")"
 
   public export
   Show VChunks where

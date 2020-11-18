@@ -8,6 +8,10 @@ export
 Functor (IOEither a) where
   map func (MkIOEither x) = MkIOEither (map (map func) x)
 
+||| Lift a two-argument function to an applicative
+liftA2 : Applicative f => (a -> b -> c) -> f a -> f b -> f c
+liftA2 f a b = (map f a) <*> b
+
 export
 Applicative (IOEither a) where
   pure x = MkIOEither (pure (pure x))

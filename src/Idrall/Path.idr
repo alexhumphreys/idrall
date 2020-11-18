@@ -1,5 +1,7 @@
 module Idrall.Path
 
+import Data.List
+
 public export
 Dir : Type
 Dir = List String

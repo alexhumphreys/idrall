@@ -1,3 +1,5 @@
+module Idrall.Expr
+
 import Idrall.Path
 
 import public Data.SortedMap
