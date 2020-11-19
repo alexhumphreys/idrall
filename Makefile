@@ -14,3 +14,6 @@ clean:
 	rm -f Idrall/*.idr~
 	rm -f Idrall/*.ibc
 	rm -rf build/
+
+test:
+	${MAKE} -C tests

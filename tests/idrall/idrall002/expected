@@ -1,0 +1,372 @@
+Listing directory ../../../dhall-lang/tests/type-inference/success/unit/
+testing: AssertAlpha
+Error: EvalApplyErr
+testing: AssertNaN
+Error: ErrorMessage: "Parse failed at position 0: char '('"
+testing: AssertSimple
+Error: ErrorMessage: "Parse failed at position 11: expected the end of the string"
+testing: AssertTrivial
+Success: ()
+testing: Bool
+Success: ()
+testing: Completion
+Error: ErrorMessage: "Parse failed at position 0: char '('"
+testing: Double
+Success: ()
+testing: DoubleLiteral
+Success: ()
+testing: DoubleShow
+Error: ReadFileError: File Not Found //show
+testing: Equivalence
+Success: ()
+testing: False
+Success: ()
+testing: Function
+Success: ()
+testing: FunctionApplication
+Success: ()
+testing: FunctionApplicationNormalizeArgument
+Error: ReadFileError: File Not Found //length
+testing: FunctionApplicationNormalizeResult
+Error: ReadFileError: File Not Found //even
+testing: FunctionDependentType1
+Success: ()
+testing: FunctionDependentType2
+Success: ()
+testing: FunctionNamedArg
+Success: ()
+testing: FunctionNormalizeTypeAnnotation
+Success: ()
+testing: FunctionTypeKindKind
+Success: ()
+testing: FunctionTypeKindTerm
+Success: ()
+testing: FunctionTypeKindType
+Success: ()
+testing: FunctionTypeTermTerm
+Success: ()
+testing: FunctionTypeTypeKind
+Success: ()
+testing: FunctionTypeTypeTerm
+Success: ()
+testing: FunctionTypeTypeType
+Success: ()
+testing: FunctionTypeUsingArgument
+Success: ()
+testing: If
+Error: MissingVar: "if"
+testing: IfNormalizeArguments
+Error: ErrorMessage: "Parse failed at position 0: char '('"
+testing: Integer
+Success: ()
+testing: IntegerClamp
+Error: ReadFileError: File Not Found //clamp
+testing: IntegerLiteral
+Success: ()
+testing: IntegerNegate
+Success: ()
+testing: IntegerShow
+Error: ReadFileError: File Not Found //show
+testing: IntegerToDouble
+Error: ReadFileError: File Not Found //toDouble
+testing: Kind
+Success: ()
+testing: Let
+Success: ()
+testing: LetNestedTypeSynonym
+Success: ()
+testing: LetTypeSynonym
+Success: ()
+testing: LetWithAnnotation
+Success: ()
+testing: List
+Success: ()
+testing: ListBuild
+Error: ReadFileError: File Not Found //build
+testing: ListFold
+Error: ReadFileError: File Not Found //fold
+testing: ListHead
+Success: ()
+testing: ListIndexed
+Error: ReadFileError: File Not Found //indexed
+testing: ListLast
+Error: ReadFileError: File Not Found //last
+testing: ListLength
+Error: ReadFileError: File Not Found //length
+testing: ListLiteralEmpty
+Success: ()
+testing: ListLiteralEmptyNormalizeAnnotation
+Error: InvalidFieldType: (ERecordLit fromList [((MkFieldName x, (EApp (ELam "listArg1" (EConst CType) (EList (EVar "listArg1"))) EBool))])
+testing: ListLiteralNormalizeArguments
+Error: MissingVar: "if"
+testing: ListLiteralOne
+Success: ()
+testing: ListReverse
+Error: ReadFileError: File Not Found //reverse
+testing: MergeEmptyAlternative
+Error: MissingVar: "merge"
+testing: MergeEmptyUnion
+Error: MissingVar: "merge"
+testing: MergeNone
+Error: ErrorMessage: "Parse failed at position 6: expected the end of the string"
+testing: MergeOne
+Error: MissingVar: "merge"
+testing: MergeOneEmpty
+Error: MissingVar: "merge"
+testing: MergeOneWithAnnotation0
+Error: MissingVar: "merge"
+testing: MergeOneWithAnnotation1
+Error: MissingVar: "merge"
+testing: MergeOptional
+Error: ErrorMessage: "Parse failed at position 29: expected the end of the string"
+testing: MergeSome
+Error: ErrorMessage: "Parse failed at position 6: expected the end of the string"
+testing: MergeTrickyShadowing
+Error: MissingVar: "merge"
+testing: Natural
+Success: ()
+testing: NaturalBuild
+Error: ReadFileError: File Not Found //build
+testing: NaturalEven
+Error: ReadFileError: File Not Found //even
+testing: NaturalFold
+Error: ReadFileError: File Not Found //fold
+testing: NaturalIsZero
+Success: ()
+testing: NaturalLiteral
+Success: ()
+testing: NaturalOdd
+Error: ReadFileError: File Not Found //odd
+testing: NaturalShow
+Error: ReadFileError: File Not Found //show
+testing: NaturalSubtract
+Error: ReadFileError: File Not Found //subtract
+testing: NaturalToInteger
+Error: ReadFileError: File Not Found //toInteger
+testing: None
+Success: ()
+testing: OperatorAnd
+Success: ()
+testing: OperatorAndNormalizeArguments
+Success: ()
+testing: OperatorEqual
+Error: ErrorMessage: "Parse failed at position 5: expected the end of the string"
+testing: OperatorEqualNormalizeArguments
+Error: ErrorMessage: "Parse failed at position 5: expected the end of the string"
+testing: OperatorListConcatenate
+Success: ()
+testing: OperatorListConcatenateNormalizeArguments
+Error: MissingVar: "if"
+testing: OperatorNotEqual
+Error: ErrorMessage: "Parse failed at position 5: expected the end of the string"
+testing: OperatorNotEqualNormalizeArguments
+Error: ErrorMessage: "Parse failed at position 5: expected the end of the string"
+testing: OperatorOr
+Error: ErrorMessage: "Parse failed at position 5: expected the end of the string"
+testing: OperatorOrNormalizeArguments
+Error: ErrorMessage: "Parse failed at position 5: expected the end of the string"
+testing: OperatorPlus
+Error: ErrorMessage: "Parse failed at position 2: expected the end of the string"
+testing: OperatorPlusNormalizeArguments
+Error: ErrorMessage: "Parse failed at position 2: expected the end of the string"
+testing: OperatorTextConcatenate
+Error: ErrorMessage: "Parse failed at position 4: expected the end of the string"
+testing: OperatorTextConcatenateNormalizeArguments
+Error: ErrorMessage: "Parse failed at position 4: expected the end of the string"
+testing: OperatorTimes
+Error: ErrorMessage: "Parse failed at position 2: expected the end of the string"
+testing: OperatorTimesNormalizeArguments
+Error: ErrorMessage: "Parse failed at position 2: expected the end of the string"
+testing: Optional
+Success: ()
+testing: OptionalBuild
+Error: ReadFileError: File Not Found //build
+testing: OptionalFold
+Error: ReadFileError: File Not Found //fold
+testing: RecordEmpty
+Success: ()
+testing: RecordLitDottedFields
+Error: ErrorMessage: "Parse failed at position 0: char '('"
+testing: RecordLitDottedFieldsMerge
+Error: ErrorMessage: "Parse failed at position 0: char '('"
+testing: RecordLitDuplicateFieldsAbstract
+Error: ErrorMessage: "Parse failed at position 0: char '('"
+testing: RecordLitDuplicateFieldsNoCollisions
+Error: ErrorMessage: "Parse failed at position 0: char '('"
+testing: RecordLitNormalizeFieldType
+Error: InvalidFieldType: (ERecordLit fromList [((MkFieldName t, EBool)])
+testing: RecordLitPun
+Error: ErrorMessage: "Parse failed at position 0: char '('"
+testing: RecordLitPunCapture
+Error: ErrorMessage: "Parse failed at position 0: char '('"
+testing: RecordLitPunSome
+Error: ErrorMessage: "Parse failed at position 0: char '('"
+testing: RecordLitSortFields
+Success: ()
+testing: RecordMixedKinds2
+Success: ()
+testing: RecordMixedKinds
+Success: ()
+testing: RecordNestedKind
+Success: ()
+testing: RecordNestedKindLike
+Success: ()
+testing: RecordNestedType
+Success: ()
+testing: RecordNestedTypeLike
+Success: ()
+testing: RecordOneKind
+Success: ()
+testing: RecordOneType
+Success: ()
+testing: RecordOneValue
+Success: ()
+testing: RecordProjectionByType
+Error: ErrorMessage: "Parse failed at position 59: expected the end of the string"
+testing: RecordProjectionByTypeEmpty
+Error: ErrorMessage: "Parse failed at position 47: expected the end of the string"
+testing: RecordProjectionByTypeJudgmentalEquality
+Error: ErrorMessage: "Parse failed at position 0: char '('"
+testing: RecordProjectionEmpty
+Error: ErrorMessage: "Parse failed at position 11: expected the end of the string"
+testing: RecordProjectionEmptyKind
+Error: ErrorMessage: "Parse failed at position 12: expected the end of the string"
+testing: RecordProjectionKind
+Error: ErrorMessage: "Parse failed at position 22: expected the end of the string"
+testing: RecordProjectionType
+Error: ErrorMessage: "Parse failed at position 25: expected the end of the string"
+testing: RecordProjectionValue
+Error: ErrorMessage: "Parse failed at position 20: expected the end of the string"
+testing: RecordSelectionKind
+Error: InvalidFieldType: (ERecordLit fromList [((MkFieldName x, (EConst CType))])
+testing: RecordSelectionType
+Error: InvalidFieldType: (ERecordLit fromList [((MkFieldName x, (ERecord fromList []))])
+testing: RecordSelectionValue
+Error: InvalidFieldType: (ERecordLit fromList [((MkFieldName x, (ERecordLit fromList []))])
+testing: RecordType
+Success: ()
+testing: RecordTypeEmpty
+Success: ()
+testing: RecordTypeKind
+Success: ()
+testing: RecordTypeKindLike
+Success: ()
+testing: RecordTypeMixedKinds2
+Success: ()
+testing: RecordTypeMixedKinds3
+Success: ()
+testing: RecordTypeMixedKinds
+Success: ()
+testing: RecordTypeNestedKind
+Success: ()
+testing: RecordTypeNestedKindLike
+Success: ()
+testing: RecordTypeType
+Success: ()
+testing: RecursiveRecordMergeBoolType
+Error: ErrorMessage: "Parse failed at position 13: expected the end of the string"
+testing: RecursiveRecordMergeLhsEmpty
+Error: ErrorMessage: "Parse failed at position 4: expected the end of the string"
+testing: RecursiveRecordMergeMixedKinds
+Error: ErrorMessage: "Parse failed at position 13: expected the end of the string"
+testing: RecursiveRecordMergeRecursively
+Error: ErrorMessage: "Parse failed at position 21: expected the end of the string"
+testing: RecursiveRecordMergeRecursivelyKinds
+Error: ErrorMessage: "Parse failed at position 21: expected the end of the string"
+testing: RecursiveRecordMergeRecursivelyTypes
+Error: ErrorMessage: "Parse failed at position 21: expected the end of the string"
+testing: RecursiveRecordMergeRhsEmpty
+Error: ErrorMessage: "Parse failed at position 13: expected the end of the string"
+testing: RecursiveRecordMergeTwo
+Error: ErrorMessage: "Parse failed at position 13: expected the end of the string"
+testing: RecursiveRecordMergeTwoKinds
+Error: ErrorMessage: "Parse failed at position 13: expected the end of the string"
+testing: RecursiveRecordMergeTwoTypes
+Error: ErrorMessage: "Parse failed at position 13: expected the end of the string"
+testing: RecursiveRecordTypeMergeDeep
+Error: ErrorMessage: "Parse failed at position 29: expected the end of the string"
+testing: RecursiveRecordTypeMergeRecursively
+Error: ErrorMessage: "Parse failed at position 21: expected the end of the string"
+testing: RecursiveRecordTypeMergeRecursivelyKinds
+Error: ErrorMessage: "Parse failed at position 21: expected the end of the string"
+testing: RecursiveRecordTypeMergeRecursivelyTypes
+Error: ErrorMessage: "Parse failed at position 21: expected the end of the string"
+testing: RecursiveRecordTypeMergeRhsEmpty
+Error: ErrorMessage: "Parse failed at position 13: expected the end of the string"
+testing: RecursiveRecordTypeMergeTwo
+Error: ErrorMessage: "Parse failed at position 13: expected the end of the string"
+testing: RecursiveRecordTypeMergeTwoKinds
+Error: ErrorMessage: "Parse failed at position 13: expected the end of the string"
+testing: RecursiveRecordTypeMergeTwoTypes
+Error: ErrorMessage: "Parse failed at position 13: expected the end of the string"
+testing: RightBiasedRecordMergeMixedKinds
+Error: ErrorMessage: "Parse failed at position 12: expected the end of the string"
+testing: RightBiasedRecordMergeRhsEmpty
+Error: ErrorMessage: "Parse failed at position 12: expected the end of the string"
+testing: RightBiasedRecordMergeTwo
+Error: ErrorMessage: "Parse failed at position 12: expected the end of the string"
+testing: RightBiasedRecordMergeTwoDifferent
+Error: ErrorMessage: "Parse failed at position 12: expected the end of the string"
+testing: RightBiasedRecordMergeTwoKinds
+Error: ErrorMessage: "Parse failed at position 13: expected the end of the string"
+testing: RightBiasedRecordMergeTwoTypes
+Error: ErrorMessage: "Parse failed at position 13: expected the end of the string"
+testing: SomeTrue
+Success: ()
+testing: Text
+Success: ()
+testing: TextLiteral
+Success: ()
+testing: TextLiteralNormalizeArguments
+Error: MissingVar: "if"
+testing: TextLiteralWithInterpolation
+Success: ()
+testing: TextShow
+Error: ReadFileError: File Not Found //show
+testing: ToMap
+Error: MissingVar: "toMap"
+testing: ToMapAnnotated
+Error: MissingVar: "toMap"
+testing: ToMapInferTypeFromRecord
+Error: MissingVar: "toMap"
+testing: True
+Success: ()
+testing: Type
+Success: ()
+testing: TypeAnnotation
+Success: ()
+testing: TypeAnnotationFunction
+Success: ()
+testing: TypeAnnotationNormalize
+Error: InvalidFieldType: (ERecordLit fromList [((MkFieldName x, EBool)])
+testing: TypeAnnotationSort
+Success: ()
+testing: UnionConstructorEmptyField
+Success: ()
+testing: UnionConstructorField
+Success: ()
+testing: UnionTypeEmpty
+Success: ()
+testing: UnionTypeKind
+Success: ()
+testing: UnionTypeMixedKinds1
+Success: ()
+testing: UnionTypeMixedKinds2
+Success: ()
+testing: UnionTypeMixedKinds3
+Success: ()
+testing: UnionTypeMixedKinds4
+Success: ()
+testing: UnionTypeOne
+Success: ()
+testing: UnionTypeType
+Success: ()
+testing: WithNewField
+Error: ErrorMessage: "Parse failed at position 0: char '('"
+testing: WithNewType
+Error: ErrorMessage: "Parse failed at position 0: char '('"
+DONE
+Passed: 80
+Failed: 103
+1/1: Building All (All.idr)
+Main> Main> Bye for now!
