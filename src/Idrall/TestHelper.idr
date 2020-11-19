@@ -34,6 +34,14 @@ onlyA : List String -> List String
 onlyA xs = filter (isSuffixOf "A.dhall") xs
 
 public export
+resultIOEither : IOEither a b -> IO (Nat, Nat)
+resultIOEither (MkIOEither x) =
+  do x' <- x
+     case x' of
+          (Left l) => pure (Z, 1)
+          (Right r) => pure (1, Z)
+
+public export
 testInferenceAB : String -> IOEither Error ()
 testInferenceAB str =
   let dir = dirName

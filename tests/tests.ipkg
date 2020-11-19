@@ -1,0 +1,5 @@
+package runtests
+
+depends = contrib, idrall
+main = Main
+executable = runtests

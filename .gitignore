@@ -1,3 +1,10 @@
 *.ibc
 *.idr~
 build/
+
+/tests/**/build
+/tests/**/output
+/tests/**/*.so
+/tests/**/*.dylib
+/tests/**/*.dll
+/tests/build/exec

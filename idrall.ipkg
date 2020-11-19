@@ -1,7 +1,17 @@
 package idrall
 
-depends = contrib
-
 sourcedir = "src"
+depends = base, contrib
 
-executable = idris2
+modules = Idrall.Expr
+        , Idrall.Value
+        , Idrall.Resolve
+        , Idrall.Parser
+        , Idrall.ParserPR
+        , Idrall.Lexer
+        , Idrall.Check
+        , Idrall.Error
+        , Idrall.IOEither
+        , Idrall.Path
+        , Idrall.TestHelper
+        , Idrall.API
