@@ -1,12 +1,19 @@
+.PHONY: build
+
 git-submodule-update:
 	git submodule update --remote
 
-repl-test:
+test-setup:
 	echo 3 > /tmp/bar.dhall
 	echo './bar.dhall' > /tmp/foo.dhall
 	echo './importFailA.dhall' > /tmp/importFailB.dhall
 	echo './importFailB.dhall' > /tmp/importFailA.dhall
-	idris2 -p contrib tests/Test2.idr
+
+repl: test-setup
+	cd src && idris2 -p contrib Idrall/API.idr
+
+edit-tests: test-setup
+	cd ./tests/idrall/idrall002 && rlwrap idris2 -p contrib -p idrall All.idr
 
 clean:
 	rm -f tests/*.idr~
@@ -14,6 +21,19 @@ clean:
 	rm -f Idrall/*.idr~
 	rm -f Idrall/*.ibc
 	rm -rf build/
+	rm -rf src/build/
+	rm -rf tests/build/
 
-test:
+build:
+	idris2 --build idrall.ipkg
+
+install:
+	idris2 --install idrall.ipkg
+
+testbin:
+	@${MAKE} -C tests testbin
+
+test-only:
 	${MAKE} -C tests
+
+test: build install testbin test-setup test-only
