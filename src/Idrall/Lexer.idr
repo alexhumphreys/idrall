@@ -8,11 +8,9 @@ import Data.List
 import Data.Nat
 import Data.String.Parser
 
--- Not a real Lexer, more a collection of small parsing utilities.
+import Idrall.ParserPR
 
-public export
-takeWhile1 : (Char -> Bool) -> Parser String -- TODO use Idris2 version of this
-takeWhile1 f = pack <$> some (satisfy f)
+-- Not a real Lexer, more a collection of small parsing utilities.
 
 public export
 hexNumber : Parser Int
@@ -53,15 +51,6 @@ validCodepoint c = not (isSurrogate c
                        --  TODO fix when idris2 has `Bits`
                        || True -- (bitsToInt (bitAnd c 0xFFFE)) == 0xFFFE
                        || True) -- (bitsToInt (bitAnd c 0xFFFF)) == 0xFFFF)
-
-infixr 3 ::.
-private
-(::.) : a -> Vect n a -> Vect (S n) a
-(::.) x xs = x :: xs
-
-ntimes : (n : Nat) -> Parser a -> Parser (Vect n a)
-ntimes    Z  p = pure Vect.Nil
-ntimes (S n) p = [| p ::. ntimes n p |]
 
 public export
 unicode : Parser Char

@@ -5,12 +5,26 @@ import Control.Monad.Trans
 
 import Data.Fin
 import Data.Nat
+import Data.Strings
+import Data.List1
 import Data.String.Parser
 import Data.String.Parser.Expression
 
 import Idrall.Lexer
 import Idrall.Expr
 import Idrall.Path
+import Idrall.ParserPR
+
+%hide Data.String.Parser.char
+%hide Prelude.pow
+
+||| Succeeds if the next char is `c`
+char : Applicative m => Char -> ParseT m Char
+char c = satisfy (== c)
+
+string' : Monad m => String -> ParseT m String
+string' str = do string str
+                 pure str
 
 fIntegerNegate : (Expr ImportStatement)
 fIntegerNegate = ELam "integerNegateParam1" EInteger (EIntegerNegate (EVar "integerNegateParam1"))
@@ -84,11 +98,24 @@ record Scientific where
   coefficient : Integer
   exponent : Integer
 
+-- parses "2.3" as 2.3000000000000003
+-- but "2.31" as 2.31
 scientificToDouble : Scientific -> Double
-scientificToDouble (MkScientific c e) = fromInteger c * exp
-  where exp : integer
-        exp = if e < 0 then 1 / pow 10 (fromIntegerNat (- e))
-                       else pow 10 (fromIntegerNat e)
+scientificToDouble (MkScientific c e) = (fromInteger c) * exp
+  where
+    pow' : (Num a) => a -> Nat -> a
+    pow' x Z = 1
+    pow' x (S n) = x * (pow' x n)
+    fromIntegerNat : Integer -> Nat
+    fromIntegerNat 0 = Z
+    fromIntegerNat n =
+      if (n > 0) then
+        S (fromIntegerNat (assert_smaller n (n - 1)))
+      else
+        Z
+    exp : Double
+    exp = if e < 0 then 1 / pow' 10 (fromIntegerNat (- e))
+                   else pow' 10 (fromIntegerNat e)
 
 parseScientific : Parser Scientific
 parseScientific = do sign <- maybe 1 (const (-1)) `map` optional (char '-') -- TODO handle '+'
@@ -115,12 +142,6 @@ kind = token "Kind" *> pure (EConst Kind)
 sort : Parser (Expr ImportStatement)
 sort = token "Sort" *> pure (EConst Sort)
 
-alphaNum : ParseT Identity Char
-alphaNum = satisfy isAlphaNum <?> "letter or digit"
-
-letter : ParseT Identity Char
-letter = satisfy isAlpha <?> "letter"
-
 identFirst : Parser Char
 identFirst = letter <|> char '_'
 
@@ -146,14 +167,14 @@ reservedNames' =
   , "Some", "None"
   , "Type", "Kind", "Sort"]
 
-parseAny : List String -> Parser String
-parseAny [] = string "provideListOfReservedNames" -- TODO use List1 in idris2 to remove this case
+parseAny : List String -> Parser ()
+parseAny [] = fail "emptyList" -- TODO use List1 in idris2 to remove this case
 parseAny (x :: xs) = string x <|> (parseAny xs)
 
 reservedNames : Parser ()
 reservedNames = do
   parseAny reservedNames'
-  (do space; pure ()) <|> eof
+  (do space; pure ()) <|> eos
 
 identity : Parser String
 identity = do
@@ -335,7 +356,7 @@ mutual
 
   relPath : Parser Path
   relPath = do
-    str <- ((string "." <* char '/') <|> (string ".." <* char '/'))
+    str <- ((string' "." <* char '/') <|> (string' ".." <* char '/'))
     d <- dirs
     pure (Relative (str :: d))
 
@@ -442,9 +463,9 @@ mutual
   parseToEnd : Parser (Expr ImportStatement)
   parseToEnd = do
     e <- expr
-    eof
+    eos
     pure e
 
 public export
-parseExpr : String -> Either String (Expr ImportStatement)
+parseExpr : String -> Either String (Expr ImportStatement, Int)
 parseExpr str = parse parseToEnd str
