@@ -860,7 +860,6 @@ mutual
     let kvs = SortedMap.toList x in do -- TODO use SortedMap Traversable with idris2
       types <- traverse synthUnion kvs
       ty <- foldl getHighestType (Right (VConst CType)) (map snd types)
-      ?foo
       Right ty
     where
       synthUnion : (FieldName, Maybe (Expr Void)) -> Either Error (FieldName, Maybe Ty)

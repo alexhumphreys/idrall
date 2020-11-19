@@ -6,6 +6,8 @@ import Idrall.IOEither
 import Idrall.Parser
 import Idrall.Path
 
+import System.File
+
 parseErrorHandler : String -> Error
 parseErrorHandler x = ErrorMessage (x)
 
@@ -49,13 +51,13 @@ mutual
       liftEither (alreadyImported h (normaliseFilePath p))
       str <- readFile' (canonicalFilePath p)
       expr <- mapErr parseErrorHandler (liftEither (parseExpr str))
-      resolve (normaliseFilePath p :: h) (Just p) expr
+      resolve (normaliseFilePath p :: h) (Just p) (fst expr)
 
   export
   covering
   resolve : (history : List FilePath) -> Maybe FilePath -> Expr ImportStatement -> IOEither Error (Expr Void)
-  resolve h p e@(EVar x) = pure e
-  resolve h p e@(EConst x) = pure e
+  resolve h p (EVar x) = pure (EVar x)
+  resolve h p (EConst x) = pure (EConst x)
   resolve h p (EPi x y z) = do
     y' <- resolve h p y
     z' <- resolve h p z
@@ -88,21 +90,21 @@ mutual
   resolve h p (EAssert x) = do
     x' <- resolve h p x
     pure (EAssert x')
-  resolve h p e@EBool = pure e
-  resolve h p e@(EBoolLit x) = pure e
+  resolve h p EBool = pure EBool
+  resolve h p (EBoolLit x) = pure (EBoolLit x)
   resolve h p (EBoolAnd x y) = do
     x' <- resolve h p x
     y' <- resolve h p y
     pure (EBoolAnd x' y')
-  resolve h p e@EInteger = pure e
-  resolve h p e@(EIntegerLit k) = pure e
-  resolve h p e@ENatural = pure e
-  resolve h p e@(ENaturalLit k) = pure e
+  resolve h p EInteger = pure EInteger
+  resolve h p (EIntegerLit k) = pure (EIntegerLit k)
+  resolve h p ENatural = pure ENatural
+  resolve h p (ENaturalLit k) = pure (ENaturalLit k)
   resolve h p (ENaturalIsZero x) = do
     x' <- resolve h p x
     pure (ENaturalIsZero x')
-  resolve h p e@EDouble = pure e
-  resolve h p e@(EDoubleLit k) = pure e
+  resolve h p EDouble = pure EDouble
+  resolve h p (EDoubleLit k) = pure (EDoubleLit k)
   resolve h p (EIntegerNegate x) = do
     x' <- resolve h p x
     pure (EIntegerNegate x')
@@ -124,7 +126,7 @@ mutual
     x' <- resolve h p x
     y' <- resolve h p y
     pure (EListHead x' y')
-  resolve h p e@EText = pure e
+  resolve h p EText = pure EText
   resolve h p (ETextLit (MkChunks xs x)) = do
     xs' <- resolveChunks h p xs
     pure (ETextLit (MkChunks xs' x))
