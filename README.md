@@ -48,25 +48,20 @@ Features marked with a tick should work for parsing, type checking and evaluatio
 
 ## Dependencies
 
-[Lightyear](https://github.com/ziman/lightyear)
+[idris2](https://github.com/idris-lang/Idris2)
+
+Not required, but some of the Makefile commands use [`rlwrap`](https://github.com/hanslub42/rlwrap) to make the Idris2 repl behave better.
 
 ## Installation
 
-Not sure, need to add some `.ipkg` file I think...
+```
+make install
+```
 
 ## Tests
 
-So far there's only the type inference tests, you can run them from the repl like so:
-
 ```
-idris -p lightyear tests/Test.idr
-*tests/Test> :exec testAll
-```
-
-They mostly fail, so you can run the ones that should pass with the following:
-
-```
-*tests/Test> :exec testGood
+make test
 ```
 
 ## Implementation details
@@ -97,10 +92,14 @@ Adding features generally means editing the `Expr` and `Value` types, the parser
 
 As an example, the `List` type was added via [#1](https://github.com/alexhumphreys/idrall/pull/1), and literal values of type list (`[1, 2, 3]`) were added via [#2](https://github.com/alexhumphreys/idrall/pull/2). For an example of an operator, [#3](https://github.com/alexhumphreys/idrall/pull/3) adds the `#` operator for appending lists.
 
+## Idris1 compatibility
+
+There is an [`idris1` tag](https://github.com/alexhumphreys/idrall/releases/tag/idris1) which is the last confirmed commit that works with idris1. It's got all the dhall types and not much else, so if you're desperate for a Dhall implementation for idris1 it may help, but realistically you're gonna need the Idris2 version.
+
 ## Future work
 
 - Add the things from the missing list above
-- Upgrade to Idris2 (will need to swap Lightyear for `Data/String/Parser` in contrib)
+- Use dependent types to prove field names in values are elements of their Unions/Records
 - Improved parsing (Not really sure what I'm doing here)
 - Think about what api/types to expose so as to make this as nice as possible to use
 - Scope checking as found in [Tiny Idris](https://github.com/edwinb/SPLV20)
