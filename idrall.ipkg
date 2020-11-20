@@ -1,6 +1,6 @@
 package idrall
 
-sourcedir = "src"
+sourcedir = "./"
 depends = base, contrib
 
 modules = Idrall.Expr
