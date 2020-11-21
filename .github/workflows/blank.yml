@@ -16,28 +16,13 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    container: snazzybucket/idris2:latest
     steps:
       - name: Checkout
         uses: actions/checkout@v2
         with:
-          path: main
           submodules: 'true'
-      - name: Checkout tools repo
-        uses: actions/checkout@v2
-        with:
-          repository:  idris-lang/Idris2
-          path: idris2
-      - name: Install build dependencies
-        run: |
-          sudo apt-get install -y chezscheme
-          echo "$HOME/.idris2/bin" >> $GITHUB_PATH
-      - name: idris2 build from bootstrap
-        run: |
-          cd idris2
-          make bootstrap-build && make install
-        shell: bash
       - name: idrall build and test
         run: |
-          cd main
           make clean && make build && make install && make test INTERACTIVE=''
         shell: bash
