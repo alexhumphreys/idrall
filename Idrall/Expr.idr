@@ -13,7 +13,7 @@ data FieldName = MkFieldName String
 
 public export
 Show FieldName where
-  show (MkFieldName x) = "(MkFieldName " ++ x
+  show (MkFieldName x) = "(MkFieldName " ++ show x ++ ")"
 
 public export
 Eq FieldName where
@@ -122,6 +122,10 @@ mutual
     | ERecord (SortedMap FieldName (Expr a))
     -- | > ERecordLit (fromList ((MkFieldName "Foo"), EBool)) ~ { Foo = Bool }
     | ERecordLit (SortedMap FieldName (Expr a))
+    -- | > x /\ y
+    | ECombine (Expr a) (Expr a)
+    -- | > x //\\ y
+    | ECombineTypes (Expr a) (Expr a)
     -- | > EUnion (fromList ((MkFieldName "Foo"), Nothing)) ~ < Foo >
     -- | > EUnion (fromList ((MkFieldName "Foo"), Just EBool)) ~ < Foo : Bool >
     | EUnion (SortedMap FieldName (Maybe (Expr a)))
@@ -140,7 +144,6 @@ mutual
     show (Raw x) = "(Raw)" -- TODO show x
     show (Resolved x) = "(Resolved " ++ show x ++ ")"
 
-  covering -- TODO Maybe idris2 thinks this is total?
   export
   Show (Expr a) where
     show (EVar x) = "(EVar " ++ show x ++ ")"
@@ -176,6 +179,8 @@ mutual
     show (ESome x) = "(ESome " ++ show x ++ ")"
     show (ERecord x) = "(ERecord " ++ show x ++ ")"
     show (ERecordLit x) = "(ERecordLit " ++ show x ++ ")"
+    show (ECombine x y) = "(ECombine " ++ show x ++ " " ++ show y ++ ")"
+    show (ECombineTypes x y) = "(ECombineTypes " ++ show x ++ " " ++ show y ++ ")"
     show (EUnion x) = "(EUnion " ++ show x ++ ")"
     show (EField x y) = "(EField " ++ show x ++ " " ++ show y ++ ")"
     show (EEmbed x) = "(EEmbed " ++ show x ++ ")"

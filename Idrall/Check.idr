@@ -101,6 +101,12 @@ mutual
     let xs = toList x
         ys = toList y in
     aEquivRecord i ns1 xs ns2 ys
+  aEquivHelper i ns1 (ECombine w x) ns2 (ECombine y z)
+    = aEquivHelper i ns1 w ns2 y &&
+      aEquivHelper i ns1 x ns2 z
+  aEquivHelper i ns1 (ECombineTypes w x) ns2 (ECombineTypes y z)
+    = aEquivHelper i ns1 w ns2 y &&
+      aEquivHelper i ns1 x ns2 z
   aEquivHelper i ns1 (EUnion x) ns2 (EUnion y) =
     let xs = toList x
         ys = toList y in
@@ -320,6 +326,14 @@ mutual
     let xs = toList x in
     do xs' <- traverse (mapRecord (eval env)) xs
        Right (VRecordLit (fromList xs'))
+  eval env (ECombine x y) = do
+    x' <- eval env x
+    y' <- eval env y
+    doCombine x' y'
+  eval env (ECombineTypes x y) = do
+    x' <- eval env x
+    y' <- eval env y
+    doCombine x' y'
   eval env (EUnion x) =
     let xs = toList x in
     do xs' <- traverse (mapUnion (eval env)) xs
@@ -397,6 +411,51 @@ mutual
     Right (VNeutral (VConst CType) (NListHead v (Normal' (VList (VNeutral (VConst CType) v)) y))) -- TODO double check
   doListHead x y = Left (ListHeadError (show x ++ " " ++ show y))
 
+  -- Errors on collision
+  mergeWith : Show k => Eq k => Ord k => SortedMap k Value -> SortedMap k Value -> Either Error (SortedMap k Value)
+  mergeWith x y =
+    let xs = Data.SortedMap.toList x
+        ys = Data.SortedMap.toList y in
+    Right $ fromList !(combineLists xs ys)
+  where
+    replaceWith : (k, Value) -> List (k, Value) -> List (k, Value)
+    replaceWith (k, v) xs =
+      let rem = filter (\(k',_) => not (k == k')) xs in
+      (k, v) :: rem
+
+    combineLists : List (k, Value) -> List (k, Value) -> Either Error (List (k, Value))
+    combineLists xs [] = Right xs
+    combineLists [] ys = Right ys
+    combineLists xs ((k, y) :: ys) = do
+      rest <- combineLists xs ys
+      case lookup k rest of
+           Nothing => Right $ (k, y) :: rest
+           (Just x) =>
+              case (x, y) of
+                   (VRecord x', VRecord y') => let nested = !(doCombine x y)
+                                                   newKv = (k, nested)
+                                                   res = replaceWith newKv rest in
+                                                   pure res
+                   (VRecordLit x', VRecordLit y') => let nested = !(doCombine x y)
+                                                         newKv = (k, nested)
+                                                         res = replaceWith newKv rest in
+                                                                                 pure res
+                   (w, q) => Left $ RecordFieldCollision (show k ++ " when combining " ++ (show w) ++ "<>" ++ (show q))
+
+  doCombine : Value -> Value -> Either Error Value
+  doCombine (VRecordLit x) (VRecordLit y) =
+    Right (VRecordLit $ !(mergeWith x y))
+  doCombine (VRecord x) (VRecord y) =
+    Right (VRecord $ !(mergeWith x y))
+  doCombine (VNeutral (VRecord x) v) y =
+    -- won't know type of y here, might need to remove some types from rbt
+    -- TODO will use an empty list for now
+    Right (VNeutral (VRecord x) (NCombine v (Normal' (VRecord (fromList [])) y)))
+  doCombine (VNeutral (VConst x) v) y =
+    -- TODO the type of VRecord can be Type/Kind/Sort, not sure what to do here
+    Right (VNeutral (VConst x) (NCombineTypes v (Normal' (VConst x) y)))
+  doCombine x y = Left $ CombineError $ show x ++ show y
+
   -- fresh names
   nextName : Name -> Name
   nextName x = x ++ "'"
@@ -453,6 +512,14 @@ mutual
   readBackNeutral ctx (NSome a) = do
     a' <- readBackNeutral ctx a
     Right (ESome a')
+  readBackNeutral ctx (NCombine x y) = do
+    x' <- readBackNeutral ctx x
+    y' <- readBackNormal ctx y
+    Right (ECombine x' y')
+  readBackNeutral ctx (NCombineTypes x y) = do
+    x' <- readBackNeutral ctx x
+    y' <- readBackNormal ctx y
+    Right (ECombineTypes x' y')
 
   covering
   readBackTyped : Ctx -> Ty -> Value -> Either Error (Expr Void)
@@ -600,6 +667,10 @@ isList ctx other = unexpected ctx "Not List" other
 isText : Ctx -> Value -> Either Error ()
 isText _ VText = Right ()
 isText ctx other = unexpected ctx "Not Text" other
+
+isRecord : Ctx -> Value -> Either Error (SortedMap FieldName Value)
+isRecord _ (VRecord x) = Right x
+isRecord ctx other = unexpected ctx "Not Record" other
 
 isOptional : Ctx -> Value -> Either Error ()
 isOptional ctx (VOptional x) = Right ()
@@ -856,6 +927,20 @@ mutual
       getHighestType' (Right (VConst CType)) (VConst Kind) = Right (VConst Kind)
       getHighestType' (Right _) (VConst Sort) = Right (VConst Sort)
       getHighestType' acc@(Right _) _ = acc -- relying on acc starting as (VConst CType)
+  synth ctx (ECombine x y) = do
+    xty <- synth ctx x
+    yty <- synth ctx y
+    xSm <- isRecord ctx xty
+    ySm <- isRecord ctx yty
+    Right $ VRecord !(mergeWith xSm ySm)
+  synth ctx (ECombineTypes x y) = do
+    xV <- eval (mkEnv ctx) x
+    yV <- eval (mkEnv ctx) y
+    xSm <- isRecord ctx xV
+    ySm <- isRecord ctx yV
+    combo <- (doCombine xV yV)
+    rbCombo <- readBackTyped ctx (VConst CType) combo
+    synth ctx rbCombo
   synth ctx (EUnion x) =
     let kvs = SortedMap.toList x in do -- TODO use SortedMap Traversable with idris2
       types <- traverse synthUnion kvs

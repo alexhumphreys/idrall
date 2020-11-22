@@ -147,6 +147,14 @@ mutual
     let kv = toList x in do
       kv' <- resolveRecord h p kv
       pure (ERecordLit (fromList kv'))
+  resolve h p (ECombine x y) = do
+    x' <- resolve h p x
+    y' <- resolve h p y
+    pure (ECombine x' y')
+  resolve h p (ECombineTypes x y) = do
+    x' <- resolve h p x
+    y' <- resolve h p y
+    pure (ECombineTypes x' y')
   resolve h p (EUnion x) =
     let kv = toList x in do
       kv' <- resolveUnion h p kv
