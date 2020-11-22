@@ -85,9 +85,10 @@ mutual
     | NOptional Neutral
     | NNone Neutral
     | NSome Neutral
+    | NCombine Neutral Normal
+    | NCombineTypes Neutral Normal
 
 mutual
-  covering
   public export
   Show Normal where
     show (Normal' x y) = "(Normal' " ++ (show x) ++ " " ++ show y ++ ")"
@@ -129,8 +130,8 @@ mutual
     show (VOptional a) = "(VOptional " ++ show a ++ ")"
     show (VNone a) = "(VNone " ++ show a ++ ")"
     show (VSome a) = "(VSome " ++ show a ++ ")"
-    show (VRecord a) = "(VRecord " ++ show a ++ ")"
-    show (VRecordLit a) = "(VRecordLit " ++ show a ++ ")"
+    show (VRecord a) = "(VRecord $ " ++ show a ++ ")"
+    show (VRecordLit a) = "(VRecordLit $ " ++ show a ++ ")"
     show (VUnion a) = "(VUnion " ++ show a ++ ")"
     show (VInject a k v) = "(VUnion " ++ show a ++ " " ++ show k ++ " " ++ show v ++ ")"
     show (VPrimVar) = "VPrimVar"
@@ -151,6 +152,8 @@ mutual
     show (NNone x) = "(NNone " ++ show x ++ ")"
     show (NSome x) = "(NSome " ++ show x ++ ")"
     show (NBoolAnd x y) = "(NBoolAnd " ++ show x ++ " " ++ show y ++ ")"
+    show (NCombine x y) = "(NCombine " ++ show x ++ " " ++ show y ++ ")"
+    show (NCombineTypes x y) = "(NCombineTypes " ++ show x ++ " " ++ show y ++ ")"
 
 public export
 Semigroup VChunks where

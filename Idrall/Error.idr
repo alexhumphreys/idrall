@@ -19,6 +19,8 @@ data Error
   | FieldNotFoundError String
   | FieldArgMismatchError String
   | InvalidFieldType String
+  | CombineError String
+  | RecordFieldCollision String
   | ReadFileError String
   | CyclicImportError String
 
@@ -39,5 +41,7 @@ Show Error where
   show (FieldNotFoundError str) = "FieldNotFoundError: " ++ str
   show (FieldArgMismatchError str) = "FieldArgMismatchError: " ++ str
   show (InvalidFieldType str) = "InvalidFieldType: " ++ str
+  show (CombineError str) = "CombineError: " ++ str
+  show (RecordFieldCollision str) = "RecordFieldCollision: " ++ str
   show (ReadFileError str) = "ReadFileError: " ++ str
   show (CyclicImportError str) = "CyclicImportError: " ++ str

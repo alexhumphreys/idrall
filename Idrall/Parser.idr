@@ -203,7 +203,11 @@ table = [ [ Postfix field]
         , [ Infix (do (token "===" <|> token "≡"); pure EEquivalent) AssocLeft]
         , [ Prefix (do token "assert"; token ":"; pure EAssert)]
         , [ Infix (do token "&&"; pure EBoolAnd) AssocLeft]
-        , [ Infix (do token "#"; pure EListAppend) AssocLeft]]
+        , [ Infix (do token "#"; pure EListAppend) AssocLeft]
+        , [ Infix (do pure ECombine <* (token "/\\" <|> token "∧")) AssocLeft
+          , Infix (do pure ECombineTypes <* (token "//\\\\" <|> token "⩓")) AssocLeft
+          ]
+        ]
 
 mutual
   recordTypeElem : Parser (FieldName, Expr ImportStatement)

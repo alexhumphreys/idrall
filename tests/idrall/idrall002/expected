@@ -96,7 +96,7 @@ Error: ReadFileError: File Not Found //length
 testing: ListLiteralEmpty
 Success: ()
 testing: ListLiteralEmptyNormalizeAnnotation
-Error: InvalidFieldType: (ERecordLit fromList [((MkFieldName x, (EApp (ELam "listArg1" (EConst CType) (EList (EVar "listArg1"))) EBool))])
+Error: InvalidFieldType: (ERecordLit fromList [((MkFieldName "x"), (EApp (ELam "listArg1" (EConst CType) (EList (EVar "listArg1"))) EBool))])
 testing: ListLiteralNormalizeArguments
 Error: MissingVar: "if"
 testing: ListLiteralOne
@@ -194,7 +194,7 @@ Error: ErrorMessage: "Parse failed at position 0: char '('"
 testing: RecordLitDuplicateFieldsNoCollisions
 Error: ErrorMessage: "Parse failed at position 0: char '('"
 testing: RecordLitNormalizeFieldType
-Error: InvalidFieldType: (ERecordLit fromList [((MkFieldName t, EBool)])
+Error: InvalidFieldType: (ERecordLit fromList [((MkFieldName "t"), EBool)])
 testing: RecordLitPun
 Error: ErrorMessage: "Parse failed at position 0: char '('"
 testing: RecordLitPunCapture
@@ -238,11 +238,11 @@ Error: ErrorMessage: "Parse failed at position 25: expected the end of the strin
 testing: RecordProjectionValue
 Error: ErrorMessage: "Parse failed at position 20: expected the end of the string"
 testing: RecordSelectionKind
-Error: InvalidFieldType: (ERecordLit fromList [((MkFieldName x, (EConst CType))])
+Error: InvalidFieldType: (ERecordLit fromList [((MkFieldName "x"), (EConst CType))])
 testing: RecordSelectionType
-Error: InvalidFieldType: (ERecordLit fromList [((MkFieldName x, (ERecord fromList []))])
+Error: InvalidFieldType: (ERecordLit fromList [((MkFieldName "x"), (ERecord fromList []))])
 testing: RecordSelectionValue
-Error: InvalidFieldType: (ERecordLit fromList [((MkFieldName x, (ERecordLit fromList []))])
+Error: InvalidFieldType: (ERecordLit fromList [((MkFieldName "x"), (ERecordLit fromList []))])
 testing: RecordType
 Success: ()
 testing: RecordTypeEmpty
@@ -264,41 +264,41 @@ Success: ()
 testing: RecordTypeType
 Success: ()
 testing: RecursiveRecordMergeBoolType
-Error: ErrorMessage: "Parse failed at position 13: expected the end of the string"
+Success: ()
 testing: RecursiveRecordMergeLhsEmpty
-Error: ErrorMessage: "Parse failed at position 4: expected the end of the string"
+Success: ()
 testing: RecursiveRecordMergeMixedKinds
-Error: ErrorMessage: "Parse failed at position 13: expected the end of the string"
+Success: ()
 testing: RecursiveRecordMergeRecursively
-Error: ErrorMessage: "Parse failed at position 21: expected the end of the string"
+Success: ()
 testing: RecursiveRecordMergeRecursivelyKinds
-Error: ErrorMessage: "Parse failed at position 21: expected the end of the string"
+Success: ()
 testing: RecursiveRecordMergeRecursivelyTypes
-Error: ErrorMessage: "Parse failed at position 21: expected the end of the string"
+Success: ()
 testing: RecursiveRecordMergeRhsEmpty
-Error: ErrorMessage: "Parse failed at position 13: expected the end of the string"
+Success: ()
 testing: RecursiveRecordMergeTwo
-Error: ErrorMessage: "Parse failed at position 13: expected the end of the string"
+Success: ()
 testing: RecursiveRecordMergeTwoKinds
-Error: ErrorMessage: "Parse failed at position 13: expected the end of the string"
+Success: ()
 testing: RecursiveRecordMergeTwoTypes
-Error: ErrorMessage: "Parse failed at position 13: expected the end of the string"
+Success: ()
 testing: RecursiveRecordTypeMergeDeep
-Error: ErrorMessage: "Parse failed at position 29: expected the end of the string"
+Success: ()
 testing: RecursiveRecordTypeMergeRecursively
-Error: ErrorMessage: "Parse failed at position 21: expected the end of the string"
+Success: ()
 testing: RecursiveRecordTypeMergeRecursivelyKinds
-Error: ErrorMessage: "Parse failed at position 21: expected the end of the string"
+Success: ()
 testing: RecursiveRecordTypeMergeRecursivelyTypes
-Error: ErrorMessage: "Parse failed at position 21: expected the end of the string"
+Success: ()
 testing: RecursiveRecordTypeMergeRhsEmpty
-Error: ErrorMessage: "Parse failed at position 13: expected the end of the string"
+Success: ()
 testing: RecursiveRecordTypeMergeTwo
-Error: ErrorMessage: "Parse failed at position 13: expected the end of the string"
+Success: ()
 testing: RecursiveRecordTypeMergeTwoKinds
-Error: ErrorMessage: "Parse failed at position 13: expected the end of the string"
+Success: ()
 testing: RecursiveRecordTypeMergeTwoTypes
-Error: ErrorMessage: "Parse failed at position 13: expected the end of the string"
+Success: ()
 testing: RightBiasedRecordMergeMixedKinds
 Error: ErrorMessage: "Parse failed at position 12: expected the end of the string"
 testing: RightBiasedRecordMergeRhsEmpty
@@ -338,7 +338,7 @@ Success: ()
 testing: TypeAnnotationFunction
 Success: ()
 testing: TypeAnnotationNormalize
-Error: InvalidFieldType: (ERecordLit fromList [((MkFieldName x, EBool)])
+Error: InvalidFieldType: (ERecordLit fromList [((MkFieldName "x"), EBool)])
 testing: TypeAnnotationSort
 Success: ()
 testing: UnionConstructorEmptyField
@@ -366,7 +366,7 @@ Error: ErrorMessage: "Parse failed at position 0: char '('"
 testing: WithNewType
 Error: ErrorMessage: "Parse failed at position 0: char '('"
 DONE
-Passed: 80
-Failed: 103
+Passed: 98
+Failed: 85
 1/1: Building All (All.idr)
 Main> Main> Bye for now!
