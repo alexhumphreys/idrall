@@ -11,6 +11,7 @@ modules = Idrall.Expr
         , Idrall.Lexer
         , Idrall.Check
         , Idrall.Error
+        , Idrall.Map
         , Idrall.IOEither
         , Idrall.Path
         , Idrall.TestHelper
