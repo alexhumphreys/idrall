@@ -108,6 +108,8 @@ mutual
     | EListAppend (Expr a) (Expr a)
     -- | > List/Head A [a]
     | EListHead (Expr a) (Expr a)
+    -- | > List/Fold A [a] B (a -> B -> B) b
+    | EListFold
     -- | > EText ~ Text
     | EText
     -- | > ETextLit (Chunks [(t1, e1), (t2, e2)] t3) ~  "t1${e1}t2${e2}t3"
@@ -172,6 +174,7 @@ mutual
     show (EListLit (Just x) xs) = "(EListLit (Just " ++ show x ++ ") " ++ show xs ++ ")"
     show (EListAppend x y) = "(EListAppend " ++ show x ++ " " ++ show y ++ ")"
     show (EListHead x y) = "(EListHead " ++ show x ++ " " ++ show y ++ ")"
+    show EListFold = "EListFold"
     show EText = "EText"
     show (ETextLit x) = "(ETextLit " ++ show x ++ ")"
     show (EOptional x) = "(EOptional " ++ show x ++ ")"

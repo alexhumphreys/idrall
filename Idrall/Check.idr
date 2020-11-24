@@ -88,6 +88,7 @@ mutual
   aEquivHelper i ns1 (EListHead w x) ns2 (EListHead y z) = do
     aEquivHelper i ns1 w ns2 y
     aEquivHelper i ns1 x ns2 z
+  aEquivHelper i _ EListFold _ EListFold = Right ()
   aEquivHelper _ _ EText _ EText = Right ()
   aEquivHelper i ns1 (ETextLit a@(MkChunks xys z)) ns2 (ETextLit b@(MkChunks xys' z')) =
     -- TODO Not confindent that this is correct for all cases
@@ -313,6 +314,22 @@ mutual
     x' <- eval env x
     y' <- eval env y
     doListHead x' y'
+  eval env EListFold =
+    Right $ VPrim $
+      \a => Right $ VPrim $
+        \c => case c of
+                   (VListLit _ as) =>
+                     Right $ VHLam (Typed "list" vType) $ \list =>
+                     Right $ VHLam (Typed "cons" (vFun a $ vFun list list) ) $ \cons =>
+                     Right $ VHLam (Typed "nil"  list) $ \nil =>
+                       foldlM (\x,b => (vApp !(vApp cons x) b)) nil as
+                   as => Right $ VHLam (ListFoldCl as) $
+                        \t => Right $ VPrim $
+                        \c => Right $ VPrim $
+                        \n => Right $ VListFold a as t c n
+    where
+      foldlM : (Monad m, Traversable t) => (v -> v -> m v) -> v -> t v -> m v
+      foldlM f x ys = foldl (\a,b => f !a b) (pure x) ys
   eval env EText = Right VText
   eval env (ETextLit (MkChunks xs x)) = do
     xs' <- traverse (mapChunks (eval env)) xs
@@ -448,6 +465,10 @@ mutual
   vApp (VHLam _ t) u = t u
   vApp t u = Left $ ErrorMessage $ show t ++ " : " ++ show u
 
+  qApp : Ctx -> Expr Void -> Value -> Either Error (Expr Void)
+  qApp ctx t VPrimVar = Right t
+  qApp ctx t u        = Right $ EApp t !(readBackTyped ctx vType u)
+
   -- reading back
   covering
   readBackNeutral : Ctx -> Neutral -> Either Error (Expr Void)
@@ -547,6 +568,11 @@ mutual
       b' <- evalClosure bT (VNeutral aT (NVar x))
       case i of
            Prim => readBackTyped ctx b' !(f VPrimVar) -- TODO double check b' here
+           Typed str v => -- TODO not sure about this case, esp the vType and NVar parts
+             Right $ ELam str
+                          !(readBackTyped ctx vType v)
+                          !(readBackTyped (extendCtx ctx str vType) vType !(f (VNeutral vType (NVar str))))
+           ListFoldCl _ => readBackTyped ctx b' !(f VPrimVar)
   readBackTyped ctx (VConst CType) (VList a) = do
     a' <- readBackTyped ctx (VConst CType) a
     Right (EList a')
@@ -558,6 +584,13 @@ mutual
     a' <- readBackTyped ctx (VConst CType) a
     es <- mapListEither vs (readBackTyped ctx a) -- Passing a here should confirm ty=a
     Right (EListLit (Just a') es)
+  readBackTyped ctx _ (VListFold a l t u v) = do
+    a' <- readBackTyped ctx (VConst CType) a
+    l' <- readBackTyped ctx (VConst CType) l
+    t' <- readBackTyped ctx (VConst CType) t
+    u' <- readBackTyped ctx (VConst CType) u
+    v' <- readBackTyped ctx (VConst CType) v
+    Right $ (EApp (EApp (EApp (EApp (EApp EListFold a') l') t') u') v')
   readBackTyped ctx (VConst CType) VText = Right EText
   readBackTyped ctx VText (VTextLit (MkVChunks xs x)) =
     let f = mapChunks (readBackTyped ctx VText) in
@@ -762,6 +795,13 @@ mutual
     = do t' <- synth ctx other
          convert ctx (VConst CType) t' t
 
+  listFoldTy : Value -> Value
+  listFoldTy a =
+    VHPi "list" vType $ \list =>
+    VHPi "cons" (vFun (vFun a list) list) $ \cons =>
+    VHPi "nil"  list $ \nil =>
+    list
+
   export
   covering
   synth : Ctx -> Expr Void -> Either Error Ty
@@ -876,6 +916,8 @@ mutual
     check ctx y (VList xVal)
     ty <- isList ctx yTy
     Right (VOptional ty)
+  synth ctx EListFold =
+    Right $ VHPi "a" vType $ \a => vFun (VList a) (listFoldTy a)
   synth ctx EText = Right (VConst CType)
   synth ctx (ETextLit (MkChunks xs x)) =
     let go = mapChunks (\e => check ctx e VText) in do

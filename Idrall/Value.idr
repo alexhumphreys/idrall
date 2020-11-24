@@ -31,6 +31,7 @@ mutual
     | VDoubleLit Double
     | VList Ty
     | VListLit (Maybe Ty) (List Value)
+    | VListFold Value Value Value Value Value
     | VText
     | VTextLit VChunks
     | VOptional Ty
@@ -62,6 +63,8 @@ mutual
   public export
   data HLamInfo
     = Prim
+    | Typed String Value
+    | ListFoldCl Value
 
   public export
   VPrim : (Value -> Either Error Value) -> Value
@@ -89,6 +92,10 @@ mutual
   vFun : Value -> Value -> Value
   vFun a b = VHPi "_" a (\_ => b)
 
+  public export
+  vType : Value
+  vType = VConst CType
+
 mutual
   public export
   Show Normal where
@@ -96,6 +103,8 @@ mutual
 
   Show HLamInfo where
     show Prim = "Prim"
+    show (Typed s v) = "(Typed " ++ show s ++ " " ++ show v ++ ")"
+    show (ListFoldCl v) = "(ListFoldCl " ++ show v ++ ")"
 
   public export
   Show Closure where
@@ -126,6 +135,10 @@ mutual
     show (VDoubleLit k) = "(VDoubleLit " ++ show k ++ ")"
     show (VList a) = "(VList " ++ show a ++ ")"
     show (VListLit ty vs) = "(VListLit " ++ show ty ++ show vs ++ ")"
+    show (VListFold v w x y z) =
+      "(VListHead "
+       ++ show v ++ " " ++ show w ++ " " ++ show x ++ " "
+       ++ show y ++ " " ++ show z ++ ")"
     show (VText) = "VText"
     show (VTextLit x) = "(VTextLit " ++ show x ++ ")"
     show (VOptional a) = "(VOptional " ++ show a ++ ")"
