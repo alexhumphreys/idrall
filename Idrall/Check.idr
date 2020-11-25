@@ -396,9 +396,9 @@ mutual
 
   doCombine : Value -> Value -> Either Error Value
   doCombine (VRecordLit x) (VRecordLit y) =
-    Right (VRecordLit $ !(mergeWith doCombine x y))
+    Right (VRecordLit $ !(mergeWithApp doCombine x y))
   doCombine (VRecord x) (VRecord y) =
-    Right (VRecord $ !(mergeWith doCombine x y))
+    Right (VRecord $ !(mergeWithApp doCombine x y))
   doCombine (VNeutral (VRecord x) v) y =
     -- won't know type of y here, might need to remove some types from rbt
     -- TODO will use an empty list for now
@@ -884,7 +884,7 @@ mutual
     yty <- synth ctx y
     xSm <- isRecord ctx xty
     ySm <- isRecord ctx yty
-    Right $ VRecord !(mergeWith doCombine xSm ySm)
+    Right $ VRecord !(mergeWithApp doCombine xSm ySm)
   synth ctx (ECombineTypes x y) = do
     xV <- eval (mkEnv ctx) x
     yV <- eval (mkEnv ctx) y

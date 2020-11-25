@@ -30,38 +30,10 @@ mapUnion f (k, Just x) =
   Right (k, Just !(f x))
 mapUnion f (k, Nothing) = Right (k, Nothing)
 
--- Errors on collision
 export
-mergeWith : Show k => Eq k => Ord k =>
-            (Value -> Value -> Either Error Value) ->
-            SortedMap k Value ->
-            SortedMap k Value ->
-            Either Error (SortedMap k Value)
-mergeWith f x y =
-  let xs = Data.SortedMap.toList x
-      ys = Data.SortedMap.toList y in
-  Right $ fromList !(combineLists xs ys)
-where
-  replaceWith : (k, Value) -> List (k, Value) -> List (k, Value)
-  replaceWith (k, v) xs =
-    let rem = filter (\(k',_) => not (k == k')) xs in
-    (k, v) :: rem
-
-  combineLists : List (k, Value) -> List (k, Value) -> Either Error (List (k, Value))
-  combineLists xs [] = Right xs
-  combineLists [] ys = Right ys
-  combineLists xs ((k, y) :: ys) = do
-    rest <- combineLists xs ys
-    case lookup k rest of
-         Nothing => Right $ (k, y) :: rest
-         (Just x) =>
-            case (x, y) of
-                 (VRecord x', VRecord y') => let nested = !(f x y)
-                                                 newKv = (k, nested)
-                                                 res = replaceWith newKv rest in
-                                                 pure res
-                 (VRecordLit x', VRecordLit y') => let nested = !(f x y)
-                                                       newKv = (k, nested)
-                                                       res = replaceWith newKv rest in
-                                                       pure res
-                 (w, q) => Left $ RecordFieldCollision (show k ++ " when combining " ++ (show w) ++ "<>" ++ (show q))
+mergeWithApp : (Monad m, Ord k) =>
+               (a -> a -> m a) ->
+               SortedMap k a ->
+               SortedMap k a ->
+               m (SortedMap k a)
+mergeWithApp f xs ys = sequence (mergeWith (\x,y => (f <$> x <*> y) >>= id) (map pure xs) (map pure ys))
