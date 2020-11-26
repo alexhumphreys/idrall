@@ -30,7 +30,7 @@ mutual
     | VDoubleLit Double
     | VList Ty
     | VListLit (Maybe Ty) (List Value)
-    | VListFold Value Value Value Value Value
+    | VListFold
     | VText
     | VTextLit VChunks
     | VOptional Ty
@@ -125,7 +125,7 @@ mutual
     show (VDoubleLit k) = "(VDoubleLit " ++ show k ++ ")"
     show (VList a) = "(VList " ++ show a ++ ")"
     show (VListLit ty vs) = "(VListLit " ++ show ty ++ show vs ++ ")"
-    show (VListFold _ _ _ _ _) = "(VListHead)"
+    show (VListFold) = "(VListHead)"
     show (VText) = "VText"
     show (VTextLit x) = "(VTextLit " ++ show x ++ ")"
     show (VOptional a) = "(VOptional " ++ show a ++ ")"
