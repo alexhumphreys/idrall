@@ -525,6 +525,13 @@ mutual
 
   covering
   readBackTyped : Ctx -> Ty -> Value -> Either Error (Expr Void)
+  readBackTyped ctx _ (VListFold a l t u v) = do
+    a' <- readBackTyped ctx (VConst CType) a
+    l' <- readBackTyped ctx (VConst CType) l
+    t' <- readBackTyped ctx (VConst CType) t
+    u' <- readBackTyped ctx (VConst CType) u
+    v' <- readBackTyped ctx (VConst CType) v
+    Right $ (EApp (EApp (EApp (EApp (EApp EListFold a') l') t') u') v')
   readBackTyped ctx (VPi dom ran) fun =
     let x = freshen (ctxNames ctx) (closureName ran)
         xVal = VNeutral dom (NVar x)
@@ -584,13 +591,6 @@ mutual
     a' <- readBackTyped ctx (VConst CType) a
     es <- mapListEither vs (readBackTyped ctx a) -- Passing a here should confirm ty=a
     Right (EListLit (Just a') es)
-  readBackTyped ctx _ (VListFold a l t u v) = do
-    a' <- readBackTyped ctx (VConst CType) a
-    l' <- readBackTyped ctx (VConst CType) l
-    t' <- readBackTyped ctx (VConst CType) t
-    u' <- readBackTyped ctx (VConst CType) u
-    v' <- readBackTyped ctx (VConst CType) v
-    Right $ (EApp (EApp (EApp (EApp (EApp EListFold a') l') t') u') v')
   readBackTyped ctx (VConst CType) VText = Right EText
   readBackTyped ctx VText (VTextLit (MkVChunks xs x)) =
     let f = mapChunks (readBackTyped ctx VText) in
