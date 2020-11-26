@@ -510,6 +510,7 @@ mutual
     a' <- readBackTyped ctx (VConst CType) a
     es <- mapListEither vs (readBackTyped ctx a) -- Passing a here should confirm ty=a
     Right (EListLit (Just a') es)
+  readBackTyped ctx _ (VListFold a b c d e) = Left $ ErrorMessage "ListFold"
   readBackTyped ctx (VConst CType) VText = Right EText
   readBackTyped ctx VText (VTextLit (MkVChunks xs x)) =
     let f = mapChunks (readBackTyped ctx VText) in
