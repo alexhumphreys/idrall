@@ -33,6 +33,6 @@ testbin:
 	@${MAKE} -C tests testbin
 
 test-only:
-	${MAKE} -C tests
+	time ${MAKE} -C tests
 
 test: build install testbin test-setup test-only
