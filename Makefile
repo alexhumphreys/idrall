@@ -33,6 +33,9 @@ testbin:
 	@${MAKE} -C tests testbin
 
 test-only:
-	time ${MAKE} -C tests only=$(only)
+	${MAKE} -C tests only=$(only)
 
 test: build install testbin test-setup test-only
+
+time:
+	time ${MAKE} test INTERACTIVE=''
