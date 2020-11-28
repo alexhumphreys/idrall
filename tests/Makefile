@@ -3,7 +3,7 @@ INTERACTIVE ?= --interactive
 .PHONY: testbin test
 
 test:
-	./build/exec/runtests idrall $(INTERACTIVE)
+	./build/exec/runtests idrall $(INTERACTIVE) --only $(only)
 
 testbin:
 	idris2 --build tests.ipkg
