@@ -176,7 +176,7 @@ var = do i <- identity
          pure (EVar i)
 
 appl : Parser ((Expr ImportStatement) -> (Expr ImportStatement) -> (Expr ImportStatement))
-appl = do spaces
+appl = do spaces -- TODO also matches no spaces, but spaces1 messes with the eos parser
           pure EApp
 
 field : Parser ((Expr ImportStatement) -> (Expr ImportStatement))
@@ -388,7 +388,7 @@ mutual
      type <|> kind <|> sort <|>
      pathTerm <|> esome <|>
      recordType <|> recordLit <|>
-     union <|>
+     union <|> lam <|> pi <|>
      var <|> list <|> parens expr)
     spaces
     pure i
