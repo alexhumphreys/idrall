@@ -13,18 +13,8 @@ import Data.String.Parser.Expression
 import Idrall.Lexer
 import Idrall.Expr
 import Idrall.Path
-import Idrall.ParserPR
 
-%hide Data.String.Parser.char
 %hide Prelude.pow
-
-||| Succeeds if the next char is `c`
-char : Applicative m => Char -> ParseT m Char
-char c = satisfy (== c)
-
-string' : Monad m => String -> ParseT m String
-string' str = do string str
-                 pure str
 
 fIntegerNegate : (Expr ImportStatement)
 fIntegerNegate = ELam "integerNegateParam1" EInteger (EIntegerNegate (EVar "integerNegateParam1"))
@@ -169,7 +159,7 @@ reservedNames' =
 
 parseAny : List String -> Parser ()
 parseAny [] = fail "emptyList" -- TODO use List1 in idris2 to remove this case
-parseAny (x :: xs) = string x <|> (parseAny xs)
+parseAny (x :: xs) = skip (string x) <|> (parseAny xs)
 
 reservedNames : Parser ()
 reservedNames = do
@@ -322,7 +312,7 @@ mutual
     token "["
     es <- commaSep1 expr
     token "]"
-    pure (EListLit Nothing es)
+    pure (EListLit Nothing (forget es))
 
   annotatedList : Parser (Expr ImportStatement)
   annotatedList = do
@@ -331,7 +321,7 @@ mutual
     token "]"
     token ":"
     e <- expr
-    pure (EListLit (Just e) es)
+    pure (EListLit (Just e) (forget es))
 
   list : Parser (Expr ImportStatement)
   list = emptyList <|> annotatedList <|> populatedList
@@ -360,7 +350,7 @@ mutual
 
   relPath : Parser Path
   relPath = do
-    str <- ((string' "." <* char '/') <|> (string' ".." <* char '/'))
+    str <- ((string "." <* char '/') <|> (string ".." <* char '/'))
     d <- dirs
     pure (Relative (str :: d))
 

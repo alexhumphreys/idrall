@@ -8,8 +8,6 @@ import Data.List
 import Data.Nat
 import Data.String.Parser
 
-import Idrall.ParserPR
-
 -- Not a real Lexer, more a collection of small parsing utilities.
 
 public export
