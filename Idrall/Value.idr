@@ -12,7 +12,7 @@ mutual
   public export
   data Value
     = VConst U
-    | VVar Name
+    | VVar Name Int
     | VPrimVar
     | VApp Value Value
     | VLambda Ty Closure
@@ -63,13 +63,19 @@ mutual
   %name Env env, env1, env2
 
   public export
+  data Env'
+    = Empty
+    | Skip Env' Name
+    | Extend Env' Name Value
+
+  public export
   data VChunks = MkVChunks (List (String, Value)) String
 
   public export
   record Closure where
     constructor MkClosure
-    closureEnv : Env
     closureName : Name
+    closureEnv : Env'
     closureBody : Expr Void
 
   public export
@@ -91,9 +97,15 @@ mutual
     show Prim = "Prim"
 
   public export
+  Show Env' where
+    show Empty = "Empty"
+    show (Skip x y) = "(Skip " ++ show x ++ " " ++ show y ++ ")"
+    show (Extend x y z) = "(Extend " ++ show x ++ " " ++ show y ++ " " ++ show z ++ ")"
+
+  public export
   Show Closure where
-    show (MkClosure closureEnv closureName closureBody)
-      = "(MkClosure " ++ show closureEnv ++ " " ++ closureName ++ " " ++ show closureBody ++ ")"
+    show (MkClosure closureName closureEnv closureBody)
+      = "(MkClosure " ++ show closureName ++ " " ++ show closureEnv ++ " " ++ show closureBody ++ ")"
 
   public export
   Show VChunks where
@@ -102,7 +114,7 @@ mutual
   public export
   Show Value where
     show (VConst x) = "(VConst " ++ show x ++ ")"
-    show (VVar x) = "(VVar " ++ show x ++ ")"
+    show (VVar x i) = "(VVar " ++ show x ++ " " ++ show i ++ ")"
     show (VPrimVar) = "VPrimVar"
     show (VApp x y) = "(VApp " ++ show x ++ " " ++ show y ++ ")"
     show (VLambda x y) = "(VLambda " ++ show x ++ " " ++ show y ++ ")"
