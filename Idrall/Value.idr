@@ -5,43 +5,57 @@ import Idrall.Error
 
 mutual
   public export
-  data Normal = Normal' Ty Value
-
-  public export
   Ty : Type
   Ty = Value
 
   -- Values
   public export
   data Value
-    = VLambda Ty Closure
+    = VConst U
+    | VVar Name
+    | VPrimVar
+    | VApp Value Value
+    | VLambda Ty Closure
     | VHLam HLamInfo (Value -> Either Error Value)
     | VPi Ty Closure
-    | VHPi String Value (Value -> Value)
-    | VEquivalent Value Value
-    | VAssert Value
-    | VConst U
+    | VHPi Name Value (Value -> Either Error Value)
+
     | VBool
     | VBoolLit Bool
-    | VInteger
-    | VIntegerLit Integer
+    | VBoolAnd Value Value
+
     | VNatural
     | VNaturalLit Nat
+    | VNaturalIsZero Value
+
+    | VInteger
+    | VIntegerLit Integer
+    | VIntegerNegate Value
+
     | VDouble
     | VDoubleLit Double
-    | VList Ty
-    | VListLit (Maybe Ty) (List Value)
+
     | VText
     | VTextLit VChunks
+
+    | VList Ty
+    | VListLit (Maybe Ty) (List Value)
+    | VListAppend Value Value
+    | VListHead Value Value
+
     | VOptional Ty
     | VNone Ty
     | VSome Ty
+
+    | VEquivalent Value Value
+    | VAssert Value
+
     | VRecord (SortedMap FieldName Value)
     | VRecordLit (SortedMap FieldName Value)
     | VUnion (SortedMap FieldName (Maybe Value))
+    | VCombine Value Value
+    | VCombineTypes Value Value
     | VInject (SortedMap FieldName (Maybe Value)) FieldName (Maybe Value) -- TODO proof that key is in SM?
-    | VPrimVar
-    | VNeutral Ty Neutral
 
   public export
   Env : Type -- Now a type alias
@@ -56,52 +70,30 @@ mutual
     constructor MkClosure
     closureEnv : Env
     closureName : Name
-    closureType : Expr Void
     closureBody : Expr Void
 
   public export
   data HLamInfo
     = Prim
 
-  public export
-  VPrim : (Value -> Either Error Value) -> Value
-  VPrim f = VHLam Prim f
+||| Returns `VHPi "_" a (\_ => Right b)`
+public export
+vFun : Value -> Value -> Value
+vFun a b = VHPi "_" a (\_ => Right b)
 
-  public export
-  data Neutral
-    = NVar Name
-    | NNaturalIsZero Neutral
-    | NIntegerNegate Neutral
-    | NEquivalent Neutral Normal
-    | NAssert Neutral
-    | NApp Neutral Normal
-    | NBoolAnd Neutral Normal
-    | NList Neutral
-    | NListAppend Neutral Normal
-    | NListHead Neutral Normal
-    | NOptional Neutral
-    | NNone Neutral
-    | NSome Neutral
-    | NCombine Neutral Normal
-    | NCombineTypes Neutral Normal
-
-  public export
-  vFun : Value -> Value -> Value
-  vFun a b = VHPi "_" a (\_ => b)
+||| Returns `VHLam Prim f`
+public export
+VPrim : (Value -> Either Error Value) -> Value
+VPrim f = VHLam Prim f
 
 mutual
-  public export
-  Show Normal where
-    show (Normal' x y) = "(Normal' " ++ (show x) ++ " " ++ show y ++ ")"
-
   Show HLamInfo where
     show Prim = "Prim"
 
   public export
   Show Closure where
-    show (MkClosure closureEnv closureName closureType closureBody)
-      = "(MkClosure " ++ show closureEnv ++ " " ++ closureName ++ " " ++ show closureType
-         ++ " " ++ show closureBody ++ ")"
+    show (MkClosure closureEnv closureName closureBody)
+      = "(MkClosure " ++ show closureEnv ++ " " ++ closureName ++ " " ++ show closureBody ++ ")"
 
   public export
   Show VChunks where
@@ -109,52 +101,51 @@ mutual
 
   public export
   Show Value where
+    show (VConst x) = "(VConst " ++ show x ++ ")"
+    show (VVar x) = "(VVar " ++ show x ++ ")"
+    show (VPrimVar) = "VPrimVar"
+    show (VApp x y) = "(VApp " ++ show x ++ " " ++ show y ++ ")"
     show (VLambda x y) = "(VLambda " ++ show x ++ " " ++ show y ++ ")"
     show (VHLam i x) = "(VHLam " ++ show i ++ " " ++ "TODO find some way to show VHLam arg" ++ ")"
     show (VPi x y) = "(VPi " ++ show x ++ " " ++ show y ++ ")"
     show (VHPi i x y) = "(VHPi " ++ show i ++ " " ++ show x ++ "TODO find some way to show VHPi arg" ++ ")"
-    show (VEquivalent x y) = "(VEquivalent " ++ show x ++ " " ++ show y ++ ")"
-    show (VAssert x) = "(VAssert " ++ show x ++ ")"
-    show (VConst x) = "(VConst " ++ show x ++ ")"
+
     show VBool = "VBool"
     show (VBoolLit x) = "(VBoolLit " ++ show x ++ ")"
-    show VInteger = "VInteger"
-    show (VIntegerLit x) = "(VIntegerLit " ++ show x ++ ")"
+    show (VBoolAnd x y) = "(VBoolAnd " ++ show x ++ " " ++ show y ++ ")"
+
     show VNatural = "VNatural"
     show (VNaturalLit k) = "(VNaturalLit " ++ show k ++ ")"
+    show (VNaturalIsZero x) = "(VNaturalIsZero " ++ show x ++ ")"
+
+    show VInteger = "VInteger"
+    show (VIntegerLit x) = "(VIntegerLit " ++ show x ++ ")"
+    show (VIntegerNegate x) = "(VIntegerNegate " ++ show x ++ ")"
+
     show VDouble = "VDouble"
     show (VDoubleLit k) = "(VDoubleLit " ++ show k ++ ")"
-    show (VList a) = "(VList " ++ show a ++ ")"
-    show (VListLit ty vs) = "(VListLit " ++ show ty ++ show vs ++ ")"
+
     show (VText) = "VText"
     show (VTextLit x) = "(VTextLit " ++ show x ++ ")"
+
+    show (VList a) = "(VList " ++ show a ++ ")"
+    show (VListLit ty vs) = "(VListLit " ++ show ty ++ show vs ++ ")"
+    show (VListAppend x y) = "(VListAppend " ++ show x ++ " " ++ show y ++ ")"
+    show (VListHead x y) = "(VListHead " ++ show x ++ " " ++ show y ++ ")"
+
     show (VOptional a) = "(VOptional " ++ show a ++ ")"
     show (VNone a) = "(VNone " ++ show a ++ ")"
     show (VSome a) = "(VSome " ++ show a ++ ")"
+
+    show (VEquivalent x y) = "(VEquivalent " ++ show x ++ " " ++ show y ++ ")"
+    show (VAssert x) = "(VAssert " ++ show x ++ ")"
+
     show (VRecord a) = "(VRecord $ " ++ show a ++ ")"
     show (VRecordLit a) = "(VRecordLit $ " ++ show a ++ ")"
     show (VUnion a) = "(VUnion " ++ show a ++ ")"
+    show (VCombine x y) = "(VCombine " ++ show x ++ " " ++ show y ++ ")"
+    show (VCombineTypes x y) = "(VCombineTypes " ++ show x ++ " " ++ show y ++ ")"
     show (VInject a k v) = "(VUnion " ++ show a ++ " " ++ show k ++ " " ++ show v ++ ")"
-    show (VPrimVar) = "VPrimVar"
-    show (VNeutral x y) = "(VNeutral " ++ show x ++ " " ++ show y ++ ")"
-
-  public export
-  Show Neutral where
-    show (NVar x) = "(NVar " ++ show x ++ ")"
-    show (NNaturalIsZero x) = "(NNaturalIsZero " ++ show x ++ ")"
-    show (NIntegerNegate x) = "(NIntegerNegate " ++ show x ++ ")"
-    show (NEquivalent x y) = "(NEquivalent " ++ show x ++ " " ++ show y ++ ")"
-    show (NAssert x) = "(NEquivalent " ++ show x ++ ")"
-    show (NApp x y) = "(NApp " ++ show x ++ " " ++ show y ++ ")"
-    show (NList x) = "(NList " ++ show x ++ ")"
-    show (NListAppend x y) = "(NListAppend " ++ show x ++ " " ++ show y ++ ")"
-    show (NListHead x y) = "(NListHead " ++ show x ++ " " ++ show y ++ ")"
-    show (NOptional x) = "(NOptional " ++ show x ++ ")"
-    show (NNone x) = "(NNone " ++ show x ++ ")"
-    show (NSome x) = "(NSome " ++ show x ++ ")"
-    show (NBoolAnd x y) = "(NBoolAnd " ++ show x ++ " " ++ show y ++ ")"
-    show (NCombine x y) = "(NCombine " ++ show x ++ " " ++ show y ++ ")"
-    show (NCombineTypes x y) = "(NCombineTypes " ++ show x ++ " " ++ show y ++ ")"
 
 public export
 Semigroup VChunks where
