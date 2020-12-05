@@ -352,197 +352,97 @@ mutual
     Right (VRecord $ !(mergeWithApp doCombine x y))
   doCombine x y = Right $ VCombineTypes x y
 
-  -- fresh names
-  nextName : Name -> Name
-  nextName x = x ++ "'"
+countName' : Name -> List Name -> Int
+countName' x env = go 0 env
+where
+  go : Int -> List Name -> Int
+  go acc [] = acc
+  go acc (x' :: xs) = go (if x == x' then acc + 1 else acc) xs
 
-  -- TODO could possibly fail for a list like [n', n'', n']
-  freshen : List Name -> Name -> Name
-  -- freshen _ "_" = "_" -- TODO dangerous?
-  freshen [] n = n
-  freshen xs n = case elem n xs of
-                   False => n
-                   True => freshen xs (nextName n)
+fresh : Name -> List Name -> (Name, Value)
+fresh x env = (x, VVar x (countName' x env))
 
-  public export
-  vApp : Value -> Value -> Either Error Value
-  vApp (VLambda _ t) u = evalClosure t u
-  vApp (VHLam _ t) u = t u
-  vApp t u = Left $ ErrorMessage $ show t ++ " : " ++ show u
+freshCl : Closure -> List Name -> (Name, Value, Closure)
+freshCl cl@(MkClosure x _ _) env = (x, snd (fresh x env), cl)
+
+mutual
+  qVar : Name -> Int -> List Name -> Expr Void
+  qVar x i env = EVar x ((countName' x env) - i - 1)
+
+  quoteBind : Name -> List Name -> Value -> Either Error (Expr Void)
+  quoteBind x env = quote (x :: env)
+
+  qApp : List Name -> Expr Void -> Value -> Either Error (Expr Void)
+  qApp env t VPrimVar = Right $ t
+  qApp env t u        = Right $ EApp t !(quote env u)
+
+  -- Prelude.foldlM : (Foldable t, Monad m) => (a -> b -> m a) -> a -> t b -> m a
+  qAppM : List Name -> Expr Void -> List Value -> Either Error (Expr Void)
+  qAppM env x args = foldlM (qApp env) x args
+
+  quote : List Name -> Value -> Either Error (Expr Void)
+  quote env (VConst k) = Right $ EConst k
+  quote env (VVar x i) = Right $ qVar x i env
+  quote env (VApp t u) = qApp env !(quote env t) u
+  quote env (VLambda a b) =
+    let (x, v, t) = freshCl b env in
+        Right $ ELam x !(quote env a) !(quoteBind x env !(inst t v))
+  quote env (VHLam Prim t) = quote env !(t VPrimVar)
+  quote env (VPi a b) =
+    let (x, v, b') = freshCl b env in
+        Right $ EPi x !(quote env a) !(quoteBind x env !(inst b' v))
+  quote env (VHPi x a b) =
+    let (x', v) = fresh x env in
+        Right $ EPi x !(quote env a) !(quoteBind x env !(b v))
+  quote env VBool = Right $ EBool
+  quote env (VBoolLit b) = Right $ EBoolLit b
+  quote env (VBoolAnd t u) = Right $ EBoolAnd !(quote env t) !(quote env u)
+  quote env VNatural = Right $ ENatural
+  quote env (VNaturalLit k) = Right $ ENaturalLit k
+  quote env (VNaturalIsZero x) = qApp env ENaturalIsZero x
+  quote env VInteger = Right $ EInteger
+  quote env (VIntegerLit x) = Right $ EIntegerLit x
+  quote env (VIntegerNegate x) = qApp env EIntegerNegate x
+  quote env VDouble = Right $ EDouble
+  quote env (VDoubleLit x) = Right $ EDoubleLit x
+  quote env VText = Right $ EText
+  quote env (VTextLit (MkVChunks xs x)) =
+    let chx = traverse (mapChunks (quote env)) xs in
+    Right $ ETextLit (MkChunks !chx x)
+  quote env (VList x) = qApp env EList x
+  quote env (VListLit Nothing ys) =
+    let ys' = traverse (quote env) ys in
+    Right $ EListLit Nothing !ys'
+  quote env (VListLit (Just x) ys) =
+    let ys' = traverse (quote env) ys in
+    Right $ EListLit (Just !(quote env x)) !ys'
+  quote env (VListAppend x y) = Right $ EListAppend !(quote env x) !(quote env y)
+  quote env (VListHead x y) = qAppM env EListHead [x, y]
+  quote env (VOptional x) = qApp env EOptional x
+  quote env (VNone x) = qApp env ENone x
+  quote env (VSome x) = Right $ ESome !(quote env x)
+  quote env (VEquivalent x y) = Right $ EEquivalent !(quote env x) !(quote env y)
+  quote env (VAssert x) = Right $ EAssert !(quote env x)
+  quote env (VRecord x) =
+    let x' = traverse (quote env) x in
+    Right $ ERecord !x'
+  quote env (VRecordLit x) =
+    let x' = traverse (quote env) x in
+    Right $ ERecordLit !x'
+  quote env (VUnion x) =
+    let x' = traverse (mapMaybe (quote env)) x in
+    Right $ EUnion !x'
+  quote env (VCombine x y) = Right $ ECombine !(quote env x) !(quote env y)
+  quote env (VCombineTypes x y) = Right $ ECombineTypes !(quote env x) !(quote env y)
+  quote env (VInject m k Nothing) =
+    let m' = traverse (mapMaybe (quote env)) m in
+    Right $ EField (EUnion !m') k
+  quote env (VInject m k (Just t)) =
+    let m' = traverse (mapMaybe (quote env)) m in
+    qApp env (EField (EUnion !m') k) t
+  quote env VPrimVar = Left $ ?quote_rhs_3
 
 {-
-  -- reading back
-  covering
-  readBackNeutral : Ctx -> Neutral -> Either Error (Expr Void)
-  readBackNeutral ctx (NVar x) = Right (EVar x)
-  readBackNeutral ctx (NIntegerNegate x) = do
-    x' <- readBackNeutral ctx x
-    Right (EIntegerNegate x')
-  readBackNeutral ctx (NNaturalIsZero x) = do
-    x' <- readBackNeutral ctx x
-    Right (ENaturalIsZero x')
-  readBackNeutral ctx (NApp neu arg) = do
-      neu' <- readBackNeutral ctx neu
-      arg' <- readBackNormal ctx arg
-      Right (EApp neu' arg')
-  readBackNeutral ctx (NBoolAnd x y) = do
-    x' <- readBackNeutral ctx x
-    y' <- readBackNormal ctx y
-    Right (EBoolAnd x' y')
-  readBackNeutral ctx (NEquivalent x y) = do
-    x' <- readBackNeutral ctx x
-    y' <- readBackNormal ctx y
-    Right (EEquivalent x' y')
-  readBackNeutral ctx (NAssert x) = do
-    x' <- readBackNeutral ctx x
-    Right (EAssert x')
-  readBackNeutral ctx (NList a) = do
-    a' <- readBackNeutral ctx a
-    Right (EList a')
-  readBackNeutral ctx (NListAppend x y) = do
-    x' <- readBackNeutral ctx x
-    y' <- readBackNormal ctx y
-    Right (EListAppend x' y')
-  readBackNeutral ctx (NListHead x y) = do
-    x' <- readBackNeutral ctx x
-    y' <- readBackNormal ctx y
-    Right (EListHead x' y')
-  readBackNeutral ctx (NOptional a) = do
-    a' <- readBackNeutral ctx a
-    Right (EOptional a')
-  readBackNeutral ctx (NNone a) = do
-    a' <- readBackNeutral ctx a
-    Right (ENone a')
-  readBackNeutral ctx (NSome a) = do
-    a' <- readBackNeutral ctx a
-    Right (ESome a')
-  readBackNeutral ctx (NCombine x y) = do
-    x' <- readBackNeutral ctx x
-    y' <- readBackNormal ctx y
-    Right (ECombine x' y')
-  readBackNeutral ctx (NCombineTypes x y) = do
-    x' <- readBackNeutral ctx x
-    y' <- readBackNormal ctx y
-    Right (ECombineTypes x' y')
-
-  covering
-  readBackTyped : Ctx -> Ty -> Value -> Either Error (Expr Void)
-  readBackTyped ctx (VPi dom ran) fun =
-    let x = freshen (ctxNames ctx) (closureName ran)
-        xVal = VNeutral dom (NVar x)
-        ctx' = extendCtx ctx x dom in
-    do ty' <- evalClosure ran xVal
-       v' <- doApply fun xVal
-       body <- readBackTyped ctx' ty' v'
-       eTy <- readBackTyped ctx (VConst CType) ty'
-       Right (ELam x eTy body)
-  readBackTyped ctx ty (VEquivalent x y) = do -- TODO not sure is `ty` correct
-    x' <- readBackTyped ctx ty x
-    y' <- readBackTyped ctx ty y
-    Right (EEquivalent x' y')
-  readBackTyped ctx (VConst CType) (VAssert x) = do -- TODO not sure is `VConst CType` correct
-    x' <- readBackTyped ctx (VConst CType) x
-    Right (EAssert x')
-  readBackTyped ctx (VConst x) (VConst y) = Right (EConst y) -- TODO check this
-  readBackTyped ctx (VConst CType) VBool = Right EBool
-  readBackTyped ctx (VConst CType) VNatural = Right ENatural -- TODO do any of these need (VConst CType)?
-  readBackTyped ctx (VConst CType) VInteger = Right EInteger
-  readBackTyped ctx VBool (VBoolLit x) = Right (EBoolLit x)
-  readBackTyped ctx VInteger (VIntegerLit x) = Right (EIntegerLit x)
-  readBackTyped ctx VNatural (VNaturalLit x) = Right (ENaturalLit x)
-  readBackTyped ctx (VConst CType) VDouble = Right EDouble
-  readBackTyped ctx VDouble (VDoubleLit x) = Right (EDoubleLit x)
-  readBackTyped ctx t (VNeutral x z) = readBackNeutral ctx z
-  readBackTyped ctx (VConst CType) (VPi aT bT) =
-    let x = freshen (ctxNames ctx) (closureName bT) in
-    do a <- readBackTyped ctx (VConst CType) aT
-       b' <- evalClosure bT (VNeutral aT (NVar x))
-       b <- readBackTyped (extendCtx ctx x aT) (VConst CType) b'
-       Right (EPi x a b)
-  readBackTyped ctx (VConst CType) (VHPi i ty f) =
-    let i' = freshen (ctxNames ctx) i in
-    do a <- readBackTyped ctx (VConst CType) ty
-       body' <- readBackTyped ctx (VConst CType) (f (VNeutral ty (NVar i')))
-       -- CType is _probably_ fine here ^^^^^
-       Right (EPi i' a body')
-  readBackTyped ctx (VPi aT bT) (VHLam i f) =
-    let x = freshen (ctxNames ctx) (closureName bT) in do
-      b' <- evalClosure bT (VNeutral aT (NVar x))
-      case i of
-           Prim => readBackTyped ctx b' !(f VPrimVar) -- TODO double check b' here
-  readBackTyped ctx (VConst CType) (VList a) = do
-    a' <- readBackTyped ctx (VConst CType) a
-    Right (EList a')
-  readBackTyped ctx (VList a) (VListLit Nothing vs) = do
-    a' <- readBackTyped ctx (VConst CType) a
-    es <- mapListEither vs (readBackTyped ctx a)
-    Right (EListLit (Just a') es)
-  readBackTyped ctx (VList a) (VListLit (Just ty) vs) = do
-    a' <- readBackTyped ctx (VConst CType) a
-    es <- mapListEither vs (readBackTyped ctx a) -- Passing a here should confirm ty=a
-    Right (EListLit (Just a') es)
-  readBackTyped ctx (VConst CType) VText = Right EText
-  readBackTyped ctx VText (VTextLit (MkVChunks xs x)) =
-    let f = mapChunks (readBackTyped ctx VText) in
-    do
-    xs' <- traverse f xs
-    Right (ETextLit (MkChunks xs' x))
-  readBackTyped ctx (VConst CType) (VOptional a) = do
-    a' <- readBackTyped ctx (VConst CType) a
-    Right (EOptional a')
-  readBackTyped ctx (VOptional ty) (VNone ty') = do
-    ety <- readBackTyped ctx (VConst CType) ty
-    ety' <- readBackTyped ctx (VConst CType) ty'
-    case aEquiv ety ety' of -- TODO should this check be happening here?
-      Right _ => Right (ENone ety')
-      Left _ => Left (ReadBackError ("error reading back None: " ++ (show ety) ++ " is not alpha equivalent to " ++ (show ety')))
-  readBackTyped ctx (VOptional ty) (VSome a) = do
-    a' <- readBackTyped ctx ty a
-    Right (ESome a')
-  readBackTyped ctx (VConst _) (VRecord a) = do
-    a' <- traverse (mapRecord (readBackTyped ctx (VConst CType))) (toList a)
-    Right (ERecord (fromList a'))
-  readBackTyped ctx (VRecord a) (VRecordLit b) =
-    let as = toList a
-        bs = toList b in
-    Right (ERecordLit (fromList !(readBackRecordLit ctx as bs)))
-  readBackTyped ctx (VConst _) (VUnion a) = do
-    a' <- traverse (readBackUnion ctx) (toList a)
-    Right (EUnion (fromList a'))
-  readBackTyped ctx (VUnion _) (VInject a k arg) =
-    let kV = lookup k a in
-    case (kV, arg) of
-         (Just (Just k'), Just arg') =>
-           do aRB <- traverse (readBackUnion ctx) (toList a)
-              arg'' <- readBackTyped ctx k' arg'
-              Right (EApp (EField (EUnion (fromList aRB)) k) (arg''))
-         (Just Nothing, Just arg') => Left (FieldArgMismatchError ("No type for param " ++ show k))
-         (Just _, _) => Right (EField
-                                      (EUnion (fromList !(traverse (readBackUnion ctx) (toList a)))) k)
-         (Nothing, _) => Left (FieldNotFoundError (show k))
-  readBackTyped _ t v = Left (ReadBackError ("error reading back: " ++ (show v) ++ " of type: " ++ (show t)))
-
-  readBackRecordLit : Ctx
-                   -> List (FieldName, Value)
-                   -> List (FieldName, Value)
-                   -> Either Error (List (FieldName, (Expr Void)))
-  readBackRecordLit ctx [] [] = Right []
-  readBackRecordLit ctx ((k, v) :: xs) ((k', v') :: ys) =
-    case k == k' of -- TODO may be unecessary, or could be done better
-         False => Left (ReadBackError ("keys don't match: " ++ show k ++ " and " ++ show k'))
-         True => do rest <- readBackRecordLit ctx xs ys
-                    Right ((k, !(readBackTyped ctx v v')) :: rest)
-  readBackRecordLit ctx _ _ = Left (ReadBackError ("wrong type for record: " ++ " ")) -- TODO improve this error
-
-  readBackUnion : Ctx -> (FieldName, Maybe Value) -> Either Error (FieldName, Maybe (Expr Void))
-  readBackUnion ctx (k, Nothing) = Right (k, Nothing)
-  readBackUnion ctx (k, Just v) = Right (k, Just !(readBackTyped ctx (VConst CType) v))
-    -- TODO is (VConst CType) always right here ^^^? Looks like rBT ignores the Ty param when reading back VConsts so maybe?
-
-  covering
-  export
-  readBackNormal : Ctx -> Normal -> Either Error (Expr Void)
-  readBackNormal ctx (Normal' t v) = readBackTyped ctx t v
 
 -- helpers
 unexpected : Ctx -> String -> Value -> Either Error a
