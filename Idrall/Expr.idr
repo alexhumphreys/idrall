@@ -62,74 +62,74 @@ mutual
   public export
   data Expr a
     -- x
-    = EVar Name
-    | EConst U
-    | EPi Name (Expr a) (Expr a)
-    -- | Lam x A b ~ λ(x : A) -> b
+    = EConst U
+    | EVar Name Int
     | ELam Name (Expr a) (Expr a)
     -- | > App f a ~ f a
+    | EPi Name (Expr a) (Expr a)
+    -- | Lam x A b ~ λ(x : A) -> b
     | EApp (Expr a) (Expr a)
     -- | > Let x Nothing r e ~ let x = r in e
     --   > Let x (Just t) r e ~ let x : t = r in e
     | ELet Name (Maybe (Expr a)) (Expr a) (Expr a)
     -- | > Annot x t ~ x : t
     | EAnnot (Expr a) (Expr a)
-    -- | > x === y
-    | EEquivalent (Expr a) (Expr a)
-    -- | > assert : e
-    | EAssert (Expr a)
     -- | > Bool ~ Bool
     | EBool
     -- | > BoolLit b ~ b
     | EBoolLit Bool
     -- | > BoolAnd x y ~ x && y
     | EBoolAnd (Expr a) (Expr a)
-    -- | > Integer ~ Integer
-    | EInteger
-    -- | > EIntegerLit i ~ i
-    | EIntegerLit Integer
-    -- | > Natural ~ Natural
-    | EIntegerNegate (Expr a)
     -- | > Natural ~ Natural
     | ENatural
     -- | > NaturalLit n ~ n
     | ENaturalLit Nat
     -- | > NaturalIsZero ~ Natural/isZero
-    | ENaturalIsZero (Expr a)
+    | ENaturalIsZero
+    -- | > Integer ~ Integer
+    | EInteger
+    -- | > EIntegerLit i ~ i
+    | EIntegerLit Integer
+    -- | > EIntegerNegate ~ Integer/negate
+    | EIntegerNegate
     -- | > Double ~ Double
     | EDouble
     -- | > DoubleLit n ~ n
     | EDoubleLit Double
-    -- | > EList a ~ List a
-    | EList (Expr a)
-    -- | > EList (Some e) [e', ...] ~ [] : List a
-    | EListLit (Maybe (Expr a)) (List (Expr a))
-    -- | > x # y
-    | EListAppend (Expr a) (Expr a)
-    -- | > List/Head A [a]
-    | EListHead (Expr a) (Expr a)
     -- | > EText ~ Text
     | EText
     -- | > ETextLit (Chunks [(t1, e1), (t2, e2)] t3) ~  "t1${e1}t2${e2}t3"
     | ETextLit (Chunks a)
-    -- | > EOptional a ~ Optional a
-    | EOptional (Expr a)
-    -- | > None a
-    | ENone (Expr a)
+    -- | > EList a ~ List a
+    | EList
+    -- | > EList (Some e) [e', ...] ~ [] : List a
+    | EListLit (Maybe (Expr a)) (List (Expr a))
+    -- | > x # y
+    | EListAppend (Expr a) (Expr a)
+    -- | > List/Head
+    | EListHead
+    -- | > EOptional ~ Optional
+    | EOptional
     -- | > Some a
     | ESome (Expr a)
+    -- | > None
+    | ENone
+    -- | > x === y
+    | EEquivalent (Expr a) (Expr a)
+    -- | > assert : e
+    | EAssert (Expr a)
     -- | > ERecord (fromList ((MkFieldName "Foo"), EBool)) ~ { Foo : Bool }
     | ERecord (SortedMap FieldName (Expr a))
     -- | > ERecordLit (fromList ((MkFieldName "Foo"), EBool)) ~ { Foo = Bool }
     | ERecordLit (SortedMap FieldName (Expr a))
+    -- | > EUnion (fromList ((MkFieldName "Foo"), Nothing)) ~ < Foo >
+    -- | > EUnion (fromList ((MkFieldName "Foo"), Just EBool)) ~ < Foo : Bool >
+    | EUnion (SortedMap FieldName (Maybe (Expr a)))
     -- | > x /\ y
     | ECombine (Expr a) (Expr a)
     -- | > x //\\ y
     | ECombineTypes (Expr a) (Expr a)
-    -- | > EUnion (fromList ((MkFieldName "Foo"), Nothing)) ~ < Foo >
-    -- | > EUnion (fromList ((MkFieldName "Foo"), Just EBool)) ~ < Foo : Bool >
-    | EUnion (SortedMap FieldName (Maybe (Expr a)))
-    -- | > EField (EVar "x") (MkFieldName "Foo") ~ x.Foo
+    -- | > EField (EVar "x" 0) (MkFieldName "Foo") ~ x.Foo
     | EField (Expr a) FieldName
     | EEmbed (Import a)
 
@@ -146,42 +146,42 @@ mutual
 
   export
   Show (Expr a) where
-    show (EVar x) = "(EVar " ++ x ++ ")"
     show (EConst x) = "(EConst " ++ show x ++ ")"
-    show (EPi x y z) = "(EPi " ++ x ++ " " ++ show y ++ " " ++ show z ++ ")"
+    show (EVar x i) = "(EVar " ++ show x ++ " " ++ show i ++ ")"
     show (ELam x y z) = "(ELam " ++ x ++ " " ++ show y ++ " " ++ show z ++ ")"
+    show (EPi x y z) = "(EPi " ++ x ++ " " ++ show y ++ " " ++ show z ++ ")"
     show (EApp x y) = "(EApp " ++ show x ++ " " ++ show y ++ ")"
     show (ELet x y z w) = "(ELet " ++ show x ++ " " ++ show y ++ " " ++ show z ++ " " ++ show w ++ ")"
     show (EAnnot x y) = "(EAnnot " ++ show x ++ " " ++ show y ++ ")"
-    show (EEquivalent x y) = "(EEquivalent " ++ show x ++ " " ++ show y ++ ")"
-    show (EAssert x) = "(EAssert " ++ show x ++ ")"
     show EBool = "EBool"
     show (EBoolLit False) = "(EBoolLit False)"
     show (EBoolLit True) = "(EBoolLit True)"
     show (EBoolAnd x y) = "(EBoolAnd " ++ show x ++ " " ++ show y ++ ")"
-    show EInteger = "EInteger"
-    show (EIntegerLit x) = "(EIntegerLit " ++ show x ++ ")"
-    show (EIntegerNegate x) = "(EIntegerNegate " ++ show x ++ ")"
     show ENatural = "ENatural"
     show (ENaturalLit k) = "(ENaturalLit " ++ show k ++ ")"
-    show (ENaturalIsZero x) = "(ENaturalIsZero " ++ show x ++ ")"
+    show ENaturalIsZero = "ENaturalIsZero"
+    show EInteger = "EInteger"
+    show (EIntegerLit x) = "(EIntegerLit " ++ show x ++ ")"
+    show EIntegerNegate = "EIntegerNegate"
     show EDouble = "EDouble"
     show (EDoubleLit k) = "(EDoubleLit " ++ show k ++ ")"
-    show (EList x) = "(EList " ++ show x ++ ")"
+    show EText = "EText"
+    show (ETextLit x) = "(ETextLit " ++ show x ++ ")"
+    show EList = "EList"
     show (EListLit Nothing xs) = "(EListLit Nothing " ++ show xs ++ ")"
     show (EListLit (Just x) xs) = "(EListLit (Just " ++ show x ++ ") " ++ show xs ++ ")"
     show (EListAppend x y) = "(EListAppend " ++ show x ++ " " ++ show y ++ ")"
-    show (EListHead x y) = "(EListHead " ++ show x ++ " " ++ show y ++ ")"
-    show EText = "EText"
-    show (ETextLit x) = "(ETextLit " ++ show x ++ ")"
-    show (EOptional x) = "(EOptional " ++ show x ++ ")"
-    show (ENone x) = "(ENone " ++ show x ++ ")"
+    show EListHead = "EListHead"
+    show EOptional = "EOptional"
+    show ENone = "ENone"
     show (ESome x) = "(ESome " ++ show x ++ ")"
+    show (EEquivalent x y) = "(EEquivalent " ++ show x ++ " " ++ show y ++ ")"
+    show (EAssert x) = "(EAssert " ++ show x ++ ")"
     show (ERecord x) = "(ERecord " ++ show x ++ ")"
     show (ERecordLit x) = "(ERecordLit " ++ show x ++ ")"
+    show (EUnion x) = "(EUnion " ++ show x ++ ")"
     show (ECombine x y) = "(ECombine " ++ show x ++ " " ++ show y ++ ")"
     show (ECombineTypes x y) = "(ECombineTypes " ++ show x ++ " " ++ show y ++ ")"
-    show (EUnion x) = "(EUnion " ++ show x ++ ")"
     show (EField x y) = "(EField " ++ show x ++ " " ++ show y ++ ")"
     show (EEmbed x) = "(EEmbed " ++ show x ++ ")"
 
