@@ -28,7 +28,7 @@ mutual
                  Namespace -> Expr Void ->
                  Namespace -> Expr Void ->
                  Either Error ()
-  aEquivHelper i ns1 (EVar x) ns2 (EVar y) =
+  aEquivHelper i ns1 (EVar x w) ns2 (EVar y z) =
     case (lookup x ns1, lookup y ns2) of
          (Nothing, Nothing) => boolAEquiv x y
          (Just j, Just k) => boolAEquiv j k
@@ -62,12 +62,10 @@ mutual
   aEquivHelper _ _ ENatural _ ENatural = Right ()
   aEquivHelper _ _ EInteger _ EInteger = Right ()
   aEquivHelper i ns1 (EIntegerLit x) ns2 (EIntegerLit y) = boolAEquiv x y
-  aEquivHelper i ns1 (EIntegerNegate x) ns2 (EIntegerNegate y) =
-    aEquivHelper i ns1 x ns2 y
+  aEquivHelper i ns1 EIntegerNegate ns2 EIntegerNegate = Right ()
   aEquivHelper _ _ (EConst x) _ (EConst y) = boolAEquiv x y
   aEquivHelper i ns1 (ENaturalLit x) ns2 (ENaturalLit y) = boolAEquiv x y
-  aEquivHelper i ns1 (ENaturalIsZero x) ns2 (ENaturalIsZero y) =
-    aEquivHelper i ns1 x ns2 y
+  aEquivHelper i ns1 ENaturalIsZero ns2 ENaturalIsZero = Right ()
   aEquivHelper _ _ EDouble _ EDouble = Right ()
   aEquivHelper i _ (EDoubleLit x) _ (EDoubleLit y) = boolAEquiv x y
   aEquivHelper i ns1 (EEquivalent w x) ns2 (EEquivalent y z) = do
@@ -85,9 +83,7 @@ mutual
   aEquivHelper i ns1 (EListAppend w x) ns2 (EListAppend y z) = do
     aEquivHelper i ns1 w ns2 y
     aEquivHelper i ns1 x ns2 z
-  aEquivHelper i ns1 (EListHead w x) ns2 (EListHead y z) = do
-    aEquivHelper i ns1 w ns2 y
-    aEquivHelper i ns1 x ns2 z
+  aEquivHelper i ns1 EListHead ns2 EListHead = Right ()
   aEquivHelper _ _ EText _ EText = Right ()
   aEquivHelper i ns1 (ETextLit a@(MkChunks xys z)) ns2 (ETextLit b@(MkChunks xys' z')) =
     -- TODO Not confindent that this is correct for all cases
@@ -97,12 +93,10 @@ mutual
                 r = b ++ z' in
                 boolAEquiv l r
          _ => aEquivTextLit i ns1 a ns2 b
-  aEquivHelper i ns1 (EOptional x) ns2 (EOptional y) =
-    aEquivHelper i ns1 x ns2 y
-  aEquivHelper i ns1 (ENone x) ns2 (ENone y) =
-    aEquivHelper i ns1 x ns2 y
+  aEquivHelper i ns1 EOptional ns2 EOptional = Right ()
   aEquivHelper i ns1 (ESome x) ns2 (ESome y) =
     aEquivHelper i ns1 x ns2 y
+  aEquivHelper i ns1 ENone ns2 ENone = Right ()
   aEquivHelper i ns1 (ERecord x) ns2 (ERecord y) =
     let xs = toList x
         ys = toList y in
@@ -192,112 +186,85 @@ mutual
 aEquiv : Expr Void -> Expr Void -> Either Error ()
 aEquiv e1 e2 = aEquivHelper 0 [] e1 [] e2
 
--- env
-export
-initEnv : Env
-initEnv = []
-
-extendEnv : Env -> Name -> Value -> Env
-extendEnv env x v = ((x, v) :: env)
-
--- definitions and dependent types
-data CtxEntry = Def Ty Value | IsA Ty
-
-export
-Ctx : Type
-Ctx = List (Name, CtxEntry)
-%name Ctx ctx, ctx1, ctx2
-
-export
-initCtx : Ctx
-initCtx = []
-
-ctxNames : Ctx -> List Name
-ctxNames ctx = map fst ctx
-
-extendCtx : Ctx -> Name -> Ty -> Ctx
-extendCtx ctx x t = (x, (IsA t)) :: ctx
-
-define : Ctx -> Name -> Ty -> Value -> Ctx
-define ctx x t v = (x, Def t v) :: ctx
-
-mkEnv : Ctx -> Env
-mkEnv [] = []
-mkEnv ((x, e) :: ctx) =
-  let env = mkEnv ctx in
-  (case e of
-        (Def _ v) => (x, v) :: env
-        (IsA t) => let v = VNeutral t (NVar x) in
-                       (x, v) :: env)
-
 -- evaluator
 mutual
+  inst : Closure -> Value -> Either Error Value
+  inst = evalClosure
+
   covering
   evalClosure : Closure -> Value -> Either Error Value
-  evalClosure (MkClosure env x ty e) v
-    -- TODO not using this type info, Andras doesn't even store type
-    -- info as part of Closure
-    = do ty' <- eval env ty
-         eval (extendEnv env x v) e
+  evalClosure (MkClosure x env e) v
+    = do eval (Extend env x v) e
 
-  evalVar : Env -> Name -> Either Error Value
-  evalVar [] x = Left (MissingVar (x ++ " not found in env"))
-  evalVar ((y, v) :: env) x
-    = case x == y of
-           True => Right v
-           False => evalVar env x
+  evalVar : Env' -> Name -> Int -> Either Error Value
+  evalVar Empty x i = pure $ VVar x (0 - i - 1)
+  evalVar (Skip env x') x i =
+    case x == x' of
+         True => if i == 0 then pure $ VVar x (countName x env) else evalVar env x (i - 1)
+         False => evalVar env x i
+  evalVar (Extend env x' v) x i =
+    case x == x' of
+         True => if i == 0 then pure v else evalVar env x (i - 1)
+         False => evalVar env x i
+
+  vVar : Env' -> Name -> Int -> Either Error Value
+  vVar = evalVar
+
+  conv : Env' -> Value -> Value -> Bool
 
   export
   covering
-  eval : Env -> Expr Void -> Either Error Value
+  eval : Env' -> Expr Void -> Either Error Value
   eval env (EConst x) = Right (VConst x)
-  eval env (EVar x)
-    = evalVar env x
-  eval env (EPi x dom ran)
-    = do ty <- eval env dom
-         Right (VPi ty (MkClosure env x dom ran))
+  eval env (EVar x i)
+    = evalVar env x i
   eval env (ELam x ty body)
     = do vTy <- eval env ty
-         Right (VLambda vTy (MkClosure env x ty body))
-  eval env (EEquivalent x y) =
-    do xV <- eval env x
-       yV <- eval env y
-       Right (VEquivalent xV yV)
-  eval env (EAssert x) = do
-    xV <- eval env x
-    doAssert xV
+         Right (VLambda vTy (MkClosure x env body))
+  eval env (EPi x dom ran)
+    = do ty <- eval env dom
+         Right (VPi ty (MkClosure x env ran))
   eval env (EApp rator rand)
     = do rator' <- eval env rator
          rand' <- eval env rand
          doApply rator' rand'
-  eval env (ELet x ty r e)
-    = case ty of
-           Nothing => do vr <- eval env r
-                         eval (extendEnv env x vr) e
-           (Just ty') => do vTy <- eval env ty' -- TODO not using this type info
-                            vr <- eval env r
-                            eval (extendEnv env x vr) e
-  eval env (EAnnot x _)
-    = do x' <- eval env x
-         Right x'
+  eval env (ELet x _ r e) =
+    do vr <- eval env r
+       eval (Extend env x vr) e
+  eval env (EAnnot x _) = eval env x
   eval env EBool = Right VBool
   eval env (EBoolLit x) = Right (VBoolLit x)
   eval env (EBoolAnd x y)
     = do x' <- eval env x
          y' <- eval env y
-         doBoolAnd x' y'
-  eval env EInteger = Right VInteger
-  eval env (EIntegerLit k) = Right (VIntegerLit k)
-  eval env (EIntegerNegate x)
-    = do x' <- eval env x
-         doIntegerNegate x'
+         case (x', y') of
+              (VBoolLit True, u) => Right u
+              (VBoolLit False, u) => Right $ VBoolLit False
+              (t, VBoolLit True) => Right t
+              (t, VBoolLit False) => Right $ VBoolLit False
+              (t, u) => case conv env t u of
+                             True => Right t
+                             False => Right $ VBoolAnd t u -- TODO check this matches the | behaviour
   eval env ENatural = Right VNatural
   eval env (ENaturalLit k) = Right (VNaturalLit k)
+  eval env ENaturalIsZero = Right $ VPrim $
+                              \c => case c of
+                                      VNaturalLit n => Right $ VBoolLit (n == 0)
+                                      n             => Right $ VNaturalIsZero n
+  eval env EInteger = Right VInteger
+  eval env (EIntegerLit k) = Right (VIntegerLit k)
+  eval env EIntegerNegate = Right $ VPrim $
+                            \c => case c of
+                                       VIntegerLit n => Right $ VIntegerLit (negate n)
+                                       n             => Right $ VIntegerNegate n
   eval env EDouble = Right VDouble
   eval env (EDoubleLit k) = Right (VDoubleLit k)
-  eval env (EList a) = do
-    a' <- eval env a
-    Right (VList a')
+  eval env EText = Right VText
+  eval env (ETextLit (MkChunks xs x)) = do
+    xs' <- traverse (mapChunks (eval env)) xs
+    Right (VTextLit (MkVChunks xs' x))
+  eval env EList = do
+    Right $ VPrim $ \a => Right $ VList a
   eval env (EListLit Nothing es) = do
     vs <- mapListEither es (eval env)
     Right (VListLit Nothing vs)
@@ -309,20 +276,23 @@ mutual
     x' <- eval env x
     y' <- eval env y
     doListAppend x' y'
-  eval env (EListHead x y) = do
-    x' <- eval env x
-    y' <- eval env y
-    doListHead x' y'
-  eval env EText = Right VText
-  eval env (ETextLit (MkChunks xs x)) = do
-    xs' <- traverse (mapChunks (eval env)) xs
-    Right (VTextLit (MkVChunks xs' x))
-  eval env (ENaturalIsZero x)
-    = do x' <- eval env x
-         doNaturalIsZero x'
-  eval env (EOptional a) = Right (VOptional !(eval env a))
-  eval env (ENone a) = Right (VNone !(eval env a))
+  eval env EListHead =
+    Right $ VPrim $ \a =>
+      Right $ VPrim $
+             \c => case c of
+                        VListLit _ [] => Right $ VNone a
+                        VListLit _ (h :: _) => Right $ VSome h
+                        as => Right $ VListHead a as
+  eval env EOptional = Right $ VPrim $ \a => Right $ VOptional a
   eval env (ESome a) = Right (VSome !(eval env a))
+  eval env ENone = Right $ VPrim $ \a => Right $ VNone a
+  eval env (EEquivalent x y) =
+    do xV <- eval env x
+       yV <- eval env y
+       Right (VEquivalent xV yV)
+  eval env (EAssert x) = do
+    xV <- eval env x
+    doAssert env xV
   eval env (ERecord x) =
     let xs = toList x in
     do xs' <- traverse (mapRecord (eval env)) xs
@@ -352,83 +322,35 @@ mutual
            (Just (Just _)) => Right (VPrim $ \u => Right $ VInject (fromList x') k (Just u))
   eval env (EField x k) = Left (InvalidFieldType (show x))
   eval env (EEmbed (Raw x)) = absurd x
-  eval env (EEmbed (Resolved x)) = eval initEnv x
+  eval env (EEmbed (Resolved x)) = eval Empty x
 
   covering
   doApply : Value -> Value -> Either Error Value
   doApply (VLambda ty closure) arg =
     evalClosure closure arg
   doApply (VHLam i f) arg = (f arg)
-  doApply (VNeutral (VPi dom ran) neu) arg =
-    do arg' <- evalClosure ran arg
-       Right (VNeutral arg' (NApp neu (Normal' dom arg)))
-  doApply _ _ = Left EvalApplyErr
-
-  doIntegerNegate : Value -> Either Error Value
-  doIntegerNegate (VIntegerLit x) = Right (VIntegerLit (x*(-1)))
-  doIntegerNegate (VNeutral VInteger neu) = Right (VNeutral VInteger (NIntegerNegate neu))
-  doIntegerNegate x = Left (EvalIntegerNegateErr (show x))
-
-  doNaturalIsZero : Value -> Either Error Value
-  doNaturalIsZero (VNaturalLit k) = Right (VBoolLit (k == 0))
-  doNaturalIsZero (VNeutral VNatural neu) = Right (VNeutral VBool (NNaturalIsZero neu))
-  doNaturalIsZero x = Left (EvalNaturalIsZeroErr (show x))
-
-  doBoolAnd : Value -> Value -> Either Error Value
-  doBoolAnd (VBoolLit x) (VBoolLit y) = Right (VBoolLit (x && y))
-  doBoolAnd (VNeutral VBool v) y = Right (VNeutral VBool (NBoolAnd v (Normal' VBool y)))
-  doBoolAnd _ _ = Left EvalBoolAndErr
+  doApply f arg = Right $ VApp f arg
 
   covering
-  doAssert : Value -> Either Error Value
-  doAssert v@(VEquivalent x y) = do
-    -- TODO VConst CType here fails for `assert : "foo${"1"}" === "foo1"`
-    -- as it would need to read back as VText
-    xRb <- readBackTyped initCtx (VConst CType) x
-    yRb <- readBackTyped initCtx (VConst CType) y
-    case aEquiv xRb yRb of
-         Left _ => Left (AssertError (show xRb ++ " not equivalent to " ++ show yRb))
-         Right _ => Right (VAssert v)
-  doAssert (VNeutral (VEquivalent x y) v)
-    = Right (VNeutral (VEquivalent x y) (NAssert v))
-  doAssert x = Left (AssertError ("not an equivalence type: " ++ show x))
+  doAssert : Env' -> Value -> Either Error Value
+  doAssert env v@(VEquivalent t u) = do
+    conv env t u
+    pure $ VAssert v
+  doAssert env x = Left (AssertError ("not an equivalence type: " ++ show x))
 
   doListAppend : Value -> Value -> Either Error Value
-  doListAppend (VListLit x xs) (VListLit _ ys) =
-    Right (VListLit x (xs ++ ys)) -- TODO dropping type info
-  doListAppend (VNeutral (VList x) v) y =
-    Right (VNeutral (VList x) (NListAppend v (Normal' (VList x) y)))
-  doListAppend x y = Left (ListAppendError (show x ++ " " ++ show y))
-
-  doListHead' : Value -> List Value -> Either Error Value
-  doListHead' ty [] = Right (VNone ty)
-  doListHead' ty (v :: vs) = Right (VSome v)
-
-  doListHead : Value -> Value -> Either Error Value -- TODO dry
-  doListHead ty@(VPi x z) (VListLit _ ys) = doListHead' ty ys
-  doListHead ty@(VEquivalent x z) (VListLit _ ys) = doListHead' ty ys
-  doListHead ty@VBool (VListLit _ ys) = doListHead' ty ys
-  doListHead ty@VNatural (VListLit _ ys) = doListHead' ty ys
-  doListHead ty@(VList x) (VListLit _ ys) = doListHead' ty ys
-  doListHead ty@(VListLit x xs) (VListLit _ ys) = doListHead' ty ys
-  doListHead ty@(VOptional x) (VListLit _ ys) = doListHead' ty ys
-  doListHead (VNeutral (VConst CType) v) y =
-    Right (VNeutral (VConst CType) (NListHead v (Normal' (VList (VNeutral (VConst CType) v)) y))) -- TODO double check
-  doListHead x y = Left (ListHeadError (show x ++ " " ++ show y))
+  doListAppend (VListLit _ []) u = Right u
+  doListAppend t (VListLit _ []) = Right t
+  doListAppend (VListLit t xs) (VListLit _ ys) =
+    Right (VListLit t (xs ++ ys))
+  doListAppend x y = Right $ VListAppend x y
 
   doCombine : Value -> Value -> Either Error Value
   doCombine (VRecordLit x) (VRecordLit y) =
     Right (VRecordLit $ !(mergeWithApp doCombine x y))
   doCombine (VRecord x) (VRecord y) =
     Right (VRecord $ !(mergeWithApp doCombine x y))
-  doCombine (VNeutral (VRecord x) v) y =
-    -- won't know type of y here, might need to remove some types from rbt
-    -- TODO will use an empty list for now
-    Right (VNeutral (VRecord x) (NCombine v (Normal' (VRecord (fromList [])) y)))
-  doCombine (VNeutral (VConst x) v) y =
-    -- TODO the type of VRecord can be Type/Kind/Sort, not sure what to do here
-    Right (VNeutral (VConst x) (NCombineTypes v (Normal' (VConst x) y)))
-  doCombine x y = Left $ CombineError $ show x ++ show y
+  doCombine x y = Right $ VCombineTypes x y
 
   -- fresh names
   nextName : Name -> Name
@@ -448,6 +370,7 @@ mutual
   vApp (VHLam _ t) u = t u
   vApp t u = Left $ ErrorMessage $ show t ++ " : " ++ show u
 
+{-
   -- reading back
   covering
   readBackNeutral : Ctx -> Neutral -> Either Error (Expr Void)
@@ -953,3 +876,4 @@ mutual
   synth ctx (EField x k) = Left (InvalidFieldType (show x))
   synth ctx (EEmbed (Raw x)) = absurd x
   synth ctx (EEmbed (Resolved x)) = synth initCtx x -- Using initCtx here to ensure fresh context.
+                                    -}
