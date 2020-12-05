@@ -1,6 +1,7 @@
 module Idrall.Value
 
 import Idrall.Expr
+import Idrall.Error
 
 mutual
   public export
@@ -14,7 +15,7 @@ mutual
   public export
   data Value
     = VLambda Ty Closure
-    | VHLam HLamInfo (Value -> Value)
+    | VHLam HLamInfo (Value -> Either Error Value)
     | VPi Ty Closure
     | VHPi String Value (Value -> Value)
     | VEquivalent Value Value
@@ -63,12 +64,8 @@ mutual
     = Prim
 
   public export
-  VPrim : (Value -> Value) -> Value
+  VPrim : (Value -> Either Error Value) -> Value
   VPrim f = VHLam Prim f
-
-  public export
-  vFun : Value -> Value -> Value
-  vFun a b = VHPi "_" a (\_ => b)
 
   public export
   data Neutral
@@ -87,6 +84,10 @@ mutual
     | NSome Neutral
     | NCombine Neutral Normal
     | NCombineTypes Neutral Normal
+
+  public export
+  vFun : Value -> Value -> Value
+  vFun a b = VHPi "_" a (\_ => b)
 
 mutual
   public export

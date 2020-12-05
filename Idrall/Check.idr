@@ -8,82 +8,101 @@ import Idrall.Map
 import Data.List
 
 -- alpha equivalence
+nestError : Either Error b -> Error -> Either Error b
+nestError x e =
+  case x of
+       (Left e') => Left $ NestedError e e'
+       (Right x') => Right x'
+
+aEquivErr : (Show x) => x -> x -> Error
+aEquivErr x y = AlphaEquivError $ show x ++ "\n not alpha equivalent to:\n" ++ show y
+
+boolAEquiv : (Eq x, Show x) => x -> x -> Either Error ()
+boolAEquiv a b =
+  case a == b of
+       True => Right ()
+       False => Left $ aEquivErr a b
+
 mutual
   aEquivHelper : (i : Integer) ->
                  Namespace -> Expr Void ->
                  Namespace -> Expr Void ->
-                 Bool
+                 Either Error ()
   aEquivHelper i ns1 (EVar x) ns2 (EVar y) =
     case (lookup x ns1, lookup y ns2) of
-         (Nothing, Nothing) => x == y
-         (Just j, Just k) => i == j
-         _ => False
-  aEquivHelper i ns1 (EPi x a1 r1) ns2 (EPi y a2 r2) =
-    aEquivHelper i ns1 a1 ns2 a2 &&
+         (Nothing, Nothing) => boolAEquiv x y
+         (Just j, Just k) => boolAEquiv j k
+         (Just j, Nothing) => Left $ AlphaEquivError $ show j ++ " not found"
+         (Nothing, Just k) => Left $ AlphaEquivError $ show k ++  " not found"
+  aEquivHelper i ns1 (EPi x a1 r1) ns2 (EPi y a2 r2) = do
+    aEquivHelper i ns1 a1 ns2 a2
     aEquivHelper (i+1) ((x, i) :: ns1) r1 ((y, i) :: ns2) r2
   aEquivHelper i ns1 (ELam x ty1 body1) ns2 (ELam y ty2 body2)
     = let newNs1 = (x, i) :: ns1
-          newNs2 = (y, i) :: ns2 in
-      aEquivHelper i ns1 ty1 ns2 ty2 &&
+          newNs2 = (y, i) :: ns2 in do
+      aEquivHelper i ns1 ty1 ns2 ty2
       aEquivHelper (i+1) newNs1 body1 newNs2 body2
-  aEquivHelper i ns1 (EApp rator1 rand1) ns2 (EApp rator2 rand2)
-    = aEquivHelper i ns1 rator1 ns2 rator2 &&
-      aEquivHelper i ns1 rand1 ns2 rand2
+  aEquivHelper i ns1 (EApp rator1 rand1) ns2 (EApp rator2 rand2) = do
+    aEquivHelper i ns1 rator1 ns2 rator2
+    aEquivHelper i ns1 rand1 ns2 rand2
   aEquivHelper i ns1 (ELet x1 t1 r1 e1) ns2 (ELet x2 t2 r2 e2)
     = let newNs1 = (x1, i) :: ns1
-          newNs2 = (x2, i) :: ns2 in
-      aEquivMaybe i ns1 t1 ns2 t2 && -- TODO not sure the type annotations matter for aEquiv-ness
-      aEquivHelper i ns1 r1 ns2 r2 &&
+          newNs2 = (x2, i) :: ns2 in do
+      aEquivMaybe i ns1 t1 ns2 t2 -- TODO not sure the type annotations matter for aEquiv-ness
+      aEquivHelper i ns1 r1 ns2 r2
       aEquivHelper i newNs1 e1 newNs2 e2 -- TODO double check this, might need (i+1)
-  aEquivHelper i ns1 (EAnnot w x) ns2 (EAnnot y z)
-    = aEquivHelper i ns1 w ns2 y &&
-      aEquivHelper i ns1 x ns2 z
-  aEquivHelper _ _ EBool _ EBool = True
-  aEquivHelper i ns1 (EBoolLit x) ns2 (EBoolLit y) = x == y
-  aEquivHelper i ns1 (EBoolAnd w x) ns2 (EBoolAnd y z)
-    = aEquivHelper i ns1 w ns2 y &&
-      aEquivHelper i ns1 x ns2 z
-  aEquivHelper _ _ ENatural _ ENatural = True
-  aEquivHelper _ _ EInteger _ EInteger = True
-  aEquivHelper i ns1 (EIntegerLit x) ns2 (EIntegerLit y) = x == y
-  aEquivHelper i ns1 (EIntegerNegate x) ns2 (EIntegerNegate y)
-    = aEquivHelper i ns1 x ns2 y
-  aEquivHelper _ _ (EConst x) _ (EConst y) = x == y
-  aEquivHelper i ns1 (ENaturalLit x) ns2 (ENaturalLit y) = x == y
-  aEquivHelper i ns1 (ENaturalIsZero x) ns2 (ENaturalIsZero y)
-    = aEquivHelper i ns1 x ns2 y
-  aEquivHelper _ _ EDouble _ EDouble = True
-  aEquivHelper i _ (EDoubleLit x) _ (EDoubleLit y) = x == y
-  aEquivHelper i ns1 (EEquivalent w x) ns2 (EEquivalent y z)
+  aEquivHelper i ns1 (EAnnot w x) ns2 (EAnnot y z) = do
+    aEquivHelper i ns1 w ns2 y
+    aEquivHelper i ns1 x ns2 z
+  aEquivHelper _ _ EBool _ EBool = Right ()
+  aEquivHelper i ns1 (EBoolLit x) ns2 (EBoolLit y) = boolAEquiv x y
+  aEquivHelper i ns1 (EBoolAnd w x) ns2 (EBoolAnd y z) = do
+    aEquivHelper i ns1 w ns2 y
+    aEquivHelper i ns1 x ns2 z
+  aEquivHelper _ _ ENatural _ ENatural = Right ()
+  aEquivHelper _ _ EInteger _ EInteger = Right ()
+  aEquivHelper i ns1 (EIntegerLit x) ns2 (EIntegerLit y) = boolAEquiv x y
+  aEquivHelper i ns1 (EIntegerNegate x) ns2 (EIntegerNegate y) =
+    aEquivHelper i ns1 x ns2 y
+  aEquivHelper _ _ (EConst x) _ (EConst y) = boolAEquiv x y
+  aEquivHelper i ns1 (ENaturalLit x) ns2 (ENaturalLit y) = boolAEquiv x y
+  aEquivHelper i ns1 (ENaturalIsZero x) ns2 (ENaturalIsZero y) =
+    aEquivHelper i ns1 x ns2 y
+  aEquivHelper _ _ EDouble _ EDouble = Right ()
+  aEquivHelper i _ (EDoubleLit x) _ (EDoubleLit y) = boolAEquiv x y
+  aEquivHelper i ns1 (EEquivalent w x) ns2 (EEquivalent y z) = do
     -- TODO should use CBOR encoding eventually
-    = aEquivHelper i ns1 w ns1 x &&
-      aEquivHelper i ns1 w ns2 y &&
-      aEquivHelper i ns2 y ns2 z
-  aEquivHelper i ns1 (EAssert x) ns2 (EAssert y)
-    = aEquivHelper i ns1 x ns2 y
-  aEquivHelper i ns1 (EList x) ns2 (EList y)
-    = aEquivHelper i ns1 x ns2 y
-  aEquivHelper i ns1 (EListLit tx xs) ns2 (EListLit ty ys)
-    = aEquivMaybe i ns1 tx ns2 ty &&
-      aEquivList i ns1 xs ns2 ys
-  aEquivHelper i ns1 (EListAppend w x) ns2 (EListAppend y z)
-    = aEquivHelper i ns1 w ns2 y &&
-      aEquivHelper i ns1 x ns2 z
-  aEquivHelper i ns1 (EListHead w x) ns2 (EListHead y z)
-    = aEquivHelper i ns1 w ns2 y &&
-      aEquivHelper i ns1 x ns2 z
-  aEquivHelper _ _ EText _ EText = True
+    aEquivHelper i ns1 w ns1 x
+    aEquivHelper i ns1 w ns2 y
+    aEquivHelper i ns2 y ns2 z
+  aEquivHelper i ns1 (EAssert x) ns2 (EAssert y) =
+    aEquivHelper i ns1 x ns2 y
+  aEquivHelper i ns1 (EList x) ns2 (EList y) =
+    aEquivHelper i ns1 x ns2 y
+  aEquivHelper i ns1 (EListLit tx xs) ns2 (EListLit ty ys) = do
+    aEquivMaybe i ns1 tx ns2 ty
+    aEquivList i ns1 xs ns2 ys
+  aEquivHelper i ns1 (EListAppend w x) ns2 (EListAppend y z) = do
+    aEquivHelper i ns1 w ns2 y
+    aEquivHelper i ns1 x ns2 z
+  aEquivHelper i ns1 (EListHead w x) ns2 (EListHead y z) = do
+    aEquivHelper i ns1 w ns2 y
+    aEquivHelper i ns1 x ns2 z
+  aEquivHelper _ _ EText _ EText = Right ()
   aEquivHelper i ns1 (ETextLit a@(MkChunks xys z)) ns2 (ETextLit b@(MkChunks xys' z')) =
     -- TODO Not confindent that this is correct for all cases
     case (stringFromETextLit xys, stringFromETextLit xys') of
-         (Just a, Just b) => ((a ++ z) == (b ++ z'))
+         (Just a, Just b) =>
+            let l = a ++ z
+                r = b ++ z' in
+                boolAEquiv l r
          _ => aEquivTextLit i ns1 a ns2 b
-  aEquivHelper i ns1 (EOptional x) ns2 (EOptional y)
-    = aEquivHelper i ns1 x ns2 y
-  aEquivHelper i ns1 (ENone x) ns2 (ENone y)
-    = aEquivHelper i ns1 x ns2 y
-  aEquivHelper i ns1 (ESome x) ns2 (ESome y)
-    = aEquivHelper i ns1 x ns2 y
+  aEquivHelper i ns1 (EOptional x) ns2 (EOptional y) =
+    aEquivHelper i ns1 x ns2 y
+  aEquivHelper i ns1 (ENone x) ns2 (ENone y) =
+    aEquivHelper i ns1 x ns2 y
+  aEquivHelper i ns1 (ESome x) ns2 (ESome y) =
+    aEquivHelper i ns1 x ns2 y
   aEquivHelper i ns1 (ERecord x) ns2 (ERecord y) =
     let xs = toList x
         ys = toList y in
@@ -92,63 +111,64 @@ mutual
     let xs = toList x
         ys = toList y in
     aEquivRecord i ns1 xs ns2 ys
-  aEquivHelper i ns1 (ECombine w x) ns2 (ECombine y z)
-    = aEquivHelper i ns1 w ns2 y &&
-      aEquivHelper i ns1 x ns2 z
-  aEquivHelper i ns1 (ECombineTypes w x) ns2 (ECombineTypes y z)
-    = aEquivHelper i ns1 w ns2 y &&
-      aEquivHelper i ns1 x ns2 z
+  aEquivHelper i ns1 (ECombine w x) ns2 (ECombine y z) = do
+    aEquivHelper i ns1 w ns2 y
+    aEquivHelper i ns1 x ns2 z
+  aEquivHelper i ns1 (ECombineTypes w x) ns2 (ECombineTypes y z) = do
+    aEquivHelper i ns1 w ns2 y
+    aEquivHelper i ns1 x ns2 z
   aEquivHelper i ns1 (EUnion x) ns2 (EUnion y) =
     let xs = toList x
         ys = toList y in
     aEquivUnion i ns1 xs ns2 ys
-  aEquivHelper i ns1 (EField x k) ns2 (EField y j) =
-    aEquivHelper i ns1 x ns2 y &&
-    k == j
-  aEquivHelper _ _ _ _ _ = False
+  aEquivHelper i ns1 (EField x k) ns2 (EField y j) = do
+    aEquivHelper i ns1 x ns2 y
+    boolAEquiv k j
+  aEquivHelper _ _ x _ y = Left $ aEquivErr x y
 
   aEquivMaybe : (i : Integer) ->
                 Namespace -> Maybe (Expr Void) ->
-                Namespace -> Maybe (Expr Void) -> Bool
+                Namespace -> Maybe (Expr Void) -> Either Error ()
   aEquivMaybe i ns1 (Just a) ns2 (Just b) = aEquivHelper i ns1 a ns2 b
-  aEquivMaybe _ _ Nothing _ Nothing = True
-  aEquivMaybe _ _ _ _ _ = False
+  aEquivMaybe _ _ Nothing _ Nothing = Right ()
+  aEquivMaybe _ _ x _ y = Left $ aEquivErr x y
 
   aEquivList : (i : Integer) ->
                Namespace -> List (Expr Void) ->
-               Namespace -> List (Expr Void) -> Bool
-  aEquivList i ns1 [] ns2 [] = True
-  aEquivList i ns1 (x :: xs) ns2 (y :: ys) =
-    aEquivHelper i ns1 x ns2 y &&
+               Namespace -> List (Expr Void) -> Either Error ()
+  aEquivList i ns1 [] ns2 [] = Right ()
+  aEquivList i ns1 (x :: xs) ns2 (y :: ys) = do
+    aEquivHelper i ns1 x ns2 y
     aEquivList i ns1 xs ns2 ys
-  aEquivList i ns1 _ ns2 _ = False
+  aEquivList _ _ x _ y = Left $ aEquivErr x y
 
   aEquivRecord : (i : Integer) ->
                 Namespace -> List (FieldName, Expr Void) ->
-                Namespace -> List (FieldName, Expr Void) -> Bool
-  aEquivRecord i ns1 [] ns2 [] = True
-  aEquivRecord i ns1 ((k, v) :: xs) ns2 ((k', v') :: ys) =
-    k == k'
-    && aEquivHelper i ns1 v ns2 v'
-    && aEquivRecord i ns1 xs ns2 ys
-  aEquivRecord i ns1 _ ns2 _ = False
+                Namespace -> List (FieldName, Expr Void) -> Either Error ()
+  aEquivRecord i ns1 [] ns2 [] = Right ()
+  aEquivRecord i ns1 ((k, v) :: xs) ns2 ((k', v') :: ys) = do
+    aEquivHelper i ns1 v ns2 v'
+    aEquivRecord i ns1 xs ns2 ys
+    boolAEquiv k k'
+  aEquivRecord _ _ x _ y = Left $ aEquivErr x y
 
   aEquivUnion : (i : Integer) ->
                 Namespace -> List (FieldName, (Maybe (Expr Void))) ->
-                Namespace -> List (FieldName, (Maybe (Expr Void))) -> Bool
-  aEquivUnion i ns1 [] ns2 [] = True
-  aEquivUnion i ns1 ((k, Nothing) :: xs) ns2 ((k', Nothing) :: ys) =
-    k == k' && aEquivUnion i ns1 xs ns2 ys
-  aEquivUnion i ns1 ((k, Just v) :: xs) ns2 ((k', Just v') :: ys) =
-    k == k' &&
-    aEquivHelper i ns1 v ns2 v' &&
+                Namespace -> List (FieldName, (Maybe (Expr Void))) -> Either Error ()
+  aEquivUnion i ns1 [] ns2 [] = Right ()
+  aEquivUnion i ns1 ((k, Nothing) :: xs) ns2 ((k', Nothing) :: ys) = do
+    boolAEquiv k k'
     aEquivUnion i ns1 xs ns2 ys
-  aEquivUnion i ns1 _ ns2 _ = False
+  aEquivUnion i ns1 ((k, Just v) :: xs) ns2 ((k', Just v') :: ys) = do
+    boolAEquiv k k'
+    aEquivHelper i ns1 v ns2 v'
+    aEquivUnion i ns1 xs ns2 ys
+  aEquivUnion _ _ x _ y = Left $ aEquivErr x y
 
   aEquivTextLit : (i : Integer) ->
                   Namespace -> Chunks Void ->
-                  Namespace -> Chunks Void -> Bool
-  aEquivTextLit i ns1 (MkChunks [] x) ns2 (MkChunks [] y) = x == y
+                  Namespace -> Chunks Void -> Either Error ()
+  aEquivTextLit i ns1 (MkChunks [] x) ns2 (MkChunks [] y) = boolAEquiv x y
   aEquivTextLit i ns1 (MkChunks xs x) ns2 (MkChunks ys y) =
     let xexprs = map snd xs
         yexprs = map snd ys
@@ -156,8 +176,10 @@ mutual
         strx = map fst xs
         stry = map fst ys
         strsRes = strx == stry
-        in
-    x == y && exprsRes && strsRes
+        in do
+    boolAEquiv x y
+    boolAEquiv strx stry
+    exprsRes
 
   stringFromETextLit : List (String, Expr Void) -> Maybe String
   stringFromETextLit [] = Just neutral
@@ -167,7 +189,7 @@ mutual
     Just (a ++ mid ++ z ++ rest)
   stringFromETextLit ((a, _) :: xs) = Nothing
 
-aEquiv : Expr Void -> Expr Void -> Bool
+aEquiv : Expr Void -> Expr Void -> Either Error ()
 aEquiv e1 e2 = aEquivHelper 0 [] e1 [] e2
 
 -- env
@@ -327,7 +349,7 @@ mutual
       case lookup k x' of
            Nothing => Left (FieldNotFoundError "k")
            (Just Nothing) => Right (VInject (fromList x') k Nothing)
-           (Just (Just _)) => Right (VPrim $ \u => VInject (fromList x') k (Just u))
+           (Just (Just _)) => Right (VPrim $ \u => Right $ VInject (fromList x') k (Just u))
   eval env (EField x k) = Left (InvalidFieldType (show x))
   eval env (EEmbed (Raw x)) = absurd x
   eval env (EEmbed (Resolved x)) = eval initEnv x
@@ -336,7 +358,7 @@ mutual
   doApply : Value -> Value -> Either Error Value
   doApply (VLambda ty closure) arg =
     evalClosure closure arg
-  doApply (VHLam i f) arg = Right (f arg)
+  doApply (VHLam i f) arg = (f arg)
   doApply (VNeutral (VPi dom ran) neu) arg =
     do arg' <- evalClosure ran arg
        Right (VNeutral arg' (NApp neu (Normal' dom arg)))
@@ -365,8 +387,8 @@ mutual
     xRb <- readBackTyped initCtx (VConst CType) x
     yRb <- readBackTyped initCtx (VConst CType) y
     case aEquiv xRb yRb of
-         False => Left (AssertError (show xRb ++ " not equivalent to " ++ show yRb))
-         True => Right (VAssert v)
+         Left _ => Left (AssertError (show xRb ++ " not equivalent to " ++ show yRb))
+         Right _ => Right (VAssert v)
   doAssert (VNeutral (VEquivalent x y) v)
     = Right (VNeutral (VEquivalent x y) (NAssert v))
   doAssert x = Left (AssertError ("not an equivalence type: " ++ show x))
@@ -414,10 +436,17 @@ mutual
 
   -- TODO could possibly fail for a list like [n', n'', n']
   freshen : List Name -> Name -> Name
+  -- freshen _ "_" = "_" -- TODO dangerous?
   freshen [] n = n
-  freshen (x :: used) n = case x == n of
-                               False => freshen used n
-                               True => freshen used (nextName n)
+  freshen xs n = case elem n xs of
+                   False => n
+                   True => freshen xs (nextName n)
+
+  public export
+  vApp : Value -> Value -> Either Error Value
+  vApp (VLambda _ t) u = evalClosure t u
+  vApp (VHLam _ t) u = t u
+  vApp t u = Left $ ErrorMessage $ show t ++ " : " ++ show u
 
   -- reading back
   covering
@@ -517,7 +546,7 @@ mutual
     let x = freshen (ctxNames ctx) (closureName bT) in do
       b' <- evalClosure bT (VNeutral aT (NVar x))
       case i of
-           Prim => readBackTyped ctx b' (f VPrimVar) -- TODO double check b' here
+           Prim => readBackTyped ctx b' !(f VPrimVar) -- TODO double check b' here
   readBackTyped ctx (VConst CType) (VList a) = do
     a' <- readBackTyped ctx (VConst CType) a
     Right (EList a')
@@ -542,8 +571,8 @@ mutual
     ety <- readBackTyped ctx (VConst CType) ty
     ety' <- readBackTyped ctx (VConst CType) ty'
     case aEquiv ety ety' of -- TODO should this check be happening here?
-      True => Right (ENone ety')
-      False => Left (ReadBackError ("error reading back None: " ++ (show ety) ++ " is not alpha equivalent to " ++ (show ety')))
+      Right _ => Right (ENone ety')
+      Left _ => Left (ReadBackError ("error reading back None: " ++ (show ety) ++ " is not alpha equivalent to " ++ (show ety')))
   readBackTyped ctx (VOptional ty) (VSome a) = do
     a' <- readBackTyped ctx ty a
     Right (ESome a')
@@ -594,7 +623,7 @@ mutual
 
 -- helpers
 unexpected : Ctx -> String -> Value -> Either Error a
-unexpected ctx str v = Left (Unexpected str v)
+unexpected ctx str v = Left (Unexpected $ str ++ " Value: " ++ show v)
 
 isInteger : Ctx -> Value -> Either Error ()
 isInteger _ VInteger = Right ()
@@ -684,14 +713,15 @@ axioms Kind = Right (VConst Sort)
 axioms Sort = Left SortError
 
 mutual
+  export
   covering
   convert : Ctx -> Ty -> Value -> Value -> Either Error ()
   convert ctx t v1 v2
     = do e1 <- readBackTyped ctx t v1
          e2 <- readBackTyped ctx t v2
-         if aEquiv e1 e2
-            then Right ()
-            else Left (ErrorMessage ("not alpha equivalent: " ++ show e1 ++ " : " ++ show e2))
+         case aEquiv e1 e2 of
+            Right _ => Right ()
+            Left y => Left (ErrorMessage ("not alpha equivalent: " ++ show e1 ++ " : " ++ show e2 ++ " ++++++++++" ++ show y))
 
   export
   covering
@@ -807,8 +837,8 @@ mutual
     xRb <- readBackTyped ctx xTy x'
     yRb <- readBackTyped ctx xTy y'
     case aEquiv xRb yRb of -- TODO should eventually use CBOR to check
-          False => Left (AssertError ("Not equivalent: " ++ show x ++ " : " ++ show y ++ ")"))
-          True => Right (VEquivalent x' y')
+          Left _ => Left (AssertError ("Not equivalent: " ++ show x ++ " : " ++ show y ++ ")"))
+          Right _ => Right (VEquivalent x' y')
   synth ctx (EList x) = do
     check ctx x (VConst CType)
     Right (VConst CType)

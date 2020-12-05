@@ -96,7 +96,7 @@ Error: ReadFileError: File Not Found //length
 testing: ListLiteralEmpty
 Success: ()
 testing: ListLiteralEmptyNormalizeAnnotation
-Error: InvalidFieldType: (ERecordLit fromList [((MkFieldName "x"), (EApp (ELam "listArg1" (EConst CType) (EList (EVar "listArg1"))) EBool))])
+Error: InvalidFieldType: (ERecordLit fromList [((MkFieldName "x"), (EApp (ELam listArg1 (EConst CType) (EList (EVar listArg1))) EBool))])
 testing: ListLiteralNormalizeArguments
 Error: MissingVar: "if"
 testing: ListLiteralOne

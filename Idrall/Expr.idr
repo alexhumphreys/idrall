@@ -146,10 +146,10 @@ mutual
 
   export
   Show (Expr a) where
-    show (EVar x) = "(EVar " ++ show x ++ ")"
+    show (EVar x) = "(EVar " ++ x ++ ")"
     show (EConst x) = "(EConst " ++ show x ++ ")"
-    show (EPi x y z) = "(EPi " ++ show x ++ " " ++ show y ++ " " ++ show z ++ ")"
-    show (ELam x y z) = "(ELam " ++ show x ++ " " ++ show y ++ " " ++ show z ++ ")"
+    show (EPi x y z) = "(EPi " ++ x ++ " " ++ show y ++ " " ++ show z ++ ")"
+    show (ELam x y z) = "(ELam " ++ x ++ " " ++ show y ++ " " ++ show z ++ ")"
     show (EApp x y) = "(EApp " ++ show x ++ " " ++ show y ++ ")"
     show (ELet x y z w) = "(ELet " ++ show x ++ " " ++ show y ++ " " ++ show z ++ " " ++ show w ++ ")"
     show (EAnnot x y) = "(EAnnot " ++ show x ++ " " ++ show y ++ ")"
