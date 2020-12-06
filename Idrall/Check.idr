@@ -442,98 +442,251 @@ mutual
     qApp env (EField (EUnion !m') k) t
   quote env VPrimVar = Left $ ?quote_rhs_3
 
+||| destruct VPi and VHPi
+vAnyPi : Value -> Either Error (Name, Ty, (Value -> Either Error Value))
+vAnyPi (VHPi x a b) = Right (x, a, b)
+vAnyPi (VPi a b@(MkClosure x _ _)) = Right (x, a, inst b)
+vAnyPi _ = Left ?vAnyPiErr
+
+||| returns `VConst CType`
+vType : Value
+vType = VConst CType
+
+||| returns `VConst Kind`
+vKind : Value
+vKind = VConst Kind
+
+||| returns `VConst Sort`
+vSort : Value
+vSort = VConst Sort
+
+data Types = TEmpty
+           | TBind Types Name Value
+
+axiom : U -> Either Error U
+axiom CType = Right Kind
+axiom Kind = Right Sort
+axiom Sort = Left ?axiomErr
+
+rule : U -> U -> Either Error U
+rule CType CType = Right CType
+rule Kind CType = Right CType
+rule Sort CType = Right CType
+rule Kind Kind = Right Kind
+rule Sort Kind = Right Sort
+rule Sort Sort = Right Sort
+-- This forbids dependent types. If this ever changes, then the fast
+-- path in the type inference for lambdas becomes unsound.
+rule _    _    = Left ?ruleErr
+
+record Cxt where
+  constructor MkCxt
+  values : Env'
+  types  : Types
+
+initCxt : Cxt
+initCxt = MkCxt Empty TEmpty
+
+envNames : Env' -> List Name
+envNames Empty = []
+envNames (Skip env x) = x :: envNames env
+envNames (Extend env x _) = x :: envNames env
+
+||| Extend context with a name, its type, and its value
+define : Name -> Value -> Value -> Cxt -> Cxt
+define x t a (MkCxt ts as) = MkCxt (Extend ts x t) (TBind as x a)
+
+||| Extend context with a name and its type
+bind : Name -> Value -> Cxt -> Cxt
+bind x a (MkCxt ts as) = MkCxt (Skip ts x) (TBind as x a)
+
+mutual
+  ||| Check if an Expr is of type `VConst c`
+  checkTy : Cxt -> Expr Void -> Either Error (Expr Void, U)
+  checkTy cxt t = do
+    (t, a) <- infer cxt t
+    case a of
+      VConst c => pure (t, c)
+      _        => Left ?checkTyErr
+
+  check : Cxt -> Expr Void -> Value -> Either Error (Expr Void)
+
+  ||| returns a pair (Expr, Value), which is original Expr, and it's type as a Value
+  export
+  infer : Cxt -> Expr Void -> Either Error (Expr Void, Value)
+  infer cxt (EConst k) = (\k' => (EConst k, VConst k')) <$> axiom k
+  infer cxt (EVar x y) = go (types cxt) y
+  where
+    go : Types -> Int -> Either Error (Expr Void, Value)
+    go TEmpty i = Left ?go_rhs_1
+    go (TBind ts x' a) i =
+      case x == x' of
+           True => if i == 0 then Right (EVar x i, a) else go ts (i - 1)
+           False => go ts i
+  infer cxt (ELam x a t) = do
+    (a, ak) <- checkTy cxt a
+    av <- eval (values cxt) a
+    (t, b) <- infer (bind x av cxt) t
+    nb <- quote (x :: (envNames (values cxt))) b
+    case ak of
+         CType => Right (ELam x a t, (vFun av b))
+         _ => Right ( ELam x a t
+                    , VHPi x av $
+                        \u => Right $ !(eval (Extend (values cxt) x u) nb)) -- TODO check i'm using values right
+  infer cxt (EPi x a b) = do
+    (a, ak) <- checkTy cxt a
+    av <- eval (values cxt) a
+    (b, bk) <- checkTy (bind x av cxt) b
+    k' <- rule ak bk
+    Right (EPi x a b, VConst k')
+  infer cxt (EApp t u) = do
+    (t, tt) <- infer cxt t
+    (x, a, b) <- vAnyPi tt
+    u' <- check cxt u a
+    Right $ (EApp t u, !(b !(eval (values cxt) u)))
+  infer cxt (ELet x Nothing a b) = do
+    (a, aa) <- infer cxt a
+    v <- eval (values cxt) a
+    infer (define x aa v cxt) b
+  infer cxt (ELet x (Just t) a b) = do
+    tt <- eval (values cxt) t
+    u' <- check cxt a tt
+    v <- eval (values cxt) a
+    infer (define x tt v cxt) b
+  infer cxt (EAnnot x t) = do
+    (t, tt) <- checkTy cxt t
+    tv <- eval (values cxt) t
+    check cxt x tv
+    Right $ (EAnnot x t, tv)
+  infer cxt EBool = Right $ (EBool, VConst CType)
+  infer cxt (EBoolLit x) = Right $ (EBoolLit x, VBool)
+  infer cxt (EBoolAnd x y) = do
+    check cxt x VBool
+    check cxt y VBool
+    Right $ (EBoolAnd x y, VBool)
+  infer cxt ENatural = Right $ (ENatural, VConst CType)
+  infer cxt (ENaturalLit k) = Right $ (ENaturalLit k, VNatural)
+  infer cxt ENaturalIsZero = Right $ (ENaturalIsZero, (vFun VNatural VBool))
+  infer cxt EInteger = Right $ (EInteger, VConst CType)
+  infer cxt (EIntegerLit x) = Right $ (EIntegerLit x, VInteger)
+  infer cxt EIntegerNegate = Right $ (EIntegerNegate, (vFun VInteger VInteger))
+  infer cxt EDouble = Right $ (EDouble, VConst CType)
+  infer cxt (EDoubleLit x) = Right $ (EDoubleLit x, VDouble)
+  infer cxt EText = Right $ (EText, VConst CType)
+  infer cxt (ETextLit (MkChunks xs x)) =
+    let go = mapChunks (\e => check cxt e VText) in do
+    traverse go xs
+    Right $ (ETextLit (MkChunks xs x), VText)
+  infer cxt EList = do
+    Right $ (EList, VConst CType)
+  infer cxt (EListLit Nothing []) = do
+    Left ?inferlistErr
+  infer cxt (EListLit Nothing (x :: xs)) = do
+    (x', ty) <- infer cxt x
+    traverse (\e => check cxt e ty) xs
+    Right $ (EListLit Nothing (x :: xs), VList ty)
+  infer cxt (EListLit (Just x) xs) = do
+    ty <- eval (values cxt) x
+    traverse (\e => check cxt e ty) xs
+    Right $ (EListLit (Just x) xs, VList ty)
+  infer cxt (EListAppend t u) = do
+    (t', tt) <- infer cxt t
+    case tt of
+         (VList x) => do
+           check cxt u tt
+           Right $ (EListAppend t u, tt)
+         _ => Left ?inferlistappendErr
+  infer cxt EListHead =
+    Right $ (EListHead, VHPi "a" vType $ \a => Right $ vFun (VList a) a)
+  infer cxt EOptional =
+    Right $ (EOptional, vType)
+  infer cxt (ESome t) = do
+    check cxt t vType
+    (t, tt) <- infer cxt t
+    pure (ESome t, VOptional tt)
+  infer cxt ENone =
+    Right $ (ENone, VHPi "a" vType $ \a => Right $ vFun (VOptional a) a)
+  infer cxt e@(EEquivalent t u) = do
+    (t, tt) <- infer cxt t
+    check cxt u tt
+    -- conv (values cxt) tt vType TODO
+    Right (e, vType)
+  infer cxt (EAssert (EEquivalent a b)) = do
+    (a, aa) <- infer cxt a
+    av <- eval (values cxt) a
+    bv <- eval (values cxt) b
+    case conv (values cxt) av bv of
+         True => Right (EAssert (EEquivalent a b), VEquivalent av bv)
+         False =>  Left (AssertError ("Not equivalent: " ++ show av ++ " : " ++ show bv ++ ")"))
+  infer cxt (EAssert _) = Left ?inferAsserErr2
+  infer cxt (ERecord x) = do
+    xs' <- traverse (inferSkip cxt) x
+    Right $ (ERecord x, getHighestType xs')
+  infer cxt (ERecordLit x) = do
+    xs' <- traverse (inferSkip cxt) x
+    Right $ (ERecordLit x, VRecordLit xs')
+  infer cxt (EUnion x) = do
+    xs' <- traverse (mapMaybe (inferSkip cxt)) x
+    Right $ (EUnion x, getHighestTypeM xs')
+  infer cxt (ECombine t u) = do
+    (t, tt) <- infer cxt t
+    (u, uu) <- infer cxt u
+    case (tt, uu) of
+         (VRecord a', VRecord b') => do
+           ty <- mergeWithApp doCombine a' b'
+           Right $ (ECombine t u, VRecord ty)
+         _ => Left ?inferCombineErr
+  infer cxt (ECombineTypes a b) = do
+    av <- eval (values cxt) a
+    bv <- eval (values cxt) b
+    case (av, bv) of
+         (VRecord a', VRecord b') => do
+           ty <- mergeWithApp doCombine a' b'
+           Right $ (ECombineTypes a b, getHighestType ty)
+         _ => Left ?inferCombineTypesErr
+         {-
+    let xs = toList x in do
+      synth ctx u
+      xs' <- traverse (mapUnion (eval (mkEnv ctx))) xs
+      xsRb <- traverse (mapUnion (readBackTyped ctx (VConst CType))) xs'
+      case lookup k xs' of
+           Nothing => Left (FieldNotFoundError "k")
+           (Just Nothing) => Right (VUnion (fromList xs'))
+           (Just (Just x')) =>
+              Right (vFun x' (VUnion (fromList xs')))
+              -}
+  infer cxt (EField t@(EUnion x) k) = do
+    xv <- traverse (mapMaybe (eval (values cxt))) x
+    case lookup k xv of
+         Nothing => Left ?inferFieldNotFound
+         (Just Nothing) => Right $ (EField t k, VUnion xv)
+         (Just (Just y)) => Right $ (EField t k, (vFun y (VUnion xv)))
+  infer cxt (EField t k) = Left ?inferWrongFieldType
+  -- synth ctx (EEmbed (Raw x)) = absurd x
+  -- synth ctx (EEmbed (Resolved x)) = synth initCtx x -- Using initCtx here to ensure fresh context.
+  infer cxt (EEmbed (Raw x)) = absurd x
+  infer cxt (EEmbed (Resolved x)) = infer initCxt x
+
+  ||| infer but only return `Value`, not `(Expr Void, Value)`
+  inferSkip : Cxt -> Expr Void -> Either Error Value
+  inferSkip cxt = (\e => Right $ snd !(infer cxt e))
+
+  pickHigherType : (acc : Ty) -> Ty -> Ty
+  pickHigherType (VConst CType) (VConst Kind) = VConst Kind
+  pickHigherType _ (VConst Sort) = VConst Sort
+  pickHigherType acc _ = acc
+
+  getHighestTypeM : Foldable t => t (Maybe Value) -> Value
+  getHighestTypeM x = foldl go vType x
+  where
+    go : Value -> Maybe Value -> Value
+    go x Nothing = x
+    go x (Just y) = pickHigherType x y
+
+  getHighestType : Foldable t => t Value -> Value
+  getHighestType x = foldl pickHigherType vType x
+
 {-
-
--- helpers
-unexpected : Ctx -> String -> Value -> Either Error a
-unexpected ctx str v = Left (Unexpected $ str ++ " Value: " ++ show v)
-
-isInteger : Ctx -> Value -> Either Error ()
-isInteger _ VInteger = Right ()
-isInteger ctx other = unexpected ctx "Not Integer" other
-
-isNat : Ctx -> Value -> Either Error ()
-isNat _ VNatural = Right ()
-isNat ctx other = unexpected ctx "Not Natural" other
-
-isDouble : Ctx -> Value -> Either Error ()
-isDouble _ VDouble = Right ()
-isDouble ctx other = unexpected ctx "Not Double" other
-
-isBool : Ctx -> Value -> Either Error ()
-isBool _ VBool = Right ()
-isBool ctx other = unexpected ctx "Not Bool" other
-
-isList : Ctx -> Value -> Either Error Ty -- TODO make return type more obvious
-isList ctx (VList x) = Right x
-isList ctx other = unexpected ctx "Not List" other
-
-isText : Ctx -> Value -> Either Error ()
-isText _ VText = Right ()
-isText ctx other = unexpected ctx "Not Text" other
-
-isRecord : Ctx -> Value -> Either Error (SortedMap FieldName Value)
-isRecord _ (VRecord x) = Right x
-isRecord ctx other = unexpected ctx "Not Record" other
-
-isOptional : Ctx -> Value -> Either Error ()
-isOptional ctx (VOptional x) = Right ()
-isOptional ctx other = unexpected ctx "Not Optional" other
-
-isEquivalent : Ctx -> Value -> Either Error (Value, Value)
-isEquivalent ctx (VEquivalent x y) = Right (x, y)
-isEquivalent ctx other = unexpected ctx "Not Equivalent" other
-
-isTerm : Ctx -> Value -> Either Error ()
-isTerm _ (VPi _ _) = Right ()
-isTerm _ (VBool) = Right ()
-isTerm _ (VNatural) = Right ()
-isTerm _ (VInteger) = Right ()
-isTerm _ (VDouble) = Right ()
-isTerm _ (VList _) = Right ()
-isTerm _ (VOptional _) = Right ()
-isTerm ctx (VNeutral x _) = isTerm ctx x
-isTerm ctx other = unexpected ctx "Not a term" other
-
-isTypeKind : Ctx -> Value -> Either Error ()
-isTypeKind _ (VConst CType) = Right ()
-isTypeKind _ (VConst Kind) = Right ()
-isTypeKind ctx (VNeutral x _) = isTypeKind ctx x
-isTypeKind ctx other = unexpected ctx "Not a type or kind" other
-
-isTermTypeKind : Ctx -> Value -> Either Error ()
-isTermTypeKind _ (VPi _ _) = Right ()
-isTermTypeKind _ (VBool) = Right ()
-isTermTypeKind _ (VNatural) = Right ()
-isTermTypeKind _ (VInteger) = Right ()
-isTermTypeKind _ (VDouble) = Right ()
-isTermTypeKind _ (VList _) = Right ()
-isTermTypeKind _ (VOptional _) = Right ()
-isTermTypeKind _ (VConst CType) = Right ()
-isTermTypeKind _ (VConst Kind) = Right ()
-isTermTypeKind ctx (VNeutral x _) = isTerm ctx x
-isTermTypeKind ctx x = (isTypeKind ctx x)
-
-isTypeKindSort : Ctx -> Value -> Either Error () -- TODO add Alternative Either
-isTypeKindSort _ (VConst CType) = Right ()
-isTypeKindSort _ (VConst Kind) = Right ()
-isTypeKindSort _ (VConst Sort) = Right ()
-isTypeKindSort ctx (VNeutral x _) = isTypeKindSort ctx x
-isTypeKindSort ctx other = unexpected ctx "Not type/kind/sort" other
-
-lookupType : Ctx -> Name -> Either Error Ty -- didn't use message type
-lookupType [] x = Left (MissingVar x)
-lookupType ((y, e) :: ctx) x =
-  (case x == y of
-        False => lookupType ctx x
-        True => (case e of
-                      (Def t _) => Right t
-                      (IsA t) => Right t))
-
-axioms : (x : U) -> Either Error Value
-axioms CType = Right (VConst Kind)
-axioms Kind = Right (VConst Sort)
-axioms Sort = Left SortError
 
 mutual
   export
