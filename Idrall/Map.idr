@@ -31,6 +31,12 @@ mapUnion f (k, Just x) =
 mapUnion f (k, Nothing) = Right (k, Nothing)
 
 export
+mapMaybe : (a -> Either e b) -> Maybe a -> Either e (Maybe b)
+mapMaybe f (Just x) =
+  Right $ Just !(f x)
+mapMaybe f Nothing = Right Nothing
+
+export
 mergeWithApp : (Monad m, Ord k) =>
                (a -> a -> m a) ->
                SortedMap k a ->
