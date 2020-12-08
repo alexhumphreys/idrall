@@ -484,6 +484,7 @@ record Cxt where
   values : Env'
   types  : Types
 
+export
 initCxt : Cxt
 initCxt = MkCxt Empty TEmpty
 
@@ -501,6 +502,8 @@ bind : Name -> Value -> Cxt -> Cxt
 bind x a (MkCxt ts as) = MkCxt (Skip ts x) (TBind as x a)
 
 mutual
+  unify : Cxt -> Value -> Value -> Either Error ()
+
   ||| Check if an Expr is of type `VConst c`
   checkTy : Cxt -> Expr Void -> Either Error (Expr Void, U)
   checkTy cxt t = do
@@ -509,7 +512,30 @@ mutual
       VConst c => pure (t, c)
       _        => Left ?checkTyErr
 
+  ||| returns the original `Expr Void` on success
+  export
   check : Cxt -> Expr Void -> Value -> Either Error (Expr Void)
+  check cxt (EConst CType) vKype = pure $ EConst CType
+  check cxt (EConst Kind) vSort = pure $ EConst Kind
+  check cxt (EConst Sort) z = Left ?checkSortErr
+  check cxt (ELam x a t) pi =
+    let (x', v) = fresh x (envNames (values cxt)) in do -- TODO not sure about fresh...
+    (_, a', b) <- vAnyPi pi
+    (a, _) <- checkTy cxt a
+    av <- eval (values cxt) a
+    unify cxt av a'
+    t <- check (define x' v av cxt) t !(b v)
+    pure $ ELam x a t
+  check cxt (EBoolLit t) VBool = pure $ EBoolLit t
+  check cxt (ENaturalLit t) VNatural = pure $ ENaturalLit t
+  check cxt (EIntegerLit t) VInteger = pure $ EIntegerLit t
+  check cxt (EDoubleLit t) VDouble = pure $ EDoubleLit t
+  check cxt (ETextLit t) VText = pure $ ETextLit t
+  -- check cxt (ERecordLit y) z = ?check_rhs TODO maybe add this later for performance?
+  check cxt t a = do
+    (t, a') <- infer cxt t
+    unify cxt a' a
+    pure t
 
   ||| returns a pair (Expr, Value), which is original Expr, and it's type as a Value
   export
@@ -542,7 +568,7 @@ mutual
   infer cxt (EApp t u) = do
     (t, tt) <- infer cxt t
     (x, a, b) <- vAnyPi tt
-    u' <- check cxt u a
+    check cxt u a
     Right $ (EApp t u, !(b !(eval (values cxt) u)))
   infer cxt (ELet x Nothing a b) = do
     (a, aa) <- infer cxt a
@@ -550,7 +576,7 @@ mutual
     infer (define x aa v cxt) b
   infer cxt (ELet x (Just t) a b) = do
     tt <- eval (values cxt) t
-    u' <- check cxt a tt
+    check cxt a tt
     v <- eval (values cxt) a
     infer (define x tt v cxt) b
   infer cxt (EAnnot x t) = do
