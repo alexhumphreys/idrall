@@ -210,8 +210,6 @@ mutual
   vVar : Env' -> Name -> Int -> Either Error Value
   vVar = evalVar
 
-  conv : Env' -> Value -> Value -> Bool
-
   export
   covering
   eval : Env' -> Expr Void -> Either Error Value
@@ -243,8 +241,8 @@ mutual
               (t, VBoolLit True) => Right t
               (t, VBoolLit False) => Right $ VBoolLit False
               (t, u) => case conv env t u of
-                             True => Right t
-                             False => Right $ VBoolAnd t u -- TODO check this matches the | behaviour
+                             Right _ => Right t
+                             Left _ => Right $ VBoolAnd t u -- TODO check this matches the | behaviour
   eval env ENatural = Right VNatural
   eval env (ENaturalLit k) = Right (VNaturalLit k)
   eval env ENaturalIsZero = Right $ VPrim $
@@ -331,6 +329,9 @@ mutual
   doApply (VHLam i f) arg = (f arg)
   doApply f arg = Right $ VApp f arg
 
+  vApp : Value -> Value -> Either Error Value
+  vApp = doApply
+
   covering
   doAssert : Env' -> Value -> Either Error Value
   doAssert env v@(VEquivalent t u) = do
@@ -351,6 +352,182 @@ mutual
   doCombine (VRecord x) (VRecord y) =
     Right (VRecord $ !(mergeWithApp doCombine x y))
   doCombine x y = Right $ VCombineTypes x y
+
+  -- conversion checking
+  -- Needs to be in mutual block with eval because it's used by Bool builtins
+
+  countName : Name -> Env' -> Int
+  countName x env = go 0 env
+  where
+    go : (acc : Int) -> Env' -> Int
+    go acc Empty = acc
+    go acc (Skip env x') = go (if x == x' then acc + 1 else acc) env
+    go acc (Extend env x' _) = go (if x == x' then acc + 1 else acc) env
+
+  convFresh : Name -> Env' -> (Name, Value)
+  convFresh x env = (x, VVar x (countName x env))
+
+  convFreshCl : Closure -> Env' -> (Name, Value, Closure)
+  convFreshCl cl@(MkClosure x _ _) env = (x, snd (convFresh x env), cl)
+
+  convErr : (Show x) => x -> x -> Error
+  convErr x y = AlphaEquivError $ show x ++ "\n not alpha equivalent to:\n" ++ show y
+
+  strFromChunks : List (String, Value) -> Maybe String
+  strFromChunks [] = Just neutral
+  strFromChunks ((str, (VTextLit (MkVChunks xys' y))) :: xs') = do
+    rest <- strFromChunks xs'
+    mid <- strFromChunks xys'
+    Just (str ++ mid ++ y ++ rest)
+  strFromChunks ((str, _) :: xs') = Nothing
+
+  convChunks : Env' -> VChunks -> VChunks -> Either Error ()
+  convChunks env (MkVChunks [] z) (MkVChunks [] z') = convEq z z'
+  convChunks env (MkVChunks ((s, t) :: xys) z) (MkVChunks ((s', t') :: xys') z') = do
+    convEq s s'
+    conv env t t'
+    convChunks env (MkVChunks xys z) (MkVChunks xys' z')
+  convChunks env _ _ = ?convChunksErr
+
+  convList : Env' -> List Value -> List Value -> Either Error ()
+  convList env [] [] = pure ()
+  convList env (t :: xs) (t' :: xs') = do
+    conv env t t'
+    convList env xs xs'
+  convList env _ _ = ?convListErr
+
+  convUnion : Env' -> List (FieldName, Maybe Value) -> List (FieldName, Maybe Value) -> Either Error ()
+  convUnion env [] [] = pure ()
+  convUnion env ((x, Just t) :: xs) ((x', Just t') :: ys) = do
+    convEq x x'
+    conv env t t'
+    convUnion env xs ys
+  convUnion env ((x, Nothing) :: xs) ((x', Nothing) :: ys) = do
+    convEq x x'
+    convUnion env xs ys
+  convUnion env _ _ = ?convUnionErr
+
+  convEq : (Eq x, Show x) => x -> x -> Either Error ()
+  convEq a b =
+    case a == b of
+         True => Right ()
+         False => Left $ aEquivErr a b
+
+  convSkip : Env' -> Name -> Value -> Value -> Either Error ()
+  convSkip env x = conv (Skip env x)
+
+  conv : Env' -> Value -> Value -> Either Error ()
+  conv env (VConst k) (VConst k') = convEq k k'
+  conv env (VVar x i) (VVar x' i') = do
+    convEq x x'
+    convEq i i'
+
+  conv env (VLambda _ t) (VLambda _ t') =
+    let (x, v, t) = convFreshCl t env in do
+    convSkip env x !(inst t v) !(inst t' v)
+  conv env (VLambda _ t) (VHLam _ t') =
+    let (x, v, t) = convFreshCl t env in do
+    convSkip env x !(inst t v) !(t' v)
+  conv env (VLambda _ t) t' =
+    let (x, v, t) = convFreshCl t env in do
+    convSkip env x !(inst t v) !(vApp t' v)
+  conv env (VHLam _ t) (VLambda _ t') =
+    let (x, v, t') = convFreshCl t' env in do
+    convSkip env x !(t v) !(inst t' v)
+  conv env (VHLam _ t) (VHLam _ t') =
+    let (x, v) = convFresh "x" env in do
+    convSkip env x !(t v) !(t' v)
+  conv env (VHLam _ t) t' =
+    let (x, v) = convFresh "x" env in do
+    convSkip env x !(t v) !(vApp t' v)
+  conv env t (VLambda _ t') =
+    let (x, v, t') = convFreshCl t' env in do
+    convSkip env x !(vApp t v) !(inst t' v)
+  conv env t (VHLam _ t') =
+    let (x, v) = convFresh "x" env in do
+    convSkip env x !(vApp t v) !(t' v)
+
+  conv env (VPi a b) (VPi a' b') =
+    let (x, v, b') = convFreshCl b' env in do
+    conv env a a'
+    convSkip env x !(inst b v) !(inst b' v)
+  conv env (VPi a b) (VHPi x a' b') =
+    let (x, v) = convFresh "x" env in do
+    conv env a a'
+    convSkip env x !(inst b v) !(b' v)
+  conv env (VHPi _ a b) (VPi a' b') =
+    let (x, v, b') = convFreshCl b' env in do
+    conv env a a'
+    convSkip env x !(b v) !(inst b' v)
+  conv env (VHPi _ a b) (VHPi x a' b') =
+    let (x, v) = convFresh "x" env in do
+    conv env a a'
+    convSkip env x !(b v) !(b' v)
+
+  conv env (VApp t u) (VApp t' u') = do
+    conv env t t'
+    conv env u u'
+  conv env VBool VBool = pure ()
+  conv env (VBoolLit b) (VBoolLit b') = convEq b b'
+  conv env (VBoolAnd t u) (VBoolAnd t' u') = do
+    conv env t t'
+    conv env u u'
+  conv env VNatural VNatural = pure ()
+  conv env (VNaturalLit k) (VNaturalLit k') = convEq k k'
+  conv env (VNaturalIsZero t) (VNaturalIsZero t') = conv env t t'
+  conv env VInteger VInteger = pure ()
+  conv env (VIntegerLit t) (VIntegerLit t') = convEq t t'
+  conv env (VIntegerNegate t) (VIntegerNegate t') = conv env t t'
+  conv env VDouble VDouble = pure ()
+  conv env (VDoubleLit t) (VDoubleLit t') = convEq t t' -- TODO use binary encode
+  conv env VText VText = pure ()
+  conv env (VTextLit t@(MkVChunks xys z)) (VTextLit u@(MkVChunks xys' z')) =
+    let l = strFromChunks xys
+        r = strFromChunks xys' in
+    case (l, r) of
+         ((Just l'), (Just r')) => do
+           convEq (l' ++ z) (r' ++ z')
+         _ => convChunks env t u
+  conv env (VList a) (VList a') = conv env a a'
+  conv env (VListLit _ xs) (VListLit _ xs') = convList env xs xs'
+  conv env (VListAppend t u) (VListAppend t' u') = do
+    conv env t t'
+    conv env u u'
+  conv env (VListHead _ t) (VListHead _ t') = conv env t t'
+  conv env (VOptional a) (VOptional a') = conv env a a'
+  conv env (VNone _) (VNone _) = pure ()
+  conv env (VSome t) (VSome t') = conv env t t'
+  conv env (VEquivalent t u) (VEquivalent t' u') = do
+    conv env t t'
+    conv env u u'
+  conv env (VAssert t) (VAssert t') = conv env t t'
+  conv env (VRecord m) (VRecord m') = do
+    case (keys m) == (keys m') of
+         True => convList env (values m) (values m')
+         False => ?convRecordErr
+  conv env (VRecordLit m) (VRecordLit m') = do
+    case (keys m) == (keys m') of
+         True => convList env (values m) (values m')
+         False => ?convRecordLitErr
+  conv env (VUnion m) (VUnion m') = do
+    convUnion env (toList m) (toList m')
+  conv env (VCombine t u) (VCombine t' u') = do
+    conv env t t'
+    conv env u u'
+  conv env (VCombineTypes t u) (VCombineTypes t' u') = do
+    conv env t t'
+    conv env u u'
+  conv env (VInject m k (Just mt)) (VInject m' k' (Just mt')) = do
+    convUnion env (toList m) (toList m')
+    convEq k k'
+    conv env mt mt'
+  conv env (VInject m k Nothing) (VInject m' k' Nothing) = do
+    convUnion env (toList m) (toList m')
+    convEq k k'
+  conv env VPrimVar VPrimVar = pure () -- TODO not in conv, maybe covered by `_ | ptrEq t t' -> True` case?
+  conv env _ _ = Left ?convErr1
+
+-- quote
 
 countName' : Name -> List Name -> Int
 countName' x env = go 0 env
@@ -440,7 +617,7 @@ mutual
   quote env (VInject m k (Just t)) =
     let m' = traverse (mapMaybe (quote env)) m in
     qApp env (EField (EUnion !m') k) t
-  quote env VPrimVar = Left $ ?quote_rhs_3
+  quote env VPrimVar = Left $ ?quoteErr1
 
 ||| destruct VPi and VHPi
 vAnyPi : Value -> Either Error (Name, Ty, (Value -> Either Error Value))
@@ -641,9 +818,8 @@ mutual
     (a, aa) <- infer cxt a
     av <- eval (values cxt) a
     bv <- eval (values cxt) b
-    case conv (values cxt) av bv of
-         True => Right (EAssert (EEquivalent a b), VEquivalent av bv)
-         False =>  Left (AssertError ("Not equivalent: " ++ show av ++ " : " ++ show bv ++ ")"))
+    conv (values cxt) av bv
+    pure (EAssert (EEquivalent a b), VEquivalent av bv)
   infer cxt (EAssert _) = Left ?inferAsserErr2
   infer cxt (ERecord x) = do
     xs' <- traverse (inferSkip cxt) x
