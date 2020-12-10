@@ -680,6 +680,7 @@ bind x a (MkCxt ts as) = MkCxt (Skip ts x) (TBind as x a)
 
 mutual
   unify : Cxt -> Value -> Value -> Either Error ()
+  unify cxt t u = conv (values cxt) t u
 
   ||| Check if an Expr is of type `VConst c`
   checkTy : Cxt -> Expr Void -> Either Error (Expr Void, U)
