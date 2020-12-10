@@ -722,7 +722,7 @@ mutual
   infer cxt (EVar x y) = go (types cxt) y
   where
     go : Types -> Int -> Either Error (Expr Void, Value)
-    go TEmpty i = Left ?go_rhs_1
+    go TEmpty i = Left ?inferVarErr
     go (TBind ts x' a) i =
       case x == x' of
            True => if i == 0 then Right (EVar x i, a) else go ts (i - 1)
