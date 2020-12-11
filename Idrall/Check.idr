@@ -248,11 +248,6 @@ mutual
   convSkip env x = conv (Skip env x)
 
   conv : Env -> Value -> Value -> Either Error ()
-  conv env (VConst k) (VConst k') = convEq k k'
-  conv env (VVar x i) (VVar x' i') = do
-    convEq x x'
-    convEq i i'
-
   conv env (VLambda _ t) (VLambda _ t') =
     let (x, v, t) = convFreshCl t env in do
     convSkip env x !(inst t v) !(inst t' v)
@@ -294,6 +289,11 @@ mutual
     let (x, v) = convFresh "x" env in do
     conv env a a'
     convSkip env x !(b v) !(b' v)
+
+  conv env (VConst k) (VConst k') = convEq k k'
+  conv env (VVar x i) (VVar x' i') = do
+    convEq x x'
+    convEq i i'
 
   conv env (VApp t u) (VApp t' u') = do
     conv env t t'
