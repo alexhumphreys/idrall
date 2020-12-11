@@ -27,7 +27,7 @@ mutual
   evalClosure (MkClosure x env e) v
     = do eval (Extend env x v) e
 
-  evalVar : Env' -> Name -> Int -> Either Error Value
+  evalVar : Env -> Name -> Int -> Either Error Value
   evalVar Empty x i = pure $ VVar x (0 - i - 1)
   evalVar (Skip env x') x i =
     case x == x' of
@@ -38,12 +38,12 @@ mutual
          True => if i == 0 then pure v else evalVar env x (i - 1)
          False => evalVar env x i
 
-  vVar : Env' -> Name -> Int -> Either Error Value
+  vVar : Env -> Name -> Int -> Either Error Value
   vVar = evalVar
 
   export
   covering
-  eval : Env' -> Expr Void -> Either Error Value
+  eval : Env -> Expr Void -> Either Error Value
   eval env (EConst x) = Right (VConst x)
   eval env (EVar x i)
     = evalVar env x i
@@ -164,7 +164,7 @@ mutual
   vApp = doApply
 
   covering
-  doAssert : Env' -> Value -> Either Error Value
+  doAssert : Env -> Value -> Either Error Value
   doAssert env v@(VEquivalent t u) = do
     conv env t u
     pure $ VAssert v
@@ -187,18 +187,18 @@ mutual
   -- conversion checking
   -- Needs to be in mutual block with eval because it's used by Bool builtins
 
-  countName : Name -> Env' -> Int
+  countName : Name -> Env -> Int
   countName x env = go 0 env
   where
-    go : (acc : Int) -> Env' -> Int
+    go : (acc : Int) -> Env -> Int
     go acc Empty = acc
     go acc (Skip env x') = go (if x == x' then acc + 1 else acc) env
     go acc (Extend env x' _) = go (if x == x' then acc + 1 else acc) env
 
-  convFresh : Name -> Env' -> (Name, Value)
+  convFresh : Name -> Env -> (Name, Value)
   convFresh x env = (x, VVar x (countName x env))
 
-  convFreshCl : Closure -> Env' -> (Name, Value, Closure)
+  convFreshCl : Closure -> Env -> (Name, Value, Closure)
   convFreshCl cl@(MkClosure x _ _) env = (x, snd (convFresh x env), cl)
 
   convErr : (Show x) => x -> x -> Error
@@ -212,7 +212,7 @@ mutual
     Just (str ++ mid ++ y ++ rest)
   strFromChunks ((str, _) :: xs') = Nothing
 
-  convChunks : Env' -> VChunks -> VChunks -> Either Error ()
+  convChunks : Env -> VChunks -> VChunks -> Either Error ()
   convChunks env (MkVChunks [] z) (MkVChunks [] z') = convEq z z'
   convChunks env (MkVChunks ((s, t) :: xys) z) (MkVChunks ((s', t') :: xys') z') = do
     convEq s s'
@@ -220,14 +220,14 @@ mutual
     convChunks env (MkVChunks xys z) (MkVChunks xys' z')
   convChunks env _ _ = ?convChunksErr
 
-  convList : Env' -> List Value -> List Value -> Either Error ()
+  convList : Env -> List Value -> List Value -> Either Error ()
   convList env [] [] = pure ()
   convList env (t :: xs) (t' :: xs') = do
     conv env t t'
     convList env xs xs'
   convList env _ _ = ?convListErr
 
-  convUnion : Env' -> List (FieldName, Maybe Value) -> List (FieldName, Maybe Value) -> Either Error ()
+  convUnion : Env -> List (FieldName, Maybe Value) -> List (FieldName, Maybe Value) -> Either Error ()
   convUnion env [] [] = pure ()
   convUnion env ((x, Just t) :: xs) ((x', Just t') :: ys) = do
     convEq x x'
@@ -244,10 +244,10 @@ mutual
          True => Right ()
          False => Left $ aEquivErr a b
 
-  convSkip : Env' -> Name -> Value -> Value -> Either Error ()
+  convSkip : Env -> Name -> Value -> Value -> Either Error ()
   convSkip env x = conv (Skip env x)
 
-  conv : Env' -> Value -> Value -> Either Error ()
+  conv : Env -> Value -> Value -> Either Error ()
   conv env (VConst k) (VConst k') = convEq k k'
   conv env (VVar x i) (VVar x' i') = do
     convEq x x'
@@ -489,14 +489,14 @@ rule _    _    = Left ?ruleErr
 
 record Cxt where
   constructor MkCxt
-  values : Env'
+  values : Env
   types  : Types
 
 export
 initCxt : Cxt
 initCxt = MkCxt Empty TEmpty
 
-envNames : Env' -> List Name
+envNames : Env -> List Name
 envNames Empty = []
 envNames (Skip env x) = x :: envNames env
 envNames (Extend env x _) = x :: envNames env

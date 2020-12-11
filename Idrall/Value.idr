@@ -58,15 +58,10 @@ mutual
     | VInject (SortedMap FieldName (Maybe Value)) FieldName (Maybe Value) -- TODO proof that key is in SM?
 
   public export
-  Env : Type -- Now a type alias
-  Env = List (Name,Value)
-  %name Env env, env1, env2
-
-  public export
-  data Env'
+  data Env
     = Empty
-    | Skip Env' Name
-    | Extend Env' Name Value
+    | Skip Env Name
+    | Extend Env Name Value
 
   public export
   data VChunks = MkVChunks (List (String, Value)) String
@@ -75,7 +70,7 @@ mutual
   record Closure where
     constructor MkClosure
     closureName : Name
-    closureEnv : Env'
+    closureEnv : Env
     closureBody : Expr Void
 
   public export
@@ -97,7 +92,7 @@ mutual
     show Prim = "Prim"
 
   public export
-  Show Env' where
+  Show Env where
     show Empty = "Empty"
     show (Skip x y) = "(Skip " ++ show x ++ " " ++ show y ++ ")"
     show (Extend x y z) = "(Extend " ++ show x ++ " " ++ show y ++ " " ++ show z ++ ")"
