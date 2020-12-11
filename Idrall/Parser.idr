@@ -16,34 +16,14 @@ import Idrall.Path
 
 %hide Prelude.pow
 
-fIntegerNegate : (Expr ImportStatement)
-fIntegerNegate = ELam "integerNegateParam1" EInteger (EIntegerNegate (EVar "integerNegateParam1"))
-
-fNaturalIsZero : (Expr ImportStatement)
-fNaturalIsZero = ELam "naturalIsZeroParam1" ENatural (ENaturalIsZero (EVar "naturalIsZeroParam1"))
-
-fList : (Expr ImportStatement)
-fList = ELam "listArg1" (EConst CType) (EList (EVar "listArg1"))
-
-fListHead : (Expr ImportStatement)
-fListHead = ELam "listHeadArg1" (EConst CType)
-              (ELam "listHeadArg2" (EList (EVar "listHeadArg1"))
-                (EListHead (EVar "listHeadArg1") (EVar "listHeadArg2")))
-
-fOptional : (Expr ImportStatement)
-fOptional = ELam "optionalArg1" (EConst CType) (EOptional (EVar "optionalArg1"))
-
-fNone : (Expr ImportStatement)
-fNone = ELam "noneArg1" (EConst CType) (ENone (EVar "noneArg1"))
-
 builtin : Parser (Expr ImportStatement)
 builtin =
-  (string "Integer/negate" *> pure fIntegerNegate) <|>
-  (string "Natural/isZero" *> pure fNaturalIsZero) <|>
-  (string "List/head" *> pure fListHead) <|>
-  (string "List" *> pure fList) <|>
-  (string "None" *> pure fNone) <|>
-  (string "Optional" *> pure fOptional)
+  (string "Integer/negate" *> pure EIntegerNegate) <|>
+  (string "Natural/isZero" *> pure ENaturalIsZero) <|>
+  (string "List/head" *> pure EListHead) <|>
+  (string "List" *> pure EList) <|>
+  (string "None" *> pure ENone) <|>
+  (string "Optional" *> pure EOptional)
 
 true : Parser (Expr ImportStatement)
 true = token "True" *> pure (EBoolLit True)
@@ -155,6 +135,7 @@ reservedNames' =
   , "->", "&&", ":"
   , "List", "Text", "Optional", "Natural", "Integer", "Double"
   , "Some", "None"
+  , "if", "then", "else"
   , "Type", "Kind", "Sort"]
 
 parseAny : List String -> Parser ()
@@ -173,7 +154,7 @@ identity = do
 
 var : Parser (Expr ImportStatement)
 var = do i <- identity
-         pure (EVar i)
+         pure (EVar i 0)
 
 appl : Parser ((Expr ImportStatement) -> (Expr ImportStatement) -> (Expr ImportStatement))
 appl = do spaces -- TODO also matches no spaces, but spaces1 messes with the eos parser
