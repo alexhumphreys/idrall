@@ -56,7 +56,7 @@ mutual
   export
   covering
   resolve : (history : List FilePath) -> Maybe FilePath -> Expr ImportStatement -> IOEither Error (Expr Void)
-  resolve h p (EVar x) = pure (EVar x)
+  resolve h p (EVar x i) = pure (EVar x i)
   resolve h p (EConst x) = pure (EConst x)
   resolve h p (EPi x y z) = do
     y' <- resolve h p y
@@ -100,17 +100,11 @@ mutual
   resolve h p (EIntegerLit k) = pure (EIntegerLit k)
   resolve h p ENatural = pure ENatural
   resolve h p (ENaturalLit k) = pure (ENaturalLit k)
-  resolve h p (ENaturalIsZero x) = do
-    x' <- resolve h p x
-    pure (ENaturalIsZero x')
+  resolve h p ENaturalIsZero = pure ENaturalIsZero
   resolve h p EDouble = pure EDouble
   resolve h p (EDoubleLit k) = pure (EDoubleLit k)
-  resolve h p (EIntegerNegate x) = do
-    x' <- resolve h p x
-    pure (EIntegerNegate x')
-  resolve h p (EList x) = do
-    x' <- resolve h p x
-    pure (EList x')
+  resolve h p EIntegerNegate = pure EIntegerNegate
+  resolve h p EList = pure EList
   resolve h p (EListLit Nothing xs) = do
     xs' <- resolveList h p xs
     pure (EListLit Nothing xs')
@@ -122,20 +116,13 @@ mutual
     x' <- resolve h p x
     y' <- resolve h p y
     pure (EListAppend x' y')
-  resolve h p (EListHead x y) = do
-    x' <- resolve h p x
-    y' <- resolve h p y
-    pure (EListHead x' y')
+  resolve h p EListHead = pure EListHead
   resolve h p EText = pure EText
   resolve h p (ETextLit (MkChunks xs x)) = do
     xs' <- resolveChunks h p xs
     pure (ETextLit (MkChunks xs' x))
-  resolve h p (EOptional x) = do
-    x' <- resolve h p x
-    pure (EOptional x')
-  resolve h p (ENone x) = do
-    x' <- resolve h p x
-    pure (ENone x')
+  resolve h p EOptional = pure EOptional
+  resolve h p ENone = pure ENone
   resolve h p (ESome x) = do
     x' <- resolve h p x
     pure (ESome x')
