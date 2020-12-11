@@ -28,20 +28,21 @@ public export
 roundTripEval : String -> IOEither Error Value
 roundTripEval x = do
   x' <- exprFromString x
-  liftEither (eval initEnv x')
+  liftEither (eval Empty x')
 
 public export
-roundTripSynth : String -> IOEither Error Value
+roundTripSynth : String -> IOEither Error (Expr Void, Value)
 roundTripSynth x = do
   x' <- exprFromString x
-  liftEither (synth initCtx x')
+  liftEither (infer initCxt x')
 
 public export
 roundTripCheck : String -> String -> IOEither Error ()
 roundTripCheck x y = do
   x' <- exprFromString x
   y' <- roundTripEval y
-  liftEither (check initCtx x' y')
+  liftEither (check initCxt x' y')
+  pure ()
 
 public export
 showIOEither : Show a => Show b => IOEither a b -> IO String
