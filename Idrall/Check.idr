@@ -14,9 +14,6 @@ nestError x e =
        (Left e') => Left $ NestedError e e'
        (Right x') => Right x'
 
-aEquivErr : (Show x) => x -> x -> Error
-aEquivErr x y = AlphaEquivError $ show x ++ "\n not alpha equivalent to:\n" ++ show y
-
 -- evaluator
 mutual
   inst : Closure -> Value -> Either Error Value
@@ -201,8 +198,8 @@ mutual
   convFreshCl : Closure -> Env -> (Name, Value, Closure)
   convFreshCl cl@(MkClosure x _ _) env = (x, snd (convFresh x env), cl)
 
-  convErr : (Show x) => x -> x -> Error
-  convErr x y = AlphaEquivError $ show x ++ "\n not alpha equivalent to:\n" ++ show y
+  convErr : (Show x) => x -> x -> Either Error a
+  convErr x y = Left $ AlphaEquivError $ show x ++ "\n not alpha equivalent to:\n" ++ show y
 
   strFromChunks : List (String, Value) -> Maybe String
   strFromChunks [] = Just neutral
@@ -218,14 +215,14 @@ mutual
     convEq s s'
     conv env t t'
     convChunks env (MkVChunks xys z) (MkVChunks xys' z')
-  convChunks env _ _ = ?convChunksErr
+  convChunks env t u = convErr t u
 
   convList : Env -> List Value -> List Value -> Either Error ()
   convList env [] [] = pure ()
   convList env (t :: xs) (t' :: xs') = do
     conv env t t'
     convList env xs xs'
-  convList env _ _ = ?convListErr
+  convList env t u = convErr t u
 
   convUnion : Env -> List (FieldName, Maybe Value) -> List (FieldName, Maybe Value) -> Either Error ()
   convUnion env [] [] = pure ()
@@ -236,13 +233,13 @@ mutual
   convUnion env ((x, Nothing) :: xs) ((x', Nothing) :: ys) = do
     convEq x x'
     convUnion env xs ys
-  convUnion env _ _ = ?convUnionErr
+  convUnion env t u = convErr t u
 
   convEq : (Eq x, Show x) => x -> x -> Either Error ()
   convEq a b =
     case a == b of
          True => Right ()
-         False => Left $ aEquivErr a b
+         False => convErr a b
 
   convSkip : Env -> Name -> Value -> Value -> Either Error ()
   convSkip env x = conv (Skip env x)
@@ -335,11 +332,11 @@ mutual
   conv env (VRecord m) (VRecord m') = do
     case (keys m) == (keys m') of
          True => convList env (values m) (values m')
-         False => ?convRecordErr
+         False => convErr m m'
   conv env (VRecordLit m) (VRecordLit m') = do
     case (keys m) == (keys m') of
          True => convList env (values m) (values m')
-         False => ?convRecordLitErr
+         False => convErr m m'
   conv env (VUnion m) (VUnion m') = do
     convUnion env (toList m) (toList m')
   conv env (VCombine t u) (VCombine t' u') = do
@@ -356,7 +353,7 @@ mutual
     convUnion env (toList m) (toList m')
     convEq k k'
   conv env VPrimVar VPrimVar = pure () -- TODO not in conv, maybe covered by `_ | ptrEq t t' -> True` case?
-  conv env _ _ = Left ?convErr1
+  conv env t u = convErr t u
 
 -- quote
 
@@ -448,13 +445,13 @@ mutual
   quote env (VInject m k (Just t)) =
     let m' = traverse (mapMaybe (quote env)) m in
     qApp env (EField (EUnion !m') k) t
-  quote env VPrimVar = Left $ ?quoteErr1
+  quote env VPrimVar = Left $ ReadBackError "Can't quote VPrimVar"
 
 ||| destruct VPi and VHPi
 vAnyPi : Value -> Either Error (Name, Ty, (Value -> Either Error Value))
 vAnyPi (VHPi x a b) = Right (x, a, b)
 vAnyPi (VPi a b@(MkClosure x _ _)) = Right (x, a, inst b)
-vAnyPi _ = Left ?vAnyPiErr
+vAnyPi t = Left $ Unexpected $ show t ++ " is not a VPi or VHPi"
 
 ||| returns `VConst CType`
 vType : Value
@@ -474,7 +471,7 @@ data Types = TEmpty
 axiom : U -> Either Error U
 axiom CType = Right Kind
 axiom Kind = Right Sort
-axiom Sort = Left ?axiomErr
+axiom Sort = Left SortError
 
 rule : U -> U -> Either Error U
 rule CType CType = Right CType
@@ -485,7 +482,7 @@ rule Sort Kind = Right Sort
 rule Sort Sort = Right Sort
 -- This forbids dependent types. If this ever changes, then the fast
 -- path in the type inference for lambdas becomes unsound.
-rule _    _    = Left ?ruleErr
+rule _    _    = Left $ ErrorMessage "rule error" -- TODO better error message
 
 record Cxt where
   constructor MkCxt
@@ -519,14 +516,14 @@ mutual
     (t, a) <- infer cxt t
     case a of
       VConst c => pure (t, c)
-      _        => Left ?checkTyErr
+      _        => Left $ ErrorMessage "Not a Type/Kind/Sort" -- TODO Better error message
 
   ||| returns the original `Expr Void` on success
   export
   check : Cxt -> Expr Void -> Value -> Either Error (Expr Void)
   check cxt (EConst CType) vKype = pure $ EConst CType
   check cxt (EConst Kind) vSort = pure $ EConst Kind
-  check cxt (EConst Sort) z = Left ?checkSortErr
+  check cxt (EConst Sort) z = Left $ SortError
   check cxt (ELam x a t) pi =
     let (x', v) = fresh x (envNames (values cxt)) in do -- TODO not sure about fresh...
     (_, a', b) <- vAnyPi pi
@@ -550,10 +547,10 @@ mutual
   export
   infer : Cxt -> Expr Void -> Either Error (Expr Void, Value)
   infer cxt (EConst k) = (\k' => (EConst k, VConst k')) <$> axiom k
-  infer cxt (EVar x y) = go (types cxt) y
+  infer cxt (EVar x i) = go (types cxt) i
   where
     go : Types -> Int -> Either Error (Expr Void, Value)
-    go TEmpty i = Left ?inferVarErr
+    go TEmpty i = Left $ MissingVar $ x -- TODO better error message
     go (TBind ts x' a) i =
       case x == x' of
            True => if i == 0 then Right (EVar x i, a) else go ts (i - 1)
@@ -615,7 +612,7 @@ mutual
   infer cxt EList = do
     Right $ (EList, VConst CType)
   infer cxt (EListLit Nothing []) = do
-    Left ?inferlistErr
+    Left $ ErrorMessage "Not type for list" -- TODO better error message
   infer cxt (EListLit Nothing (x :: xs)) = do
     (x', ty) <- infer cxt x
     traverse (\e => check cxt e ty) xs
@@ -630,7 +627,7 @@ mutual
          (VList x) => do
            check cxt u tt
            Right $ (EListAppend t u, tt)
-         _ => Left ?inferlistappendErr
+         _ => Left $ ListAppendError "not a list" -- TODO better error message
   infer cxt EListHead =
     Right $ (EListHead, VHPi "a" vType $ \a => Right $ vFun (VList a) a)
   infer cxt EOptional =
@@ -652,7 +649,7 @@ mutual
     bv <- eval (values cxt) b
     conv (values cxt) av bv
     pure (EAssert (EEquivalent a b), VEquivalent av bv)
-  infer cxt (EAssert _) = Left ?inferAsserErr2
+  infer cxt (EAssert _) = Left $ AssertError "not an EEquivalent type" -- TODO better error message
   infer cxt (ERecord x) = do
     xs' <- traverse (inferSkip cxt) x
     Right $ (ERecord x, getHighestType xs')
@@ -669,7 +666,7 @@ mutual
          (VRecord a', VRecord b') => do
            ty <- mergeWithApp doCombine a' b'
            Right $ (ECombine t u, VRecord ty)
-         _ => Left ?inferCombineErr
+         _ => Left $ CombineError "Not a record" -- TODO better error message
   infer cxt (ECombineTypes a b) = do
     av <- eval (values cxt) a
     bv <- eval (values cxt) b
@@ -677,7 +674,7 @@ mutual
          (VRecord a', VRecord b') => do
            ty <- mergeWithApp doCombine a' b'
            Right $ (ECombineTypes a b, getHighestType ty)
-         _ => Left ?inferCombineTypesErr
+         _ => Left $ CombineError "Not a record" -- TODO better error message
          {-
     let xs = toList x in do
       synth ctx u
@@ -692,12 +689,10 @@ mutual
   infer cxt (EField t@(EUnion x) k) = do
     xv <- traverse (mapMaybe (eval (values cxt))) x
     case lookup k xv of
-         Nothing => Left ?inferFieldNotFound
+         Nothing => Left $ FieldNotFoundError "k"
          (Just Nothing) => Right $ (EField t k, VUnion xv)
          (Just (Just y)) => Right $ (EField t k, (vFun y (VUnion xv)))
-  infer cxt (EField t k) = Left ?inferWrongFieldType
-  -- synth ctx (EEmbed (Raw x)) = absurd x
-  -- synth ctx (EEmbed (Resolved x)) = synth initCtx x -- Using initCtx here to ensure fresh context.
+  infer cxt (EField t k) = Left $ ErrorMessage "Not a valid field type" -- TODO better error message
   infer cxt (EEmbed (Raw x)) = absurd x
   infer cxt (EEmbed (Resolved x)) = infer initCxt x
 
