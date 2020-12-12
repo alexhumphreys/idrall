@@ -1,6 +1,6 @@
 Listing directory ../../../dhall-lang/tests/type-inference/success/unit/
 testing: AssertAlpha
-Error: EvalApplyErr
+Success: ()
 testing: AssertNaN
 Error: ErrorMessage: "Parse failed at position 0: char '('"
 testing: AssertSimple
@@ -36,7 +36,7 @@ Success: ()
 testing: FunctionNamedArg
 Success: ()
 testing: FunctionNormalizeTypeAnnotation
-Success: ()
+Error: InvalidFieldType: (ERecordLit fromList [((MkFieldName "t"), EBool)])
 testing: FunctionTypeKindKind
 Success: ()
 testing: FunctionTypeKindTerm
@@ -54,7 +54,7 @@ Success: ()
 testing: FunctionTypeUsingArgument
 Success: ()
 testing: If
-Error: MissingVar: "if"
+Error: ErrorMessage: "Parse failed at position 0: char '('"
 testing: IfNormalizeArguments
 Error: ErrorMessage: "Parse failed at position 0: char '('"
 testing: Integer
@@ -96,9 +96,9 @@ Error: ReadFileError: File Not Found //length
 testing: ListLiteralEmpty
 Success: ()
 testing: ListLiteralEmptyNormalizeAnnotation
-Error: InvalidFieldType: (ERecordLit fromList [((MkFieldName "x"), (EApp (ELam listArg1 (EConst CType) (EList (EVar listArg1))) EBool))])
+Error: InvalidFieldType: (ERecordLit fromList [((MkFieldName "x"), (EApp EList EBool))])
 testing: ListLiteralNormalizeArguments
-Error: MissingVar: "if"
+Error: ErrorMessage: "Parse failed at position 0: char '('"
 testing: ListLiteralOne
 Success: ()
 testing: ListReverse
@@ -156,7 +156,7 @@ Error: ErrorMessage: "Parse failed at position 5: expected the end of the string
 testing: OperatorListConcatenate
 Success: ()
 testing: OperatorListConcatenateNormalizeArguments
-Error: MissingVar: "if"
+Error: ErrorMessage: "Parse failed at position 1: char '('"
 testing: OperatorNotEqual
 Error: ErrorMessage: "Parse failed at position 5: expected the end of the string"
 testing: OperatorNotEqualNormalizeArguments
@@ -318,7 +318,7 @@ Success: ()
 testing: TextLiteral
 Success: ()
 testing: TextLiteralNormalizeArguments
-Error: MissingVar: "if"
+Error: Unexpected: VText is not a VPi or VHPi
 testing: TextLiteralWithInterpolation
 Success: ()
 testing: TextShow
