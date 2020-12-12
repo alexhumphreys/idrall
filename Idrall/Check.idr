@@ -473,16 +473,16 @@ axiom CType = Right Kind
 axiom Kind = Right Sort
 axiom Sort = Left SortError
 
-rule : U -> U -> Either Error U
-rule CType CType = Right CType
-rule Kind CType = Right CType
-rule Sort CType = Right CType
-rule Kind Kind = Right Kind
-rule Sort Kind = Right Sort
-rule Sort Sort = Right Sort
--- This forbids dependent types. If this ever changes, then the fast
--- path in the type inference for lambdas becomes unsound.
-rule _    _    = Left $ ErrorMessage "rule error" -- TODO better error message
+rule : U -> U -> U
+rule CType CType = CType
+rule Kind CType = CType
+rule Sort CType = CType
+rule CType Kind = Kind
+rule Kind Kind = Kind
+rule Sort Kind = Sort
+rule CType Sort = Sort
+rule Kind Sort = Sort
+rule Sort Sort = Sort
 
 record Cxt where
   constructor MkCxt
@@ -563,17 +563,14 @@ mutual
     av <- eval (values cxt) a
     (t, b) <- infer (bind x av cxt) t
     nb <- quote (x :: (envNames (values cxt))) b
-    case ak of
-         CType => Right (ELam x a t, (vFun av b))
-         _ => Right ( ELam x a t
-                    , VHPi x av $
-                        \u => Right $ !(eval (Extend (values cxt) x u) nb)) -- TODO check i'm using values right
+    Right ( ELam x a t
+          , VHPi x av $
+            \u => Right $ !(eval (Extend (values cxt) x u) nb)) -- TODO check i'm using values right
   infer cxt (EPi x a b) = do
     (a, ak) <- checkTy cxt a
     av <- eval (values cxt) a
     (b, bk) <- checkTy (bind x av cxt) b
-    k' <- rule ak bk
-    Right (EPi x a b, VConst k')
+    Right (EPi x a b, VConst $ rule ak bk)
   infer cxt (EApp t u) = do
     (t, tt) <- infer cxt t
     (x, a, b) <- vAnyPi tt
@@ -582,14 +579,13 @@ mutual
   infer cxt (ELet x Nothing a b) = do
     (a, aa) <- infer cxt a
     v <- eval (values cxt) a
-    infer (define x aa v cxt) b
+    infer (define x v aa cxt) b
   infer cxt (ELet x (Just t) a b) = do
     tt <- eval (values cxt) t
     check cxt a tt
     v <- eval (values cxt) a
-    infer (define x tt v cxt) b
+    infer (define x v tt cxt) b
   infer cxt (EAnnot x t) = do
-    (t, tt) <- checkTy cxt t
     tv <- eval (values cxt) t
     check cxt x tv
     Right $ (EAnnot x t, tv)
@@ -613,7 +609,7 @@ mutual
     traverse go xs
     Right $ (ETextLit (MkChunks xs x), VText)
   infer cxt EList = do
-    Right $ (EList, VConst CType)
+    Right $ (EList, VHPi "a" vType $ \a => Right $ vType)
   infer cxt (EListLit Nothing []) = do
     Left $ ErrorMessage "Not type for list" -- TODO better error message
   infer cxt (EListLit Nothing (x :: xs)) = do
@@ -623,7 +619,7 @@ mutual
   infer cxt (EListLit (Just x) xs) = do
     ty <- eval (values cxt) x
     traverse (\e => check cxt e ty) xs
-    Right $ (EListLit (Just x) xs, VList ty)
+    Right $ (EListLit (Just x) xs, ty)
   infer cxt (EListAppend t u) = do
     (t', tt) <- infer cxt t
     case tt of
@@ -632,15 +628,15 @@ mutual
            Right $ (EListAppend t u, tt)
          _ => Left $ ListAppendError "not a list" -- TODO better error message
   infer cxt EListHead =
-    Right $ (EListHead, VHPi "a" vType $ \a => Right $ vFun (VList a) a)
+    Right $ (EListHead, VHPi "a" vType $ \a => Right $ vFun (VList a) (VOptional a))
   infer cxt EOptional =
-    Right $ (EOptional, vType)
+    Right $ (EOptional, VHPi "a" vType $ \a => Right $ vType)
   infer cxt (ESome t) = do
-    check cxt t vType
     (t, tt) <- infer cxt t
+    check cxt !(quote (envNames $ values cxt) tt) vType -- TODO abstract this out?
     pure (ESome t, VOptional tt)
   infer cxt ENone =
-    Right $ (ENone, VHPi "a" vType $ \a => Right $ vFun (VOptional a) a)
+    Right $ (ENone, VHPi "a" vType $ \a => Right $ (VOptional a))
   infer cxt e@(EEquivalent t u) = do
     (t, tt) <- infer cxt t
     check cxt u tt
@@ -655,13 +651,13 @@ mutual
   infer cxt (EAssert _) = Left $ AssertError "not an EEquivalent type" -- TODO better error message
   infer cxt (ERecord x) = do
     xs' <- traverse (inferSkip cxt) x
-    Right $ (ERecord x, getHighestType xs')
+    Right $ (ERecord x, VConst (getHighestType xs'))
   infer cxt (ERecordLit x) = do
     xs' <- traverse (inferSkip cxt) x
-    Right $ (ERecordLit x, VRecordLit xs')
+    Right $ (ERecordLit x, VRecord xs')
   infer cxt (EUnion x) = do
     xs' <- traverse (mapMaybe (inferSkip cxt)) x
-    Right $ (EUnion x, getHighestTypeM xs')
+    Right $ (EUnion x, VConst (getHighestTypeM xs'))
   infer cxt (ECombine t u) = do
     (t, tt) <- infer cxt t
     (u, uu) <- infer cxt u
@@ -669,26 +665,16 @@ mutual
          (VRecord a', VRecord b') => do
            ty <- mergeWithApp doCombine a' b'
            Right $ (ECombine t u, VRecord ty)
-         _ => Left $ CombineError "Not a record" -- TODO better error message
-  infer cxt (ECombineTypes a b) = do
+         (VRecord _, other) => unexpected "Not a RecordLit" other
+         (other, _) => unexpected "Not a RecordLit" other
+  infer cxt (ECombineTypes a b) = do -- TODO lot of traversals here
     av <- eval (values cxt) a
     bv <- eval (values cxt) b
     case (av, bv) of
          (VRecord a', VRecord b') => do
            ty <- mergeWithApp doCombine a' b'
-           Right $ (ECombineTypes a b, getHighestType ty)
-         _ => Left $ CombineError "Not a record" -- TODO better error message
-         {-
-    let xs = toList x in do
-      synth ctx u
-      xs' <- traverse (mapUnion (eval (mkEnv ctx))) xs
-      xsRb <- traverse (mapUnion (readBackTyped ctx (VConst CType))) xs'
-      case lookup k xs' of
-           Nothing => Left (FieldNotFoundError "k")
-           (Just Nothing) => Right (VUnion (fromList xs'))
-           (Just (Just x')) =>
-              Right (vFun x' (VUnion (fromList xs')))
-              -}
+           Right $ (ECombineTypes a b, snd !(infer cxt !(quote (envNames $ values cxt) (VRecord ty))))
+         (other, _) => unexpected "Not a Record" other
   infer cxt (EField t@(EUnion x) k) = do
     xv <- traverse (mapMaybe (eval (values cxt))) x
     case lookup k xv of
@@ -703,17 +689,18 @@ mutual
   inferSkip : Cxt -> Expr Void -> Either Error Value
   inferSkip cxt = (\e => Right $ snd !(infer cxt e))
 
-  pickHigherType : (acc : Ty) -> Ty -> Ty
-  pickHigherType (VConst CType) (VConst Kind) = VConst Kind
-  pickHigherType _ (VConst Sort) = VConst Sort
-  pickHigherType acc _ = acc
+  pickHigherType : (acc : U) -> Ty -> U
+  pickHigherType CType (VConst Kind) = Kind
+  pickHigherType _ (VConst Sort) = Sort
+  pickHigherType acc other = acc
 
-  getHighestTypeM : Foldable t => t (Maybe Value) -> Value
-  getHighestTypeM x = foldl go vType x
+  getHighestTypeM : Foldable t => t (Maybe Value) -> U
+  getHighestTypeM x = foldl go CType x
   where
-    go : Value -> Maybe Value -> Value
+    go : U -> Maybe Value -> U
     go x Nothing = x
     go x (Just y) = pickHigherType x y
 
-  getHighestType : Foldable t => t Value -> Value
-  getHighestType x = foldl pickHigherType vType x
+  export
+  getHighestType : Foldable t => t Value -> U
+  getHighestType x = foldl pickHigherType CType x
