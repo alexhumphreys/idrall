@@ -499,7 +499,7 @@ envNames (Skip env x) = x :: envNames env
 envNames (Extend env x _) = x :: envNames env
 
 ||| Extend context with a name, its type, and its value
-define : Name -> Value -> Value -> Cxt -> Cxt
+define : Name -> Value -> Ty -> Cxt -> Cxt
 define x t a (MkCxt ts as) = MkCxt (Extend ts x t) (TBind as x a)
 
 ||| Extend context with a name and its type
@@ -542,6 +542,9 @@ mutual
     (t, a') <- infer cxt t
     unify cxt a' a
     pure t
+
+  unexpected : String -> Value -> Either Error a
+  unexpected str v = Left (Unexpected $ str ++ " Value: " ++ show v)
 
   ||| returns a pair (Expr, Value), which is original Expr, and it's type as a Value
   export
@@ -692,7 +695,7 @@ mutual
          Nothing => Left $ FieldNotFoundError "k"
          (Just Nothing) => Right $ (EField t k, VUnion xv)
          (Just (Just y)) => Right $ (EField t k, (vFun y (VUnion xv)))
-  infer cxt (EField t k) = Left $ ErrorMessage "Not a valid field type" -- TODO better error message
+  infer cxt (EField t k) = Left (InvalidFieldType (show t))
   infer cxt (EEmbed (Raw x)) = absurd x
   infer cxt (EEmbed (Resolved x)) = infer initCxt x
 
