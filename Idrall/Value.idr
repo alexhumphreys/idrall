@@ -78,6 +78,7 @@ mutual
     = Prim
 
 ||| Returns `VHPi "_" a (\_ => Right b)`
+||| Non-dependent function arrow
 public export
 vFun : Value -> Value -> Value
 vFun a b = VHPi "_" a (\_ => Right b)
