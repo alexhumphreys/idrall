@@ -106,8 +106,10 @@ mutual
     | EListLit (Maybe (Expr a)) (List (Expr a))
     -- | > x # y
     | EListAppend (Expr a) (Expr a)
-    -- | > List/Head
+    -- | > List/head
     | EListHead
+    -- | > List/fold
+    | EListFold
     -- | > EOptional ~ Optional
     | EOptional
     -- | > Some a
@@ -172,6 +174,7 @@ mutual
     show (EListLit (Just x) xs) = "(EListLit (Just " ++ show x ++ ") " ++ show xs ++ ")"
     show (EListAppend x y) = "(EListAppend " ++ show x ++ " " ++ show y ++ ")"
     show EListHead = "EListHead"
+    show EListFold = "EListFold"
     show EOptional = "EOptional"
     show ENone = "ENone"
     show (ESome x) = "(ESome " ++ show x ++ ")"

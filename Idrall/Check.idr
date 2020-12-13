@@ -14,6 +14,18 @@ nestError x e =
        (Left e') => Left $ NestedError e e'
        (Right x') => Right x'
 
+||| returns `VConst CType`
+vType : Value
+vType = VConst CType
+
+||| returns `VConst Kind`
+vKind : Value
+vKind = VConst Kind
+
+||| returns `VConst Sort`
+vSort : Value
+vSort = VConst Sort
+
 -- evaluator
 mutual
   inst : Closure -> Value -> Either Error Value
@@ -109,6 +121,19 @@ mutual
                         VListLit _ [] => Right $ VNone a
                         VListLit _ (h :: _) => Right $ VSome h
                         as => Right $ VListHead a as
+  eval env EListFold =
+    Right $ VPrim $
+      \a => Right $ VPrim $
+        \c => case c of
+                   (VListLit _ as) =>
+                     Right $ VHLam (Typed "list" vType) $ \list =>
+                     Right $ VHLam (Typed "cons" (vFun a $ vFun list list) ) $ \cons =>
+                     Right $ VHLam (Typed "nil"  list) $ \nil =>
+                       foldlM (\x,b => (vApp !(vApp cons x) b)) nil as
+                   as => Right $ VHLam (ListFoldCl as) $
+                        \t => Right $ VPrim $
+                        \c => Right $ VPrim $
+                        \n => Right $ VListFold a as t c n
   eval env EOptional = Right $ VPrim $ \a => Right $ VOptional a
   eval env (ESome a) = Right (VSome !(eval env a))
   eval env ENone = Right $ VPrim $ \a => Right $ VNone a
@@ -322,6 +347,11 @@ mutual
     conv env t t'
     conv env u u'
   conv env (VListHead _ t) (VListHead _ t') = conv env t t'
+  conv env (VListFold a l _ t u) (VListFold a' l' _ t' u') = do
+    conv env a a'
+    conv env l l'
+    conv env t t'
+    conv env u u'
   conv env (VOptional a) (VOptional a') = conv env a a'
   conv env (VNone _) (VNone _) = pure ()
   conv env (VSome t) (VSome t') = conv env t t'
@@ -392,7 +422,10 @@ mutual
   quote env (VLambda a b) =
     let (x, v, t) = freshCl b env in
         Right $ ELam x !(quote env a) !(quoteBind x env !(inst t v))
-  quote env (VHLam Prim t) = quote env !(t VPrimVar)
+  quote env (VHLam (Typed x a) t) =
+    let (x', v) = fresh x env in
+    Right $ ELam x' !(quote env a) !(quoteBind x env !(t v))
+  quote env (VHLam _ t) = quote env !(t VPrimVar)
   quote env (VPi a b) =
     let (x, v, b') = freshCl b env in
         Right $ EPi x !(quote env a) !(quoteBind x env !(inst b' v))
@@ -423,6 +456,7 @@ mutual
     Right $ EListLit (Just !(quote env x)) !ys'
   quote env (VListAppend x y) = Right $ EListAppend !(quote env x) !(quote env y)
   quote env (VListHead x y) = qAppM env EListHead [x, y]
+  quote env (VListFold a l t u v) = qAppM env EListFold [a, l, t, u, v]
   quote env (VOptional x) = qApp env EOptional x
   quote env (VNone x) = qApp env ENone x
   quote env (VSome x) = Right $ ESome !(quote env x)
@@ -452,18 +486,6 @@ vAnyPi : Value -> Either Error (Name, Ty, (Value -> Either Error Value))
 vAnyPi (VHPi x a b) = Right (x, a, b)
 vAnyPi (VPi a b@(MkClosure x _ _)) = Right (x, a, inst b)
 vAnyPi t = Left $ Unexpected $ show t ++ " is not a VPi or VHPi"
-
-||| returns `VConst CType`
-vType : Value
-vType = VConst CType
-
-||| returns `VConst Kind`
-vKind : Value
-vKind = VConst Kind
-
-||| returns `VConst Sort`
-vSort : Value
-vSort = VConst Sort
 
 data Types = TEmpty
            | TBind Types Name Value
@@ -545,6 +567,14 @@ mutual
 
   unexpected : String -> Value -> Either Error a
   unexpected str v = Left (Unexpected $ str ++ " Value: " ++ show v)
+
+  listFoldTy : Value -> Value
+  listFoldTy a =
+    VHPi "list" vType $ \list =>
+    -- pure $ VHPi "cons" (vFun a $ vFun list list) $ \cons =>
+    pure $ VHPi "cons" (vFun (vFun a list) list) $ \cons =>
+    pure $ VHPi "nil" list $ \nil =>
+    pure $ list
 
   ||| returns a pair (Expr, Value), which is original Expr, and it's type as a Value
   export
@@ -628,7 +658,9 @@ mutual
            Right $ (EListAppend t u, tt)
          _ => Left $ ListAppendError "not a list" -- TODO better error message
   infer cxt EListHead =
-    Right $ (EListHead, VHPi "a" vType $ \a => Right $ vFun (VList a) (VOptional a))
+    Right (EListHead, VHPi "a" vType $ \a => Right $ vFun (VList a) (VOptional a))
+  infer cxt EListFold =
+    pure (EListFold, VHPi "a" vType $ \a => pure $ vFun (VList a) (listFoldTy a))
   infer cxt EOptional =
     Right $ (EOptional, VHPi "a" vType $ \a => Right $ vType)
   infer cxt (ESome t) = do

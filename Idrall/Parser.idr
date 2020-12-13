@@ -21,6 +21,7 @@ builtin =
   (string "Integer/negate" *> pure EIntegerNegate) <|>
   (string "Natural/isZero" *> pure ENaturalIsZero) <|>
   (string "List/head" *> pure EListHead) <|>
+  (string "List/fold" *> pure EListFold) <|>
   (string "List" *> pure EList) <|>
   (string "None" *> pure ENone) <|>
   (string "Optional" *> pure EOptional)
@@ -437,6 +438,7 @@ mutual
 
   parseToEnd : Parser (Expr ImportStatement)
   parseToEnd = do
+    spaces
     e <- expr
     eos
     pure e
