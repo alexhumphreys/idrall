@@ -42,6 +42,7 @@ mutual
     | VListLit (Maybe Ty) (List Value)
     | VListAppend Value Value
     | VListHead Value Value
+    | VListFold Value Value Value Value Value
 
     | VOptional Ty
     | VNone Ty
@@ -76,6 +77,8 @@ mutual
   public export
   data HLamInfo
     = Prim
+    | Typed String Value
+    | ListFoldCl Value
 
 ||| Returns `VHPi "_" a (\_ => Right b)`
 ||| Non-dependent function arrow
@@ -91,6 +94,8 @@ VPrim f = VHLam Prim f
 mutual
   Show HLamInfo where
     show Prim = "Prim"
+    show (Typed x y) = "(Typed " ++ show x ++ " " ++ show y ++ ")"
+    show (ListFoldCl x) = "(ListFoldCl " ++ show x ++ ")"
 
   public export
   Show Env where
@@ -140,6 +145,8 @@ mutual
     show (VListLit ty vs) = "(VListLit " ++ show ty ++ show vs ++ ")"
     show (VListAppend x y) = "(VListAppend " ++ show x ++ " " ++ show y ++ ")"
     show (VListHead x y) = "(VListHead " ++ show x ++ " " ++ show y ++ ")"
+    show (VListFold v w x y z) =
+      "(VListFold " ++ show v ++ " " ++ show w ++ " " ++ show x ++ " " ++ show y ++ " " ++ show z ++ ")"
 
     show (VOptional a) = "(VOptional " ++ show a ++ ")"
     show (VNone a) = "(VNone " ++ show a ++ ")"

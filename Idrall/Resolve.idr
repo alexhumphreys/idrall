@@ -117,6 +117,7 @@ mutual
     y' <- resolve h p y
     pure (EListAppend x' y')
   resolve h p EListHead = pure EListHead
+  resolve h p EListFold = pure EListFold
   resolve h p EText = pure EText
   resolve h p (ETextLit (MkChunks xs x)) = do
     xs' <- resolveChunks h p xs

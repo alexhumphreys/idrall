@@ -56,7 +56,7 @@ Success: ()
 testing: If
 Error: ErrorMessage: "Parse failed at position 0: char '('"
 testing: IfNormalizeArguments
-Error: ErrorMessage: "Parse failed at position 0: char '('"
+Error: ErrorMessage: "Parse failed at position 6: char '('"
 testing: Integer
 Success: ()
 testing: IntegerClamp
@@ -84,7 +84,7 @@ Success: ()
 testing: ListBuild
 Error: ReadFileError: File Not Found //build
 testing: ListFold
-Error: ReadFileError: File Not Found //fold
+Success: ()
 testing: ListHead
 Success: ()
 testing: ListIndexed
@@ -366,7 +366,7 @@ Error: ErrorMessage: "Parse failed at position 0: char '('"
 testing: WithNewType
 Error: ErrorMessage: "Parse failed at position 0: char '('"
 DONE
-Passed: 98
-Failed: 85
+Passed: 99
+Failed: 84
 1/1: Building All (All.idr)
 Main> Main> Bye for now!
