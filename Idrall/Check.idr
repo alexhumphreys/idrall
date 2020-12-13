@@ -168,9 +168,14 @@ mutual
     let xs = toList x in do
       x' <- traverse (mapUnion (eval env)) xs
       case lookup k x' of
-           Nothing => Left (FieldNotFoundError "k")
+           Nothing => Left (FieldNotFoundError $ show k)
            (Just Nothing) => Right (VInject (fromList x') k Nothing)
            (Just (Just _)) => Right (VPrim $ \u => Right $ VInject (fromList x') k (Just u))
+  eval env (EField (ERecordLit m) k) = do
+    m' <- traverse (eval env) m
+    case lookup k m' of
+         Nothing => Left (FieldNotFoundError $ show k)
+         (Just t) => pure t
   eval env (EField x k) = Left (InvalidFieldType (show x))
   eval env (EEmbed (Raw x)) = absurd x
   eval env (EEmbed (Resolved x)) = eval Empty x
@@ -710,9 +715,13 @@ mutual
   infer cxt (EField t@(EUnion x) k) = do
     xv <- traverse (mapMaybe (eval (values cxt))) x
     case lookup k xv of
-         Nothing => Left $ FieldNotFoundError "k"
+         Nothing => Left $ FieldNotFoundError $ show k
          (Just Nothing) => Right $ (EField t k, VUnion xv)
          (Just (Just y)) => Right $ (EField t k, (vFun y (VUnion xv)))
+  infer cxt (EField (ERecordLit m) k) = do
+    case lookup k m of
+         Nothing => Left $ FieldNotFoundError $ show k
+         (Just x) => infer cxt x
   infer cxt (EField t k) = Left (InvalidFieldType (show t))
   infer cxt (EEmbed (Raw x)) = absurd x
   infer cxt (EEmbed (Resolved x)) = infer initCxt x
