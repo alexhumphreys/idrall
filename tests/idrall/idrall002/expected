@@ -150,21 +150,21 @@ Success: ()
 testing: OperatorAndNormalizeArguments
 Success: ()
 testing: OperatorEqual
-Error: ErrorMessage: "Parse failed at position 5: expected the end of the string"
+Success: ()
 testing: OperatorEqualNormalizeArguments
-Error: ErrorMessage: "Parse failed at position 5: expected the end of the string"
+Success: ()
 testing: OperatorListConcatenate
 Success: ()
 testing: OperatorListConcatenateNormalizeArguments
 Error: ErrorMessage: "Parse failed at position 1: char '('"
 testing: OperatorNotEqual
-Error: ErrorMessage: "Parse failed at position 5: expected the end of the string"
+Success: ()
 testing: OperatorNotEqualNormalizeArguments
-Error: ErrorMessage: "Parse failed at position 5: expected the end of the string"
+Success: ()
 testing: OperatorOr
-Error: ErrorMessage: "Parse failed at position 5: expected the end of the string"
+Success: ()
 testing: OperatorOrNormalizeArguments
-Error: ErrorMessage: "Parse failed at position 5: expected the end of the string"
+Success: ()
 testing: OperatorPlus
 Error: ErrorMessage: "Parse failed at position 2: expected the end of the string"
 testing: OperatorPlusNormalizeArguments
@@ -366,7 +366,7 @@ Error: ErrorMessage: "Parse failed at position 0: char '('"
 testing: WithNewType
 Error: ErrorMessage: "Parse failed at position 0: char '('"
 DONE
-Passed: 106
-Failed: 77
+Passed: 112
+Failed: 71
 1/1: Building All (All.idr)
 Main> Main> Bye for now!

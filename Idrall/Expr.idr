@@ -80,6 +80,12 @@ mutual
     | EBoolLit Bool
     -- | > BoolAnd x y ~ x && y
     | EBoolAnd (Expr a) (Expr a)
+    -- | > BoolOr  x y ~  x || y
+    | EBoolOr  (Expr a) (Expr a)
+    -- | > BoolEQ  x y ~  x == y
+    | EBoolEQ  (Expr a) (Expr a)
+    -- | > BoolNE  x y ~  x != y
+    | EBoolNE  (Expr a) (Expr a)
     -- | > Natural ~ Natural
     | ENatural
     -- | > NaturalLit n ~ n
@@ -159,6 +165,9 @@ mutual
     show (EBoolLit False) = "(EBoolLit False)"
     show (EBoolLit True) = "(EBoolLit True)"
     show (EBoolAnd x y) = "(EBoolAnd " ++ show x ++ " " ++ show y ++ ")"
+    show (EBoolOr x y) = "(EBoolOr " ++ show x ++ " " ++ show y ++ ")"
+    show (EBoolEQ x y) = "(EBoolEQ " ++ show x ++ " " ++ show y ++ ")"
+    show (EBoolNE x y) = "(EBoolNE " ++ show x ++ " " ++ show y ++ ")"
     show ENatural = "ENatural"
     show (ENaturalLit k) = "(ENaturalLit " ++ show k ++ ")"
     show ENaturalIsZero = "ENaturalIsZero"

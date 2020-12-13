@@ -174,7 +174,11 @@ table = [ [ Postfix field]
         , [ Infix (do token ":"; pure EAnnot) AssocLeft]
         , [ Infix (do (token "===" <|> token "≡"); pure EEquivalent) AssocLeft]
         , [ Prefix (do token "assert"; token ":"; pure EAssert)]
-        , [ Infix (do token "&&"; pure EBoolAnd) AssocLeft]
+        , [ Infix (token "&&" $> EBoolAnd) AssocLeft
+          , Infix (token "||" $> EBoolOr) AssocLeft
+          , Infix (token "==" $> EBoolEQ) AssocLeft
+          , Infix (token "!=" $> EBoolNE) AssocLeft
+          ]
         , [ Infix (do token "#"; pure EListAppend) AssocLeft]
         , [ Infix (do pure ECombine <* (token "/\\" <|> token "∧")) AssocLeft
           , Infix (do pure ECombineTypes <* (token "//\\\\" <|> token "⩓")) AssocLeft
