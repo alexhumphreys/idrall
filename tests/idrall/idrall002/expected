@@ -36,7 +36,7 @@ Success: ()
 testing: FunctionNamedArg
 Success: ()
 testing: FunctionNormalizeTypeAnnotation
-Error: InvalidFieldType: (ERecordLit fromList [((MkFieldName "t"), EBool)])
+Success: ()
 testing: FunctionTypeKindKind
 Success: ()
 testing: FunctionTypeKindTerm
@@ -96,7 +96,7 @@ Error: ReadFileError: File Not Found //length
 testing: ListLiteralEmpty
 Success: ()
 testing: ListLiteralEmptyNormalizeAnnotation
-Error: InvalidFieldType: (ERecordLit fromList [((MkFieldName "x"), (EApp EList EBool))])
+Success: ()
 testing: ListLiteralNormalizeArguments
 Error: ErrorMessage: "Parse failed at position 0: char '('"
 testing: ListLiteralOne
@@ -194,7 +194,7 @@ Error: ErrorMessage: "Parse failed at position 0: char '('"
 testing: RecordLitDuplicateFieldsNoCollisions
 Error: ErrorMessage: "Parse failed at position 0: char '('"
 testing: RecordLitNormalizeFieldType
-Error: InvalidFieldType: (ERecordLit fromList [((MkFieldName "t"), EBool)])
+Success: ()
 testing: RecordLitPun
 Error: ErrorMessage: "Parse failed at position 0: char '('"
 testing: RecordLitPunCapture
@@ -238,11 +238,11 @@ Error: ErrorMessage: "Parse failed at position 25: expected the end of the strin
 testing: RecordProjectionValue
 Error: ErrorMessage: "Parse failed at position 20: expected the end of the string"
 testing: RecordSelectionKind
-Error: InvalidFieldType: (ERecordLit fromList [((MkFieldName "x"), (EConst CType))])
+Success: ()
 testing: RecordSelectionType
-Error: InvalidFieldType: (ERecordLit fromList [((MkFieldName "x"), (ERecord fromList []))])
+Success: ()
 testing: RecordSelectionValue
-Error: InvalidFieldType: (ERecordLit fromList [((MkFieldName "x"), (ERecordLit fromList []))])
+Success: ()
 testing: RecordType
 Success: ()
 testing: RecordTypeEmpty
@@ -338,7 +338,7 @@ Success: ()
 testing: TypeAnnotationFunction
 Success: ()
 testing: TypeAnnotationNormalize
-Error: InvalidFieldType: (ERecordLit fromList [((MkFieldName "x"), EBool)])
+Success: ()
 testing: TypeAnnotationSort
 Success: ()
 testing: UnionConstructorEmptyField
@@ -366,7 +366,7 @@ Error: ErrorMessage: "Parse failed at position 0: char '('"
 testing: WithNewType
 Error: ErrorMessage: "Parse failed at position 0: char '('"
 DONE
-Passed: 99
-Failed: 84
+Passed: 106
+Failed: 77
 1/1: Building All (All.idr)
 Main> Main> Bye for now!
