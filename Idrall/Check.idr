@@ -71,18 +71,39 @@ mutual
        eval (Extend env x vr) e
   eval env (EAnnot x _) = eval env x
   eval env EBool = Right VBool
-  eval env (EBoolLit x) = Right (VBoolLit x)
-  eval env (EBoolAnd x y)
-    = do x' <- eval env x
-         y' <- eval env y
-         case (x', y') of
-              (VBoolLit True, u) => Right u
-              (VBoolLit False, u) => Right $ VBoolLit False
-              (t, VBoolLit True) => Right t
-              (t, VBoolLit False) => Right $ VBoolLit False
-              (t, u) => case conv env t u of
-                             Right _ => Right t
-                             Left _ => Right $ VBoolAnd t u -- TODO check this matches the | behaviour
+  eval env (EBoolLit b) = Right (VBoolLit b)
+  eval env (EBoolAnd t u) =
+    case (!(eval env t), !(eval env u)) of
+         (VBoolLit True, u) => pure u
+         (VBoolLit False, u) => pure $ VBoolLit False
+         (t, VBoolLit True) => pure t
+         (t, VBoolLit False) => pure $ VBoolLit False
+         (t, u) => case conv env t u of
+                        Right _ => Right t
+                        Left _ => Right $ VBoolAnd t u
+  eval env (EBoolOr t u) =
+    case (!(eval env t), !(eval env u)) of
+         (VBoolLit False, u) => pure u
+         (VBoolLit True, u) => pure $ VBoolLit True
+         (t, VBoolLit False) => pure t
+         (t, VBoolLit True) => pure $ VBoolLit True
+         (t, u) => case conv env t u of
+                        Right _ => pure t
+                        Left _ => pure $ VBoolOr t u
+  eval env (EBoolEQ t u) =
+    case (!(eval env t), !(eval env u)) of
+         (VBoolLit True, u) => pure u
+         (t, VBoolLit True) => pure t
+         (t, u) => case conv env t u of
+                        Right _ => pure $ VBoolLit True
+                        Left _ => pure $ VBoolEQ t u
+  eval env (EBoolNE t u) =
+    case (!(eval env t), !(eval env u)) of
+         (VBoolLit False, u) => pure u
+         (t, VBoolLit False) => pure t
+         (t, u) => case conv env t u of
+                        Right _ => pure $ VBoolLit False
+                        Left _ => pure $ VBoolNE t u
   eval env ENatural = Right VNatural
   eval env (ENaturalLit k) = Right (VNaturalLit k)
   eval env ENaturalIsZero = Right $ VPrim $
@@ -330,6 +351,15 @@ mutual
   conv env (VBoolAnd t u) (VBoolAnd t' u') = do
     conv env t t'
     conv env u u'
+  conv env (VBoolOr t u) (VBoolOr t' u') = do
+    conv env t t'
+    conv env u u'
+  conv env (VBoolEQ t u) (VBoolEQ t' u') = do
+    conv env t t'
+    conv env u u'
+  conv env (VBoolNE t u) (VBoolNE t' u') = do
+    conv env t t'
+    conv env u u'
   conv env VNatural VNatural = pure ()
   conv env (VNaturalLit k) (VNaturalLit k') = convEq k k'
   conv env (VNaturalIsZero t) (VNaturalIsZero t') = conv env t t'
@@ -440,6 +470,9 @@ mutual
   quote env VBool = Right $ EBool
   quote env (VBoolLit b) = Right $ EBoolLit b
   quote env (VBoolAnd t u) = Right $ EBoolAnd !(quote env t) !(quote env u)
+  quote env (VBoolOr t u) = Right $ EBoolOr !(quote env t) !(quote env u)
+  quote env (VBoolEQ t u) = Right $ EBoolEQ !(quote env t) !(quote env u)
+  quote env (VBoolNE t u) = Right $ EBoolNE !(quote env t) !(quote env u)
   quote env VNatural = Right $ ENatural
   quote env (VNaturalLit k) = Right $ ENaturalLit k
   quote env (VNaturalIsZero x) = qApp env ENaturalIsZero x
@@ -630,6 +663,18 @@ mutual
     check cxt x VBool
     check cxt y VBool
     Right $ (EBoolAnd x y, VBool)
+  infer cxt (EBoolOr x y) = do
+    check cxt x VBool
+    check cxt y VBool
+    Right $ (EBoolOr x y, VBool)
+  infer cxt (EBoolEQ x y) = do
+    check cxt x VBool
+    check cxt y VBool
+    Right $ (EBoolEQ x y, VBool)
+  infer cxt (EBoolNE x y) = do
+    check cxt x VBool
+    check cxt y VBool
+    Right $ (EBoolNE x y, VBool)
   infer cxt ENatural = Right $ (ENatural, VConst CType)
   infer cxt (ENaturalLit k) = Right $ (ENaturalLit k, VNatural)
   infer cxt ENaturalIsZero = Right $ (ENaturalIsZero, (vFun VNatural VBool))
