@@ -9,6 +9,15 @@ import Idrall.Value
 import Data.List
 
 export
+isOdd : Nat -> Bool
+isOdd Z = False
+isOdd (S k) = not (isOdd k)
+
+export
+isEven : Nat -> Bool
+isEven k = not $ isOdd k
+
+export
 mapChunks : (a -> Either e b) -> (k, a) -> Either e (k, b)
 mapChunks f (k, a) = Right (k, !(f a))
 

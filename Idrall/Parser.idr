@@ -20,6 +20,9 @@ builtin : Parser (Expr ImportStatement)
 builtin =
   (string "Integer/negate" *> pure EIntegerNegate) <|>
   (string "Natural/isZero" *> pure ENaturalIsZero) <|>
+  (string "Natural/even" *> pure ENaturalEven) <|>
+  (string "Natural/odd" *> pure ENaturalOdd) <|>
+  (string "Natural/toInteger" *> pure ENaturalToInteger) <|>
   (string "List/head" *> pure EListHead) <|>
   (string "List/fold" *> pure EListFold) <|>
   (string "List" *> pure EList) <|>
@@ -172,13 +175,15 @@ table = [ [ Postfix field]
         , [ Infix appl AssocLeft]
         , [ Infix (do (token "->" <|> token "→") ; pure (EPi "_")) AssocLeft ]
         , [ Infix (do token ":"; pure EAnnot) AssocLeft]
-        , [ Infix (do (token "===" <|> token "≡"); pure EEquivalent) AssocLeft]
-        , [ Prefix (do token "assert"; token ":"; pure EAssert)]
         , [ Infix (token "&&" $> EBoolAnd) AssocLeft
           , Infix (token "||" $> EBoolOr) AssocLeft
           , Infix (token "==" $> EBoolEQ) AssocLeft
           , Infix (token "!=" $> EBoolNE) AssocLeft
+          , Infix (token "*" $> ENaturalTimes) AssocLeft
           ]
+        , [ Infix (token "+" $> ENaturalPlus) AssocLeft]
+        , [ Infix (do (token "===" <|> token "≡"); pure EEquivalent) AssocLeft]
+        , [ Prefix (do token "assert"; token ":"; pure EAssert)]
         , [ Infix (do token "#"; pure EListAppend) AssocLeft]
         , [ Infix (do pure ECombine <* (token "/\\" <|> token "∧")) AssocLeft
           , Infix (do pure ECombineTypes <* (token "//\\\\" <|> token "⩓")) AssocLeft

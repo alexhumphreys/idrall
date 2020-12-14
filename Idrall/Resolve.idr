@@ -113,6 +113,17 @@ mutual
   resolve h p ENatural = pure ENatural
   resolve h p (ENaturalLit k) = pure (ENaturalLit k)
   resolve h p ENaturalIsZero = pure ENaturalIsZero
+  resolve h p ENaturalEven = pure ENaturalEven
+  resolve h p ENaturalOdd = pure ENaturalOdd
+  resolve h p ENaturalToInteger = pure ENaturalToInteger
+  resolve h p (ENaturalPlus x y) = do
+    x' <- resolve h p x
+    y' <- resolve h p y
+    pure (ENaturalPlus x' y')
+  resolve h p (ENaturalTimes x y) = do
+    x' <- resolve h p x
+    y' <- resolve h p y
+    pure (ENaturalTimes x' y')
   resolve h p EDouble = pure EDouble
   resolve h p (EDoubleLit k) = pure (EDoubleLit k)
   resolve h p EIntegerNegate = pure EIntegerNegate

@@ -110,6 +110,35 @@ mutual
                               \c => case c of
                                       VNaturalLit n => Right $ VBoolLit (n == 0)
                                       n             => Right $ VNaturalIsZero n
+  eval env ENaturalEven =
+    Right $ VPrim $
+      \c => case c of
+                 VNaturalLit n => pure $ VBoolLit (isEven n)
+                 n             => pure $ VNaturalEven n
+  eval env ENaturalOdd =
+    Right $ VPrim $
+      \c => case c of
+                 VNaturalLit n => pure $ VBoolLit (isOdd n)
+                 n             => pure $ VNaturalOdd n
+  eval env ENaturalToInteger =
+    Right $ VPrim $
+      \c => case c of
+                 VNaturalLit n => pure $ VIntegerLit (cast n)
+                 n             => pure $ VNaturalOdd n
+  eval env (ENaturalPlus t u) =
+    case (!(eval env t), !(eval env u)) of
+         (VNaturalLit 0, u) => pure u
+         (t, VNaturalLit 0) => pure t
+         (VNaturalLit t, VNaturalLit u) => pure (VNaturalLit $ t + u)
+         (t, u) => pure $ VNaturalPlus t u
+  eval env (ENaturalTimes t u) =
+    case (!(eval env t), !(eval env u)) of
+         (VNaturalLit 1, u) => pure u
+         (t, VNaturalLit 1) => pure t
+         (VNaturalLit 0, u) => pure $ VNaturalLit 0
+         (t, VNaturalLit 0) => pure $ VNaturalLit 0
+         (VNaturalLit t, VNaturalLit u) => pure (VNaturalLit $ t * u)
+         (t, u) => pure $ VNaturalTimes t u
   eval env EInteger = Right VInteger
   eval env (EIntegerLit k) = Right (VIntegerLit k)
   eval env EIntegerNegate = Right $ VPrim $
@@ -363,6 +392,15 @@ mutual
   conv env VNatural VNatural = pure ()
   conv env (VNaturalLit k) (VNaturalLit k') = convEq k k'
   conv env (VNaturalIsZero t) (VNaturalIsZero t') = conv env t t'
+  conv env (VNaturalEven t) (VNaturalEven t') = conv env t t'
+  conv env (VNaturalOdd t) (VNaturalOdd t') = conv env t t'
+  conv env (VNaturalToInteger t) (VNaturalToInteger t') = conv env t t'
+  conv env (VNaturalPlus t u) (VNaturalPlus t' u') = do
+    conv env t t'
+    conv env u u'
+  conv env (VNaturalTimes t u) (VNaturalTimes t' u') = do
+    conv env t t'
+    conv env u u'
   conv env VInteger VInteger = pure ()
   conv env (VIntegerLit t) (VIntegerLit t') = convEq t t'
   conv env (VIntegerNegate t) (VIntegerNegate t') = conv env t t'
@@ -476,6 +514,11 @@ mutual
   quote env VNatural = Right $ ENatural
   quote env (VNaturalLit k) = Right $ ENaturalLit k
   quote env (VNaturalIsZero x) = qApp env ENaturalIsZero x
+  quote env (VNaturalEven x) = qApp env ENaturalEven x
+  quote env (VNaturalOdd x) = qApp env ENaturalOdd x
+  quote env (VNaturalToInteger x) = qApp env ENaturalToInteger x
+  quote env (VNaturalPlus t u) = Right $ ENaturalPlus !(quote env t) !(quote env u)
+  quote env (VNaturalTimes t u) = Right $ ENaturalTimes !(quote env t) !(quote env u)
   quote env VInteger = Right $ EInteger
   quote env (VIntegerLit x) = Right $ EIntegerLit x
   quote env (VIntegerNegate x) = qApp env EIntegerNegate x
@@ -678,6 +721,17 @@ mutual
   infer cxt ENatural = Right $ (ENatural, VConst CType)
   infer cxt (ENaturalLit k) = Right $ (ENaturalLit k, VNatural)
   infer cxt ENaturalIsZero = Right $ (ENaturalIsZero, (vFun VNatural VBool))
+  infer cxt ENaturalEven = Right $ (ENaturalEven, (vFun VNatural VBool))
+  infer cxt ENaturalOdd = Right $ (ENaturalOdd, (vFun VNatural VBool))
+  infer cxt ENaturalToInteger = Right $ (ENaturalToInteger, (vFun VNatural VInteger))
+  infer cxt (ENaturalPlus t u) = do
+    check cxt t VNatural
+    check cxt u VNatural
+    Right $ (ENaturalPlus t u, VNatural)
+  infer cxt (ENaturalTimes t u) = do
+    check cxt t VNatural
+    check cxt u VNatural
+    Right $ (ENaturalTimes t u, VNatural)
   infer cxt EInteger = Right $ (EInteger, VConst CType)
   infer cxt (EIntegerLit x) = Right $ (EIntegerLit x, VInteger)
   infer cxt EIntegerNegate = Right $ (EIntegerNegate, (vFun VInteger VInteger))

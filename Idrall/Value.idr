@@ -30,6 +30,11 @@ mutual
     | VNatural
     | VNaturalLit Nat
     | VNaturalIsZero Value
+    | VNaturalEven Value
+    | VNaturalOdd Value
+    | VNaturalToInteger Value
+    | VNaturalPlus Value Value
+    | VNaturalTimes Value Value
 
     | VInteger
     | VIntegerLit Integer
@@ -136,6 +141,11 @@ mutual
     show VNatural = "VNatural"
     show (VNaturalLit k) = "(VNaturalLit " ++ show k ++ ")"
     show (VNaturalIsZero x) = "(VNaturalIsZero " ++ show x ++ ")"
+    show (VNaturalEven x) = "(VNaturalEven " ++ show x ++ ")"
+    show (VNaturalOdd x) = "(VNaturalOdd " ++ show x ++ ")"
+    show (VNaturalToInteger x) = "(VNaturalToInteger " ++ show x ++ ")"
+    show (VNaturalPlus x y) = "(VNaturalPlus " ++ show x ++ " " ++ show y ++ ")"
+    show (VNaturalTimes x y) = "(VNaturalTimes " ++ show x ++ " " ++ show y ++ ")"
 
     show VInteger = "VInteger"
     show (VIntegerLit x) = "(VIntegerLit " ++ show x ++ ")"
