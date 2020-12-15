@@ -4,7 +4,7 @@ Success: ()
 testing: AssertNaN
 Error: ErrorMessage: "Parse failed at position 0: char '('"
 testing: AssertSimple
-Error: ErrorMessage: "Parse failed at position 11: expected the end of the string"
+Success: ()
 testing: AssertTrivial
 Success: ()
 testing: Bool
@@ -28,7 +28,7 @@ Success: ()
 testing: FunctionApplicationNormalizeArgument
 Error: ReadFileError: File Not Found //length
 testing: FunctionApplicationNormalizeResult
-Error: ReadFileError: File Not Found //even
+Success: ()
 testing: FunctionDependentType1
 Success: ()
 testing: FunctionDependentType2
@@ -128,7 +128,7 @@ Success: ()
 testing: NaturalBuild
 Error: ReadFileError: File Not Found //build
 testing: NaturalEven
-Error: ReadFileError: File Not Found //even
+Success: ()
 testing: NaturalFold
 Error: ReadFileError: File Not Found //fold
 testing: NaturalIsZero
@@ -136,13 +136,13 @@ Success: ()
 testing: NaturalLiteral
 Success: ()
 testing: NaturalOdd
-Error: ReadFileError: File Not Found //odd
+Success: ()
 testing: NaturalShow
 Error: ReadFileError: File Not Found //show
 testing: NaturalSubtract
 Error: ReadFileError: File Not Found //subtract
 testing: NaturalToInteger
-Error: ReadFileError: File Not Found //toInteger
+Success: ()
 testing: None
 Success: ()
 testing: OperatorAnd
@@ -166,17 +166,17 @@ Success: ()
 testing: OperatorOrNormalizeArguments
 Success: ()
 testing: OperatorPlus
-Error: ErrorMessage: "Parse failed at position 2: expected the end of the string"
+Success: ()
 testing: OperatorPlusNormalizeArguments
-Error: ErrorMessage: "Parse failed at position 2: expected the end of the string"
+Success: ()
 testing: OperatorTextConcatenate
 Error: ErrorMessage: "Parse failed at position 4: expected the end of the string"
 testing: OperatorTextConcatenateNormalizeArguments
 Error: ErrorMessage: "Parse failed at position 4: expected the end of the string"
 testing: OperatorTimes
-Error: ErrorMessage: "Parse failed at position 2: expected the end of the string"
+Success: ()
 testing: OperatorTimesNormalizeArguments
-Error: ErrorMessage: "Parse failed at position 2: expected the end of the string"
+Success: ()
 testing: Optional
 Success: ()
 testing: OptionalBuild
@@ -366,7 +366,7 @@ Error: ErrorMessage: "Parse failed at position 0: char '('"
 testing: WithNewType
 Error: ErrorMessage: "Parse failed at position 0: char '('"
 DONE
-Passed: 112
-Failed: 71
+Passed: 121
+Failed: 62
 1/1: Building All (All.idr)
 Main> Main> Bye for now!

@@ -92,6 +92,16 @@ mutual
     | ENaturalLit Nat
     -- | > NaturalIsZero ~ Natural/isZero
     | ENaturalIsZero
+        -- | > NaturalEven                              ~  Natural/even
+    | ENaturalEven
+    -- | > NaturalOdd                               ~  Natural/odd
+    | ENaturalOdd
+    -- | > NaturalToInteger                         ~  Natural/toInteger
+    | ENaturalToInteger
+     -- | > NaturalPlus x y                          ~  x + y
+    | ENaturalPlus (Expr a) (Expr a)
+    -- | > NaturalTimes x y                         ~  x * y
+    | ENaturalTimes (Expr a) (Expr a)
     -- | > Integer ~ Integer
     | EInteger
     -- | > EIntegerLit i ~ i
@@ -171,6 +181,11 @@ mutual
     show ENatural = "ENatural"
     show (ENaturalLit k) = "(ENaturalLit " ++ show k ++ ")"
     show ENaturalIsZero = "ENaturalIsZero"
+    show ENaturalEven = "ENaturalEven"
+    show ENaturalOdd = "ENaturalOdd"
+    show ENaturalToInteger = "ENaturalToInteger"
+    show (ENaturalPlus x y) = "(ENaturalPlus " ++ show x ++ " " ++ show y ++ ")"
+    show (ENaturalTimes x y) = "(ENaturalTimes " ++ show x ++ " " ++ show y ++ ")"
     show EInteger = "EInteger"
     show (EIntegerLit x) = "(EIntegerLit " ++ show x ++ ")"
     show EIntegerNegate = "EIntegerNegate"
