@@ -163,14 +163,19 @@ mutual
   eval env (EListAppend x y) = do
     x' <- eval env x
     y' <- eval env y
-    doListAppend x' y'
-  eval env EListHead =
-    Right $ VPrim $ \a =>
-      Right $ VPrim $
-             \c => case c of
-                        VListLit _ [] => Right $ VNone a
-                        VListLit _ (h :: _) => Right $ VSome h
-                        as => Right $ VListHead a as
+    vListAppend x' y'
+  eval env EListBuild =
+    Right $ VPrim $
+      \a => Right $ VPrim $
+        \c => case c of
+                   VHLam (ListFoldCl x) _ => pure $ x
+                   VPrimVar => pure $ VListBuild a VPrimVar
+                   t => vAppM t [ VList a
+                                , VHLam (Typed "a" a) $ \x =>
+                                    pure $ VHLam (Typed "as" (VList a)) $ \as =>
+                                      vListAppend (VListLit Nothing [x]) as
+                                , VListLit (Just a) []
+                                ]
   eval env EListFold =
     Right $ VPrim $
       \a => Right $ VPrim $
@@ -184,6 +189,40 @@ mutual
                         \t => Right $ VPrim $
                         \c => Right $ VPrim $
                         \n => Right $ VListFold a as t c n
+  eval env EListLength =
+    Right $ VPrim $
+      \a => Right $ VPrim $
+        \c => case c of
+                   (VListLit _ as) => pure $ VNaturalLit (length as)
+                   as => pure $ VListLength a as
+  eval env EListHead =
+    Right $ VPrim $ \a =>
+      Right $ VPrim $
+             \c => case c of
+                        VListLit _ [] => pure $ VNone a
+                        VListLit _ (h :: _) => pure $ VSome h
+                        as => pure $ VListHead a as
+  eval env EListLast =
+    Right $ VPrim $
+      \a => Right $ VPrim $
+        \c => case c of
+                   VListLit _ as =>
+                     case last' as of
+                          Nothing => pure $ VNone a
+                          (Just t) => pure $ VSome t
+                   as => pure $ VListLast a as
+  eval env EListIndexed =
+    pure $ VPrim $
+      \a => Right $ VPrim $
+        \c => case c of
+                   VListLit t as => pure $ vListIndexed t as
+                   as => pure $ VListLast a as
+  eval env EListReverse =
+    pure $ VPrim $
+      \a => Right $ VPrim $
+        \c => case c of
+                   VListLit t as => pure $ VListLit t (reverse as)
+                   as => pure $ VListReverse a as
   eval env EOptional = Right $ VPrim $ \a => Right $ VOptional a
   eval env (ESome a) = Right (VSome !(eval env a))
   eval env ENone = Right $ VPrim $ \a => Right $ VNone a
@@ -230,6 +269,28 @@ mutual
   eval env (EEmbed (Raw x)) = absurd x
   eval env (EEmbed (Resolved x)) = eval Empty x
 
+  listIndexedType : Maybe Value -> Maybe Value
+  listIndexedType Nothing = Nothing
+  listIndexedType (Just a) =
+    Just $ VRecord (fromList [(MkFieldName "index", VNatural), (MkFieldName "value", a)])
+
+  -- TODO lots of traversals here
+  vListIndexed : Maybe Value -> List Value -> Value
+  vListIndexed a xs =
+    let prep = foldl go [] xs
+        lists = map toRecordList prep
+        recordsAsLists = map toRecordList prep
+        final = map toRecord recordsAsLists
+        in VListLit (listIndexedType a) final
+  where
+    go : List (Nat, Value) -> Value -> List (Nat, Value)
+    go [] t = [(0, t)]
+    go acc@((i, _) :: _) u = (i+1, u) :: acc
+    toRecordList : (Nat, Value) -> List (FieldName, Value)
+    toRecordList (i, v) = [(MkFieldName "index", VNaturalLit i), (MkFieldName "value", v)]
+    toRecord : List (FieldName, Value) -> Value
+    toRecord xs = VRecordLit $ fromList xs
+
   covering
   doApply : Value -> Value -> Either Error Value
   doApply (VLambda ty closure) arg =
@@ -240,6 +301,9 @@ mutual
   vApp : Value -> Value -> Either Error Value
   vApp = doApply
 
+  vAppM : Value -> List Value -> Either Error Value
+  vAppM x xs = foldlM vApp x xs
+
   covering
   doAssert : Env -> Value -> Either Error Value
   doAssert env v@(VEquivalent t u) = do
@@ -247,12 +311,12 @@ mutual
     pure $ VAssert v
   doAssert env x = Left (AssertError ("not an equivalence type: " ++ show x))
 
-  doListAppend : Value -> Value -> Either Error Value
-  doListAppend (VListLit _ []) u = Right u
-  doListAppend t (VListLit _ []) = Right t
-  doListAppend (VListLit t xs) (VListLit _ ys) =
+  vListAppend : Value -> Value -> Either Error Value
+  vListAppend (VListLit _ []) u = Right u
+  vListAppend t (VListLit _ []) = Right t
+  vListAppend (VListLit t xs) (VListLit _ ys) =
     Right (VListLit t (xs ++ ys))
-  doListAppend x y = Right $ VListAppend x y
+  vListAppend x y = Right $ VListAppend x y
 
   doCombine : Value -> Value -> Either Error Value
   doCombine (VRecordLit x) (VRecordLit y) =
@@ -419,12 +483,17 @@ mutual
   conv env (VListAppend t u) (VListAppend t' u') = do
     conv env t t'
     conv env u u'
-  conv env (VListHead _ t) (VListHead _ t') = conv env t t'
+  conv env (VListBuild _ t) (VListBuild _ t') = conv env t t'
   conv env (VListFold a l _ t u) (VListFold a' l' _ t' u') = do
     conv env a a'
     conv env l l'
     conv env t t'
     conv env u u'
+  conv env (VListLength _ t) (VListLength _ t') = conv env t t'
+  conv env (VListHead _ t) (VListHead _ t') = conv env t t'
+  conv env (VListLast _ t) (VListLast _ t') = conv env t t'
+  conv env (VListIndexed _ t) (VListIndexed _ t') = conv env t t'
+  conv env (VListReverse _ t) (VListReverse _ t') = conv env t t'
   conv env (VOptional a) (VOptional a') = conv env a a'
   conv env (VNone _) (VNone _) = pure ()
   conv env (VSome t) (VSome t') = conv env t t'
@@ -536,8 +605,13 @@ mutual
     let ys' = traverse (quote env) ys in
     Right $ EListLit (Just !(quote env x)) !ys'
   quote env (VListAppend x y) = Right $ EListAppend !(quote env x) !(quote env y)
-  quote env (VListHead x y) = qAppM env EListHead [x, y]
+  quote env (VListBuild t u) = qAppM env EListBuild [t, u]
   quote env (VListFold a l t u v) = qAppM env EListFold [a, l, t, u, v]
+  quote env (VListLength t u) = qAppM env EListLength [t, u]
+  quote env (VListHead t u) = qAppM env EListHead [t, u]
+  quote env (VListLast t u) = qAppM env EListLast [t, u]
+  quote env (VListIndexed t u) = qAppM env EListIndexed [t, u]
+  quote env (VListReverse t u) = qAppM env EListReverse [t, u]
   quote env (VOptional x) = qApp env EOptional x
   quote env (VNone x) = qApp env ENone x
   quote env (VSome x) = Right $ ESome !(quote env x)
@@ -761,10 +835,23 @@ mutual
            check cxt u tt
            Right $ (EListAppend t u, tt)
          _ => Left $ ListAppendError "not a list" -- TODO better error message
-  infer cxt EListHead =
-    Right (EListHead, VHPi "a" vType $ \a => Right $ vFun (VList a) (VOptional a))
+  infer cxt EListBuild =
+    pure (EListBuild, VHPi "a" vType $ \a => pure $ vFun (listFoldTy a) (VList a))
   infer cxt EListFold =
     pure (EListFold, VHPi "a" vType $ \a => pure $ vFun (VList a) (listFoldTy a))
+  infer cxt EListLength =
+    pure (EListLength, VHPi "a" vType $ \a => pure $ vFun (VList a) VNatural)
+  infer cxt EListHead =
+    pure (EListHead, VHPi "a" vType $ \a => pure $ vFun (VList a) (VOptional a))
+  infer cxt EListLast =
+    pure (EListLast, VHPi "a" vType $ \a => pure $ vFun (VList a) (VOptional a))
+  infer cxt EListIndexed =
+    pure (EListIndexed
+         , VHPi "a" vType $ \a =>
+           pure $ vFun (VList a)
+                  (VList (VRecord (fromList [(MkFieldName "index", VNatural), (MkFieldName "value", a)]))))
+  infer cxt EListReverse =
+    pure (EListReverse, VHPi "a" vType $ \a => pure $ vFun (VList a) (VList a))
   infer cxt EOptional =
     Right $ (EOptional, VHPi "a" vType $ \a => Right $ vType)
   infer cxt (ESome t) = do
