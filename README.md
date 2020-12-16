@@ -6,45 +6,99 @@ Parse, evaluate, check/infer types of Dhall expressions.
 
 ## Status
 
-Very much a work in progress, with many thing missing. The plan is to make an end to end compiler for a small goofy subset of Dhall, and gradually and features.
+Still a work in progress with some things missing, but does have a lot of the language features. Check the list below to see how what is/isn't implemented.
 
 ## Features
 
 Features marked with a tick should work for parsing, type checking and evaluation.
 
-- [x] Fuctions
-- [x] Types
-  - [x] Bool
-  - [x] Natural
-  - [x] Integer
-  - [x] List
-  - [x] Optional
-  - [x] Equivalent
-  - [x] String
-  - [x] Records
-  - [x] Union
-  - [x] Double
-- Operators
-  - [x] `&&`
-  - [x] `#`
-  - [x] `.` (Field operator)
-  - [ ] `\\`
-  - [ ] `/\`
-  - [ ] `::`
-  - etc.
-- Builtins
-  - [x] `Natural/isZero`
-  - [x] `List/head`
-  - [x] `Integer/negate`
-  - [ ] Everything else
-- Imports
-  - [x] local files
-  - [ ] Env
-  - [ ] http
+### Bool
+- [x] Bool Type
+- [x] Bool Literals
+- [ ] Keyword: if/then/else
+- [x] Operator: ||
+- [x] Operator: &&
+- [x] Operator: ==
+- [x] Operator: !=
+
+### Natural
+- [x] Natural Type
+- [x] Natural Literals
+- [x] Operator: +
+- [x] Operator: *
+- [x] Function: Natural/even
+- [x] Function: Natural/odd
+- [x] Function: Natural/isZero
+- [ ] Function: Natural/subtract
+- [ ] Function: Natural/fold
+- [ ] Function: Natural/build
+- [ ] Function: Natural/show
+- [x] Function: Natural/toInteger
+
+### Integer
+- [x] Integer Type
+- [x] Integer Literals 
+- [x] Function: Integer/negate
+- [ ] Function: Integer/clamp
+- [ ] Function: Integer/toDouble
+- [ ] Function: Integer/show
+
+### Double
+- [x] Double Type
+- [x] Double Literals
+- [ ] Function: Double/show
+
+### Text
+- [x] Text Type
+- [x] Text
+- [ ] Function: Text/show
+- [ ] Function: Text/replace
+- [ ] Operator: ++
+
+### List
+- [x] List - Type
+- [x] List
+- [x] Operator: #
+- [x] Function: List/fold
+- [x] Function: List/build
+- [x] Function: List/length
+- [x] Function: List/head
+- [x] Function: List/last
+- [x] Function: List/indexed
+- [x] Function: List/reverse
+
+### Optional
+- [x] Optional - Type
+- [x] Optional
+- [ ] Keyword: merge
+
+### Records
+- [x] Record types
+- [x] Record values
+- [x] Operator: ⩓
+- [x] Operator: ∧
+- [ ] Operator: ⫽
+- [ ] Operator: ::
+- [ ] Keyword: merge
+- [ ] Keyword: toMap
+
+### Imports
+- [ ] Keyword: missing
+- [ ] Operator: ?
+- [ ] Keyword: as Text
+- [ ] Keyword: using
+- [x] Local imports (/path/to/file.dhall)
+- [ ] Environment variables
+- [ ] HTTP imports
+
+### Other
+- [x] Keyword: let
+- [x] Keyword: assert
+- [x] Pi types: Bool -> Bool
+- [x] Functions: \(x : Bool) -> x
 - [ ] `x@1` style variables
 - [ ] Anything to do with caching
 - [ ] CBOR representation
-- [ ] The rest of this list
 
 ## Dependencies
 
