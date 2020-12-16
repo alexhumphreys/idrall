@@ -49,8 +49,13 @@ mutual
     | VList Ty
     | VListLit (Maybe Ty) (List Value)
     | VListAppend Value Value
-    | VListHead Value Value
+    | VListBuild Value Value
     | VListFold Value Value Value Value Value
+    | VListLength Value Value
+    | VListHead Value Value
+    | VListLast Value Value
+    | VListIndexed Value Value
+    | VListReverse Value Value
 
     | VOptional Ty
     | VNone Ty
@@ -160,9 +165,14 @@ mutual
     show (VList a) = "(VList " ++ show a ++ ")"
     show (VListLit ty vs) = "(VListLit " ++ show ty ++ show vs ++ ")"
     show (VListAppend x y) = "(VListAppend " ++ show x ++ " " ++ show y ++ ")"
-    show (VListHead x y) = "(VListHead " ++ show x ++ " " ++ show y ++ ")"
+    show (VListBuild x y) = "(VListBuild " ++ show x ++ " " ++ show y ++ ")"
     show (VListFold v w x y z) =
       "(VListFold " ++ show v ++ " " ++ show w ++ " " ++ show x ++ " " ++ show y ++ " " ++ show z ++ ")"
+    show (VListLength x y) = "(VListLength " ++ show x ++ " " ++ show y ++ ")"
+    show (VListHead x y) = "(VListHead " ++ show x ++ " " ++ show y ++ ")"
+    show (VListLast x y) = "(VListLast " ++ show x ++ " " ++ show y ++ ")"
+    show (VListIndexed x y) = "(VListIndexed " ++ show x ++ " " ++ show y ++ ")"
+    show (VListReverse x y) = "(VListReverse " ++ show x ++ " " ++ show y ++ ")"
 
     show (VOptional a) = "(VOptional " ++ show a ++ ")"
     show (VNone a) = "(VNone " ++ show a ++ ")"

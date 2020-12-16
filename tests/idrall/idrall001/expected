@@ -80,8 +80,10 @@ testing: Double
 Success: ()
 testing: DoubleLiteral
 Success: ()
+testing: ListIndexed
+Success: ()
 DONE
-Passed: 41
+Passed: 42
 Failed: 0
 1/1: Building Good (Good.idr)
 Main> Main> Bye for now!

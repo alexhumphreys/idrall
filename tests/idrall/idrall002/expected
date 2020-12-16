@@ -26,7 +26,7 @@ Success: ()
 testing: FunctionApplication
 Success: ()
 testing: FunctionApplicationNormalizeArgument
-Error: ReadFileError: File Not Found //length
+Success: ()
 testing: FunctionApplicationNormalizeResult
 Success: ()
 testing: FunctionDependentType1
@@ -82,17 +82,17 @@ Success: ()
 testing: List
 Success: ()
 testing: ListBuild
-Error: ReadFileError: File Not Found //build
+Success: ()
 testing: ListFold
 Success: ()
 testing: ListHead
 Success: ()
 testing: ListIndexed
-Error: ReadFileError: File Not Found //indexed
+Success: ()
 testing: ListLast
-Error: ReadFileError: File Not Found //last
+Success: ()
 testing: ListLength
-Error: ReadFileError: File Not Found //length
+Success: ()
 testing: ListLiteralEmpty
 Success: ()
 testing: ListLiteralEmptyNormalizeAnnotation
@@ -102,7 +102,7 @@ Error: ErrorMessage: "Parse failed at position 0: char '('"
 testing: ListLiteralOne
 Success: ()
 testing: ListReverse
-Error: ReadFileError: File Not Found //reverse
+Success: ()
 testing: MergeEmptyAlternative
 Error: MissingVar: "merge"
 testing: MergeEmptyUnion
@@ -366,7 +366,7 @@ Error: ErrorMessage: "Parse failed at position 0: char '('"
 testing: WithNewType
 Error: ErrorMessage: "Parse failed at position 0: char '('"
 DONE
-Passed: 121
-Failed: 62
+Passed: 127
+Failed: 56
 1/1: Building All (All.idr)
 Main> Main> Bye for now!

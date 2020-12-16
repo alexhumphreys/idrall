@@ -23,8 +23,13 @@ builtin =
   (string "Natural/even" *> pure ENaturalEven) <|>
   (string "Natural/odd" *> pure ENaturalOdd) <|>
   (string "Natural/toInteger" *> pure ENaturalToInteger) <|>
-  (string "List/head" *> pure EListHead) <|>
+  (string "List/build" *> pure EListBuild) <|>
   (string "List/fold" *> pure EListFold) <|>
+  (string "List/length" *> pure EListLength) <|>
+  (string "List/head" *> pure EListHead) <|>
+  (string "List/last" *> pure EListLast) <|>
+  (string "List/indexed" *> pure EListIndexed) <|>
+  (string "List/reverse" *> pure EListReverse) <|>
   (string "List" *> pure EList) <|>
   (string "None" *> pure ENone) <|>
   (string "Optional" *> pure EOptional)

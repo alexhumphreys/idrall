@@ -122,10 +122,20 @@ mutual
     | EListLit (Maybe (Expr a)) (List (Expr a))
     -- | > x # y
     | EListAppend (Expr a) (Expr a)
-    -- | > List/head
-    | EListHead
+    -- | > List/build
+    | EListBuild
     -- | > List/fold
     | EListFold
+    -- | > List/length
+    | EListLength
+    -- | > List/head
+    | EListHead
+    -- | > List/last
+    | EListLast
+    -- | > List/indexed
+    | EListIndexed
+    -- | > List/reverse
+    | EListReverse
     -- | > EOptional ~ Optional
     | EOptional
     -- | > Some a
@@ -197,8 +207,13 @@ mutual
     show (EListLit Nothing xs) = "(EListLit Nothing " ++ show xs ++ ")"
     show (EListLit (Just x) xs) = "(EListLit (Just " ++ show x ++ ") " ++ show xs ++ ")"
     show (EListAppend x y) = "(EListAppend " ++ show x ++ " " ++ show y ++ ")"
-    show EListHead = "EListHead"
+    show EListBuild = "EListBuild"
     show EListFold = "EListFold"
+    show EListHead = "EListHead"
+    show EListLength = "EListLength"
+    show EListLast = "EListLast"
+    show EListIndexed = "EListIndexed"
+    show EListReverse = "EListReverse"
     show EOptional = "EOptional"
     show ENone = "ENone"
     show (ESome x) = "(ESome " ++ show x ++ ")"
