@@ -69,6 +69,7 @@ mutual
     | VUnion (SortedMap FieldName (Maybe Value))
     | VCombine Value Value
     | VCombineTypes Value Value
+    | VPrefer Value Value
     | VInject (SortedMap FieldName (Maybe Value)) FieldName (Maybe Value) -- TODO proof that key is in SM?
 
   public export
@@ -186,6 +187,7 @@ mutual
     show (VUnion a) = "(VUnion " ++ show a ++ ")"
     show (VCombine x y) = "(VCombine " ++ show x ++ " " ++ show y ++ ")"
     show (VCombineTypes x y) = "(VCombineTypes " ++ show x ++ " " ++ show y ++ ")"
+    show (VPrefer x y) = "(VPrefer " ++ show x ++ " " ++ show y ++ ")"
     show (VInject a k v) = "(VUnion " ++ show a ++ " " ++ show k ++ " " ++ show v ++ ")"
 
 public export

@@ -190,8 +190,9 @@ table = [ [ Postfix field]
         , [ Infix (do (token "===" <|> token "≡"); pure EEquivalent) AssocLeft]
         , [ Prefix (do token "assert"; token ":"; pure EAssert)]
         , [ Infix (do token "#"; pure EListAppend) AssocLeft]
-        , [ Infix (do pure ECombine <* (token "/\\" <|> token "∧")) AssocLeft
-          , Infix (do pure ECombineTypes <* (token "//\\\\" <|> token "⩓")) AssocLeft
+        , [ Infix (pure ECombine <* (token "/\\" <|> token "∧")) AssocLeft
+          , Infix (pure EPrefer <* (token "⫽")) AssocLeft -- TODO ascii version, conflicts with path parsing
+          , Infix (pure ECombineTypes <* (token "//\\\\" <|> token "⩓")) AssocLeft
           ]
         ]
 

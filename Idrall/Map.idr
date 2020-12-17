@@ -52,3 +52,11 @@ mergeWithApp : (Monad m, Ord k) =>
                SortedMap k a ->
                m (SortedMap k a)
 mergeWithApp f xs ys = sequence (mergeWith (\x,y => (f <$> x <*> y) >>= id) (map pure xs) (map pure ys))
+
+export
+mergeWithApp' : (Monad m, Ord k) =>
+               (a -> a -> m a) ->
+               SortedMap k a ->
+               SortedMap k a ->
+               m (SortedMap k a)
+mergeWithApp' f xs ys = sequence (mergeWith (\x,y => y) (map pure xs) (map pure ys))
