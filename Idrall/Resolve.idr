@@ -171,6 +171,10 @@ mutual
     x' <- resolve h p x
     y' <- resolve h p y
     pure (ECombineTypes x' y')
+  resolve h p (EPrefer x y) = do
+    x' <- resolve h p x
+    y' <- resolve h p y
+    pure (EPrefer x' y')
   resolve h p (EUnion x) =
     let kv = toList x in do
       kv' <- resolveUnion h p kv

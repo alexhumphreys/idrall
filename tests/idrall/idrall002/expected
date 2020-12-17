@@ -300,17 +300,17 @@ Success: ()
 testing: RecursiveRecordTypeMergeTwoTypes
 Success: ()
 testing: RightBiasedRecordMergeMixedKinds
-Error: ErrorMessage: "Parse failed at position 12: expected the end of the string"
+Success: ()
 testing: RightBiasedRecordMergeRhsEmpty
-Error: ErrorMessage: "Parse failed at position 12: expected the end of the string"
+Success: ()
 testing: RightBiasedRecordMergeTwo
-Error: ErrorMessage: "Parse failed at position 12: expected the end of the string"
+Success: ()
 testing: RightBiasedRecordMergeTwoDifferent
-Error: ErrorMessage: "Parse failed at position 12: expected the end of the string"
+Success: ()
 testing: RightBiasedRecordMergeTwoKinds
-Error: ErrorMessage: "Parse failed at position 13: expected the end of the string"
+Success: ()
 testing: RightBiasedRecordMergeTwoTypes
-Error: ErrorMessage: "Parse failed at position 13: expected the end of the string"
+Success: ()
 testing: SomeTrue
 Success: ()
 testing: Text
@@ -366,7 +366,7 @@ Error: ErrorMessage: "Parse failed at position 0: char '('"
 testing: WithNewType
 Error: ErrorMessage: "Parse failed at position 0: char '('"
 DONE
-Passed: 127
-Failed: 56
+Passed: 133
+Failed: 50
 1/1: Building All (All.idr)
 Main> Main> Bye for now!

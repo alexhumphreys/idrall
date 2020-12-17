@@ -249,6 +249,10 @@ mutual
     x' <- eval env x
     y' <- eval env y
     doCombine x' y'
+  eval env (EPrefer x y) = do
+    x' <- eval env x
+    y' <- eval env y
+    doPrefer x' y'
   eval env (EUnion x) =
     let xs = toList x in
     do xs' <- traverse (mapUnion (eval env)) xs
@@ -324,6 +328,11 @@ mutual
   doCombine (VRecord x) (VRecord y) =
     Right (VRecord $ !(mergeWithApp doCombine x y))
   doCombine x y = Right $ VCombineTypes x y
+
+  doPrefer : Value -> Value -> Either Error Value
+  doPrefer (VRecordLit x) (VRecordLit y) =
+    Right (VRecordLit $ !(mergeWithApp' doPrefer x y))
+  doPrefer x y = Right $ VPrefer x y
 
   -- conversion checking
   -- Needs to be in mutual block with eval because it's used by Bool builtins
@@ -517,6 +526,9 @@ mutual
   conv env (VCombineTypes t u) (VCombineTypes t' u') = do
     conv env t t'
     conv env u u'
+  conv env (VPrefer t u) (VPrefer t' u') = do
+    conv env t t'
+    conv env u u'
   conv env (VInject m k (Just mt)) (VInject m' k' (Just mt')) = do
     convUnion env (toList m) (toList m')
     convEq k k'
@@ -628,6 +640,7 @@ mutual
     Right $ EUnion !x'
   quote env (VCombine x y) = Right $ ECombine !(quote env x) !(quote env y)
   quote env (VCombineTypes x y) = Right $ ECombineTypes !(quote env x) !(quote env y)
+  quote env (VPrefer x y) = Right $ EPrefer !(quote env x) !(quote env y)
   quote env (VInject m k Nothing) =
     let m' = traverse (mapMaybe (quote env)) m in
     Right $ EField (EUnion !m') k
@@ -898,6 +911,15 @@ mutual
            ty <- mergeWithApp doCombine a' b'
            Right $ (ECombineTypes a b, snd !(infer cxt !(quote (envNames $ values cxt) (VRecord ty))))
          (other, _) => unexpected "Not a Record" other
+  infer cxt (EPrefer t u) = do
+    (t, tt) <- infer cxt t
+    (u, uu) <- infer cxt u
+    case (tt, uu) of
+         (VRecord a', VRecord b') => do
+           ty <- mergeWithApp' doCombine a' b'
+           Right $ (EPrefer t u, VRecord ty)
+         (VRecord _, other) => unexpected "Not a RecordLit" other
+         (other, _) => unexpected "Not a RecordLit" other
   infer cxt (EField t@(EUnion x) k) = do
     xv <- traverse (mapMaybe (eval (values cxt))) x
     case lookup k xv of
