@@ -191,7 +191,7 @@ table = [ [ Postfix field]
         , [ Prefix (do token "assert"; token ":"; pure EAssert)]
         , [ Infix (do token "#"; pure EListAppend) AssocLeft]
         , [ Infix (pure ECombine <* (token "/\\" <|> token "∧")) AssocLeft
-          , Infix (pure EPrefer <* (token "⫽")) AssocLeft -- TODO ascii version, conflicts with path parsing
+          , Infix (pure EPrefer <* (token "//" <|> token "⫽")) AssocLeft
           , Infix (pure ECombineTypes <* (token "//\\\\" <|> token "⩓")) AssocLeft
           ]
         ]
@@ -335,6 +335,7 @@ mutual
 
   absolutePath : Parser Path
   absolutePath = do
+    requireFailure $ string "//"
     string "/"
     d <- dirs
     pure (Absolute d)
