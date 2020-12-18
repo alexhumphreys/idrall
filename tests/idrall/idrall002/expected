@@ -54,9 +54,9 @@ Success: ()
 testing: FunctionTypeUsingArgument
 Success: ()
 testing: If
-Error: ErrorMessage: "Parse failed at position 0: char '('"
+Success: ()
 testing: IfNormalizeArguments
-Error: ErrorMessage: "Parse failed at position 6: char '('"
+Success: ()
 testing: Integer
 Success: ()
 testing: IntegerClamp
@@ -98,7 +98,7 @@ Success: ()
 testing: ListLiteralEmptyNormalizeAnnotation
 Success: ()
 testing: ListLiteralNormalizeArguments
-Error: ErrorMessage: "Parse failed at position 0: char '('"
+Success: ()
 testing: ListLiteralOne
 Success: ()
 testing: ListReverse
@@ -156,7 +156,7 @@ Success: ()
 testing: OperatorListConcatenate
 Success: ()
 testing: OperatorListConcatenateNormalizeArguments
-Error: ErrorMessage: "Parse failed at position 1: char '('"
+Success: ()
 testing: OperatorNotEqual
 Success: ()
 testing: OperatorNotEqualNormalizeArguments
@@ -318,7 +318,7 @@ Success: ()
 testing: TextLiteral
 Success: ()
 testing: TextLiteralNormalizeArguments
-Error: Unexpected: VText is not a VPi or VHPi
+Success: ()
 testing: TextLiteralWithInterpolation
 Success: ()
 testing: TextShow
@@ -366,7 +366,7 @@ Error: ErrorMessage: "Parse failed at position 0: char '('"
 testing: WithNewType
 Error: ErrorMessage: "Parse failed at position 0: char '('"
 DONE
-Passed: 133
-Failed: 50
+Passed: 138
+Failed: 45
 1/1: Building All (All.idr)
 Main> Main> Bye for now!

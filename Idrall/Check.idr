@@ -110,6 +110,14 @@ mutual
                               \c => case c of
                                       VNaturalLit n => Right $ VBoolLit (n == 0)
                                       n             => Right $ VNaturalIsZero n
+  eval env (EBoolIf b t f) =
+    case (!(eval env b), !(eval env t), !(eval env f)) of
+         (VBoolLit True, t, f) => pure t
+         (VBoolLit False, t, f) => pure f
+         (b, VBoolLit True, VBoolLit False) => pure b
+         (b, t, f) => case conv env t f of
+                           (Right _) => pure t
+                           (Left _) => pure $ VBoolIf b t f
   eval env ENaturalEven =
     Right $ VPrim $
       \c => case c of
@@ -462,6 +470,10 @@ mutual
   conv env (VBoolNE t u) (VBoolNE t' u') = do
     conv env t t'
     conv env u u'
+  conv env (VBoolIf b t f) (VBoolIf b' t' f') = do
+    conv env b b'
+    conv env t t'
+    conv env f f'
   conv env VNatural VNatural = pure ()
   conv env (VNaturalLit k) (VNaturalLit k') = convEq k k'
   conv env (VNaturalIsZero t) (VNaturalIsZero t') = conv env t t'
@@ -586,12 +598,13 @@ mutual
   quote env (VHPi x a b) =
     let (x', v) = fresh x env in
         Right $ EPi x !(quote env a) !(quoteBind x env !(b v))
-  quote env VBool = Right $ EBool
-  quote env (VBoolLit b) = Right $ EBoolLit b
-  quote env (VBoolAnd t u) = Right $ EBoolAnd !(quote env t) !(quote env u)
-  quote env (VBoolOr t u) = Right $ EBoolOr !(quote env t) !(quote env u)
-  quote env (VBoolEQ t u) = Right $ EBoolEQ !(quote env t) !(quote env u)
-  quote env (VBoolNE t u) = Right $ EBoolNE !(quote env t) !(quote env u)
+  quote env VBool = pure $ EBool
+  quote env (VBoolLit b) = pure $ EBoolLit b
+  quote env (VBoolAnd t u) = pure $ EBoolAnd !(quote env t) !(quote env u)
+  quote env (VBoolOr t u) = pure $ EBoolOr !(quote env t) !(quote env u)
+  quote env (VBoolEQ t u) = pure $ EBoolEQ !(quote env t) !(quote env u)
+  quote env (VBoolNE t u) = pure $ EBoolNE !(quote env t) !(quote env u)
+  quote env (VBoolIf b t f) = pure $ EBoolIf !(quote env b) !(quote env t) !(quote env f)
   quote env VNatural = Right $ ENatural
   quote env (VNaturalLit k) = Right $ ENaturalLit k
   quote env (VNaturalIsZero x) = qApp env ENaturalIsZero x
@@ -805,6 +818,11 @@ mutual
     check cxt x VBool
     check cxt y VBool
     Right $ (EBoolNE x y, VBool)
+  infer cxt (EBoolIf b t f) = do
+    check cxt b VBool
+    (t, tt) <- infer cxt t
+    check cxt f tt
+    Right $ (EBoolIf b t f, tt)
   infer cxt ENatural = Right $ (ENatural, VConst CType)
   infer cxt (ENaturalLit k) = Right $ (ENaturalLit k, VNatural)
   infer cxt ENaturalIsZero = Right $ (ENaturalIsZero, (vFun VNatural VBool))

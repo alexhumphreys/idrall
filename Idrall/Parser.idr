@@ -296,6 +296,16 @@ mutual
   pi : Parser (Expr ImportStatement)
   pi = piComplex
 
+  ifExpr : Parser (Expr ImportStatement)
+  ifExpr = do
+    token "if"
+    x <- expr
+    token "then"
+    y <- expr
+    token "else"
+    z <- expr
+    pure (EBoolIf x y z)
+
   emptyList : Parser (Expr ImportStatement)
   emptyList = do
     token "["
@@ -378,7 +388,7 @@ mutual
   term : Parser (Expr ImportStatement)
   term = do
     i <-(builtin <|>
-     true <|> false <|> bool <|>
+     true <|> false <|> bool <|> ifExpr <|>
      double <|> doubleLit <|>
      natural <|> naturalLit <|>
      integer <|> integerLit <|>
