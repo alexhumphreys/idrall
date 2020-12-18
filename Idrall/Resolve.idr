@@ -108,6 +108,11 @@ mutual
     x' <- resolve h p x
     y' <- resolve h p y
     pure (EBoolNE x' y')
+  resolve h p (EBoolIf x y z) = do
+    x' <- resolve h p x
+    y' <- resolve h p y
+    z' <- resolve h p z
+    pure (EBoolIf x' y' z')
   resolve h p EInteger = pure EInteger
   resolve h p (EIntegerLit k) = pure (EIntegerLit k)
   resolve h p ENatural = pure ENatural

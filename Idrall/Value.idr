@@ -26,6 +26,7 @@ mutual
     | VBoolOr Value Value
     | VBoolEQ Value Value
     | VBoolNE Value Value
+    | VBoolIf Value Value Value
 
     | VNatural
     | VNaturalLit Nat
@@ -143,6 +144,7 @@ mutual
     show (VBoolOr x y) = "(VBoolOr " ++ show x ++ " " ++ show y ++ ")"
     show (VBoolEQ x y) = "(VBoolEQ " ++ show x ++ " " ++ show y ++ ")"
     show (VBoolNE x y) = "(VBoolNE " ++ show x ++ " " ++ show y ++ ")"
+    show (VBoolIf x y z) = "(VBoolNE " ++ show x ++ " " ++ show y ++ " " ++ show y ++ ")"
 
     show VNatural = "VNatural"
     show (VNaturalLit k) = "(VNaturalLit " ++ show k ++ ")"
