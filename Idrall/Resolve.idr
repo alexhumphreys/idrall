@@ -180,6 +180,15 @@ mutual
     x' <- resolve h p x
     y' <- resolve h p y
     pure (EPrefer x' y')
+  resolve h p (EMerge x y Nothing) = do
+    x' <- resolve h p x
+    y' <- resolve h p y
+    pure (EMerge x' y' Nothing)
+  resolve h p (EMerge x y (Just z)) = do
+    x' <- resolve h p x
+    y' <- resolve h p y
+    z' <- resolve h p z
+    pure (EMerge x' y' (Just z'))
   resolve h p (EUnion x) =
     let kv = toList x in do
       kv' <- resolveUnion h p kv

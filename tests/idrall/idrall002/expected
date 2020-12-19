@@ -10,7 +10,7 @@ Success: ()
 testing: Bool
 Success: ()
 testing: Completion
-Error: ErrorMessage: "Parse failed at position 0: char '('"
+Error: ErrorMessage: "Parse failed at position 28: expected the end of the string"
 testing: Double
 Success: ()
 testing: DoubleLiteral
@@ -104,25 +104,25 @@ Success: ()
 testing: ListReverse
 Success: ()
 testing: MergeEmptyAlternative
-Error: MissingVar: "merge"
+Success: ()
 testing: MergeEmptyUnion
-Error: MissingVar: "merge"
+Success: ()
 testing: MergeNone
-Error: ErrorMessage: "Parse failed at position 6: expected the end of the string"
+Success: ()
 testing: MergeOne
-Error: MissingVar: "merge"
+Success: ()
 testing: MergeOneEmpty
-Error: MissingVar: "merge"
+Success: ()
 testing: MergeOneWithAnnotation0
-Error: MissingVar: "merge"
+Success: ()
 testing: MergeOneWithAnnotation1
-Error: MissingVar: "merge"
+Success: ()
 testing: MergeOptional
-Error: ErrorMessage: "Parse failed at position 29: expected the end of the string"
+Success: ()
 testing: MergeSome
-Error: ErrorMessage: "Parse failed at position 6: expected the end of the string"
+Success: ()
 testing: MergeTrickyShadowing
-Error: MissingVar: "merge"
+Success: ()
 testing: Natural
 Success: ()
 testing: NaturalBuild
@@ -366,7 +366,7 @@ Error: ErrorMessage: "Parse failed at position 0: char '('"
 testing: WithNewType
 Error: ErrorMessage: "Parse failed at position 0: char '('"
 DONE
-Passed: 138
-Failed: 45
+Passed: 148
+Failed: 35
 1/1: Building All (All.idr)
 Main> Main> Bye for now!

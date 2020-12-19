@@ -6,6 +6,7 @@ import Idrall.Value
 import Idrall.Map
 
 import Data.List
+import Data.List1
 
 -- alpha equivalence
 nestError : Either Error b -> Error -> Either Error b
@@ -261,6 +262,25 @@ mutual
     x' <- eval env x
     y' <- eval env y
     doPrefer x' y'
+  eval env (EMerge x y ma) = -- TODO Double check this
+    case (!(eval env x), !(eval env y), !(mapMaybe (eval env) ma)) of
+         (VRecordLit m, VInject _ k (Just t), _) =>
+           case lookup k m of
+                Just f => vApp f t
+                Nothing => Left $ MergeUnhandledCase $ show k -- TODO DRY these error conditions
+         (VRecordLit m, VInject _ k _, _) =>
+           case lookup k m of
+                Just t => pure t
+                Nothing => Left $ MergeUnhandledCase $ show k
+         (VRecordLit m, VSome t, _) =>
+           case lookup (MkFieldName "Some") m of
+                Just f => vApp f t
+                Nothing => Left $ MergeUnhandledCase $ "Some"
+         (VRecordLit m, VNone _, _) =>
+           case lookup (MkFieldName "None") m of
+                Just t => pure t
+                Nothing => Left $ MergeUnhandledCase $ "None"
+         (t, u, ma) => pure $ VMerge t u ma
   eval env (EUnion x) =
     let xs = toList x in
     do xs' <- traverse (mapUnion (eval env)) xs
@@ -541,6 +561,13 @@ mutual
   conv env (VPrefer t u) (VPrefer t' u') = do
     conv env t t'
     conv env u u'
+  conv env (VMerge t u Nothing) (VMerge t' u' Nothing) = do
+    conv env t t'
+    conv env u u'
+  conv env (VMerge t u (Just a)) (VMerge t' u' (Just a')) = do
+    conv env t t'
+    conv env u u'
+    conv env a a'
   conv env (VInject m k (Just mt)) (VInject m' k' (Just mt')) = do
     convUnion env (toList m) (toList m')
     convEq k k'
@@ -654,6 +681,8 @@ mutual
   quote env (VCombine x y) = Right $ ECombine !(quote env x) !(quote env y)
   quote env (VCombineTypes x y) = Right $ ECombineTypes !(quote env x) !(quote env y)
   quote env (VPrefer x y) = Right $ EPrefer !(quote env x) !(quote env y)
+  quote env (VMerge x y Nothing) = pure $ EMerge !(quote env x) !(quote env y) Nothing
+  quote env (VMerge x y (Just z)) = pure $ EMerge !(quote env x) !(quote env y) (Just !(quote env z))
   quote env (VInject m k Nothing) =
     let m' = traverse (mapMaybe (quote env)) m in
     Right $ EField (EUnion !m') k
@@ -938,6 +967,25 @@ mutual
            Right $ (EPrefer t u, VRecord ty)
          (VRecord _, other) => unexpected "Not a RecordLit" other
          (other, _) => unexpected "Not a RecordLit" other
+  infer cxt (EMerge t u a) = do
+    (u, ut) <- infer cxt u
+    (t, tt) <- infer cxt t
+    case (ut, tt) of
+         (VUnion ts, VRecord us) => do
+           case a of
+                Nothing => do
+                  pure (EMerge t u a, !(inferMerge cxt ts us Nothing))
+                (Just a') => do
+                  av <- eval (values cxt) a'
+                  ty <- inferMerge cxt ts us (Just av)
+                  conv (values cxt) av ty
+                  pure (EMerge t u a, av)
+         (VOptional a', VRecord us) =>
+           let newUnion = SortedMap.fromList $
+                            [(MkFieldName "None", Nothing), (MkFieldName "Some", Just a')]
+           in pure (EMerge t u a, !(inferMerge cxt newUnion us Nothing))
+         (other, VRecord _) => unexpected "Not a RecordLit or Optional" other
+         (_, other) => unexpected "Not a RecordLit" other
   infer cxt (EField t@(EUnion x) k) = do
     xv <- traverse (mapMaybe (eval (values cxt))) x
     case lookup k xv of
@@ -951,6 +999,48 @@ mutual
   infer cxt (EField t k) = Left (InvalidFieldType (show t))
   infer cxt (EEmbed (Raw x)) = absurd x
   infer cxt (EEmbed (Resolved x)) = infer initCxt x
+
+  checkEmptyMerge : Maybe Value -> Either Error Value
+  checkEmptyMerge Nothing = Left $ EmptyMerge "Needs a type annotation"
+  checkEmptyMerge (Just v) = pure v
+
+  inferMerge : Cxt
+             -> SortedMap FieldName (Maybe Value)
+             -> SortedMap FieldName Value
+             -> Maybe Value
+             -> Either Error Value
+  inferMerge cxt us rs mv = do
+    xs <- inferUnionHandlers (toList us) (toList rs)
+    case Data.List1.fromList xs of
+         Nothing => checkEmptyMerge mv
+         (Just (head ::: tail)) =>
+           foldlM (\acc,v => unify cxt acc v *> pure acc) head tail
+  where
+    checkKeys : FieldName -> FieldName -> Either Error ()
+    checkKeys k k' = case k == k' of
+                          True => pure ()
+                          False => Left $ MergeUnhandledCase $ show k
+
+    -- Check there's a 1 to 1 relation between union and handlers.  Relying on
+    -- calling this with lists create by `SortedMap.toList` Returns a list of
+    -- the types when each handler is applied to the corresponding union
+    -- alternative.
+    inferUnionHandlers : List (FieldName, (Maybe Value))
+                        -> List (FieldName, Value)
+                        -> Either Error (List (Value))
+    inferUnionHandlers [] [] = pure []
+    inferUnionHandlers [] ((k, v) :: xs) = Left $ MergeUnusedHandler $ show k
+    inferUnionHandlers ((k, v) :: xs) [] = Left $ MergeUnhandledCase $ show k
+    inferUnionHandlers ((k, Just v) :: xs) ((k', v') :: ys) = do
+      -- if it's an Union field with a value, apply the Record function
+      checkKeys k k'
+      (_, a', b) <- vAnyPi v'
+      unify cxt v a'
+      pure $ !(b v) :: !(inferUnionHandlers xs ys)
+    inferUnionHandlers ((k, Nothing) :: xs) ((k', v') :: ys) = do
+      -- if it's an Union field without value, return the Record value
+      checkKeys k k'
+      pure $ v' :: !(inferUnionHandlers xs ys)
 
   ||| infer but only return `Value`, not `(Expr Void, Value)`
   inferSkip : Cxt -> Expr Void -> Either Error Value

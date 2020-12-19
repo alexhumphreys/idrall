@@ -21,6 +21,9 @@ data Error
   | CombineError String
   | RecordFieldCollision String
   | ReadFileError String
+  | MergeUnusedHandler String
+  | MergeUnhandledCase String
+  | EmptyMerge String
   | CyclicImportError String
   | NestedError Error Error
 
@@ -45,6 +48,9 @@ Show Error where
   show (CombineError str) = "CombineError: " ++ str
   show (RecordFieldCollision str) = "RecordFieldCollision: " ++ str
   show (ReadFileError str) = "ReadFileError: " ++ str
+  show (MergeUnusedHandler str) = "MergeUnusedHandler: " ++ str
+  show (MergeUnhandledCase str) = "MergeUnhandledCase: " ++ str
+  show (EmptyMerge str) = "EmptyMerge: " ++ str
   show (CyclicImportError str) = "CyclicImportError: " ++ str
   show (NestedError e e') =
     show e ++ "\n" ++ show e'
