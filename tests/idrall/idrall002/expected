@@ -222,21 +222,21 @@ Success: ()
 testing: RecordOneValue
 Success: ()
 testing: RecordProjectionByType
-Error: ErrorMessage: "Parse failed at position 59: expected the end of the string"
+Success: ()
 testing: RecordProjectionByTypeEmpty
-Error: ErrorMessage: "Parse failed at position 47: expected the end of the string"
+Success: ()
 testing: RecordProjectionByTypeJudgmentalEquality
 Error: ErrorMessage: "Parse failed at position 0: char '('"
 testing: RecordProjectionEmpty
-Error: ErrorMessage: "Parse failed at position 11: expected the end of the string"
+Success: ()
 testing: RecordProjectionEmptyKind
-Error: ErrorMessage: "Parse failed at position 12: expected the end of the string"
+Success: ()
 testing: RecordProjectionKind
-Error: ErrorMessage: "Parse failed at position 22: expected the end of the string"
+Success: ()
 testing: RecordProjectionType
-Error: ErrorMessage: "Parse failed at position 25: expected the end of the string"
+Success: ()
 testing: RecordProjectionValue
-Error: ErrorMessage: "Parse failed at position 20: expected the end of the string"
+Success: ()
 testing: RecordSelectionKind
 Success: ()
 testing: RecordSelectionType
@@ -372,7 +372,7 @@ Error: ErrorMessage: "Parse failed at position 0: char '('"
 testing: WithNewType
 Error: ErrorMessage: "Parse failed at position 0: char '('"
 DONE
-Passed: 150
-Failed: 36
+Passed: 157
+Failed: 29
 1/1: Building All (All.idr)
 Main> Main> Bye for now!

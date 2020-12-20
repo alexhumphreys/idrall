@@ -73,6 +73,7 @@ mutual
     | VPrefer Value Value
     | VMerge Value Value (Maybe Value)
     | VInject (SortedMap FieldName (Maybe Value)) FieldName (Maybe Value) -- TODO proof that key is in SM?
+    | VProject (Value) (Either (List FieldName) (Value))
 
   public export
   data Env
@@ -193,6 +194,7 @@ mutual
     show (VPrefer x y) = "(VPrefer " ++ show x ++ " " ++ show y ++ ")"
     show (VMerge x y z) = "(VMerge " ++ show x ++ " " ++ show y ++ " " ++ show z ++ ")"
     show (VInject a k v) = "(VInject " ++ show a ++ " " ++ show k ++ " " ++ show v ++ ")"
+    show (VProject x y) = "(VProject " ++ show x ++ " " ++ show y ++ ")"
 
 public export
 Semigroup VChunks where

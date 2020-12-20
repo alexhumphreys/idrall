@@ -166,6 +166,9 @@ mutual
     | EMerge (Expr a) (Expr a) (Maybe (Expr a))
     -- | > EField (EVar "x" 0) (MkFieldName "Foo") ~ x.Foo
     | EField (Expr a) FieldName
+    -- | > Project e (Left xs) ~ e.{ xs }
+    --   > Project e (Right t) ~ e.(t)
+    | EProject (Expr a) (Either (List FieldName) (Expr a))
     | EEmbed (Import a)
 
 export
@@ -235,6 +238,7 @@ mutual
     show (EPrefer x y) = "(EPrefer " ++ show x ++ " " ++ show y ++ ")"
     show (EMerge x y z) = "(EMerge " ++ show x ++ " " ++ show y ++ " " ++ show z ++ ")"
     show (EField x y) = "(EField " ++ show x ++ " " ++ show y ++ ")"
+    show (EProject x y) = "(EField " ++ show x ++ " " ++ show y ++ ")"
     show (EEmbed x) = "(EEmbed " ++ show x ++ ")"
 
   public export

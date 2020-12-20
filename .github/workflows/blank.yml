@@ -25,7 +25,7 @@ jobs:
         with:
           repository: dhall-lang/dhall-lang
           path: dhall-lang
-          ref: '12d5a99'
+          ref: 'baaac8c'
       - name: idrall build and test
         run: |
           make clean && make build && make install && make test INTERACTIVE=''
