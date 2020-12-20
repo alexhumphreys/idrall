@@ -55,6 +55,10 @@ testing: FunctionTypeUsingArgument
 Success: ()
 testing: If
 Success: ()
+testing: IfBranchesKind
+Success: ()
+testing: IfBranchesType
+Success: ()
 testing: IfNormalizeArguments
 Success: ()
 testing: Integer
@@ -179,10 +183,6 @@ testing: OperatorTimesNormalizeArguments
 Success: ()
 testing: Optional
 Success: ()
-testing: OptionalBuild
-Error: ReadFileError: File Not Found //build
-testing: OptionalFold
-Error: ReadFileError: File Not Found //fold
 testing: RecordEmpty
 Success: ()
 testing: RecordLitDottedFields
@@ -321,6 +321,8 @@ testing: TextLiteralNormalizeArguments
 Success: ()
 testing: TextLiteralWithInterpolation
 Success: ()
+testing: TextReplace
+Error: ReadFileError: File Not Found //replace
 testing: TextShow
 Error: ReadFileError: File Not Found //show
 testing: ToMap
@@ -361,12 +363,16 @@ testing: UnionTypeOne
 Success: ()
 testing: UnionTypeType
 Success: ()
+testing: WithCreateIntermediateRecords
+Error: ErrorMessage: "Parse failed at position 0: char '('"
+testing: WithNested
+Error: ErrorMessage: "Parse failed at position 0: char '('"
 testing: WithNewField
 Error: ErrorMessage: "Parse failed at position 0: char '('"
 testing: WithNewType
 Error: ErrorMessage: "Parse failed at position 0: char '('"
 DONE
-Passed: 148
-Failed: 35
+Passed: 150
+Failed: 36
 1/1: Building All (All.idr)
 Main> Main> Bye for now!
