@@ -161,6 +161,9 @@ mutual
     | ECombineTypes (Expr a) (Expr a)
     -- | > Prefer x y ~  x ⫽ y
     | EPrefer (Expr a) (Expr a)
+    -- | > Merge x y (Just t ) ~  merge x y : t
+    --   > Merge x y  Nothing  ~  merge x y
+    | EMerge (Expr a) (Expr a) (Maybe (Expr a))
     -- | > EField (EVar "x" 0) (MkFieldName "Foo") ~ x.Foo
     | EField (Expr a) FieldName
     | EEmbed (Import a)
@@ -230,6 +233,7 @@ mutual
     show (ECombine x y) = "(ECombine " ++ show x ++ " " ++ show y ++ ")"
     show (ECombineTypes x y) = "(ECombineTypes " ++ show x ++ " " ++ show y ++ ")"
     show (EPrefer x y) = "(EPrefer " ++ show x ++ " " ++ show y ++ ")"
+    show (EMerge x y z) = "(EMerge " ++ show x ++ " " ++ show y ++ " " ++ show z ++ ")"
     show (EField x y) = "(EField " ++ show x ++ " " ++ show y ++ ")"
     show (EEmbed x) = "(EEmbed " ++ show x ++ ")"
 

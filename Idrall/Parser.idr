@@ -140,7 +140,7 @@ identShort = do i <- identFirst
 
 reservedNames' : List String
 reservedNames' =
-  [ "in", "let", "assert"
+  [ "in", "let", "assert", "merge"
   , "->", "&&", ":"
   , "List", "Text", "Optional", "Natural", "Integer", "Double"
   , "Some", "None"
@@ -157,12 +157,11 @@ reservedNames = do
   (do space; pure ()) <|> eos
 
 identity : Parser String
-identity = do
-  _ <- requireFailure reservedNames
-  (identLong <|> identShort) <* spaces
+identity = do (identLong <|> identShort) <* spaces
 
 var : Parser (Expr ImportStatement)
-var = do i <- identity
+var = do _ <- requireFailure reservedNames
+         i <- identity
          pure (EVar i 0)
 
 appl : Parser ((Expr ImportStatement) -> (Expr ImportStatement) -> (Expr ImportStatement))
@@ -176,8 +175,9 @@ field = do
   pure (\e => (EField e (MkFieldName i)))
 
 table : OperatorTable (Expr ImportStatement)
-table = [ [ Postfix field]
-        , [ Infix appl AssocLeft]
+table = [ [ Postfix field
+          , Infix appl AssocLeft
+          ]
         , [ Infix (do (token "->" <|> token "→") ; pure (EPi "_")) AssocLeft ]
         , [ Infix (do token ":"; pure EAnnot) AssocLeft]
         , [ Infix (token "&&" $> EBoolAnd) AssocLeft
@@ -385,9 +385,24 @@ mutual
     e <- expr
     pure (ESome e)
 
+  mergeExpr : Parser (Expr ImportStatement)
+  mergeExpr = do
+    token "merge"
+    x <- expr
+    case x of -- TODO hacky
+         (EApp y z) => pure (EMerge y z Nothing)
+         (EAnnot (EApp y z) t) => pure (EMerge y z (Just t))
+         _ => do spaces
+                 y <- expr
+                 spaces
+                 t <- optional (token ":" *> term)
+                 case y of
+                      (EAnnot y' a) => pure (EMerge x y' (Just a))
+                      _ => pure (EMerge x y t)
+
   term : Parser (Expr ImportStatement)
   term = do
-    i <-(builtin <|>
+    i <-(builtin <|> mergeExpr <|>
      true <|> false <|> bool <|> ifExpr <|>
      double <|> doubleLit <|>
      natural <|> naturalLit <|>

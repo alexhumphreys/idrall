@@ -71,6 +71,7 @@ mutual
     | VCombine Value Value
     | VCombineTypes Value Value
     | VPrefer Value Value
+    | VMerge Value Value (Maybe Value)
     | VInject (SortedMap FieldName (Maybe Value)) FieldName (Maybe Value) -- TODO proof that key is in SM?
 
   public export
@@ -190,7 +191,8 @@ mutual
     show (VCombine x y) = "(VCombine " ++ show x ++ " " ++ show y ++ ")"
     show (VCombineTypes x y) = "(VCombineTypes " ++ show x ++ " " ++ show y ++ ")"
     show (VPrefer x y) = "(VPrefer " ++ show x ++ " " ++ show y ++ ")"
-    show (VInject a k v) = "(VUnion " ++ show a ++ " " ++ show k ++ " " ++ show v ++ ")"
+    show (VMerge x y z) = "(VMerge " ++ show x ++ " " ++ show y ++ " " ++ show z ++ ")"
+    show (VInject a k v) = "(VInject " ++ show a ++ " " ++ show k ++ " " ++ show v ++ ")"
 
 public export
 Semigroup VChunks where
