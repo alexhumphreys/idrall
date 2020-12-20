@@ -157,7 +157,7 @@ reservedNames = do
   (do space; pure ()) <|> eos
 
 identity : Parser String
-identity = do (identLong <|> identShort) <* spaces
+identity = do (identLong <|> identShort) <* whitespace
 
 var : Parser (Expr ImportStatement)
 var = do _ <- requireFailure reservedNames
@@ -165,7 +165,7 @@ var = do _ <- requireFailure reservedNames
          pure (EVar i 0)
 
 appl : Parser ((Expr ImportStatement) -> (Expr ImportStatement) -> (Expr ImportStatement))
-appl = do spaces -- TODO also matches no spaces, but spaces1 messes with the eos parser
+appl = do whitespace -- TODO also matches no spaces, but spaces1 messes with the eos parser
           pure EApp
 
 projectNames : Parser ((Expr ImportStatement) -> (Expr ImportStatement))
@@ -292,7 +292,7 @@ mutual
     t <- optional (do token ":"; expr)
     token "="
     v <- expr
-    spaces
+    whitespace
     optional (token "in")
     e <- expr
     pure (ELet i t v e)
@@ -303,7 +303,7 @@ mutual
     i <- identity
     token ":"
     dom <- expr
-    spaces
+    whitespace
     token ")"
     (token "->" <|> token "→")
     ran <- expr
@@ -389,7 +389,7 @@ mutual
     i <- identity
     token ":"
     ty <- expr
-    spaces
+    whitespace
     token ")"
     (token "->" <|> token "→")
     e <- expr
@@ -408,9 +408,9 @@ mutual
     case x of -- TODO hacky
          (EApp y z) => pure (EMerge y z Nothing)
          (EAnnot (EApp y z) t) => pure (EMerge y z (Just t))
-         _ => do spaces
+         _ => do whitespace
                  y <- expr
-                 spaces
+                 whitespace
                  t <- optional (token ":" *> term)
                  case y of
                       (EAnnot y' a) => pure (EMerge x y' (Just a))
@@ -429,7 +429,7 @@ mutual
      recordType <|> recordLit <|>
      union <|> lam <|> pi <|>
      var <|> list <|> parens expr)
-    spaces
+    whitespace
     pure i
 
   interpolation : Parser (Chunks ImportStatement)
@@ -495,7 +495,7 @@ mutual
 
   parseToEnd : Parser (Expr ImportStatement)
   parseToEnd = do
-    spaces
+    whitespace
     e <- expr
     eos
     pure e
