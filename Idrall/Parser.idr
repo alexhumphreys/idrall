@@ -168,6 +168,15 @@ appl : Parser ((Expr ImportStatement) -> (Expr ImportStatement) -> (Expr ImportS
 appl = do spaces -- TODO also matches no spaces, but spaces1 messes with the eos parser
           pure EApp
 
+projectNames : Parser ((Expr ImportStatement) -> (Expr ImportStatement))
+projectNames = do
+  token ".("
+  xs <- identity `sepBy` (token ",")
+  token ")"
+  pure (\e => (EProject e (Left (map MkFieldName xs))))
+
+projectByType : Parser ((Expr ImportStatement) -> (Expr ImportStatement))
+
 field : Parser ((Expr ImportStatement) -> (Expr ImportStatement))
 field = do
   token "."

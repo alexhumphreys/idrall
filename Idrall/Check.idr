@@ -298,6 +298,7 @@ mutual
          Nothing => Left (FieldNotFoundError $ show k)
          (Just t) => pure t
   eval env (EField x k) = Left (InvalidFieldType (show x))
+  eval env (EProject x y) = ?evalProj
   eval env (EEmbed (Raw x)) = absurd x
   eval env (EEmbed (Resolved x)) = eval Empty x
 
@@ -575,6 +576,7 @@ mutual
   conv env (VInject m k Nothing) (VInject m' k' Nothing) = do
     convUnion env (toList m) (toList m')
     convEq k k'
+  conv env (VProject t u) (VProject t' u') = ?convProj
   conv env VPrimVar VPrimVar = pure () -- TODO not in conv, maybe covered by `_ | ptrEq t t' -> True` case?
   conv env t u = convErr t u
 
@@ -689,6 +691,7 @@ mutual
   quote env (VInject m k (Just t)) =
     let m' = traverse (mapMaybe (quote env)) m in
     qApp env (EField (EUnion !m') k) t
+  quote env (VProject t u) = ?quoteProj
   quote env VPrimVar = Left $ ReadBackError "Can't quote VPrimVar"
 
 ||| destruct VPi and VHPi
@@ -997,6 +1000,7 @@ mutual
          Nothing => Left $ FieldNotFoundError $ show k
          (Just x) => infer cxt x
   infer cxt (EField t k) = Left (InvalidFieldType (show t))
+  infer cxt (EProject t u) = ?inferProj
   infer cxt (EEmbed (Raw x)) = absurd x
   infer cxt (EEmbed (Resolved x)) = infer initCxt x
 
