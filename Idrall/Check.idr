@@ -298,9 +298,25 @@ mutual
          Nothing => Left (FieldNotFoundError $ show k)
          (Just t) => pure t
   eval env (EField x k) = Left (InvalidFieldType (show x))
-  eval env (EProject x y) = ?evalProj
+  eval env (EProject x (Left ks)) =
+    case !(eval env x) of
+         VRecordLit ms => pure $ VRecordLit $ fromList !(vProjectByFields ms ks)
+         other => Left (Unexpected $ "Not a RecordLit. Value: " ++ show other)
+  eval env (EProject x (Right y)) =
+    case (!(eval env x), !(eval env y)) of
+         (VRecordLit ms, VRecordLit ms') => pure $ VRecordLit $ fromList !(vProjectByFields ms (keys ms'))
+         (other, VRecord _) => Left (Unexpected $ "Not a RecordLit. Value: " ++ show other)
+         (_, other) => Left (Unexpected $ "Not a Record. Value: " ++ show other)
   eval env (EEmbed (Raw x)) = absurd x
   eval env (EEmbed (Resolved x)) = eval Empty x
+
+  vProjectByFields : SortedMap FieldName Value -> List FieldName -> Either Error (List (FieldName, Value))
+  vProjectByFields ms ks = traverse (lookupRecord ms) ks
+  where
+    lookupRecord : SortedMap FieldName Value -> FieldName -> Either Error (FieldName, Value)
+    lookupRecord ms k = case lookup k ms of
+                             Nothing => Left $ FieldNotFoundError $ show k
+                             (Just v) => pure (k, v)
 
   listIndexedType : Maybe Value -> Maybe Value
   listIndexedType Nothing = Nothing
@@ -576,7 +592,12 @@ mutual
   conv env (VInject m k Nothing) (VInject m' k' Nothing) = do
     convUnion env (toList m) (toList m')
     convEq k k'
-  conv env (VProject t u) (VProject t' u') = ?convProj
+  conv env (VProject t (Left ks)) (VProject t' (Left ks')) = do
+    conv env t t'
+    convEq ks ks'
+  conv env (VProject t (Right u)) (VProject t' (Right u')) = do
+    conv env t t'
+    conv env u u'
   conv env VPrimVar VPrimVar = pure () -- TODO not in conv, maybe covered by `_ | ptrEq t t' -> True` case?
   conv env t u = convErr t u
 
@@ -691,7 +712,8 @@ mutual
   quote env (VInject m k (Just t)) =
     let m' = traverse (mapMaybe (quote env)) m in
     qApp env (EField (EUnion !m') k) t
-  quote env (VProject t u) = ?quoteProj
+  quote env (VProject t (Left ks)) = pure $ EProject !(quote env t) (Left ks)
+  quote env (VProject t (Right u)) = pure $ EProject !(quote env t) (Right $ !(quote env u))
   quote env VPrimVar = Left $ ReadBackError "Can't quote VPrimVar"
 
 ||| destruct VPi and VHPi
@@ -1000,7 +1022,20 @@ mutual
          Nothing => Left $ FieldNotFoundError $ show k
          (Just x) => infer cxt x
   infer cxt (EField t k) = Left (InvalidFieldType (show t))
-  infer cxt (EProject t u) = ?inferProj
+  infer cxt (EProject t (Left ks)) = do
+    (t, tt) <- infer cxt t
+    case tt of
+         (VRecord ms) =>
+           pure (EProject t (Left ks), VRecord $ fromList !(vProjectByFields ms ks))
+         (other) => unexpected "Not a RecordLit" other
+  infer cxt (EProject t (Right a)) = do
+    (t, tt) <- infer cxt t
+    av <- eval (values cxt) a
+    case (tt, av) of
+         (VRecord ms, VRecord ms') => do
+           pure (EProject t (Right a), VRecord $ fromList !(vProjectByFields ms (keys ms')))
+         (other, VRecord _) => unexpected "Not a RecordLit" other
+         (_, other) => unexpected "Not a Record" other
   infer cxt (EEmbed (Raw x)) = absurd x
   infer cxt (EEmbed (Resolved x)) = infer initCxt x
 
