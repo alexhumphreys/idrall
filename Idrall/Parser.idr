@@ -170,12 +170,10 @@ appl = do spaces -- TODO also matches no spaces, but spaces1 messes with the eos
 
 projectNames : Parser ((Expr ImportStatement) -> (Expr ImportStatement))
 projectNames = do
-  token ".("
+  token ".{"
   xs <- identity `sepBy` (token ",")
-  token ")"
+  token "}"
   pure (\e => (EProject e (Left (map MkFieldName xs))))
-
-projectByType : Parser ((Expr ImportStatement) -> (Expr ImportStatement))
 
 field : Parser ((Expr ImportStatement) -> (Expr ImportStatement))
 field = do
@@ -183,29 +181,38 @@ field = do
   i <- identity
   pure (\e => (EField e (MkFieldName i)))
 
-table : OperatorTable (Expr ImportStatement)
-table = [ [ Postfix field
-          , Infix appl AssocLeft
-          ]
-        , [ Infix (do (token "->" <|> token "→") ; pure (EPi "_")) AssocLeft ]
-        , [ Infix (do token ":"; pure EAnnot) AssocLeft]
-        , [ Infix (token "&&" $> EBoolAnd) AssocLeft
-          , Infix (token "||" $> EBoolOr) AssocLeft
-          , Infix (token "==" $> EBoolEQ) AssocLeft
-          , Infix (token "!=" $> EBoolNE) AssocLeft
-          , Infix (token "*" $> ENaturalTimes) AssocLeft
-          ]
-        , [ Infix (token "+" $> ENaturalPlus) AssocLeft]
-        , [ Infix (do (token "===" <|> token "≡"); pure EEquivalent) AssocLeft]
-        , [ Prefix (do token "assert"; token ":"; pure EAssert)]
-        , [ Infix (do token "#"; pure EListAppend) AssocLeft]
-        , [ Infix (pure ECombine <* (token "/\\" <|> token "∧")) AssocLeft
-          , Infix (pure EPrefer <* (token "//" <|> token "⫽")) AssocLeft
-          , Infix (pure ECombineTypes <* (token "//\\\\" <|> token "⩓")) AssocLeft
-          ]
-        ]
-
 mutual
+  projectByType : Parser ((Expr ImportStatement) -> (Expr ImportStatement))
+  projectByType = do
+    token ".("
+    e <- expr
+    token ")"
+    pure (\e' => (EProject e' (Right e)))
+
+  table : OperatorTable (Expr ImportStatement)
+  table = [ [ Postfix projectNames
+            , Postfix projectByType
+            , Postfix field
+            , Infix appl AssocLeft
+            ]
+          , [ Infix (do (token "->" <|> token "→") ; pure (EPi "_")) AssocLeft ]
+          , [ Infix (do token ":"; pure EAnnot) AssocLeft]
+          , [ Infix (token "&&" $> EBoolAnd) AssocLeft
+            , Infix (token "||" $> EBoolOr) AssocLeft
+            , Infix (token "==" $> EBoolEQ) AssocLeft
+            , Infix (token "!=" $> EBoolNE) AssocLeft
+            , Infix (token "*" $> ENaturalTimes) AssocLeft
+            ]
+          , [ Infix (token "+" $> ENaturalPlus) AssocLeft]
+          , [ Infix (do (token "===" <|> token "≡"); pure EEquivalent) AssocLeft]
+          , [ Prefix (do token "assert"; token ":"; pure EAssert)]
+          , [ Infix (do token "#"; pure EListAppend) AssocLeft]
+          , [ Infix (pure ECombine <* (token "/\\" <|> token "∧")) AssocLeft
+            , Infix (pure EPrefer <* (token "//" <|> token "⫽")) AssocLeft
+            , Infix (pure ECombineTypes <* (token "//\\\\" <|> token "⩓")) AssocLeft
+            ]
+          ]
+
   recordTypeElem : Parser (FieldName, Expr ImportStatement)
   recordTypeElem = do
     k <- identity
