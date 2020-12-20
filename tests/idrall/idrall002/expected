@@ -226,7 +226,7 @@ Success: ()
 testing: RecordProjectionByTypeEmpty
 Success: ()
 testing: RecordProjectionByTypeJudgmentalEquality
-Error: ErrorMessage: "Parse failed at position 0: char '('"
+Success: ()
 testing: RecordProjectionEmpty
 Success: ()
 testing: RecordProjectionEmptyKind
@@ -372,7 +372,7 @@ Error: ErrorMessage: "Parse failed at position 0: char '('"
 testing: WithNewType
 Error: ErrorMessage: "Parse failed at position 0: char '('"
 DONE
-Passed: 157
-Failed: 29
+Passed: 158
+Failed: 28
 1/1: Building All (All.idr)
 Main> Main> Bye for now!

@@ -11,6 +11,14 @@ import Data.String.Parser
 -- Not a real Lexer, more a collection of small parsing utilities.
 
 public export
+linecomment : Parser String
+linecomment = token "--" *> takeWhile (\c => c /= '\n') <* char '\n'
+
+public export
+whitespace : Parser ()
+whitespace =  skip (some linecomment) <|> spaces
+
+public export
 hexNumber : Parser Int
 hexNumber = choice (the (List (Parser Int)) [ hexDigit, hexUpper, hexLower ])
 where
