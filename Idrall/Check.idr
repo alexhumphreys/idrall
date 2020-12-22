@@ -129,6 +129,12 @@ mutual
       \c => case c of
                  VNaturalLit n => pure $ VBoolLit (isOdd n)
                  n             => pure $ VNaturalOdd n
+  eval env ENaturalSubtract = do
+    Right $ VPrim $
+      \x => Right $ VPrim $
+        \y => case (x, y) of
+                   (VNaturalLit n, VNaturalLit n') => pure $ VNaturalLit (minus n' n)
+                   (n, n') => pure $ VNaturalSubtract n' n'
   eval env ENaturalShow =
     Right $ VPrim $
       \c => case c of
@@ -164,6 +170,16 @@ mutual
                             \c => case c of
                                        VIntegerLit n => Right $ VIntegerLit (negate n)
                                        n             => Right $ VIntegerNegate n
+  eval env EIntegerClamp =
+    Right $ VPrim $
+      \c => case c of
+                 VIntegerLit n => pure $ VNaturalLit (integerToNat n)
+                 n             => pure $ VIntegerClamp n
+  eval env EIntegerToDouble =
+    Right $ VPrim $
+      \c => case c of
+                 VIntegerLit n => pure $ VDoubleLit (cast n)
+                 n             => pure $ VIntegerToDouble n
   eval env EDouble = Right VDouble
   eval env (EDoubleLit k) = Right (VDoubleLit k)
   eval env EDoubleShow =
@@ -532,6 +548,9 @@ mutual
   conv env (VNaturalEven t) (VNaturalEven t') = conv env t t'
   conv env (VNaturalOdd t) (VNaturalOdd t') = conv env t t'
   conv env (VNaturalShow t) (VNaturalShow t') = conv env t t'
+  conv env (VNaturalSubtract t u) (VNaturalSubtract t' u') = do
+    conv env t t'
+    conv env u u'
   conv env (VNaturalToInteger t) (VNaturalToInteger t') = conv env t t'
   conv env (VNaturalPlus t u) (VNaturalPlus t' u') = do
     conv env t t'
@@ -543,6 +562,8 @@ mutual
   conv env (VIntegerLit t) (VIntegerLit t') = convEq t t'
   conv env (VIntegerShow t) (VIntegerShow t') = conv env t t'
   conv env (VIntegerNegate t) (VIntegerNegate t') = conv env t t'
+  conv env (VIntegerClamp t) (VIntegerClamp t') = conv env t t'
+  conv env (VIntegerToDouble t) (VIntegerToDouble t') = conv env t t'
   conv env VDouble VDouble = pure ()
   conv env (VDoubleLit t) (VDoubleLit t') = convEq t t' -- TODO use binary encode
   conv env (VDoubleShow t) (VDoubleShow t') = conv env t t'
@@ -679,6 +700,7 @@ mutual
   quote env (VNaturalEven x) = qApp env ENaturalEven x
   quote env (VNaturalOdd x) = qApp env ENaturalOdd x
   quote env (VNaturalToInteger x) = qApp env ENaturalToInteger x
+  quote env (VNaturalSubtract x y) = qAppM env ENaturalSubtract [x, y]
   quote env (VNaturalShow x) = qApp env ENaturalShow x
   quote env (VNaturalPlus t u) = Right $ ENaturalPlus !(quote env t) !(quote env u)
   quote env (VNaturalTimes t u) = Right $ ENaturalTimes !(quote env t) !(quote env u)
@@ -686,6 +708,8 @@ mutual
   quote env (VIntegerLit x) = Right $ EIntegerLit x
   quote env (VIntegerShow x) = qApp env EIntegerShow x
   quote env (VIntegerNegate x) = qApp env EIntegerNegate x
+  quote env (VIntegerClamp x) = qApp env EIntegerClamp x
+  quote env (VIntegerToDouble x) = qApp env EIntegerToDouble x
   quote env VDouble = Right $ EDouble
   quote env (VDoubleLit x) = Right $ EDoubleLit x
   quote env (VDoubleShow x) = qApp env EDoubleShow x
@@ -903,6 +927,7 @@ mutual
   infer cxt ENaturalIsZero = Right $ (ENaturalIsZero, (vFun VNatural VBool))
   infer cxt ENaturalEven = Right $ (ENaturalEven, (vFun VNatural VBool))
   infer cxt ENaturalOdd = Right $ (ENaturalOdd, (vFun VNatural VBool))
+  infer cxt ENaturalSubtract = Right $ (ENaturalOdd, (vFun (vFun VNatural VNatural) VNatural))
   infer cxt ENaturalToInteger = Right $ (ENaturalToInteger, (vFun VNatural VInteger))
   infer cxt ENaturalShow = Right $ (ENaturalShow, (vFun VNatural VText))
   infer cxt (ENaturalPlus t u) = do
@@ -917,6 +942,8 @@ mutual
   infer cxt (EIntegerLit x) = Right $ (EIntegerLit x, VInteger)
   infer cxt EIntegerShow = Right $ (EIntegerShow, (vFun VInteger VText))
   infer cxt EIntegerNegate = Right $ (EIntegerNegate, (vFun VInteger VInteger))
+  infer cxt EIntegerClamp = Right $ (EIntegerNegate, (vFun VInteger VNatural))
+  infer cxt EIntegerToDouble = Right $ (EIntegerNegate, (vFun VInteger VDouble))
   infer cxt EDouble = Right $ (EDouble, VConst CType)
   infer cxt (EDoubleLit x) = Right $ (EDoubleLit x, VDouble)
   infer cxt EDoubleShow = Right $ (EDoubleShow, (vFun VDouble VText))

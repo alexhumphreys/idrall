@@ -118,6 +118,7 @@ mutual
   resolve h p ENaturalIsZero = pure ENaturalIsZero
   resolve h p ENaturalEven = pure ENaturalEven
   resolve h p ENaturalOdd = pure ENaturalOdd
+  resolve h p ENaturalSubtract = pure ENaturalSubtract
   resolve h p ENaturalToInteger = pure ENaturalToInteger
   resolve h p ENaturalShow = pure ENaturalShow
   resolve h p (ENaturalPlus x y) = do
@@ -131,7 +132,9 @@ mutual
   resolve h p EInteger = pure EInteger
   resolve h p (EIntegerLit k) = pure (EIntegerLit k)
   resolve h p EIntegerShow = pure EIntegerShow
+  resolve h p EIntegerClamp = pure EIntegerClamp
   resolve h p EIntegerNegate = pure EIntegerNegate
+  resolve h p EIntegerToDouble = pure EIntegerToDouble
   resolve h p EDouble = pure EDouble
   resolve h p (EDoubleLit k) = pure (EDoubleLit k)
   resolve h p EDoubleShow = pure EDoubleShow
