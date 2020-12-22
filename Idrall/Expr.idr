@@ -100,6 +100,8 @@ mutual
     | ENaturalOdd
     -- | > NaturalToInteger                         ~  Natural/toInteger
     | ENaturalToInteger
+    -- | > NaturalShow                               ~  Natural/show
+    | ENaturalShow
      -- | > NaturalPlus x y                          ~  x + y
     | ENaturalPlus (Expr a) (Expr a)
     -- | > NaturalTimes x y                         ~  x * y
@@ -108,12 +110,16 @@ mutual
     | EInteger
     -- | > EIntegerLit i ~ i
     | EIntegerLit Integer
+    -- | > IntegerShow ~  Integer/show
+    | EIntegerShow
     -- | > EIntegerNegate ~ Integer/negate
     | EIntegerNegate
     -- | > Double ~ Double
     | EDouble
     -- | > DoubleLit n ~ n
     | EDoubleLit Double
+    -- | > DoubleShow ~  Double/show
+    | EDoubleShow
     -- | > EText ~ Text
     | EText
     -- | > ETextLit (Chunks [(t1, e1), (t2, e2)] t3) ~  "t1${e1}t2${e2}t3"
@@ -205,13 +211,16 @@ mutual
     show ENaturalEven = "ENaturalEven"
     show ENaturalOdd = "ENaturalOdd"
     show ENaturalToInteger = "ENaturalToInteger"
+    show ENaturalShow = "NaturalShow"
     show (ENaturalPlus x y) = "(ENaturalPlus " ++ show x ++ " " ++ show y ++ ")"
     show (ENaturalTimes x y) = "(ENaturalTimes " ++ show x ++ " " ++ show y ++ ")"
     show EInteger = "EInteger"
     show (EIntegerLit x) = "(EIntegerLit " ++ show x ++ ")"
+    show EIntegerShow = "EIntegerShow"
     show EIntegerNegate = "EIntegerNegate"
     show EDouble = "EDouble"
     show (EDoubleLit k) = "(EDoubleLit " ++ show k ++ ")"
+    show EDoubleShow = "EDoubleShow"
     show EText = "EText"
     show (ETextLit x) = "(ETextLit " ++ show x ++ ")"
     show EList = "EList"

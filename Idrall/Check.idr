@@ -129,11 +129,16 @@ mutual
       \c => case c of
                  VNaturalLit n => pure $ VBoolLit (isOdd n)
                  n             => pure $ VNaturalOdd n
+  eval env ENaturalShow =
+    Right $ VPrim $
+      \c => case c of
+                 VNaturalLit n => pure $ VTextLit (MkVChunks [] (show n))
+                 n             => pure $ VNaturalShow n
   eval env ENaturalToInteger =
     Right $ VPrim $
       \c => case c of
                  VNaturalLit n => pure $ VIntegerLit (cast n)
-                 n             => pure $ VNaturalOdd n
+                 n             => pure $ VNaturalToInteger n
   eval env (ENaturalPlus t u) =
     case (!(eval env t), !(eval env u)) of
          (VNaturalLit 0, u) => pure u
@@ -150,12 +155,22 @@ mutual
          (t, u) => pure $ VNaturalTimes t u
   eval env EInteger = Right VInteger
   eval env (EIntegerLit k) = Right (VIntegerLit k)
+  eval env EIntegerShow =
+    Right $ VPrim $
+      \c => case c of
+                 VIntegerLit n => pure $ VTextLit (MkVChunks [] (show n))
+                 n             => pure $ VIntegerShow n
   eval env EIntegerNegate = Right $ VPrim $
                             \c => case c of
                                        VIntegerLit n => Right $ VIntegerLit (negate n)
                                        n             => Right $ VIntegerNegate n
   eval env EDouble = Right VDouble
   eval env (EDoubleLit k) = Right (VDoubleLit k)
+  eval env EDoubleShow =
+    Right $ VPrim $
+      \c => case c of
+                 VDoubleLit n => pure $ VTextLit (MkVChunks [] (show n))
+                 n             => pure $ VDoubleShow n
   eval env EText = Right VText
   eval env (ETextLit (MkChunks xs x)) = do
     xs' <- traverse (mapChunks (eval env)) xs
@@ -516,6 +531,7 @@ mutual
   conv env (VNaturalIsZero t) (VNaturalIsZero t') = conv env t t'
   conv env (VNaturalEven t) (VNaturalEven t') = conv env t t'
   conv env (VNaturalOdd t) (VNaturalOdd t') = conv env t t'
+  conv env (VNaturalShow t) (VNaturalShow t') = conv env t t'
   conv env (VNaturalToInteger t) (VNaturalToInteger t') = conv env t t'
   conv env (VNaturalPlus t u) (VNaturalPlus t' u') = do
     conv env t t'
@@ -525,9 +541,11 @@ mutual
     conv env u u'
   conv env VInteger VInteger = pure ()
   conv env (VIntegerLit t) (VIntegerLit t') = convEq t t'
+  conv env (VIntegerShow t) (VIntegerShow t') = conv env t t'
   conv env (VIntegerNegate t) (VIntegerNegate t') = conv env t t'
   conv env VDouble VDouble = pure ()
   conv env (VDoubleLit t) (VDoubleLit t') = convEq t t' -- TODO use binary encode
+  conv env (VDoubleShow t) (VDoubleShow t') = conv env t t'
   conv env VText VText = pure ()
   conv env (VTextLit t@(MkVChunks xys z)) (VTextLit u@(MkVChunks xys' z')) =
     let l = strFromChunks xys
@@ -661,13 +679,16 @@ mutual
   quote env (VNaturalEven x) = qApp env ENaturalEven x
   quote env (VNaturalOdd x) = qApp env ENaturalOdd x
   quote env (VNaturalToInteger x) = qApp env ENaturalToInteger x
+  quote env (VNaturalShow x) = qApp env ENaturalShow x
   quote env (VNaturalPlus t u) = Right $ ENaturalPlus !(quote env t) !(quote env u)
   quote env (VNaturalTimes t u) = Right $ ENaturalTimes !(quote env t) !(quote env u)
   quote env VInteger = Right $ EInteger
   quote env (VIntegerLit x) = Right $ EIntegerLit x
+  quote env (VIntegerShow x) = qApp env EIntegerShow x
   quote env (VIntegerNegate x) = qApp env EIntegerNegate x
   quote env VDouble = Right $ EDouble
   quote env (VDoubleLit x) = Right $ EDoubleLit x
+  quote env (VDoubleShow x) = qApp env EDoubleShow x
   quote env VText = Right $ EText
   quote env (VTextLit (MkVChunks xs x)) =
     let chx = traverse (mapChunks (quote env)) xs in
@@ -883,6 +904,7 @@ mutual
   infer cxt ENaturalEven = Right $ (ENaturalEven, (vFun VNatural VBool))
   infer cxt ENaturalOdd = Right $ (ENaturalOdd, (vFun VNatural VBool))
   infer cxt ENaturalToInteger = Right $ (ENaturalToInteger, (vFun VNatural VInteger))
+  infer cxt ENaturalShow = Right $ (ENaturalShow, (vFun VNatural VText))
   infer cxt (ENaturalPlus t u) = do
     check cxt t VNatural
     check cxt u VNatural
@@ -893,9 +915,11 @@ mutual
     Right $ (ENaturalTimes t u, VNatural)
   infer cxt EInteger = Right $ (EInteger, VConst CType)
   infer cxt (EIntegerLit x) = Right $ (EIntegerLit x, VInteger)
+  infer cxt EIntegerShow = Right $ (EIntegerShow, (vFun VInteger VText))
   infer cxt EIntegerNegate = Right $ (EIntegerNegate, (vFun VInteger VInteger))
   infer cxt EDouble = Right $ (EDouble, VConst CType)
   infer cxt (EDoubleLit x) = Right $ (EDoubleLit x, VDouble)
+  infer cxt EDoubleShow = Right $ (EDoubleShow, (vFun VDouble VText))
   infer cxt EText = Right $ (EText, VConst CType)
   infer cxt (ETextLit (MkChunks xs x)) =
     let go = mapChunks (\e => check cxt e VText) in do
