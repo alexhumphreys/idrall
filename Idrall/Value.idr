@@ -33,16 +33,19 @@ mutual
     | VNaturalIsZero Value
     | VNaturalEven Value
     | VNaturalOdd Value
+    | VNaturalShow Value
     | VNaturalToInteger Value
     | VNaturalPlus Value Value
     | VNaturalTimes Value Value
 
     | VInteger
     | VIntegerLit Integer
+    | VIntegerShow Value
     | VIntegerNegate Value
 
     | VDouble
     | VDoubleLit Double
+    | VDoubleShow Value
 
     | VText
     | VTextLit VChunks
@@ -154,15 +157,18 @@ mutual
     show (VNaturalEven x) = "(VNaturalEven " ++ show x ++ ")"
     show (VNaturalOdd x) = "(VNaturalOdd " ++ show x ++ ")"
     show (VNaturalToInteger x) = "(VNaturalToInteger " ++ show x ++ ")"
+    show (VNaturalShow x) = "(VNaturalShow " ++ show x ++ ")"
     show (VNaturalPlus x y) = "(VNaturalPlus " ++ show x ++ " " ++ show y ++ ")"
     show (VNaturalTimes x y) = "(VNaturalTimes " ++ show x ++ " " ++ show y ++ ")"
 
     show VInteger = "VInteger"
     show (VIntegerLit x) = "(VIntegerLit " ++ show x ++ ")"
+    show (VIntegerShow x) = "(VIntegerShow " ++ show x ++ ")"
     show (VIntegerNegate x) = "(VIntegerNegate " ++ show x ++ ")"
 
     show VDouble = "VDouble"
     show (VDoubleLit k) = "(VDoubleLit " ++ show k ++ ")"
+    show (VDoubleShow x) = "(VDoubleShow " ++ show x ++ ")"
 
     show (VText) = "VText"
     show (VTextLit x) = "(VTextLit " ++ show x ++ ")"

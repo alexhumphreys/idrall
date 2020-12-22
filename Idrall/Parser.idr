@@ -18,11 +18,14 @@ import Idrall.Path
 
 builtin : Parser (Expr ImportStatement)
 builtin =
-  (string "Integer/negate" *> pure EIntegerNegate) <|>
   (string "Natural/isZero" *> pure ENaturalIsZero) <|>
   (string "Natural/even" *> pure ENaturalEven) <|>
   (string "Natural/odd" *> pure ENaturalOdd) <|>
   (string "Natural/toInteger" *> pure ENaturalToInteger) <|>
+  (string "Natural/show" *> pure ENaturalShow) <|>
+  (string "Integer/show" *> pure EIntegerShow) <|>
+  (string "Integer/negate" *> pure EIntegerNegate) <|>
+  (string "Double/show" *> pure EDoubleShow) <|>
   (string "List/build" *> pure EListBuild) <|>
   (string "List/fold" *> pure EListFold) <|>
   (string "List/length" *> pure EListLength) <|>

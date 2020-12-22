@@ -113,14 +113,13 @@ mutual
     y' <- resolve h p y
     z' <- resolve h p z
     pure (EBoolIf x' y' z')
-  resolve h p EInteger = pure EInteger
-  resolve h p (EIntegerLit k) = pure (EIntegerLit k)
   resolve h p ENatural = pure ENatural
   resolve h p (ENaturalLit k) = pure (ENaturalLit k)
   resolve h p ENaturalIsZero = pure ENaturalIsZero
   resolve h p ENaturalEven = pure ENaturalEven
   resolve h p ENaturalOdd = pure ENaturalOdd
   resolve h p ENaturalToInteger = pure ENaturalToInteger
+  resolve h p ENaturalShow = pure ENaturalShow
   resolve h p (ENaturalPlus x y) = do
     x' <- resolve h p x
     y' <- resolve h p y
@@ -129,9 +128,13 @@ mutual
     x' <- resolve h p x
     y' <- resolve h p y
     pure (ENaturalTimes x' y')
+  resolve h p EInteger = pure EInteger
+  resolve h p (EIntegerLit k) = pure (EIntegerLit k)
+  resolve h p EIntegerShow = pure EIntegerShow
+  resolve h p EIntegerNegate = pure EIntegerNegate
   resolve h p EDouble = pure EDouble
   resolve h p (EDoubleLit k) = pure (EDoubleLit k)
-  resolve h p EIntegerNegate = pure EIntegerNegate
+  resolve h p EDoubleShow = pure EDoubleShow
   resolve h p EList = pure EList
   resolve h p (EListLit Nothing xs) = do
     xs' <- resolveList h p xs

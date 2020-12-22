@@ -16,7 +16,7 @@ Success: ()
 testing: DoubleLiteral
 Success: ()
 testing: DoubleShow
-Error: ReadFileError: File Not Found //show
+Success: ()
 testing: Equivalence
 Success: ()
 testing: False
@@ -70,7 +70,7 @@ Success: ()
 testing: IntegerNegate
 Success: ()
 testing: IntegerShow
-Error: ReadFileError: File Not Found //show
+Success: ()
 testing: IntegerToDouble
 Error: ReadFileError: File Not Found //toDouble
 testing: Kind
@@ -142,7 +142,7 @@ Success: ()
 testing: NaturalOdd
 Success: ()
 testing: NaturalShow
-Error: ReadFileError: File Not Found //show
+Success: ()
 testing: NaturalSubtract
 Error: ReadFileError: File Not Found //subtract
 testing: NaturalToInteger
@@ -372,7 +372,7 @@ Error: ErrorMessage: "Parse failed at position 0: char '('"
 testing: WithNewType
 Error: ErrorMessage: "Parse failed at position 0: char '('"
 DONE
-Passed: 158
-Failed: 28
+Passed: 161
+Failed: 25
 1/1: Building All (All.idr)
 Main> Main> Bye for now!
