@@ -196,11 +196,11 @@ Error: ErrorMessage: "Parse failed at position 0: char '('"
 testing: RecordLitNormalizeFieldType
 Success: ()
 testing: RecordLitPun
-Error: ErrorMessage: "Parse failed at position 0: char '('"
+Success: ()
 testing: RecordLitPunCapture
-Error: ErrorMessage: "Parse failed at position 0: char '('"
+Success: ()
 testing: RecordLitPunSome
-Error: ErrorMessage: "Parse failed at position 0: char '('"
+Success: ()
 testing: RecordLitSortFields
 Success: ()
 testing: RecordMixedKinds2
@@ -372,7 +372,7 @@ Error: ErrorMessage: "Parse failed at position 0: char '('"
 testing: WithNewType
 Error: ErrorMessage: "Parse failed at position 0: char '('"
 DONE
-Passed: 164
-Failed: 22
+Passed: 167
+Failed: 19
 1/1: Building All (All.idr)
 Main> Main> Bye for now!
