@@ -252,20 +252,32 @@ mutual
   recordType = do
     recordTypeEmpty <|> recordTypeNonEmpty
 
-  recordLitRegularElem : Parser (FieldName, Expr ImportStatement)
+  recordLitRegularElem : Parser (SortedMap FieldName (Expr ImportStatement))
   recordLitRegularElem = do
     k <- identity
     token "="
     e <- expr
-    pure (MkFieldName k, e)
+    pure $ fromList [(MkFieldName k, e)]
 
-  recordLitPunElem : Parser (FieldName, Expr ImportStatement)
+  recordLitPunElem : Parser (SortedMap FieldName (Expr ImportStatement))
   recordLitPunElem = do
     k <- identity
-    pure $ (MkFieldName k, (EVar k 0))
+    pure $ fromList [(MkFieldName k, (EVar k 0))]
 
-  recordLitElem : Parser (FieldName, Expr ImportStatement)
-  recordLitElem = recordLitRegularElem <|> recordLitPunElem
+  recordLitDottedElem : Parser (SortedMap FieldName (Expr ImportStatement))
+  recordLitDottedElem = do
+    ks <- (identity <* spaces) `sepBy1` (token ".")
+    token "="
+    e <- expr
+    pure $ mkNestedRecord (map MkFieldName ks) e
+  where
+    mkNestedRecord : List1 FieldName -> Expr ImportStatement -> SortedMap FieldName (Expr ImportStatement)
+    mkNestedRecord ks e =
+      let (k ::: ks') = reverse ks in
+      foldl (\ms,k' => fromList [(k', ERecordLit ms)]) (fromList [(k, e)]) ks'
+
+  recordLitElem : Parser (SortedMap FieldName (Expr ImportStatement))
+  recordLitElem = recordLitDottedElem <|> recordLitRegularElem <|> recordLitPunElem
 
   recordLitEmpty : Parser (Expr ImportStatement)
   recordLitEmpty = do
@@ -277,9 +289,9 @@ mutual
   recordLitNonEmpty : Parser (Expr ImportStatement)
   recordLitNonEmpty = do
     token "{"
-    xs <- recordLitElem `sepBy` (token ",")
+    (x ::: xs) <- recordLitElem `sepBy1` (token ",")
     token "}"
-    pure (ERecordLit (fromList xs))
+    pure $ ERecordLit $ foldl (mergeWith ECombine) x xs
 
   recordLit : Parser (Expr ImportStatement)
   recordLit = do

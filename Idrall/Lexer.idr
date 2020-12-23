@@ -7,16 +7,60 @@ import Data.Vect
 import Data.List
 import Data.Nat
 import Data.String.Parser
+import Data.Strings
 
 -- Not a real Lexer, more a collection of small parsing utilities.
 
+mutual
+  blockCommentChunk : Parser String
+  blockCommentChunk =
+    blockComment <|> characters <|> character <|> endOfLine
+    where
+      characters : Parser String
+      characters = (takeWhile1 predicate)
+        where
+          predicate : Char -> Bool
+          predicate c =
+                  '\x20' <= c && c <= '\x10FFFF' && c /= '-' && c /= '{'
+              ||  c == '\n'
+              ||  c == '\t'
+
+      character : Parser String
+      character = do x <- satisfy predicate
+                     pure $ singleton x
+        where
+          predicate : Char -> Bool
+          predicate c = '\x20' <= c && c <= '\x10FFFF' || c == '\n' || c == '\t'
+
+      endOfLine : Parser String
+      endOfLine = (string "\r\n" <?> "newline")
+
+  blockCommentContinue : Parser String
+  blockCommentContinue = endOfComment <|> continue
+    where
+      endOfComment : Parser String
+      endOfComment = token "-}" *> pure ""
+
+      continue : Parser String
+      continue = do
+          c <- blockCommentChunk
+          c' <- blockCommentContinue
+          pure (c <+> c')
+
+  public export
+  blockComment : Parser String
+  blockComment = do
+      _ <- string "{-"
+      c <- blockCommentContinue
+      pure c
+
 public export
-linecomment : Parser String
-linecomment = token "--" *> takeWhile (\c => c /= '\n') <* char '\n'
+lineComment : Parser String
+lineComment = token "--" *> takeWhile (\c => c /= '\n') <* char '\n'
 
 public export
 whitespace : Parser ()
-whitespace =  skip (some linecomment) <|> spaces
+whitespace =  skip blockComment <|> skip (some lineComment) <|> spaces
 
 public export
 hexNumber : Parser Int
