@@ -100,6 +100,8 @@ mutual
     | ENaturalOdd
     -- | > NaturalToInteger                         ~  Natural/toInteger
     | ENaturalToInteger
+    -- | > NaturalSubtract                          ~  Natural/subtract
+    | ENaturalSubtract
     -- | > NaturalShow                               ~  Natural/show
     | ENaturalShow
      -- | > NaturalPlus x y                          ~  x + y
@@ -112,8 +114,12 @@ mutual
     | EIntegerLit Integer
     -- | > IntegerShow ~  Integer/show
     | EIntegerShow
-    -- | > EIntegerNegate ~ Integer/negate
+    -- | > EIntegerClamp ~ Integer/clamp
+    | EIntegerClamp
+    -- | > EIntegerNegate ~ EIntegerNegate
     | EIntegerNegate
+    -- | > EIntegerToDouble ~ EIntegerToDouble
+    | EIntegerToDouble
     -- | > Double ~ Double
     | EDouble
     -- | > DoubleLit n ~ n
@@ -211,13 +217,16 @@ mutual
     show ENaturalEven = "ENaturalEven"
     show ENaturalOdd = "ENaturalOdd"
     show ENaturalToInteger = "ENaturalToInteger"
+    show ENaturalSubtract = "ENaturalSubtract"
     show ENaturalShow = "NaturalShow"
     show (ENaturalPlus x y) = "(ENaturalPlus " ++ show x ++ " " ++ show y ++ ")"
     show (ENaturalTimes x y) = "(ENaturalTimes " ++ show x ++ " " ++ show y ++ ")"
     show EInteger = "EInteger"
     show (EIntegerLit x) = "(EIntegerLit " ++ show x ++ ")"
+    show EIntegerClamp = "EIntegerClamp"
     show EIntegerShow = "EIntegerShow"
     show EIntegerNegate = "EIntegerNegate"
+    show EIntegerToDouble = "EIntegerToDouble"
     show EDouble = "EDouble"
     show (EDoubleLit k) = "(EDoubleLit " ++ show k ++ ")"
     show EDoubleShow = "EDoubleShow"

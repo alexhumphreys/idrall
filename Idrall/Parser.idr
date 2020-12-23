@@ -21,10 +21,13 @@ builtin =
   (string "Natural/isZero" *> pure ENaturalIsZero) <|>
   (string "Natural/even" *> pure ENaturalEven) <|>
   (string "Natural/odd" *> pure ENaturalOdd) <|>
+  (string "Natural/subtract" *> pure ENaturalSubtract) <|>
   (string "Natural/toInteger" *> pure ENaturalToInteger) <|>
   (string "Natural/show" *> pure ENaturalShow) <|>
   (string "Integer/show" *> pure EIntegerShow) <|>
   (string "Integer/negate" *> pure EIntegerNegate) <|>
+  (string "Integer/clamp" *> pure EIntegerClamp) <|>
+  (string "Integer/toDouble" *> pure EIntegerToDouble) <|>
   (string "Double/show" *> pure EDoubleShow) <|>
   (string "List/build" *> pure EListBuild) <|>
   (string "List/fold" *> pure EListFold) <|>

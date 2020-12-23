@@ -33,6 +33,7 @@ mutual
     | VNaturalIsZero Value
     | VNaturalEven Value
     | VNaturalOdd Value
+    | VNaturalSubtract Value Value
     | VNaturalShow Value
     | VNaturalToInteger Value
     | VNaturalPlus Value Value
@@ -42,6 +43,8 @@ mutual
     | VIntegerLit Integer
     | VIntegerShow Value
     | VIntegerNegate Value
+    | VIntegerClamp Value
+    | VIntegerToDouble Value
 
     | VDouble
     | VDoubleLit Double
@@ -157,6 +160,7 @@ mutual
     show (VNaturalEven x) = "(VNaturalEven " ++ show x ++ ")"
     show (VNaturalOdd x) = "(VNaturalOdd " ++ show x ++ ")"
     show (VNaturalToInteger x) = "(VNaturalToInteger " ++ show x ++ ")"
+    show (VNaturalSubtract x y) = "(VNaturalSubtract " ++ show x ++ " " ++ show y ++ ")"
     show (VNaturalShow x) = "(VNaturalShow " ++ show x ++ ")"
     show (VNaturalPlus x y) = "(VNaturalPlus " ++ show x ++ " " ++ show y ++ ")"
     show (VNaturalTimes x y) = "(VNaturalTimes " ++ show x ++ " " ++ show y ++ ")"
@@ -165,6 +169,8 @@ mutual
     show (VIntegerLit x) = "(VIntegerLit " ++ show x ++ ")"
     show (VIntegerShow x) = "(VIntegerShow " ++ show x ++ ")"
     show (VIntegerNegate x) = "(VIntegerNegate " ++ show x ++ ")"
+    show (VIntegerClamp x) = "(VIntegerClamp " ++ show x ++ ")"
+    show (VIntegerToDouble x) = "(VIntegerToDouble " ++ show x ++ ")"
 
     show VDouble = "VDouble"
     show (VDoubleLit k) = "(VDoubleLit " ++ show k ++ ")"
