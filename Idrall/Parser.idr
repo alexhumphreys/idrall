@@ -133,8 +133,6 @@ identFirst = letter <|> char '_'
 identRest : Parser Char
 identRest = alphaNum <|> char '-' <|> char '/' <|> char '_'
 
--- TODO identBackticks : Parser String
-
 identLong : Parser String
 identLong = do f <- identFirst
                r <- some identRest
@@ -165,10 +163,21 @@ reservedNames = do
 identity : Parser String
 identity = do (identLong <|> identShort) <* whitespace
 
+identBackticks : Parser String
+identBackticks = char '`' *> identity <* token "`"
+
+varBackticks : Parser (Expr ImportStatement)
+varBackticks = do
+  i <- identBackticks
+  pure $ EVar i 0
+
+varRegular : Parser (Expr ImportStatement)
+varRegular = do requireFailure reservedNames
+                i <- identity
+                pure (EVar i 0)
+
 var : Parser (Expr ImportStatement)
-var = do _ <- requireFailure reservedNames
-         i <- identity
-         pure (EVar i 0)
+var = varBackticks <|> varRegular
 
 appl : Parser ((Expr ImportStatement) -> (Expr ImportStatement) -> (Expr ImportStatement))
 appl = do whitespace -- TODO also matches no spaces, but spaces1 messes with the eos parser
@@ -243,12 +252,20 @@ mutual
   recordType = do
     recordTypeEmpty <|> recordTypeNonEmpty
 
-  recordLitElem : Parser (FieldName, Expr ImportStatement)
-  recordLitElem = do
+  recordLitRegularElem : Parser (FieldName, Expr ImportStatement)
+  recordLitRegularElem = do
     k <- identity
     token "="
     e <- expr
     pure (MkFieldName k, e)
+
+  recordLitPunElem : Parser (FieldName, Expr ImportStatement)
+  recordLitPunElem = do
+    k <- identity
+    pure $ (MkFieldName k, (EVar k 0))
+
+  recordLitElem : Parser (FieldName, Expr ImportStatement)
+  recordLitElem = recordLitRegularElem <|> recordLitPunElem
 
   recordLitEmpty : Parser (Expr ImportStatement)
   recordLitEmpty = do
@@ -294,7 +311,7 @@ mutual
   -- Need to parse this somehow.
   letExpr : Parser (Expr ImportStatement)
   letExpr = token "let" *> do
-    i <- identity
+    i <- identity <|> identBackticks
     t <- optional (do token ":"; expr)
     token "="
     v <- expr
