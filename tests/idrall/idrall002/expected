@@ -364,15 +364,15 @@ Success: ()
 testing: UnionTypeType
 Success: ()
 testing: WithCreateIntermediateRecords
-Error: ErrorMessage: "Parse failed at position 132: expected the end of the string"
+Success: ()
 testing: WithNested
-Error: ErrorMessage: "Parse failed at position 171: expected the end of the string"
+Success: ()
 testing: WithNewField
-Error: ErrorMessage: "Parse failed at position 119: expected the end of the string"
+Success: ()
 testing: WithNewType
-Error: ErrorMessage: "Parse failed at position 170: expected the end of the string"
+Success: ()
 DONE
-Passed: 171
-Failed: 15
+Passed: 175
+Failed: 11
 1/1: Building All (All.idr)
 Main> Main> Bye for now!

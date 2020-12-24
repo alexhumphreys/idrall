@@ -204,11 +204,20 @@ mutual
     token ")"
     pure (\e' => (EProject e' (Right e)))
 
+  withExpr : Parser ((Expr ImportStatement) -> (Expr ImportStatement))
+  withExpr = do
+    token "with"
+    ks <- dottedList
+    token "="
+    e <- expr
+    pure (\e' => (EWith e' ks e))
+
   table : OperatorTable (Expr ImportStatement)
   table = [ [ Postfix projectNames
             , Postfix projectByType
             , Postfix field
             , Infix appl AssocLeft
+            , Postfix withExpr
             ]
           , [ Infix (do (token "->" <|> token "→") ; pure (EPi "_")) AssocLeft ]
           , [ Infix (do token ":"; pure EAnnot) AssocLeft]
@@ -264,12 +273,17 @@ mutual
     k <- identity
     pure $ fromList [(MkFieldName k, (EVar k 0))]
 
+  dottedList : Parser (List1 FieldName)
+  dottedList = do
+    ks <- (identity <* spaces) `sepBy1` (token ".")
+    pure $ (map MkFieldName ks)
+
   recordLitDottedElem : Parser (SortedMap FieldName (Expr ImportStatement))
   recordLitDottedElem = do
-    ks <- (identity <* spaces) `sepBy1` (token ".")
+    ks <- dottedList
     token "="
     e <- expr
-    pure $ mkNestedRecord (map MkFieldName ks) e
+    pure $ mkNestedRecord ks e
   where
     mkNestedRecord : List1 FieldName -> Expr ImportStatement -> SortedMap FieldName (Expr ImportStatement)
     mkNestedRecord ks e =
