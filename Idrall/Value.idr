@@ -3,6 +3,8 @@ module Idrall.Value
 import Idrall.Expr
 import Idrall.Error
 
+import Data.List1
+
 mutual
   public export
   Ty : Type
@@ -80,6 +82,7 @@ mutual
     | VMerge Value Value (Maybe Value)
     | VInject (SortedMap FieldName (Maybe Value)) FieldName (Maybe Value) -- TODO proof that key is in SM?
     | VProject (Value) (Either (List FieldName) (Value))
+    | VWith Value (List1 FieldName) Value
 
   public export
   data Env
@@ -207,6 +210,7 @@ mutual
     show (VMerge x y z) = "(VMerge " ++ show x ++ " " ++ show y ++ " " ++ show z ++ ")"
     show (VInject a k v) = "(VInject " ++ show a ++ " " ++ show k ++ " " ++ show v ++ ")"
     show (VProject x y) = "(VProject " ++ show x ++ " " ++ show y ++ ")"
+    show (VWith x ks y) = "(VWith " ++ show x ++ " " ++ show ks ++ " " ++ show y ++ ")"
 
 public export
 Semigroup VChunks where

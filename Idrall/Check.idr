@@ -338,8 +338,23 @@ mutual
          (VRecordLit ms, VRecordLit ms') => pure $ VRecordLit $ fromList !(vProjectByFields ms (keys ms'))
          (other, VRecord _) => Left (Unexpected $ "Not a RecordLit. Value: " ++ show other)
          (_, other) => Left (Unexpected $ "Not a Record. Value: " ++ show other)
+  eval env (EWith x ks y) = vWith !(eval env x) ks !(eval env y)
   eval env (EEmbed (Raw x)) = absurd x
   eval env (EEmbed (Resolved x)) = eval Empty x
+
+  vWith : Value -> List1 FieldName -> Value -> Either Error Value
+  vWith (VRecordLit ms) (head ::: []) u = pure $ VRecordLit $ insert head u ms
+  vWith (VRecordLit ms) (head ::: (k :: ks)) u =
+    case lookup head ms of
+         Nothing =>
+           let new = VRecordLit (fromList [])
+               rest = vWith new (k ::: ks) u
+           in
+           pure $ VRecordLit $ insert head !rest ms
+         (Just u') =>
+           let rest = vWith u' (k ::: ks) u in
+           pure $ VRecordLit $ insert head !rest ms
+  vWith t ks u = pure $ VWith t ks u
 
   vProjectByFields : SortedMap FieldName Value -> List FieldName -> Either Error (List (FieldName, Value))
   vProjectByFields ms ks = traverse (lookupRecord ms) ks
@@ -637,6 +652,10 @@ mutual
   conv env (VProject t (Right u)) (VProject t' (Right u')) = do
     conv env t t'
     conv env u u'
+  conv env (VWith t ks u) (VWith t' ks' u') = do
+    conv env t t'
+    convEq ks ks'
+    conv env u u'
   conv env VPrimVar VPrimVar = pure () -- TODO not in conv, maybe covered by `_ | ptrEq t t' -> True` case?
   conv env t u = convErr t u
 
@@ -759,6 +778,7 @@ mutual
     qApp env (EField (EUnion !m') k) t
   quote env (VProject t (Left ks)) = pure $ EProject !(quote env t) (Left ks)
   quote env (VProject t (Right u)) = pure $ EProject !(quote env t) (Right $ !(quote env u))
+  quote env (VWith t ks u) = pure $ EWith !(quote env t) ks !(quote env u)
   quote env VPrimVar = Left $ ReadBackError "Can't quote VPrimVar"
 
 ||| destruct VPi and VHPi
@@ -1087,6 +1107,23 @@ mutual
            pure (EProject t (Right a), VRecord $ fromList !(vProjectByFields ms (keys ms')))
          (other, VRecord _) => unexpected "Not a RecordLit" other
          (_, other) => unexpected "Not a Record" other
+  infer cxt (EWith t ks u) = do -- TODO understand this
+    (t, tt) <- infer cxt t
+    pure (EWith t ks u, !(inferWith tt ks u))
+  where
+    inferWith : Value -> List1 FieldName -> Expr Void -> Either Error Value
+    inferWith (VRecord ms) ks y =
+      case ks of
+           (head ::: []) => do
+             (u, uu) <- infer cxt u
+             pure $ VRecord $ insert head uu ms
+           (head ::: (k :: ks)) => do
+             let v = case lookup head ms of
+                      Nothing => VRecord (fromList [])
+                      (Just v) => v
+             v' <- inferWith v (k ::: ks) y
+             pure $ VRecord $ insert head v' ms
+    inferWith other _ _ = unexpected "Not a RecordLit" other
   infer cxt (EEmbed (Raw x)) = absurd x
   infer cxt (EEmbed (Resolved x)) = infer initCxt x
 

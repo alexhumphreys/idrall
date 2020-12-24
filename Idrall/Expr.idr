@@ -1,5 +1,7 @@
 module Idrall.Expr
 
+import Data.List1
+
 import Idrall.Path
 
 import public Data.SortedMap
@@ -181,6 +183,8 @@ mutual
     -- | > Project e (Left xs) ~ e.{ xs }
     --   > Project e (Right t) ~ e.(t)
     | EProject (Expr a) (Either (List FieldName) (Expr a))
+    -- | > With x y e ~  x with y = e
+    | EWith (Expr a) (List1 FieldName) (Expr a)
     | EEmbed (Import a)
 
 export
@@ -257,6 +261,7 @@ mutual
     show (EMerge x y z) = "(EMerge " ++ show x ++ " " ++ show y ++ " " ++ show z ++ ")"
     show (EField x y) = "(EField " ++ show x ++ " " ++ show y ++ ")"
     show (EProject x y) = "(EField " ++ show x ++ " " ++ show y ++ ")"
+    show (EWith x ks y) = "(EWith " ++ show x ++ " " ++ show ks ++ " " ++ show y ++ ")"
     show (EEmbed x) = "(EEmbed " ++ show x ++ ")"
 
   public export
