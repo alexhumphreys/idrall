@@ -144,7 +144,7 @@ identShort = do i <- identFirst
 
 reservedNames' : List String
 reservedNames' =
-  [ "in", "let", "assert", "merge"
+  [ "in", "let", "assert", "merge", "toMap"
   , "->", "&&", ":"
   , "List", "Text", "Optional", "Natural", "Integer", "Double"
   , "Some", "None"
@@ -465,9 +465,17 @@ mutual
                       (EAnnot y' a) => pure (EMerge x y' (Just a))
                       _ => pure (EMerge x y t)
 
+  toMap : Parser (Expr ImportStatement)
+  toMap = do
+    token "toMap"
+    x <- expr
+    case x of -- TODO hacky
+         (EAnnot x y) => pure (EToMap x (Just y))
+         x => pure (EToMap x Nothing)
+
   term : Parser (Expr ImportStatement)
   term = do
-    i <-(builtin <|> mergeExpr <|>
+    i <-(builtin <|> mergeExpr <|> toMap <|>
      true <|> false <|> bool <|> ifExpr <|>
      double <|> doubleLit <|>
      natural <|> naturalLit <|>

@@ -80,6 +80,8 @@ mutual
     | VCombineTypes Value Value
     | VPrefer Value Value
     | VMerge Value Value (Maybe Value)
+    | VToMap Value (Maybe Value)
+    -- TODO missing VField?
     | VInject (SortedMap FieldName (Maybe Value)) FieldName (Maybe Value) -- TODO proof that key is in SM?
     | VProject (Value) (Either (List FieldName) (Value))
     | VWith Value (List1 FieldName) Value
@@ -208,6 +210,7 @@ mutual
     show (VCombineTypes x y) = "(VCombineTypes " ++ show x ++ " " ++ show y ++ ")"
     show (VPrefer x y) = "(VPrefer " ++ show x ++ " " ++ show y ++ ")"
     show (VMerge x y z) = "(VMerge " ++ show x ++ " " ++ show y ++ " " ++ show z ++ ")"
+    show (VToMap x y) = "(VToMap " ++ show x ++ " " ++ show y ++ ")"
     show (VInject a k v) = "(VInject " ++ show a ++ " " ++ show k ++ " " ++ show v ++ ")"
     show (VProject x y) = "(VProject " ++ show x ++ " " ++ show y ++ ")"
     show (VWith x ks y) = "(VWith " ++ show x ++ " " ++ show ks ++ " " ++ show y ++ ")"

@@ -199,6 +199,13 @@ mutual
     let kv = toList x in do
       kv' <- resolveUnion h p kv
       pure (EUnion (fromList kv'))
+  resolve h p (EToMap x Nothing) = do
+    x' <- resolve h p x
+    pure (EToMap x' Nothing)
+  resolve h p (EToMap x (Just y)) = do
+    x' <- resolve h p x
+    y' <- resolve h p y
+    pure (EToMap x' (Just y'))
   resolve h p (EField x y) = do
     pure (EField !(resolve h p x) y)
   resolve h p (EProject x (Left y)) = do

@@ -173,17 +173,20 @@ mutual
     | ECombine (Expr a) (Expr a)
     -- | > x //\\ y
     | ECombineTypes (Expr a) (Expr a)
-    -- | > Prefer x y ~  x ⫽ y
+    -- | > EPrefer x y ~  x ⫽ y
     | EPrefer (Expr a) (Expr a)
-    -- | > Merge x y (Just t ) ~  merge x y : t
-    --   > Merge x y  Nothing  ~  merge x y
+    -- | > EMerge x y (Just t ) ~  merge x y : t
+    --   > EMerge x y  Nothing  ~  merge x y
     | EMerge (Expr a) (Expr a) (Maybe (Expr a))
+    -- | > EToMap x (Just t) ~  toMap x : t
+    --   > EToMap x Nothing ~  toMap x
+    | EToMap (Expr a) (Maybe (Expr a))
     -- | > EField (EVar "x" 0) (MkFieldName "Foo") ~ x.Foo
     | EField (Expr a) FieldName
-    -- | > Project e (Left xs) ~ e.{ xs }
-    --   > Project e (Right t) ~ e.(t)
+    -- | > EProject e (Left xs) ~ e.{ xs }
+    --   > EProject e (Right t) ~ e.(t)
     | EProject (Expr a) (Either (List FieldName) (Expr a))
-    -- | > With x y e ~  x with y = e
+    -- | > EWith x y e ~  x with y = e
     | EWith (Expr a) (List1 FieldName) (Expr a)
     | EEmbed (Import a)
 
@@ -259,6 +262,7 @@ mutual
     show (ECombineTypes x y) = "(ECombineTypes " ++ show x ++ " " ++ show y ++ ")"
     show (EPrefer x y) = "(EPrefer " ++ show x ++ " " ++ show y ++ ")"
     show (EMerge x y z) = "(EMerge " ++ show x ++ " " ++ show y ++ " " ++ show z ++ ")"
+    show (EToMap x y) = "(EToMap " ++ show x ++ " " ++ show y ++ ")"
     show (EField x y) = "(EField " ++ show x ++ " " ++ show y ++ ")"
     show (EProject x y) = "(EField " ++ show x ++ " " ++ show y ++ ")"
     show (EWith x ks y) = "(EWith " ++ show x ++ " " ++ show ks ++ " " ++ show y ++ ")"
