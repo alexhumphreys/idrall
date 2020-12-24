@@ -329,6 +329,19 @@ mutual
          Nothing => Left (FieldNotFoundError $ show k)
          (Just t) => pure t
   eval env (EField x k) = Left (InvalidFieldType (show x))
+  eval env (EToMap x Nothing) =
+    case !(eval env x) of
+         VRecordLit ms =>
+           let xs = SortedMap.toList ms in
+               case xs of
+                    [] => Left $ ToMapEmpty "Needs an annotation"
+                    (y :: ys) => pure $ VListLit Nothing $ map vToMap (y :: ys)
+         other => pure $ VToMap other Nothing
+  eval env (EToMap x (Just y)) = do
+    y' <- eval env y
+    case !(eval env x) of
+         VRecordLit ms => pure $ VListLit (Just y') $ map vToMap (SortedMap.toList ms)
+         other => pure $ VToMap other Nothing
   eval env (EProject x (Left ks)) =
     case !(eval env x) of
          VRecordLit ms => pure $ VRecordLit $ fromList !(vProjectByFields ms ks)
@@ -341,6 +354,12 @@ mutual
   eval env (EWith x ks y) = vWith !(eval env x) ks !(eval env y)
   eval env (EEmbed (Raw x)) = absurd x
   eval env (EEmbed (Resolved x)) = eval Empty x
+
+  vToMap : (FieldName, Value) -> Value
+  vToMap (MkFieldName k, v) = VRecordLit $ fromList
+    [ (MkFieldName "mapKey", VTextLit $ MkVChunks [] k)
+    , (MkFieldName "mapValue", v)
+    ]
 
   vWith : Value -> List1 FieldName -> Value -> Either Error Value
   vWith (VRecordLit ms) (head ::: []) u = pure $ VRecordLit $ insert head u ms
@@ -639,6 +658,11 @@ mutual
     conv env t t'
     conv env u u'
     conv env a a'
+  conv env (VToMap t Nothing) (VToMap t' Nothing) = do
+    conv env t t'
+  conv env (VToMap t (Just a)) (VToMap t' (Just a')) = do
+    conv env t t'
+    conv env a a'
   conv env (VInject m k (Just mt)) (VInject m' k' (Just mt')) = do
     convUnion env (toList m) (toList m')
     convEq k k'
@@ -770,6 +794,8 @@ mutual
   quote env (VPrefer x y) = Right $ EPrefer !(quote env x) !(quote env y)
   quote env (VMerge x y Nothing) = pure $ EMerge !(quote env x) !(quote env y) Nothing
   quote env (VMerge x y (Just z)) = pure $ EMerge !(quote env x) !(quote env y) (Just !(quote env z))
+  quote env (VToMap x Nothing) = pure $ EToMap !(quote env x) Nothing
+  quote env (VToMap x (Just y)) = pure $ EToMap !(quote env x) (Just !(quote env y))
   quote env (VInject m k Nothing) =
     let m' = traverse (mapMaybe (quote env)) m in
     Right $ EField (EUnion !m') k
@@ -1082,6 +1108,23 @@ mutual
            in pure (EMerge t u a, !(inferMerge cxt newUnion us Nothing))
          (other, VRecord _) => unexpected "Not a RecordLit or Optional" other
          (_, other) => unexpected "Not a RecordLit" other
+  infer cxt (EToMap t Nothing) = do
+    (t, tt) <- infer cxt t
+    case tt of
+         (VRecord ms) =>
+           let xs = SortedMap.toList ms in
+           case xs of
+                ((k, v) :: ys) => do
+                  unify cxt !(inferSkip cxt !(quote (envNames $ values cxt) v)) (VConst CType)
+                  foldlM (\x,y => unify cxt x y *> pure x) v (map snd ys)
+                  pure (EToMap t Nothing, toMapTy v)
+                [] => Left $ ToMapEmpty "Needs an annotation"
+         other => unexpected "Not a RecordLit" other
+  infer cxt (EToMap t (Just a)) = do
+    (t, tt) <- infer cxt (EToMap t Nothing)
+    av <- eval (values cxt) a
+    unify cxt tt av
+    pure (EToMap t (Just a), av)
   infer cxt (EField t@(EUnion x) k) = do
     xv <- traverse (mapMaybe (eval (values cxt))) x
     case lookup k xv of
@@ -1126,6 +1169,9 @@ mutual
     inferWith other _ _ = unexpected "Not a RecordLit" other
   infer cxt (EEmbed (Raw x)) = absurd x
   infer cxt (EEmbed (Resolved x)) = infer initCxt x
+
+  toMapTy : Value -> Value
+  toMapTy v = VList $ VRecord $ fromList [(MkFieldName "mapKey", VText), (MkFieldName "mapValue", v)]
 
   checkEmptyMerge : Maybe Value -> Either Error Value
   checkEmptyMerge Nothing = Left $ EmptyMerge "Needs a type annotation"

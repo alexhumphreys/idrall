@@ -326,11 +326,11 @@ Error: ReadFileError: File Not Found //replace
 testing: TextShow
 Error: ReadFileError: File Not Found //show
 testing: ToMap
-Error: MissingVar: "toMap"
+Success: ()
 testing: ToMapAnnotated
-Error: MissingVar: "toMap"
+Success: ()
 testing: ToMapInferTypeFromRecord
-Error: MissingVar: "toMap"
+Success: ()
 testing: True
 Success: ()
 testing: Type
@@ -372,7 +372,7 @@ Success: ()
 testing: WithNewType
 Success: ()
 DONE
-Passed: 175
-Failed: 11
+Passed: 178
+Failed: 8
 1/1: Building All (All.idr)
 Main> Main> Bye for now!
