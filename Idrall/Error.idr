@@ -25,6 +25,7 @@ data Error
   | MergeUnhandledCase String
   | ToMapEmpty String
   | EmptyMerge String
+  | InvalidRecordCompletion String
   | CyclicImportError String
   | NestedError Error Error
 
@@ -53,6 +54,7 @@ Show Error where
   show (MergeUnhandledCase str) = "MergeUnhandledCase: " ++ str
   show (EmptyMerge str) = "EmptyMerge: " ++ str
   show (ToMapEmpty str) = "ToMapEmpty: " ++ str
+  show (InvalidRecordCompletion str) = "InvalidRecordCompletion: " ++ str
   show (CyclicImportError str) = "CyclicImportError: " ++ str
   show (NestedError e e') =
     show e ++ "\n" ++ show e'

@@ -329,6 +329,8 @@ mutual
          Nothing => Left (FieldNotFoundError $ show k)
          (Just t) => pure t
   eval env (EField x k) = Left (InvalidFieldType (show x))
+  eval env (ERecordCompletion t u) =
+    eval env (EAnnot (EPrefer (EField t (MkFieldName "default")) u) (EField t (MkFieldName "Type")))
   eval env (EToMap x Nothing) =
     case !(eval env x) of
          VRecordLit ms =>
@@ -1136,6 +1138,18 @@ mutual
          Nothing => Left $ FieldNotFoundError $ show k
          (Just x) => infer cxt x
   infer cxt (EField t k) = Left (InvalidFieldType (show t))
+  infer cxt (ERecordCompletion t u) = do
+    (t, tt) <- infer cxt t
+    case tt of
+         (VRecord ms) => do
+           -- guard $ mapErr "Type" (go (MkFieldName "Type") ms)
+           -- guard $ mapErr "default" (go (MkFieldName "default") ms)
+           case (lookup (MkFieldName "Type") ms, lookup (MkFieldName "default") ms) of
+                (Just x, Just y) =>
+                  infer cxt (EAnnot (EPrefer (EField t (MkFieldName "default")) u) (EField t (MkFieldName "Type")))
+                (other, (Just _)) => Left $ InvalidRecordCompletion "Type"
+                (_, other) => Left $ InvalidRecordCompletion "default"
+         other => unexpected "Not a RecordLit" other
   infer cxt (EProject t (Left ks)) = do
     (t, tt) <- infer cxt t
     case tt of

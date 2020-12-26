@@ -175,6 +175,8 @@ mutual
     | ECombineTypes (Expr a) (Expr a)
     -- | > EPrefer x y ~  x ⫽ y
     | EPrefer (Expr a) (Expr a)
+    -- | > ERecordCompletion x y ~  x::y
+    | ERecordCompletion (Expr a) (Expr a)
     -- | > EMerge x y (Just t ) ~  merge x y : t
     --   > EMerge x y  Nothing  ~  merge x y
     | EMerge (Expr a) (Expr a) (Maybe (Expr a))
@@ -261,6 +263,7 @@ mutual
     show (ECombine x y) = "(ECombine " ++ show x ++ " " ++ show y ++ ")"
     show (ECombineTypes x y) = "(ECombineTypes " ++ show x ++ " " ++ show y ++ ")"
     show (EPrefer x y) = "(EPrefer " ++ show x ++ " " ++ show y ++ ")"
+    show (ERecordCompletion x y) = "(ERecordCompletion " ++ show x ++ " " ++ show y ++ ")"
     show (EMerge x y z) = "(EMerge " ++ show x ++ " " ++ show y ++ " " ++ show z ++ ")"
     show (EToMap x y) = "(EToMap " ++ show x ++ " " ++ show y ++ ")"
     show (EField x y) = "(EField " ++ show x ++ " " ++ show y ++ ")"

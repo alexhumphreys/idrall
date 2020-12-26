@@ -10,7 +10,7 @@ Success: ()
 testing: Bool
 Success: ()
 testing: Completion
-Error: ErrorMessage: "Parse failed at position 28: expected the end of the string"
+Success: ()
 testing: Double
 Success: ()
 testing: DoubleLiteral
@@ -372,7 +372,7 @@ Success: ()
 testing: WithNewType
 Success: ()
 DONE
-Passed: 178
-Failed: 8
+Passed: 179
+Failed: 7
 1/1: Building All (All.idr)
 Main> Main> Bye for now!
