@@ -186,6 +186,10 @@ mutual
     x' <- resolve h p x
     y' <- resolve h p y
     pure (EPrefer x' y')
+  resolve h p (ERecordCompletion x y) = do
+    x' <- resolve h p x
+    y' <- resolve h p y
+    pure (ERecordCompletion x' y')
   resolve h p (EMerge x y Nothing) = do
     x' <- resolve h p x
     y' <- resolve h p y

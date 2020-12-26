@@ -234,6 +234,7 @@ mutual
           , [ Infix (pure ECombine <* (token "/\\" <|> token "∧")) AssocLeft
             , Infix (pure EPrefer <* (token "//" <|> token "⫽")) AssocLeft
             , Infix (pure ECombineTypes <* (token "//\\\\" <|> token "⩓")) AssocLeft
+            , Infix (pure ERecordCompletion <* (token "::")) AssocLeft
             ]
           ]
 
