@@ -32,6 +32,8 @@ mutual
 
     | VNatural
     | VNaturalLit Nat
+    | VNaturalBuild Value
+    | VNaturalFold Value Value Value Value
     | VNaturalIsZero Value
     | VNaturalEven Value
     | VNaturalOdd Value
@@ -54,6 +56,7 @@ mutual
 
     | VText
     | VTextLit VChunks
+    | VTextAppend Value Value
 
     | VList Ty
     | VListLit (Maybe Ty) (List Value)
@@ -106,6 +109,7 @@ mutual
   data HLamInfo
     = Prim
     | Typed String Value
+    | NaturalFoldCl Value
     | ListFoldCl Value
 
 ||| Returns `VHPi "_" a (\_ => Right b)`
@@ -124,6 +128,7 @@ mutual
     show Prim = "Prim"
     show (Typed x y) = "(Typed " ++ show x ++ " " ++ show y ++ ")"
     show (ListFoldCl x) = "(ListFoldCl " ++ show x ++ ")"
+    show (NaturalFoldCl x) = "(NaturalFoldCl " ++ show x ++ ")"
 
   public export
   Show Env where
@@ -161,6 +166,9 @@ mutual
 
     show VNatural = "VNatural"
     show (VNaturalLit k) = "(VNaturalLit " ++ show k ++ ")"
+    show (VNaturalBuild x) = "(VNaturalBuild " ++ show x ++ ")"
+    show (VNaturalFold w x y z) =
+      "(VNaturalFold " ++ show w ++ " " ++ show x ++ " " ++ show y ++ " " ++ show z ++ ")"
     show (VNaturalIsZero x) = "(VNaturalIsZero " ++ show x ++ ")"
     show (VNaturalEven x) = "(VNaturalEven " ++ show x ++ ")"
     show (VNaturalOdd x) = "(VNaturalOdd " ++ show x ++ ")"
@@ -183,6 +191,7 @@ mutual
 
     show (VText) = "VText"
     show (VTextLit x) = "(VTextLit " ++ show x ++ ")"
+    show (VTextAppend x y) = "(VTextLit " ++ show x ++ " " ++ show y ++ ")"
 
     show (VList a) = "(VList " ++ show a ++ ")"
     show (VListLit ty vs) = "(VListLit " ++ show ty ++ show vs ++ ")"

@@ -94,6 +94,10 @@ mutual
     | ENatural
     -- | > NaturalLit n ~ n
     | ENaturalLit Nat
+    -- | > NaturalFold ~ Natural/fold
+    | ENaturalFold
+    -- | > NaturalBuild ~ Natural/build
+    | ENaturalBuild
     -- | > NaturalIsZero ~ Natural/isZero
     | ENaturalIsZero
         -- | > NaturalEven                              ~  Natural/even
@@ -132,6 +136,8 @@ mutual
     | EText
     -- | > ETextLit (Chunks [(t1, e1), (t2, e2)] t3) ~  "t1${e1}t2${e2}t3"
     | ETextLit (Chunks a)
+    -- | > ETextAppend x y ~ x ++ y
+    | ETextAppend (Expr a) (Expr a)
     -- | > EList a ~ List a
     | EList
     -- | > EList (Some e) [e', ...] ~ [] : List a
@@ -222,6 +228,8 @@ mutual
     show (EBoolIf x y z) = "(EBoolIf " ++ show x ++ " " ++ show y ++ " " ++ show z ++ ")"
     show ENatural = "ENatural"
     show (ENaturalLit k) = "(ENaturalLit " ++ show k ++ ")"
+    show ENaturalFold = "ENaturalFold"
+    show ENaturalBuild = "ENaturalBuild"
     show ENaturalIsZero = "ENaturalIsZero"
     show ENaturalEven = "ENaturalEven"
     show ENaturalOdd = "ENaturalOdd"
@@ -241,6 +249,7 @@ mutual
     show EDoubleShow = "EDoubleShow"
     show EText = "EText"
     show (ETextLit x) = "(ETextLit " ++ show x ++ ")"
+    show (ETextAppend x y) = "(ETextAppend " ++ show x ++ " " ++ show y ++ ")"
     show EList = "EList"
     show (EListLit Nothing xs) = "(EListLit Nothing " ++ show xs ++ ")"
     show (EListLit (Just x) xs) = "(EListLit (Just " ++ show x ++ ") " ++ show xs ++ ")"

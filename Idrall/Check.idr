@@ -107,6 +107,33 @@ mutual
                         Left _ => pure $ VBoolNE t u
   eval env ENatural = Right VNatural
   eval env (ENaturalLit k) = Right (VNaturalLit k)
+  eval env ENaturalBuild =
+    pure $ VPrim $
+      \c => case c of
+                 VHLam (NaturalFoldCl x) _ => pure x
+                 VPrimVar => pure $ VNaturalBuild VPrimVar
+                 t => vAppM t [ VNatural
+                              , VHLam (Typed "n" VNatural) $ \n =>
+                                    pure $ vNaturalPlus n (VNaturalLit 1)
+                              , VNaturalLit 0
+                              ]
+  eval env ENaturalFold =
+    pure $ VPrim $
+      \c => case c of
+                 VNaturalLit n =>
+                     pure $ VHLam (Typed "natural" vType) $ \natural =>
+                     pure $ VHLam (Typed "succ" (vFun natural natural) ) $ \succ =>
+                     pure $ VHLam (Typed "zero" natural) $ \zero =>
+                       go succ zero n
+                 n =>
+                     pure $ VHLam (NaturalFoldCl n) $ \natural =>
+                     pure $ VPrim $ \succ =>
+                     pure $ VPrim $ \zero =>
+                     pure $ VNaturalFold n natural succ zero
+  where
+    go : Value -> Value -> Nat -> Either Error Value
+    go succ acc 0 = pure acc
+    go succ acc (S k) = go succ !(vApp succ acc) k
   eval env ENaturalIsZero = Right $ VPrim $
                               \c => case c of
                                       VNaturalLit n => Right $ VBoolLit (n == 0)
@@ -145,12 +172,7 @@ mutual
       \c => case c of
                  VNaturalLit n => pure $ VIntegerLit (cast n)
                  n             => pure $ VNaturalToInteger n
-  eval env (ENaturalPlus t u) =
-    case (!(eval env t), !(eval env u)) of
-         (VNaturalLit 0, u) => pure u
-         (t, VNaturalLit 0) => pure t
-         (VNaturalLit t, VNaturalLit u) => pure (VNaturalLit $ t + u)
-         (t, u) => pure $ VNaturalPlus t u
+  eval env (ENaturalPlus t u) = pure $ vNaturalPlus !(eval env t) !(eval env u)
   eval env (ENaturalTimes t u) =
     case (!(eval env t), !(eval env u)) of
          (VNaturalLit 1, u) => pure u
@@ -191,6 +213,12 @@ mutual
   eval env (ETextLit (MkChunks xs x)) = do
     xs' <- traverse (mapChunks (eval env)) xs
     Right (VTextLit (MkVChunks xs' x))
+  eval env (ETextAppend x y) =
+    case (!(eval env x), !(eval env y)) of
+         (VTextLit (MkVChunks [] ""), u) => pure u
+         (t, VTextLit (MkVChunks [] "")) => pure t
+         (VTextLit x, VTextLit y) => pure $ VTextLit (x <+> y)
+         (t, u) => pure $ VTextAppend t u
   eval env EList = do
     Right $ VPrim $ \a => Right $ VList a
   eval env (EListLit Nothing es) = do
@@ -390,6 +418,12 @@ mutual
   listIndexedType (Just a) =
     Just $ VRecord (fromList [(MkFieldName "index", VNatural), (MkFieldName "value", a)])
 
+  vNaturalPlus : Value -> Value -> Value
+  vNaturalPlus (VNaturalLit 0) u = u
+  vNaturalPlus t (VNaturalLit 0) = t
+  vNaturalPlus (VNaturalLit t) (VNaturalLit u) = VNaturalLit $ t + u
+  vNaturalPlus t u = VNaturalPlus t u
+
   -- TODO lots of traversals here
   vListIndexed : Maybe Value -> List Value -> Value
   vListIndexed a xs =
@@ -580,6 +614,12 @@ mutual
     conv env f f'
   conv env VNatural VNatural = pure ()
   conv env (VNaturalLit k) (VNaturalLit k') = convEq k k'
+  conv env (VNaturalBuild t) (VNaturalBuild t') = conv env t t'
+  conv env (VNaturalFold t u v w) (VNaturalFold t' u' v' w') = do
+    conv env t t'
+    conv env u u'
+    conv env v v'
+    conv env w w'
   conv env (VNaturalIsZero t) (VNaturalIsZero t') = conv env t t'
   conv env (VNaturalEven t) (VNaturalEven t') = conv env t t'
   conv env (VNaturalOdd t) (VNaturalOdd t') = conv env t t'
@@ -611,6 +651,9 @@ mutual
          ((Just l'), (Just r')) => do
            convEq (l' ++ z) (r' ++ z')
          _ => convChunks env t u
+  conv env (VTextAppend t u) (VTextAppend t' u') = do
+    conv env t t'
+    conv env u u'
   conv env (VList a) (VList a') = conv env a a'
   conv env (VListLit _ xs) (VListLit _ xs') = convList env xs xs'
   conv env (VListAppend t u) (VListAppend t' u') = do
@@ -741,6 +784,8 @@ mutual
   quote env (VBoolIf b t f) = pure $ EBoolIf !(quote env b) !(quote env t) !(quote env f)
   quote env VNatural = Right $ ENatural
   quote env (VNaturalLit k) = Right $ ENaturalLit k
+  quote env (VNaturalBuild x) = qApp env ENaturalBuild x
+  quote env (VNaturalFold w x y z) = qAppM env ENaturalFold [w, x, y, z]
   quote env (VNaturalIsZero x) = qApp env ENaturalIsZero x
   quote env (VNaturalEven x) = qApp env ENaturalEven x
   quote env (VNaturalOdd x) = qApp env ENaturalOdd x
@@ -762,6 +807,7 @@ mutual
   quote env (VTextLit (MkVChunks xs x)) =
     let chx = traverse (mapChunks (quote env)) xs in
     Right $ ETextLit (MkChunks !chx x)
+  quote env (VTextAppend t u) = pure $ ETextAppend !(quote env t) !(quote env u)
   quote env (VList x) = qApp env EList x
   quote env (VListLit Nothing ys) =
     let ys' = traverse (quote env) ys in
@@ -896,6 +942,13 @@ mutual
   unexpected : String -> Value -> Either Error a
   unexpected str v = Left (Unexpected $ str ++ " Value: " ++ show v)
 
+  natFoldTy : Value
+  natFoldTy =
+    VHPi "natural" vType $ \natural =>
+    pure $ VHPi "succ" (vFun natural natural) $ \succ =>
+    pure $ VHPi "zero" natural $ \zero =>
+    pure $ natural
+
   listFoldTy : Value -> Value
   listFoldTy a =
     VHPi "list" vType $ \list =>
@@ -972,6 +1025,8 @@ mutual
     Right $ (EBoolIf b t f, tt)
   infer cxt ENatural = Right $ (ENatural, VConst CType)
   infer cxt (ENaturalLit k) = Right $ (ENaturalLit k, VNatural)
+  infer cxt ENaturalBuild = pure (ENaturalBuild, vFun natFoldTy VNatural)
+  infer cxt ENaturalFold = pure (ENaturalFold, vFun VNatural natFoldTy)
   infer cxt ENaturalIsZero = Right $ (ENaturalIsZero, (vFun VNatural VBool))
   infer cxt ENaturalEven = Right $ (ENaturalEven, (vFun VNatural VBool))
   infer cxt ENaturalOdd = Right $ (ENaturalOdd, (vFun VNatural VBool))
@@ -1000,6 +1055,10 @@ mutual
     let go = mapChunks (\e => check cxt e VText) in do
     traverse go xs
     Right $ (ETextLit (MkChunks xs x), VText)
+  infer cxt (ETextAppend t u) = do
+    check cxt t VText
+    check cxt u VText
+    pure $ (ETextAppend t u, VText)
   infer cxt EList = do
     Right $ (EList, VHPi "a" vType $ \a => Right $ vType)
   infer cxt (EListLit Nothing []) = do

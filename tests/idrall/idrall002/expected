@@ -130,11 +130,11 @@ Success: ()
 testing: Natural
 Success: ()
 testing: NaturalBuild
-Error: ReadFileError: File Not Found //build
+Success: ()
 testing: NaturalEven
 Success: ()
 testing: NaturalFold
-Error: ReadFileError: File Not Found //fold
+Success: ()
 testing: NaturalIsZero
 Success: ()
 testing: NaturalLiteral
@@ -174,9 +174,9 @@ Success: ()
 testing: OperatorPlusNormalizeArguments
 Success: ()
 testing: OperatorTextConcatenate
-Error: ErrorMessage: "Parse failed at position 4: expected the end of the string"
+Success: ()
 testing: OperatorTextConcatenateNormalizeArguments
-Error: ErrorMessage: "Parse failed at position 4: expected the end of the string"
+Success: ()
 testing: OperatorTimes
 Success: ()
 testing: OperatorTimesNormalizeArguments
@@ -372,7 +372,7 @@ Success: ()
 testing: WithNewType
 Success: ()
 DONE
-Passed: 179
-Failed: 7
+Passed: 183
+Failed: 3
 1/1: Building All (All.idr)
 Main> Main> Bye for now!
