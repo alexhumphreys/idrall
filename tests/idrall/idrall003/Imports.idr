@@ -5,7 +5,7 @@ import Idrall.TestHelper
 import Idrall.Error
 import Idrall.Value
 import Idrall.IOEither
-import Idrall.API
+import Idrall.APIv1
 
 import System.Directory
 import Data.List

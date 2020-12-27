@@ -1,4 +1,4 @@
-module Idrall.API
+module Idrall.APIv1
 
 import Idrall.Expr
 import Idrall.Value
@@ -43,6 +43,12 @@ roundTripCheck x y = do
   y' <- roundTripEval y
   liftEither (check initCxt x' y')
   pure ()
+
+public export
+valueFromString : String -> IOEither Error Value
+valueFromString x = do
+  roundTripSynth x
+  roundTripEval x
 
 public export
 showIOEither : Show a => Show b => IOEither a b -> IO String

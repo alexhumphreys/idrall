@@ -10,7 +10,7 @@ test-setup:
 	echo './importFailB.dhall' > /tmp/importFailA.dhall
 
 repl: test-setup
-	rlwrap idris2 -p contrib Idrall/API.idr
+	rlwrap idris2 -p contrib Idrall/APIv1.idr
 
 edit-tests: test-setup
 	cd ./tests/idrall/idrall002 && rlwrap idris2 -p contrib -p idrall All.idr

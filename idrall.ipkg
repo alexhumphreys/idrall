@@ -14,4 +14,4 @@ modules = Idrall.Expr
         , Idrall.IOEither
         , Idrall.Path
         , Idrall.TestHelper
-        , Idrall.API
+        , Idrall.APIv1
