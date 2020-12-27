@@ -6,7 +6,40 @@ Parse, evaluate, check/infer types of Dhall expressions.
 
 ## Status
 
-Still a work in progress with some things missing, but does have a lot of the language features. Check the list below to see how what is/isn't implemented.
+Still a work in progress, but for a given dhall expression with not much imports, this should be able to parse/type check and attempt evaluation. Type checker is complete (one test is failing but that is due to [this Idris2 issue](https://github.com/idris-lang/Idris2/issues/29). Need to start running the other tests like parsing/normalisation etc. Everything around imports needs some work, and also not sure what the API should look like.
+
+## Usage (very alpha, YMMV)
+
+These are all janky names and subject to change.
+
+There's some functions in `Idrall/APIv1.idr` that expose the parsing/type checking/evaluation. The `valueFromString` function takes a dhall string, infers it's type, then evaluates it. If you have `idris2` installed you can run the following shell commands (prefixed with a `$`) from the root dir of this repo:
+
+```
+$ idris2 Idrall/APIv1.idr -p contrib --client ':exec doStuff valueFromString "{hello = 1, world = 2}.world + 3"'
+Success: (VNaturalLit 5)
+```
+
+You can also create local dhall files, like the one provided at `samples/if-function.dhall`:
+
+```
+$ cat samples/if-function.dhall
+let f = λ(x : Bool) →
+  if x
+  then "it's true!"
+  else "nah"
+in f True
+```
+
+and use `valueFromString` to evaluate them as follows. Note the path in the string:
+
+```
+$ idris2 Idrall/APIv1.idr -p contrib --client ':exec doStuff valueFromString "./samples/if-function.dhall"'
+Success: (VTextLit (MkVChunks [] "it's true!"))
+```
+
+To see the types it is returning you'll want to check out [IOEither.idr](https://github.com/alexhumphreys/idrall/blob/master/Idrall/IOEither.idr) and [Value.idr](https://github.com/alexhumphreys/idrall/blob/master/Idrall/Value.idr).
+
+There's still not much of an API, and this will hopefully change, but this should be enough to help you kick the tires if you're curious. If you find any problems or have any suggests, [issues](https://github.com/alexhumphreys/idrall/issues) and pull requests are welcome.
 
 ## Features
 
@@ -15,7 +48,7 @@ Features marked with a tick should work for parsing, type checking and evaluatio
 ### Bool
 - [x] Bool Type
 - [x] Bool Literals
-- [ ] Keyword: if/then/else
+- [x] Keyword: if/then/else
 - [x] Operator: ||
 - [x] Operator: &&
 - [x] Operator: ==
@@ -29,31 +62,31 @@ Features marked with a tick should work for parsing, type checking and evaluatio
 - [x] Function: Natural/even
 - [x] Function: Natural/odd
 - [x] Function: Natural/isZero
-- [ ] Function: Natural/subtract
-- [ ] Function: Natural/fold
-- [ ] Function: Natural/build
-- [ ] Function: Natural/show
+- [x] Function: Natural/subtract
+- [x] Function: Natural/fold
+- [x] Function: Natural/build
+- [x] Function: Natural/show
 - [x] Function: Natural/toInteger
 
 ### Integer
 - [x] Integer Type
 - [x] Integer Literals 
 - [x] Function: Integer/negate
-- [ ] Function: Integer/clamp
-- [ ] Function: Integer/toDouble
-- [ ] Function: Integer/show
+- [x] Function: Integer/clamp
+- [x] Function: Integer/toDouble
+- [x] Function: Integer/show
 
 ### Double
 - [x] Double Type
 - [x] Double Literals
-- [ ] Function: Double/show
+- [x] Function: Double/show
 
 ### Text
 - [x] Text Type
 - [x] Text
-- [ ] Function: Text/show
-- [ ] Function: Text/replace
-- [ ] Operator: ++
+- [x] Function: Text/show
+- [x] Function: Text/replace
+- [x] Operator: ++
 
 ### List
 - [x] List - Type
@@ -70,17 +103,17 @@ Features marked with a tick should work for parsing, type checking and evaluatio
 ### Optional
 - [x] Optional - Type
 - [x] Optional
-- [ ] Keyword: merge
+- [x] Keyword: merge
 
 ### Records
 - [x] Record types
 - [x] Record values
 - [x] Operator: ⩓
 - [x] Operator: ∧
-- [ ] Operator: ⫽
-- [ ] Operator: ::
-- [ ] Keyword: merge
-- [ ] Keyword: toMap
+- [x] Operator: ⫽
+- [x] Operator: ::
+- [x] Keyword: merge
+- [x] Keyword: toMap
 
 ### Imports
 - [ ] Keyword: missing
@@ -90,6 +123,7 @@ Features marked with a tick should work for parsing, type checking and evaluatio
 - [x] Local imports (/path/to/file.dhall)
 - [ ] Environment variables
 - [ ] HTTP imports
+- [ ] Semantic integrity checks
 
 ### Other
 - [x] Keyword: let
@@ -138,7 +172,7 @@ That was a very brief, potentially wrong introduction to the NbE technique used.
 
 ## Contributions
 
-Any contributions would be appreciated, and anything from the missing list above would be a good place to start.
+Any contributions would be appreciated, also just try using this and opening any issues if you find any would be great. `grep`ing the code for `TODO` will show a lot of rough edges that could use some attention. If anything in the "Future work" section below catches your eye you can try that too!
 
 ### Examples of adding language features
 
@@ -152,8 +186,10 @@ There is an [`idris1` tag](https://github.com/alexhumphreys/idrall/releases/tag/
 
 ## Future work
 
-- Add the things from the missing list above
-- Use dependent types to prove field names in values are elements of their Unions/Records
+- Add the missing things from the features list above.
+- `Check.idr` takes about 8s to type check, should split up this file. Could be related to [this issue](https://github.com/idris-lang/Idris2/issues/797).
+- Use dependent types to prove field names in values are elements of their Unions/Records.
 - Improved parsing (Not really sure what I'm doing here)
-- Think about what api/types to expose so as to make this as nice as possible to use
-- Scope checking as found in [Tiny Idris](https://github.com/edwinb/SPLV20)
+- Think about what api/types to expose so as to make this as nice as possible to use.
+- Try out [this reflection tutorial](https://github.com/stefan-hoeck/idris2-elab-util) to attempt to derive a generic `fromDhall` utility similar to the dhall-haskell implementation.
+- Scope checking as found in [Tiny Idris](https://github.com/edwinb/SPLV20), you can find some failed attempts [here](https://github.com/alexhumphreys/idrall/blob/feat/scope-checking2/Idrall/Binder.idr).
