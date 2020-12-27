@@ -57,6 +57,8 @@ mutual
     | VText
     | VTextLit VChunks
     | VTextAppend Value Value
+    | VTextShow Value
+    | VTextReplace Value Value Value
 
     | VList Ty
     | VListLit (Maybe Ty) (List Value)
@@ -191,7 +193,9 @@ mutual
 
     show (VText) = "VText"
     show (VTextLit x) = "(VTextLit " ++ show x ++ ")"
-    show (VTextAppend x y) = "(VTextLit " ++ show x ++ " " ++ show y ++ ")"
+    show (VTextAppend x y) = "(VTextAppend " ++ show x ++ " " ++ show y ++ ")"
+    show (VTextShow x) = "(VTextShow " ++ show x ++ ")"
+    show (VTextReplace x y z) = "(VTextReplace " ++ show x ++ " " ++ show y ++ " " ++ show z ++ ")"
 
     show (VList a) = "(VList " ++ show a ++ ")"
     show (VListLit ty vs) = "(VListLit " ++ show ty ++ show vs ++ ")"

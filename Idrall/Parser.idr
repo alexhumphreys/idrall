@@ -39,8 +39,11 @@ builtin =
   (string "List/indexed" *> pure EListIndexed) <|>
   (string "List/reverse" *> pure EListReverse) <|>
   (string "List" *> pure EList) <|>
+  (string "Text/show" *> pure ETextShow) <|>
+  (string "Text/replace" *> pure ETextReplace) <|>
   (string "None" *> pure ENone) <|>
-  (string "Optional" *> pure EOptional)
+  (string "Optional" *> pure EOptional) <|>
+  (string "NaN" *> pure (EDoubleLit (0.0/0.0)))
 
 true : Parser (Expr ImportStatement)
 true = token "True" *> pure (EBoolLit True)
