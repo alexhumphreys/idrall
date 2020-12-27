@@ -2,7 +2,9 @@ Listing directory ../../../dhall-lang/tests/type-inference/success/unit/
 testing: AssertAlpha
 Success: ()
 testing: AssertNaN
-Error: MissingVar: "NaN"
+Error: AlphaEquivError:+nan.0
+ not alpha equivalent to:
++nan.0
 testing: AssertSimple
 Success: ()
 testing: AssertTrivial
@@ -322,9 +324,9 @@ Success: ()
 testing: TextLiteralWithInterpolation
 Success: ()
 testing: TextReplace
-Error: ReadFileError: File Not Found //replace
+Success: ()
 testing: TextShow
-Error: ReadFileError: File Not Found //show
+Success: ()
 testing: ToMap
 Success: ()
 testing: ToMapAnnotated
@@ -372,7 +374,7 @@ Success: ()
 testing: WithNewType
 Success: ()
 DONE
-Passed: 183
-Failed: 3
+Passed: 185
+Failed: 1
 1/1: Building All (All.idr)
 Main> Main> Bye for now!

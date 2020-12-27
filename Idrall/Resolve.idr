@@ -167,6 +167,8 @@ mutual
     x' <- resolve h p x
     y' <- resolve h p y
     pure (ETextAppend x' y')
+  resolve h p ETextShow = pure ETextShow
+  resolve h p ETextReplace = pure ETextReplace
   resolve h p EOptional = pure EOptional
   resolve h p ENone = pure ENone
   resolve h p (ESome x) = do

@@ -139,6 +139,10 @@ mutual
     | ETextLit (Chunks a)
     -- | > ETextAppend x y ~ x ++ y
     | ETextAppend (Expr a) (Expr a)
+    -- | > ETextShow ~ Text/show
+    | ETextShow
+    -- | > ETextReplace ~ Text/replace
+    | ETextReplace
     -- | > EList a ~ List a
     | EList
     -- | > EList (Some e) [e', ...] ~ [] : List a
@@ -251,6 +255,8 @@ mutual
     show EText = "EText"
     show (ETextLit x) = "(ETextLit " ++ show x ++ ")"
     show (ETextAppend x y) = "(ETextAppend " ++ show x ++ " " ++ show y ++ ")"
+    show ETextShow = "ETextShow"
+    show ETextReplace = "ETextReplace"
     show EList = "EList"
     show (EListLit Nothing xs) = "(EListLit Nothing " ++ show xs ++ ")"
     show (EListLit (Just x) xs) = "(EListLit (Just " ++ show x ++ ") " ++ show xs ++ ")"

@@ -7,6 +7,7 @@ import Idrall.Map
 
 import Data.List
 import Data.List1
+import Data.Strings
 
 -- alpha equivalence
 nestError : Either Error b -> Error -> Either Error b
@@ -219,6 +220,37 @@ mutual
          (t, VTextLit (MkVChunks [] "")) => pure t
          (VTextLit x, VTextLit y) => pure $ VTextLit (x <+> y)
          (t, u) => pure $ VTextAppend t u
+  eval env ETextShow =
+    pure $ VPrim $ \c =>
+      case c of
+           VTextLit (MkVChunks [] x) => pure $ VTextLit (MkVChunks [] (vTextShow x))
+           t => pure $ VTextShow t
+  eval env ETextReplace = -- Probably not right
+    pure $ VPrim $
+      \needle => pure $ VPrim $
+        \replacement => pure $ VPrim $
+          \haystack =>
+            case needle of
+                 VTextLit (MkVChunks [] "") => pure haystack
+                 VTextLit (MkVChunks [] needleText) =>
+                   case haystack of
+                        (VTextLit (MkVChunks [] haystackText)) =>
+                          case replacement of
+                               (VTextLit (MkVChunks [] replacementText)) =>
+                                 pure $ VTextLit $
+                                        MkVChunks [] $ textReplace needleText replacementText haystackText
+                               (VTextLit (MkVChunks chx replacementText)) =>
+                                 case strFromChunks chx  of
+                                      Nothing => Left $ ErrorMessage "could not make string for replacement"
+                                      (Just str) =>
+                                         pure $ VTextLit $
+                                         MkVChunks [] $ textReplace
+                                                          needleText
+                                                          replacementText
+                                                          haystackText
+                               _ => pure $ VTextReplace needle replacement haystack
+                        _ => pure $ VTextReplace needle replacement haystack
+                 k => pure $ VTextReplace needle replacement haystack
   eval env EList = do
     Right $ VPrim $ \a => Right $ VList a
   eval env (EListLit Nothing es) = do
@@ -384,6 +416,24 @@ mutual
   eval env (EWith x ks y) = vWith !(eval env x) ks !(eval env y)
   eval env (EEmbed (Raw x)) = absurd x
   eval env (EEmbed (Resolved x)) = eval Empty x
+
+  vTextShow : String -> String
+  vTextShow x = "\"" <+> (foldl (<+>) "" (map f (unpack x))) <+> "\""
+  where
+    f : Char -> String
+    f '"'  = "\\\""
+    f '$'  = "\\u0024"
+    f '\\' = "\\\\"
+    f '\b' = "\\b"
+    f '\n' = "\\n"
+    f '\r' = "\\r"
+    f '\t' = "\\t"
+    f '\f' = "\\f"
+    -- TODO handle this case
+    -- https://github.com/dhall-lang/dhall-haskell/blob/f33e8cff8fc51e4a562f48fcf987e6af5e09142d/dhall/src/Dhall/Eval.hs#L847
+    f c = case c <= '\x1F' of
+               True => singleton c
+               False => singleton c
 
   vToMap : (FieldName, Value) -> Value
   vToMap (MkFieldName k, v) = VRecordLit $ fromList
@@ -654,6 +704,12 @@ mutual
   conv env (VTextAppend t u) (VTextAppend t' u') = do
     conv env t t'
     conv env u u'
+  conv env (VTextShow t) (VTextShow t') = do
+    conv env t t'
+  conv env (VTextReplace t u v) (VTextReplace t' u' v') = do
+    conv env t t'
+    conv env u u'
+    conv env v v'
   conv env (VList a) (VList a') = conv env a a'
   conv env (VListLit _ xs) (VListLit _ xs') = convList env xs xs'
   conv env (VListAppend t u) (VListAppend t' u') = do
@@ -808,6 +864,8 @@ mutual
     let chx = traverse (mapChunks (quote env)) xs in
     Right $ ETextLit (MkChunks !chx x)
   quote env (VTextAppend t u) = pure $ ETextAppend !(quote env t) !(quote env u)
+  quote env (VTextShow t) = qApp env ETextShow t
+  quote env (VTextReplace t u v) = qAppM env ETextReplace [t, u, v]
   quote env (VList x) = qApp env EList x
   quote env (VListLit Nothing ys) =
     let ys' = traverse (quote env) ys in
@@ -1059,6 +1117,13 @@ mutual
     check cxt t VText
     check cxt u VText
     pure $ (ETextAppend t u, VText)
+  infer cxt ETextShow = pure $ (EIntegerShow, (vFun VText VText))
+  infer cxt ETextReplace =
+    pure ( ETextReplace,
+           VHPi "needle" VText $ \needle =>
+           pure $ VHPi "replacement" VText $ \replacement =>
+           pure $ VHPi "haystack" VText $ \haystack =>
+           pure VText)
   infer cxt EList = do
     Right $ (EList, VHPi "a" vType $ \a => Right $ vType)
   infer cxt (EListLit Nothing []) = do

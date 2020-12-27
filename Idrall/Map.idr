@@ -60,3 +60,23 @@ mergeWithApp' : (Monad m, Ord k) =>
                SortedMap k a ->
                m (SortedMap k a)
 mergeWithApp' f xs ys = sequence (mergeWith (\x,y => y) (map pure xs) (map pure ys))
+
+replace : Eq a => (needle : List a) -> (replacement : List a) -> (haystack : List a) -> List a
+replace needle replacement haystack = go 0 [] needle haystack
+  where
+    go : (pass : Nat) ->
+         (acc : List a) ->
+         (needle : List a) ->
+         (haystack : List a) -> List a
+    go _ acc (x :: xs) [] = acc -- End of list
+    go _ acc [] haystack = haystack -- Empty needle
+    go (S k) acc needle (y :: haystack) = -- Pass through to remove matched elements
+      go k acc needle haystack
+    go Z acc needle@(x :: xs) h@(y :: haystack) =
+      case isPrefixOf needle h of
+           False => go 0 (acc ++ [y]) needle haystack
+           True => go (length xs) (acc ++ replacement) needle haystack
+
+export
+textReplace : (needle : String) -> (replacement : String) -> (haystack : String) -> String
+textReplace needle replacement haystack = pack $ replace (unpack needle) (unpack replacement) (unpack haystack)
