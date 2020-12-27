@@ -66,55 +66,60 @@ mutual
     -- x
     = EConst U
     | EVar Name Int
+    -- | ELam x A b ~ λ(x : A) -> b
     | ELam Name (Expr a) (Expr a)
-    -- | > App f a ~ f a
+    -- | EPi x A b ~ forall(x : A) -> b
     | EPi Name (Expr a) (Expr a)
-    -- | Lam x A b ~ λ(x : A) -> b
+    -- | > EApp f a ~ f a
     | EApp (Expr a) (Expr a)
-    -- | > Let x Nothing r e ~ let x = r in e
-    --   > Let x (Just t) r e ~ let x : t = r in e
+    -- | > ELet x Nothing r e ~ let x = r in e
+    --   > ELet x (Just t) r e ~ let x : t = r in e
     | ELet Name (Maybe (Expr a)) (Expr a) (Expr a)
-    -- | > Annot x t ~ x : t
+    -- | > EAnnot x t ~ x : t
     | EAnnot (Expr a) (Expr a)
-    -- | > Bool ~ Bool
+    -- | > EBool ~ Bool
     | EBool
-    -- | > BoolLit b ~ b
+    -- | > EBoolLit b ~ b
     | EBoolLit Bool
-    -- | > BoolAnd x y ~ x && y
+    -- | > EBoolAnd x y ~ x && y
     | EBoolAnd (Expr a) (Expr a)
-    -- | > BoolOr  x y ~  x || y
+    -- | > EBoolOr  x y ~  x || y
     | EBoolOr  (Expr a) (Expr a)
-    -- | > BoolEQ  x y ~  x == y
+    -- | > EBoolEQ  x y ~  x == y
     | EBoolEQ  (Expr a) (Expr a)
-    -- | > BoolNE  x y ~  x != y
+    -- | > EBoolNE  x y ~  x != y
     | EBoolNE  (Expr a) (Expr a)
-    -- | > BoolIf x y z ~ if x then y else z
+    -- | > EBoolIf x y z ~ if x then y else z
     | EBoolIf (Expr a) (Expr a) (Expr a)
-    -- | > Natural ~ Natural
+    -- | > ENatural ~ Natural
     | ENatural
-    -- | > NaturalLit n ~ n
+    -- | > ENaturalLit n ~ n
     | ENaturalLit Nat
-    -- | > NaturalIsZero ~ Natural/isZero
+    -- | > ENaturalFold ~ Natural/fold
+    | ENaturalFold
+    -- | > ENaturalBuild ~ Natural/build
+    | ENaturalBuild
+    -- | > ENaturalIsZero ~ Natural/isZero
     | ENaturalIsZero
-        -- | > NaturalEven                              ~  Natural/even
+    -- | > ENaturalEven ~  Natural/even
     | ENaturalEven
-    -- | > NaturalOdd                               ~  Natural/odd
+    -- | > ENaturalOdd ~  Natural/odd
     | ENaturalOdd
-    -- | > NaturalToInteger                         ~  Natural/toInteger
+    -- | > ENaturalToInteger ~  Natural/toInteger
     | ENaturalToInteger
-    -- | > NaturalSubtract                          ~  Natural/subtract
+    -- | > ENaturalSubtract ~  Natural/subtract
     | ENaturalSubtract
-    -- | > NaturalShow                               ~  Natural/show
+    -- | > ENaturalShow ~  Natural/show
     | ENaturalShow
-     -- | > NaturalPlus x y                          ~  x + y
+     -- | > ENaturalPlus x y ~  x + y
     | ENaturalPlus (Expr a) (Expr a)
-    -- | > NaturalTimes x y                         ~  x * y
+    -- | > ENaturalTimes x y ~  x * y
     | ENaturalTimes (Expr a) (Expr a)
-    -- | > Integer ~ Integer
+    -- | > EInteger ~ Integer
     | EInteger
     -- | > EIntegerLit i ~ i
     | EIntegerLit Integer
-    -- | > IntegerShow ~  Integer/show
+    -- | > EIntegerShow ~  Integer/show
     | EIntegerShow
     -- | > EIntegerClamp ~ Integer/clamp
     | EIntegerClamp
@@ -122,45 +127,47 @@ mutual
     | EIntegerNegate
     -- | > EIntegerToDouble ~ EIntegerToDouble
     | EIntegerToDouble
-    -- | > Double ~ Double
+    -- | > EDouble ~ Double
     | EDouble
-    -- | > DoubleLit n ~ n
+    -- | > EDoubleLit n ~ n
     | EDoubleLit Double
-    -- | > DoubleShow ~  Double/show
+    -- | > EDoubleShow ~  Double/show
     | EDoubleShow
     -- | > EText ~ Text
     | EText
     -- | > ETextLit (Chunks [(t1, e1), (t2, e2)] t3) ~  "t1${e1}t2${e2}t3"
     | ETextLit (Chunks a)
+    -- | > ETextAppend x y ~ x ++ y
+    | ETextAppend (Expr a) (Expr a)
     -- | > EList a ~ List a
     | EList
     -- | > EList (Some e) [e', ...] ~ [] : List a
     | EListLit (Maybe (Expr a)) (List (Expr a))
-    -- | > x # y
+    -- | > EListAppend x y ~ x # y
     | EListAppend (Expr a) (Expr a)
-    -- | > List/build
+    -- | > EListBuild ~ List/build
     | EListBuild
-    -- | > List/fold
+    -- | > EListFold ~ List/fold
     | EListFold
-    -- | > List/length
+    -- | > EListLength ~ List/length
     | EListLength
-    -- | > List/head
+    -- | > EListHead ~ List/head
     | EListHead
-    -- | > List/last
+    -- | > EListLast ~ List/last
     | EListLast
-    -- | > List/indexed
+    -- | > EListIndexed ~ List/indexed
     | EListIndexed
-    -- | > List/reverse
+    -- | > EListReverse ~ List/reverse
     | EListReverse
     -- | > EOptional ~ Optional
     | EOptional
-    -- | > Some a
+    -- | > ESome x ~ Some a
     | ESome (Expr a)
-    -- | > None
+    -- | > ENone ~ None
     | ENone
-    -- | > x === y
+    -- | > EEquivalent x y ~ x === y
     | EEquivalent (Expr a) (Expr a)
-    -- | > assert : e
+    -- | > EAssert x ~ assert : e
     | EAssert (Expr a)
     -- | > ERecord (fromList ((MkFieldName "Foo"), EBool)) ~ { Foo : Bool }
     | ERecord (SortedMap FieldName (Expr a))
@@ -169,9 +176,9 @@ mutual
     -- | > EUnion (fromList ((MkFieldName "Foo"), Nothing)) ~ < Foo >
     -- | > EUnion (fromList ((MkFieldName "Foo"), Just EBool)) ~ < Foo : Bool >
     | EUnion (SortedMap FieldName (Maybe (Expr a)))
-    -- | > x /\ y
+    -- | > ECombine x y ~ x /\ y
     | ECombine (Expr a) (Expr a)
-    -- | > x //\\ y
+    -- | > ECombineTypes x y ~ x //\\ y
     | ECombineTypes (Expr a) (Expr a)
     -- | > EPrefer x y ~  x ⫽ y
     | EPrefer (Expr a) (Expr a)
@@ -222,6 +229,8 @@ mutual
     show (EBoolIf x y z) = "(EBoolIf " ++ show x ++ " " ++ show y ++ " " ++ show z ++ ")"
     show ENatural = "ENatural"
     show (ENaturalLit k) = "(ENaturalLit " ++ show k ++ ")"
+    show ENaturalFold = "ENaturalFold"
+    show ENaturalBuild = "ENaturalBuild"
     show ENaturalIsZero = "ENaturalIsZero"
     show ENaturalEven = "ENaturalEven"
     show ENaturalOdd = "ENaturalOdd"
@@ -241,6 +250,7 @@ mutual
     show EDoubleShow = "EDoubleShow"
     show EText = "EText"
     show (ETextLit x) = "(ETextLit " ++ show x ++ ")"
+    show (ETextAppend x y) = "(ETextAppend " ++ show x ++ " " ++ show y ++ ")"
     show EList = "EList"
     show (EListLit Nothing xs) = "(EListLit Nothing " ++ show xs ++ ")"
     show (EListLit (Just x) xs) = "(EListLit (Just " ++ show x ++ ") " ++ show xs ++ ")"

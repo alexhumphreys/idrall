@@ -115,6 +115,8 @@ mutual
     pure (EBoolIf x' y' z')
   resolve h p ENatural = pure ENatural
   resolve h p (ENaturalLit k) = pure (ENaturalLit k)
+  resolve h p ENaturalBuild = pure ENaturalBuild
+  resolve h p ENaturalFold = pure ENaturalFold
   resolve h p ENaturalIsZero = pure ENaturalIsZero
   resolve h p ENaturalEven = pure ENaturalEven
   resolve h p ENaturalOdd = pure ENaturalOdd
@@ -161,6 +163,10 @@ mutual
   resolve h p (ETextLit (MkChunks xs x)) = do
     xs' <- resolveChunks h p xs
     pure (ETextLit (MkChunks xs' x))
+  resolve h p (ETextAppend x y) = do
+    x' <- resolve h p x
+    y' <- resolve h p y
+    pure (ETextAppend x' y')
   resolve h p EOptional = pure EOptional
   resolve h p ENone = pure ENone
   resolve h p (ESome x) = do

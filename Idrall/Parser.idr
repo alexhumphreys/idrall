@@ -18,6 +18,8 @@ import Idrall.Path
 
 builtin : Parser (Expr ImportStatement)
 builtin =
+  (string "Natural/build" *> pure ENaturalBuild) <|>
+  (string "Natural/fold" *> pure ENaturalFold) <|>
   (string "Natural/isZero" *> pure ENaturalIsZero) <|>
   (string "Natural/even" *> pure ENaturalEven) <|>
   (string "Natural/odd" *> pure ENaturalOdd) <|>
@@ -226,6 +228,7 @@ mutual
             , Infix (token "==" $> EBoolEQ) AssocLeft
             , Infix (token "!=" $> EBoolNE) AssocLeft
             , Infix (token "*" $> ENaturalTimes) AssocLeft
+            , Infix (token "++" $> ETextAppend) AssocLeft
             ]
           , [ Infix (token "+" $> ENaturalPlus) AssocLeft]
           , [ Infix (do (token "===" <|> token "≡"); pure EEquivalent) AssocLeft]
@@ -402,7 +405,7 @@ mutual
   -- https://github.com/dhall-lang/dhall-haskell/blob/56bf1163a1331f72f7a55c06ab5ef77a60960630/dhall/src/Dhall/Syntax.hs#L1107
   -- https://github.com/dhall-lang/dhall-haskell/blob/56bf1163a1331f72f7a55c06ab5ef77a60960630/dhall/src/Dhall/Parser/Token.hs#L584
   dirCharacters : Parser Char
-  dirCharacters = alphaNum <|> (char '.')
+  dirCharacters = alphaNum <|> (char '-') <|> (char '.')
 
   dirs : Parser (List String)
   dirs = do
@@ -486,7 +489,7 @@ mutual
      pathTerm <|> esome <|>
      recordType <|> recordLit <|>
      union <|> lam <|> pi <|>
-     var <|> list <|> parens expr)
+     var <|> list <|> parens (whitespace *> expr))
     whitespace
     pure i
 
