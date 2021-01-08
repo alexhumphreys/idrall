@@ -1010,8 +1010,7 @@ mutual
   listFoldTy : Value -> Value
   listFoldTy a =
     VHPi "list" vType $ \list =>
-    -- pure $ VHPi "cons" (vFun a $ vFun list list) $ \cons =>
-    pure $ VHPi "cons" (vFun (vFun a list) list) $ \cons =>
+    pure $ VHPi "cons" (vFun a $ vFun list list) $ \cons =>
     pure $ VHPi "nil" list $ \nil =>
     pure $ list
 
@@ -1088,7 +1087,7 @@ mutual
   infer cxt ENaturalIsZero = Right $ (ENaturalIsZero, (vFun VNatural VBool))
   infer cxt ENaturalEven = Right $ (ENaturalEven, (vFun VNatural VBool))
   infer cxt ENaturalOdd = Right $ (ENaturalOdd, (vFun VNatural VBool))
-  infer cxt ENaturalSubtract = Right $ (ENaturalOdd, (vFun (vFun VNatural VNatural) VNatural))
+  infer cxt ENaturalSubtract = Right $ (ENaturalOdd, (vFun VNatural (vFun VNatural VNatural)))
   infer cxt ENaturalToInteger = Right $ (ENaturalToInteger, (vFun VNatural VInteger))
   infer cxt ENaturalShow = Right $ (ENaturalShow, (vFun VNatural VText))
   infer cxt (ENaturalPlus t u) = do

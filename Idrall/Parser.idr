@@ -224,7 +224,7 @@ mutual
             , Infix appl AssocLeft
             , Postfix withExpr
             ]
-          , [ Infix (do (token "->" <|> token "→") ; pure (EPi "_")) AssocLeft ]
+          , [ Infix (do (token "->" <|> token "→") ; pure (EPi "_")) AssocRight ]
           , [ Infix (do token ":"; pure EAnnot) AssocLeft]
           , [ Infix (token "&&" $> EBoolAnd) AssocLeft
             , Infix (token "||" $> EBoolOr) AssocLeft
