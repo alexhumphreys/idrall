@@ -241,6 +241,7 @@ mutual
             , Infix (pure EPrefer <* (token "//" <|> token "⫽")) AssocLeft
             , Infix (pure ECombineTypes <* (token "//\\\\" <|> token "⩓")) AssocLeft
             , Infix (pure ERecordCompletion <* (token "::")) AssocLeft
+            , Infix (pure const <* (token "?")) AssocLeft -- TODO not const
             ]
           ]
 
@@ -439,9 +440,18 @@ mutual
     ex <- relPath <|> homePath <|> absolutePath
     pure (EEmbed (Raw (LocalFile (filePathFromPath ex))))
 
+  shaPathTerm : Parser (Expr ImportStatement)
+  shaPathTerm = do
+    p <- pathTerm
+    spaces
+    token "sha256:"
+    many alphaNum
+    pure p
+
   lam : Parser (Expr ImportStatement)
   lam = do
-    (string "λ(" <|> string "\\(")
+    token "λ" <|> token "\\"
+    token "("
     i <- identity
     token ":"
     ty <- expr
@@ -489,7 +499,7 @@ mutual
      integer <|> integerLit <|>
      text <|> textLiteral <|>
      type <|> kind <|> sort <|>
-     pathTerm <|> esome <|>
+     shaPathTerm <|> pathTerm <|> esome <|>
      recordType <|> recordLit <|>
      union <|> lam <|> pi <|>
      var <|> list <|> parens (whitespace *> expr))

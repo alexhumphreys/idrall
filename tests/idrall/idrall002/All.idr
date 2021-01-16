@@ -73,7 +73,7 @@ mkres (MkIOEither x) = do
   x' <- x
   case x' of
        (Left y) => do
-         print y
+         printLn y
          pure (MkRecord 0 1)
        (Right y) => pure (MkRecord 1 0)
 
@@ -82,10 +82,9 @@ nameCases (path, c) = (path ++ "/" ++ c ++ "A.dhall", path ++ "/" ++ c ++ "B.dha
 
 runTest : (String, String) -> IO Result
 runTest x =
-  let x' = nameCases x
-      iores = roundTripCheck (fst x') (snd x') in do
+  let x' = nameCases x in do
         putStrLn $ "Testing: " ++ show x
-        mkres iores
+        mkres $ roundTripCheck (fst x') (snd x')
 
 runTests : DirTree String -> IO Result
 runTests x =
@@ -99,4 +98,4 @@ testAll = do
 
 main : IO ()
 main = do res <- testAll
-          print $ res
+          printLn $ res
