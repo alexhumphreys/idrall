@@ -1,89 +1,47 @@
-testing: AssertTrivial
-Success: ()
-testing: Bool
-Success: ()
-testing: Function
-Success: ()
-testing: Natural
-Success: ()
-testing: True
-Success: ()
-testing: NaturalIsZero
-Success: ()
-testing: NaturalLiteral
-Success: ()
-testing: Let
-Success: ()
-testing: FunctionTypeTermTerm
-Success: ()
-testing: FunctionApplication
-Success: ()
-testing: Equivalence
-Success: ()
-testing: FunctionDependentType1
-Success: ()
-testing: List
-Success: ()
-testing: ListLiteralOne
-Success: ()
-testing: ListLiteralEmpty
-Success: ()
-testing: ListHead
-Success: ()
-testing: OperatorListConcatenate
-Success: ()
-testing: Optional
-Success: ()
-testing: None
-Success: ()
-testing: SomeTrue
-Success: ()
-testing: Integer
-Success: ()
-testing: IntegerLiteral
-Success: ()
-testing: IntegerNegate
-Success: ()
-testing: UnionTypeType
-Success: ()
-testing: UnionTypeOne
-Success: ()
-testing: UnionTypeMixedKinds4
-Success: ()
-testing: UnionTypeMixedKinds3
-Success: ()
-testing: UnionTypeMixedKinds2
-Success: ()
-testing: UnionTypeMixedKinds1
-Success: ()
-testing: UnionTypeKind
-Success: ()
-testing: UnionTypeEmpty
-Success: ()
-testing: UnionConstructorField
-Success: ()
-testing: UnionConstructorEmptyField
-Success: ()
-testing: TypeAnnotation
-Success: ()
-testing: TypeAnnotationFunction
-Success: ()
-testing: TypeAnnotationSort
-Success: ()
-testing: Text
-Success: ()
-testing: TextLiteral
-Success: ()
-testing: TextLiteralWithInterpolation
-Success: ()
-testing: Double
-Success: ()
-testing: DoubleLiteral
-Success: ()
-testing: ListIndexed
-Success: ()
-DONE
-Passed: 42
-Failed: 0
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "AssertTrivial")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "Bool")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "Function")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "Natural")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "True")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "NaturalIsZero")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "NaturalLiteral")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "Let")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "FunctionTypeTermTerm")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "FunctionApplication")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "Equivalence")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "FunctionDependentType1")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "List")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "ListLiteralOne")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "ListLiteralEmpty")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "ListHead")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "OperatorListConcatenate")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "Optional")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "None")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "SomeTrue")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "Integer")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "IntegerLiteral")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "IntegerNegate")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "UnionTypeType")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "UnionTypeOne")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "UnionTypeMixedKinds4")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "UnionTypeMixedKinds3")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "UnionTypeMixedKinds2")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "UnionTypeMixedKinds1")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "UnionTypeKind")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "UnionTypeEmpty")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "UnionConstructorField")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "UnionConstructorEmptyField")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "TypeAnnotation")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "TypeAnnotationFunction")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "TypeAnnotationSort")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "Text")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "TextLiteral")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "TextLiteralWithInterpolation")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "Double")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "DoubleLiteral")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "ListIndexed")
+Result: 
+Pass: 42
+Fail: 0
 1/1: Building Good (Good.idr)
 Main> Main> Bye for now!
