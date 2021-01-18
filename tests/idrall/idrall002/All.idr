@@ -5,20 +5,19 @@ import Idrall.TestHelper
 import Idrall.Error
 import Idrall.IOEither
 import Idrall.APIv1
+import Idrall.Parser
 
+import System
 import System.Directory
 import Data.List
 import Data.Strings
+import Data.Strings
 
-testAll : IO ()
+testAll : IO (Result)
 testAll = do
-  putStrLn ("Listing directory " ++ dirName)
-  dh <- openDir dirName
-  case dh of
-    Left er => putStrLn "directory not found"
-    Right d => do
-      entries <- listDir d []
-      testAB Z Z (map stripSuffix (onlyA (sort entries)))
+  dir <- findTests "../../../dhall-lang/tests/type-inference/success"
+  runTests dir
 
 main : IO ()
-main = do testAll
+main = do res <- testAll
+          printLn $ res

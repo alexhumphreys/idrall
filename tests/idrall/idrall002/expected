@@ -1,380 +1,401 @@
-Listing directory ../../../dhall-lang/tests/type-inference/success/unit/
-testing: AssertAlpha
-Success: ()
-testing: AssertNaN
-Error: AlphaEquivError:+nan.0
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Bool/and", "0")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Bool/and", "1")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Bool/build", "0")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Bool/build", "1")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Bool/even", "0")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Bool/even", "1")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Bool/even", "2")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Bool/even", "3")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Bool/fold", "0")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Bool/fold", "1")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Bool/not", "0")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Bool/not", "1")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Bool/odd", "0")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Bool/odd", "1")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Bool/odd", "2")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Bool/odd", "3")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Bool/or", "0")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Bool/or", "1")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Bool/show", "0")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Bool/show", "1")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Double/show", "0")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Double/show", "1")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Integer/show", "0")
+AlphaEquivError:"0"
+ not alpha equivalent to:
+"+0"
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Integer/show", "1")
+AlphaEquivError:"0"
+ not alpha equivalent to:
+"+0"
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Integer/toDouble", "0")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Integer/toDouble", "1")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/all", "0")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/all", "1")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/any", "0")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/any", "1")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/build", "0")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/build", "1")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/concat", "0")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/concat", "1")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/concatMap", "0")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/concatMap", "1")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/filter", "0")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/filter", "1")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/fold", "0")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/fold", "1")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/fold", "2")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/generate", "0")
+InvalidFieldType: (EVar "x" 0)
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/generate", "1")
+InvalidFieldType: (EVar "x" 0)
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/head", "0")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/head", "1")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/indexed", "0")
+AlphaEquivError:2
+ not alpha equivalent to:
+0
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/indexed", "1")
+AlphaEquivError:2
+ not alpha equivalent to:
+0
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/iterate", "0")
+InvalidFieldType: (EVar "y" 0)
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/iterate", "1")
+InvalidFieldType: (EVar "y" 0)
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/last", "0")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/last", "1")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/length", "0")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/length", "1")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/map", "0")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/map", "1")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/null", "0")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/null", "1")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/replicate", "0")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/replicate", "1")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/reverse", "0")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/reverse", "1")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/shifted", "0")
+InvalidFieldType: (EVar "y" 0)
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/shifted", "1")
+InvalidFieldType: (EVar "y" 0)
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/unzip", "0")
+InvalidFieldType: (EVar "x" 0)
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/unzip", "1")
+InvalidFieldType: (EVar "x" 0)
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Monoid", "00")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Monoid", "01")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Monoid", "02")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Monoid", "03")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Monoid", "04")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Monoid", "05")
+InvalidFieldType: (EVar "y" 0)
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Monoid", "06")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Monoid", "07")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Monoid", "08")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Monoid", "09")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Monoid", "10")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Natural/build", "0")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Natural/build", "1")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Natural/enumerate", "0")
+InvalidFieldType: (EVar "x" 0)
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Natural/enumerate", "1")
+InvalidFieldType: (EVar "x" 0)
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Natural/even", "0")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Natural/even", "1")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Natural/fold", "0")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Natural/fold", "1")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Natural/fold", "2")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Natural/isZero", "0")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Natural/isZero", "1")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Natural/odd", "0")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Natural/odd", "1")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Natural/product", "0")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Natural/product", "1")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Natural/show", "0")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Natural/show", "1")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Natural/sum", "0")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Natural/sum", "1")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Natural/toDouble", "0")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Natural/toDouble", "1")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Natural/toInteger", "0")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Natural/toInteger", "1")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Optional/all", "0")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Optional/all", "1")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Optional/any", "0")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Optional/any", "1")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Optional/build", "0")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Optional/build", "1")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Optional/concat", "0")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Optional/concat", "1")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Optional/concat", "2")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Optional/filter", "0")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Optional/filter", "1")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Optional/fold", "0")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Optional/fold", "1")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Optional/head", "0")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Optional/head", "1")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Optional/head", "2")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Optional/last", "0")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Optional/last", "1")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Optional/last", "2")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Optional/length", "0")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Optional/length", "1")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Optional/map", "0")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Optional/map", "1")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Optional/null", "0")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Optional/null", "1")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Optional/toList", "0")
+AlphaEquivError:(VVar "a" 0)
+ not alpha equivalent to:
+(VList (VVar "a" 0))
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Optional/toList", "1")
+AlphaEquivError:(VVar "a" 0)
+ not alpha equivalent to:
+(VList (VVar "a" 0))
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Optional/unzip", "0")
+InvalidFieldType: (EVar "x" 0)
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Optional/unzip", "1")
+InvalidFieldType: (EVar "x" 0)
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Text/concat", "0")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Text/concat", "1")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Text/concatMap", "0")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Text/concatMap", "1")
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Text/concatMapSep", "0")
+InvalidFieldType: (EVar "Status" 0)
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Text/concatMapSep", "1")
+InvalidFieldType: (EVar "Status" 0)
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Text/concatSep", "0")
+InvalidFieldType: (EVar "Status" 0)
+Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Text/concatSep", "1")
+InvalidFieldType: (EVar "Status" 0)
+Testing: ("../../../dhall-lang/tests/type-inference/success/regression", "LambdaInLetScoping1")
+Testing: ("../../../dhall-lang/tests/type-inference/success/regression", "LambdaInLetScoping2")
+Testing: ("../../../dhall-lang/tests/type-inference/success/regression", "RecursiveRecordTypeMergeTripleCollision")
+Testing: ("../../../dhall-lang/tests/type-inference/success/regression", "Todo")
+Testing: ("../../../dhall-lang/tests/type-inference/success/simple/access", "0")
+Testing: ("../../../dhall-lang/tests/type-inference/success/simple/access", "1")
+Testing: ("../../../dhall-lang/tests/type-inference/success/simple", "anonymousFunctionsInTypes")
+Testing: ("../../../dhall-lang/tests/type-inference/success/simple", "combineMixedRecords")
+Testing: ("../../../dhall-lang/tests/type-inference/success/simple", "completion")
+InvalidFieldType: (EVar "Example" 0)
+Testing: ("../../../dhall-lang/tests/type-inference/success/simple", "complexShadowing")
+ErrorMessage: "Parse failed at position 0: char '('"
+Testing: ("../../../dhall-lang/tests/type-inference/success/simple", "fieldsAreTypes")
+Testing: ("../../../dhall-lang/tests/type-inference/success/simple", "kindParameter")
+Testing: ("../../../dhall-lang/tests/type-inference/success/simple", "mergeEquivalence")
+Testing: ("../../../dhall-lang/tests/type-inference/success/simple", "mixedFieldAccess")
+ErrorMessage: "Parse failed at position 181: char '('"
+Testing: ("../../../dhall-lang/tests/type-inference/success/simple", "orderInsensitivity")
+Testing: ("../../../dhall-lang/tests/type-inference/success/simple", "toMapEmptyNormalizeAnnotation")
+ToMapEmpty: Needs an annotation
+Testing: ("../../../dhall-lang/tests/type-inference/success/simple", "unionsOfTypes")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "AssertAlpha")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "AssertNaN")
+AlphaEquivError:+nan.0
  not alpha equivalent to:
 +nan.0
-testing: AssertSimple
-Success: ()
-testing: AssertTrivial
-Success: ()
-testing: Bool
-Success: ()
-testing: Completion
-Success: ()
-testing: Double
-Success: ()
-testing: DoubleLiteral
-Success: ()
-testing: DoubleShow
-Success: ()
-testing: Equivalence
-Success: ()
-testing: False
-Success: ()
-testing: Function
-Success: ()
-testing: FunctionApplication
-Success: ()
-testing: FunctionApplicationNormalizeArgument
-Success: ()
-testing: FunctionApplicationNormalizeResult
-Success: ()
-testing: FunctionDependentType1
-Success: ()
-testing: FunctionDependentType2
-Success: ()
-testing: FunctionNamedArg
-Success: ()
-testing: FunctionNormalizeTypeAnnotation
-Success: ()
-testing: FunctionTypeKindKind
-Success: ()
-testing: FunctionTypeKindTerm
-Success: ()
-testing: FunctionTypeKindType
-Success: ()
-testing: FunctionTypeTermTerm
-Success: ()
-testing: FunctionTypeTypeKind
-Success: ()
-testing: FunctionTypeTypeTerm
-Success: ()
-testing: FunctionTypeTypeType
-Success: ()
-testing: FunctionTypeUsingArgument
-Success: ()
-testing: If
-Success: ()
-testing: IfBranchesKind
-Success: ()
-testing: IfBranchesType
-Success: ()
-testing: IfNormalizeArguments
-Success: ()
-testing: Integer
-Success: ()
-testing: IntegerClamp
-Success: ()
-testing: IntegerLiteral
-Success: ()
-testing: IntegerNegate
-Success: ()
-testing: IntegerShow
-Success: ()
-testing: IntegerToDouble
-Success: ()
-testing: Kind
-Success: ()
-testing: Let
-Success: ()
-testing: LetNestedTypeSynonym
-Success: ()
-testing: LetTypeSynonym
-Success: ()
-testing: LetWithAnnotation
-Success: ()
-testing: List
-Success: ()
-testing: ListBuild
-Success: ()
-testing: ListFold
-Success: ()
-testing: ListHead
-Success: ()
-testing: ListIndexed
-Success: ()
-testing: ListLast
-Success: ()
-testing: ListLength
-Success: ()
-testing: ListLiteralEmpty
-Success: ()
-testing: ListLiteralEmptyNormalizeAnnotation
-Success: ()
-testing: ListLiteralNormalizeArguments
-Success: ()
-testing: ListLiteralOne
-Success: ()
-testing: ListReverse
-Success: ()
-testing: MergeEmptyAlternative
-Success: ()
-testing: MergeEmptyUnion
-Success: ()
-testing: MergeNone
-Success: ()
-testing: MergeOne
-Success: ()
-testing: MergeOneEmpty
-Success: ()
-testing: MergeOneWithAnnotation0
-Success: ()
-testing: MergeOneWithAnnotation1
-Success: ()
-testing: MergeOptional
-Success: ()
-testing: MergeSome
-Success: ()
-testing: MergeTrickyShadowing
-Success: ()
-testing: Natural
-Success: ()
-testing: NaturalBuild
-Success: ()
-testing: NaturalEven
-Success: ()
-testing: NaturalFold
-Success: ()
-testing: NaturalIsZero
-Success: ()
-testing: NaturalLiteral
-Success: ()
-testing: NaturalOdd
-Success: ()
-testing: NaturalShow
-Success: ()
-testing: NaturalSubtract
-Success: ()
-testing: NaturalToInteger
-Success: ()
-testing: None
-Success: ()
-testing: OperatorAnd
-Success: ()
-testing: OperatorAndNormalizeArguments
-Success: ()
-testing: OperatorEqual
-Success: ()
-testing: OperatorEqualNormalizeArguments
-Success: ()
-testing: OperatorListConcatenate
-Success: ()
-testing: OperatorListConcatenateNormalizeArguments
-Success: ()
-testing: OperatorNotEqual
-Success: ()
-testing: OperatorNotEqualNormalizeArguments
-Success: ()
-testing: OperatorOr
-Success: ()
-testing: OperatorOrNormalizeArguments
-Success: ()
-testing: OperatorPlus
-Success: ()
-testing: OperatorPlusNormalizeArguments
-Success: ()
-testing: OperatorTextConcatenate
-Success: ()
-testing: OperatorTextConcatenateNormalizeArguments
-Success: ()
-testing: OperatorTimes
-Success: ()
-testing: OperatorTimesNormalizeArguments
-Success: ()
-testing: Optional
-Success: ()
-testing: RecordEmpty
-Success: ()
-testing: RecordLitDottedFields
-Success: ()
-testing: RecordLitDottedFieldsMerge
-Success: ()
-testing: RecordLitDuplicateFieldsAbstract
-Success: ()
-testing: RecordLitDuplicateFieldsNoCollisions
-Success: ()
-testing: RecordLitNormalizeFieldType
-Success: ()
-testing: RecordLitPun
-Success: ()
-testing: RecordLitPunCapture
-Success: ()
-testing: RecordLitPunSome
-Success: ()
-testing: RecordLitSortFields
-Success: ()
-testing: RecordMixedKinds2
-Success: ()
-testing: RecordMixedKinds
-Success: ()
-testing: RecordNestedKind
-Success: ()
-testing: RecordNestedKindLike
-Success: ()
-testing: RecordNestedType
-Success: ()
-testing: RecordNestedTypeLike
-Success: ()
-testing: RecordOneKind
-Success: ()
-testing: RecordOneType
-Success: ()
-testing: RecordOneValue
-Success: ()
-testing: RecordProjectionByType
-Success: ()
-testing: RecordProjectionByTypeEmpty
-Success: ()
-testing: RecordProjectionByTypeJudgmentalEquality
-Success: ()
-testing: RecordProjectionEmpty
-Success: ()
-testing: RecordProjectionEmptyKind
-Success: ()
-testing: RecordProjectionKind
-Success: ()
-testing: RecordProjectionType
-Success: ()
-testing: RecordProjectionValue
-Success: ()
-testing: RecordSelectionKind
-Success: ()
-testing: RecordSelectionType
-Success: ()
-testing: RecordSelectionValue
-Success: ()
-testing: RecordType
-Success: ()
-testing: RecordTypeEmpty
-Success: ()
-testing: RecordTypeKind
-Success: ()
-testing: RecordTypeKindLike
-Success: ()
-testing: RecordTypeMixedKinds2
-Success: ()
-testing: RecordTypeMixedKinds3
-Success: ()
-testing: RecordTypeMixedKinds
-Success: ()
-testing: RecordTypeNestedKind
-Success: ()
-testing: RecordTypeNestedKindLike
-Success: ()
-testing: RecordTypeType
-Success: ()
-testing: RecursiveRecordMergeBoolType
-Success: ()
-testing: RecursiveRecordMergeLhsEmpty
-Success: ()
-testing: RecursiveRecordMergeMixedKinds
-Success: ()
-testing: RecursiveRecordMergeRecursively
-Success: ()
-testing: RecursiveRecordMergeRecursivelyKinds
-Success: ()
-testing: RecursiveRecordMergeRecursivelyTypes
-Success: ()
-testing: RecursiveRecordMergeRhsEmpty
-Success: ()
-testing: RecursiveRecordMergeTwo
-Success: ()
-testing: RecursiveRecordMergeTwoKinds
-Success: ()
-testing: RecursiveRecordMergeTwoTypes
-Success: ()
-testing: RecursiveRecordTypeMergeDeep
-Success: ()
-testing: RecursiveRecordTypeMergeRecursively
-Success: ()
-testing: RecursiveRecordTypeMergeRecursivelyKinds
-Success: ()
-testing: RecursiveRecordTypeMergeRecursivelyTypes
-Success: ()
-testing: RecursiveRecordTypeMergeRhsEmpty
-Success: ()
-testing: RecursiveRecordTypeMergeTwo
-Success: ()
-testing: RecursiveRecordTypeMergeTwoKinds
-Success: ()
-testing: RecursiveRecordTypeMergeTwoTypes
-Success: ()
-testing: RightBiasedRecordMergeMixedKinds
-Success: ()
-testing: RightBiasedRecordMergeRhsEmpty
-Success: ()
-testing: RightBiasedRecordMergeTwo
-Success: ()
-testing: RightBiasedRecordMergeTwoDifferent
-Success: ()
-testing: RightBiasedRecordMergeTwoKinds
-Success: ()
-testing: RightBiasedRecordMergeTwoTypes
-Success: ()
-testing: SomeTrue
-Success: ()
-testing: Text
-Success: ()
-testing: TextLiteral
-Success: ()
-testing: TextLiteralNormalizeArguments
-Success: ()
-testing: TextLiteralWithInterpolation
-Success: ()
-testing: TextReplace
-Success: ()
-testing: TextShow
-Success: ()
-testing: ToMap
-Success: ()
-testing: ToMapAnnotated
-Success: ()
-testing: ToMapInferTypeFromRecord
-Success: ()
-testing: True
-Success: ()
-testing: Type
-Success: ()
-testing: TypeAnnotation
-Success: ()
-testing: TypeAnnotationFunction
-Success: ()
-testing: TypeAnnotationNormalize
-Success: ()
-testing: TypeAnnotationSort
-Success: ()
-testing: UnionConstructorEmptyField
-Success: ()
-testing: UnionConstructorField
-Success: ()
-testing: UnionTypeEmpty
-Success: ()
-testing: UnionTypeKind
-Success: ()
-testing: UnionTypeMixedKinds1
-Success: ()
-testing: UnionTypeMixedKinds2
-Success: ()
-testing: UnionTypeMixedKinds3
-Success: ()
-testing: UnionTypeMixedKinds4
-Success: ()
-testing: UnionTypeOne
-Success: ()
-testing: UnionTypeType
-Success: ()
-testing: WithCreateIntermediateRecords
-Success: ()
-testing: WithNested
-Success: ()
-testing: WithNewField
-Success: ()
-testing: WithNewType
-Success: ()
-DONE
-Passed: 185
-Failed: 1
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "AssertSimple")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "AssertTrivial")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "Bool")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "Completion")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "Double")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "DoubleLiteral")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "DoubleShow")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "Equivalence")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "False")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "Function")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "FunctionApplication")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "FunctionApplicationNormalizeArgument")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "FunctionApplicationNormalizeResult")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "FunctionDependentType1")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "FunctionDependentType2")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "FunctionNamedArg")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "FunctionNormalizeTypeAnnotation")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "FunctionTypeKindKind")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "FunctionTypeKindTerm")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "FunctionTypeKindType")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "FunctionTypeTermTerm")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "FunctionTypeTypeKind")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "FunctionTypeTypeTerm")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "FunctionTypeTypeType")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "FunctionTypeUsingArgument")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "If")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "IfBranchesKind")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "IfBranchesType")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "IfNormalizeArguments")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "Integer")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "IntegerClamp")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "IntegerLiteral")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "IntegerNegate")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "IntegerShow")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "IntegerToDouble")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "Kind")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "Let")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "LetNestedTypeSynonym")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "LetTypeSynonym")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "LetWithAnnotation")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "List")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "ListBuild")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "ListFold")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "ListHead")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "ListIndexed")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "ListLast")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "ListLength")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "ListLiteralEmpty")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "ListLiteralEmptyNormalizeAnnotation")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "ListLiteralNormalizeArguments")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "ListLiteralOne")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "ListReverse")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "MergeEmptyAlternative")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "MergeEmptyUnion")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "MergeNone")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "MergeOne")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "MergeOneEmpty")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "MergeOneWithAnnotation0")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "MergeOneWithAnnotation1")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "MergeOptional")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "MergeSome")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "MergeTrickyShadowing")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "Natural")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "NaturalBuild")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "NaturalEven")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "NaturalFold")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "NaturalIsZero")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "NaturalLiteral")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "NaturalOdd")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "NaturalShow")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "NaturalSubtract")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "NaturalToInteger")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "None")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "OperatorAnd")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "OperatorAndNormalizeArguments")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "OperatorEqual")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "OperatorEqualNormalizeArguments")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "OperatorListConcatenate")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "OperatorListConcatenateNormalizeArguments")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "OperatorNotEqual")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "OperatorNotEqualNormalizeArguments")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "OperatorOr")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "OperatorOrNormalizeArguments")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "OperatorPlus")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "OperatorPlusNormalizeArguments")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "OperatorTextConcatenate")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "OperatorTextConcatenateNormalizeArguments")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "OperatorTimes")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "OperatorTimesNormalizeArguments")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "Optional")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RecordEmpty")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RecordLitDottedFields")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RecordLitDottedFieldsMerge")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RecordLitDuplicateFieldsAbstract")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RecordLitDuplicateFieldsNoCollisions")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RecordLitNormalizeFieldType")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RecordLitPun")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RecordLitPunCapture")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RecordLitPunSome")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RecordLitSortFields")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RecordMixedKinds2")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RecordMixedKinds")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RecordNestedKind")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RecordNestedKindLike")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RecordNestedType")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RecordNestedTypeLike")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RecordOneKind")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RecordOneType")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RecordOneValue")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RecordProjectionByType")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RecordProjectionByTypeEmpty")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RecordProjectionByTypeJudgmentalEquality")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RecordProjectionEmpty")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RecordProjectionEmptyKind")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RecordProjectionKind")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RecordProjectionType")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RecordProjectionValue")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RecordSelectionKind")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RecordSelectionType")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RecordSelectionValue")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RecordType")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RecordTypeEmpty")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RecordTypeKind")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RecordTypeKindLike")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RecordTypeMixedKinds2")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RecordTypeMixedKinds3")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RecordTypeMixedKinds")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RecordTypeNestedKind")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RecordTypeNestedKindLike")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RecordTypeType")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RecursiveRecordMergeBoolType")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RecursiveRecordMergeLhsEmpty")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RecursiveRecordMergeMixedKinds")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RecursiveRecordMergeRecursively")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RecursiveRecordMergeRecursivelyKinds")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RecursiveRecordMergeRecursivelyTypes")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RecursiveRecordMergeRhsEmpty")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RecursiveRecordMergeTwo")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RecursiveRecordMergeTwoKinds")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RecursiveRecordMergeTwoTypes")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RecursiveRecordTypeMergeDeep")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RecursiveRecordTypeMergeRecursively")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RecursiveRecordTypeMergeRecursivelyKinds")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RecursiveRecordTypeMergeRecursivelyTypes")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RecursiveRecordTypeMergeRhsEmpty")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RecursiveRecordTypeMergeTwo")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RecursiveRecordTypeMergeTwoKinds")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RecursiveRecordTypeMergeTwoTypes")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RightBiasedRecordMergeMixedKinds")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RightBiasedRecordMergeRhsEmpty")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RightBiasedRecordMergeTwo")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RightBiasedRecordMergeTwoDifferent")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RightBiasedRecordMergeTwoKinds")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "RightBiasedRecordMergeTwoTypes")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "SomeTrue")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "Text")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "TextLiteral")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "TextLiteralNormalizeArguments")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "TextLiteralWithInterpolation")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "TextReplace")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "TextShow")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "ToMap")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "ToMapAnnotated")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "ToMapInferTypeFromRecord")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "True")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "Type")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "TypeAnnotation")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "TypeAnnotationFunction")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "TypeAnnotationNormalize")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "TypeAnnotationSort")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "UnionConstructorEmptyField")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "UnionConstructorField")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "UnionTypeEmpty")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "UnionTypeKind")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "UnionTypeMixedKinds1")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "UnionTypeMixedKinds2")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "UnionTypeMixedKinds3")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "UnionTypeMixedKinds4")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "UnionTypeOne")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "UnionTypeType")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "WithCreateIntermediateRecords")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "WithNested")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "WithNewField")
+Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "WithNewType")
+Testing: ("../../../dhall-lang/tests/type-inference/success", "CacheImports")
+ErrorMessage: "Parse failed at position 179: char '('"
+Testing: ("../../../dhall-lang/tests/type-inference/success", "CacheImportsCanonicalize")
+ErrorMessage: "Parse failed at position 152: char '('"
+Testing: ("../../../dhall-lang/tests/type-inference/success", "accessEncodedType")
+ErrorMessage: "Parse failed at position 2: char '('"
+Testing: ("../../../dhall-lang/tests/type-inference/success", "accessType")
+InvalidFieldType: (EVar "record" 0)
+Testing: ("../../../dhall-lang/tests/type-inference/success", "preferMixedRecords")
+Testing: ("../../../dhall-lang/tests/type-inference/success", "preferMixedRecordsSameField")
+Testing: ("../../../dhall-lang/tests/type-inference/success", "prelude")
+ErrorMessage: "Parse failed at position 839: char '('"
+Testing: ("../../../dhall-lang/tests/type-inference/success", "recordOfRecordOfTypes")
+ErrorMessage: "Parse failed at position 97: expected the end of the string"
+Testing: ("../../../dhall-lang/tests/type-inference/success", "recordOfTypes")
+Result: 
+Pass: 314
+Fail: 34
 1/1: Building All (All.idr)
 Main> Main> Bye for now!

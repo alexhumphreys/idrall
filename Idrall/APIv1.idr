@@ -24,6 +24,12 @@ exprFromString x = do
   x' <- mapErr (handleError) (liftEither (parseExpr x))
   resolve [] Nothing (fst x')
 
+export
+resolveFromString : Maybe FilePath -> String -> IOEither Error (Expr Void)
+resolveFromString path x = do
+  x' <- mapErr (handleError) (liftEither (parseExpr x))
+  resolve [] path (fst x')
+
 public export
 roundTripEval : String -> IOEither Error Value
 roundTripEval x = do
@@ -40,6 +46,14 @@ public export
 roundTripCheck : String -> String -> IOEither Error ()
 roundTripCheck x y = do
   x' <- exprFromString x
+  y' <- roundTripEval y
+  liftEither (check initCxt x' y')
+  pure ()
+
+public export
+roundTripCheck' : Maybe FilePath -> String -> String -> IOEither Error ()
+roundTripCheck' path x y = do
+  x' <- resolveFromString path x
   y' <- roundTripEval y
   liftEither (check initCxt x' y')
   pure ()

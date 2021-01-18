@@ -268,7 +268,6 @@ mutual
     Right $ VPrim $
       \a => Right $ VPrim $
         \c => case c of
-                   VHLam (ListFoldCl x) _ => pure $ x
                    VPrimVar => pure $ VListBuild a VPrimVar
                    t => vAppM t [ VList a
                                 , VHLam (Typed "a" a) $ \x =>
@@ -284,11 +283,14 @@ mutual
                      Right $ VHLam (Typed "list" vType) $ \list =>
                      Right $ VHLam (Typed "cons" (vFun a $ vFun list list) ) $ \cons =>
                      Right $ VHLam (Typed "nil"  list) $ \nil =>
-                       foldlM (\x,b => (vApp !(vApp cons x) b)) nil as
+                       foldrM (\x,b => vAppM cons [x, b]) nil as
                    as => Right $ VHLam (ListFoldCl as) $
                         \t => Right $ VPrim $
-                        \c => Right $ VPrim $
-                        \n => Right $ VListFold a as t c n
+                        \c' => Right $ VPrim $
+                        \n => Right $ VListFold a as t c' n
+    where
+      foldrM : (Foldable t, Monad m) => (funcM: b -> a -> m a) -> (init: a) -> (input: t b) -> m a
+      foldrM fm a0 = foldr (\b,ma => ma >>= fm b) (pure a0)
   eval env EListLength =
     Right $ VPrim $
       \a => Right $ VPrim $
@@ -388,7 +390,7 @@ mutual
     case lookup k m' of
          Nothing => Left (FieldNotFoundError $ show k)
          (Just t) => pure t
-  eval env (EField x k) = Left (InvalidFieldType (show x))
+  eval env (EField x k) = Left (InvalidFieldType (show x)) -- TODO Fix, mk neutral
   eval env (ERecordCompletion t u) =
     eval env (EAnnot (EPrefer (EField t (MkFieldName "default")) u) (EField t (MkFieldName "Type")))
   eval env (EToMap x Nothing) =

@@ -154,9 +154,9 @@ mutual
     show (VPrimVar) = "VPrimVar"
     show (VApp x y) = "(VApp " ++ show x ++ " " ++ show y ++ ")"
     show (VLambda x y) = "(VLambda " ++ show x ++ " " ++ show y ++ ")"
-    show (VHLam i x) = "(VHLam " ++ show i ++ " " ++ "TODO find some way to show VHLam arg" ++ ")"
+    show (VHLam i x) = "(VHLam " ++ show i ++ " " ++ show (x VPrimVar)
     show (VPi x y) = "(VPi " ++ show x ++ " " ++ show y ++ ")"
-    show (VHPi i x y) = "(VHPi " ++ show i ++ " " ++ show x ++ "TODO find some way to show VHPi arg" ++ ")"
+    show (VHPi i x y) = "(VHPi " ++ show i ++ " " ++ show x ++ show (y VPrimVar)
 
     show VBool = "VBool"
     show (VBoolLit x) = "(VBoolLit " ++ show x ++ ")"
