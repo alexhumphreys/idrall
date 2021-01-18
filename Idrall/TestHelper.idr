@@ -74,14 +74,18 @@ dirExists dir = do
   pure True
 
 getDirs : String -> List String -> IO (List String)
-getDirs path [] = pure []
-getDirs path ("." :: xs) = getDirs path xs
-getDirs path (".." :: xs) = getDirs path xs
-getDirs path (x :: xs) = do
-  exists <- dirExists $ (path ++ "/" ++ x)
-  case exists of
-       True => pure $ (path ++ "/" ++ x) :: !(getDirs path xs)
-       False => getDirs path xs
+getDirs path ls = do x <- go path ls
+                     pure $ sort x
+where
+  go : String -> List String -> IO (List String)
+  go path [] = pure []
+  go path ("." :: xs) = go path xs
+  go path (".." :: xs) = go path xs
+  go path (x :: xs) = do
+    exists <- dirExists $ (path ++ "/" ++ x)
+    case exists of
+         True => pure $ (path ++ "/" ++ x) :: !(go path xs)
+         False => go path xs
 
 public export
 findTests : String -> IO (DirTree String)
