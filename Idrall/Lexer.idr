@@ -8,8 +8,13 @@ import Data.List
 import Data.Nat
 import Data.String.Parser
 import Data.Strings
+import Data.List1
 
 -- Not a real Lexer, more a collection of small parsing utilities.
+
+export
+commaSep1' : Monad m => ParseT m a -> ParseT m (List1 a)
+commaSep1' p = p `sepBy1` (token ",")
 
 mutual
   blockCommentChunk : Parser String

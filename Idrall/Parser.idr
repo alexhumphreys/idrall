@@ -389,14 +389,14 @@ mutual
   populatedList : Parser (Expr ImportStatement)
   populatedList = do
     token "["
-    es <- commaSep1 expr
+    es <- commaSep1' expr
     token "]"
     pure (EListLit Nothing (forget es))
 
   annotatedList : Parser (Expr ImportStatement)
   annotatedList = do
     token "["
-    es <- commaSep1 expr
+    es <- commaSep1' expr
     token "]"
     token ":"
     e <- expr

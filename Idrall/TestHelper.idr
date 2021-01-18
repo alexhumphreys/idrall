@@ -10,7 +10,7 @@ import Data.Strings
 
 public export
 dirName : String
-dirName = "../../../dhall-lang/tests/type-inference/success/unit/"
+dirName = "../../../dhall-lang/tests/type-inference/success/"
 
 public export
 listDir : Directory -> List String -> IO (List String)
@@ -32,6 +32,25 @@ stripSuffix x =
 public export
 onlyA : List String -> List String
 onlyA xs = filter (isSuffixOf "A.dhall") xs
+
+public export
+dirExists : String -> IO Bool
+dirExists dir = do
+  Right d <- openDir dir
+    | Left _ => pure False
+  closeDir d
+  pure True
+
+export
+getDirs : String -> List String -> IO (List String)
+getDirs path [] = pure []
+getDirs path ("." :: xs) = getDirs path xs
+getDirs path (".." :: xs) = getDirs path xs
+getDirs path (x :: xs) = do
+  exists <- dirExists $ (path ++ "/" ++ x)
+  case exists of
+       True => pure $ (path ++ "/" ++ x) :: !(getDirs path xs)
+       False => getDirs path xs
 
 public export
 resultIOEither : IOEither a b -> IO (Nat, Nat)
