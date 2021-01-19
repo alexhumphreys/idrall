@@ -117,7 +117,7 @@ Features marked with a tick should work for parsing, type checking and evaluatio
 
 ### Imports
 - [ ] Keyword: missing
-- [ ] Operator: ?
+- [x] Operator: ?
 - [ ] Keyword: as Text
 - [ ] Keyword: using
 - [x] Local imports (/path/to/file.dhall)

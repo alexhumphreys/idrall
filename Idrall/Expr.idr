@@ -201,6 +201,8 @@ mutual
     | EProject (Expr a) (Either (List FieldName) (Expr a))
     -- | > EWith x y e ~  x with y = e
     | EWith (Expr a) (List1 FieldName) (Expr a)
+    -- | > EImportAlt x y ~ x ? y
+    | EImportAlt (Expr a) (Expr a)
     | EEmbed (Import a)
 
 export
@@ -285,6 +287,7 @@ mutual
     show (EField x y) = "(EField " ++ show x ++ " " ++ show y ++ ")"
     show (EProject x y) = "(EField " ++ show x ++ " " ++ show y ++ ")"
     show (EWith x ks y) = "(EWith " ++ show x ++ " " ++ show ks ++ " " ++ show y ++ ")"
+    show (EImportAlt x y) = "(EImportAlt " ++ show x ++ " " ++ show y ++ ")"
     show (EEmbed x) = "(EEmbed " ++ show x ++ ")"
 
   public export
