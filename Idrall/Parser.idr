@@ -241,7 +241,7 @@ mutual
             , Infix (pure EPrefer <* (token "//" <|> token "⫽")) AssocLeft
             , Infix (pure ECombineTypes <* (token "//\\\\" <|> token "⩓")) AssocLeft
             , Infix (pure ERecordCompletion <* (token "::")) AssocLeft
-            , Infix (pure const <* (token "?")) AssocLeft -- TODO not const
+            , Infix (pure EImportAlt <* (token "?")) AssocLeft
             ]
           ]
 

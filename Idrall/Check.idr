@@ -416,6 +416,7 @@ mutual
          (other, VRecord _) => Left (Unexpected $ "Not a RecordLit. Value: " ++ show other)
          (_, other) => Left (Unexpected $ "Not a Record. Value: " ++ show other)
   eval env (EWith x ks y) = vWith !(eval env x) ks !(eval env y)
+  eval env (EImportAlt x y) = eval env x
   eval env (EEmbed (Raw x)) = absurd x
   eval env (EEmbed (Resolved x)) = eval Empty x
 
@@ -1306,6 +1307,7 @@ mutual
              v' <- inferWith v (k ::: ks) y
              pure $ VRecord $ insert head v' ms
     inferWith other _ _ = unexpected "Not a RecordLit" other
+  infer cxt (EImportAlt x y) = infer cxt x
   infer cxt (EEmbed (Raw x)) = absurd x
   infer cxt (EEmbed (Resolved x)) = infer initCxt x
 

@@ -231,6 +231,13 @@ mutual
     x' <- resolve h p x
     y' <- resolve h p y
     pure (EWith x' ks y')
+  resolve h p (EImportAlt x y) =
+    case resolve h p x of
+         (MkIOEither x') => MkIOEither $ do
+           case !x' of
+                (Right x'') => pure $ Right x''
+                (Left w) => case resolve h p y of
+                                 (MkIOEither y'') => y''
   resolve h p (EEmbed (Raw (LocalFile x))) = resolveLocalFile h p x
   resolve h p (EEmbed (Raw (EnvVar x))) = MkIOEither (pure (Left (ErrorMessage "TODO not implemented")))
   resolve h p (EEmbed (Resolved x)) = MkIOEither (pure (Left (ErrorMessage "Already resolved")))
