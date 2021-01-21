@@ -378,19 +378,18 @@ mutual
     let xs = toList x in
     do xs' <- traverse (mapUnion (eval env)) xs
        Right (VUnion (fromList xs'))
-  eval env (EField (EUnion x) k) =
-    let xs = toList x in do
-      x' <- traverse (mapUnion (eval env)) xs
-      case lookup k x' of
-           Nothing => Left (FieldNotFoundError $ show k)
-           (Just Nothing) => Right (VInject (fromList x') k Nothing)
-           (Just (Just _)) => Right (VPrim $ \u => Right $ VInject (fromList x') k (Just u))
-  eval env (EField (ERecordLit m) k) = do
-    m' <- traverse (eval env) m
-    case lookup k m' of
-         Nothing => Left (FieldNotFoundError $ show k)
-         (Just t) => pure t
-  eval env (EField x k) = Left (InvalidFieldType (show x)) -- TODO Fix, mk neutral
+  eval env (EField x k) =
+    case !(eval env x) of
+         VRecordLit m =>
+            case lookup k m of
+                 (Just v) => pure v
+                 Nothing => Left (FieldNotFoundError $ show k)
+         VUnion m =>
+            case lookup k m of
+                 (Just (Just y)) => pure $ VPrim $ \u => pure $ VInject m k (Just u)
+                 (Just Nothing) => pure $ VInject m k Nothing
+                 Nothing => Left (FieldNotFoundError $ show k)
+         t => pure $ VField t k
   eval env (ERecordCompletion t u) =
     eval env (EAnnot (EPrefer (EField t (MkFieldName "default")) u) (EField t (MkFieldName "Type")))
   eval env (EToMap x Nothing) =
@@ -898,6 +897,7 @@ mutual
   quote env (VUnion x) =
     let x' = traverse (mapMaybe (quote env)) x in
     Right $ EUnion !x'
+  quote env (VField x y) = Right $ EField !(quote env x) y
   quote env (VCombine x y) = Right $ ECombine !(quote env x) !(quote env y)
   quote env (VCombineTypes x y) = Right $ ECombineTypes !(quote env x) !(quote env y)
   quote env (VPrefer x y) = Right $ EPrefer !(quote env x) !(quote env y)
@@ -1253,17 +1253,22 @@ mutual
     av <- eval (values cxt) a
     unify cxt tt av
     pure (EToMap t (Just a), av)
-  infer cxt (EField t@(EUnion x) k) = do
-    xv <- traverse (mapMaybe (eval (values cxt))) x
-    case lookup k xv of
-         Nothing => Left $ FieldNotFoundError $ show k
-         (Just Nothing) => Right $ (EField t k, VUnion xv)
-         (Just (Just y)) => Right $ (EField t k, (vFun y (VUnion xv)))
-  infer cxt (EField (ERecordLit m) k) = do
-    case lookup k m of
-         Nothing => Left $ FieldNotFoundError $ show k
-         (Just x) => infer cxt x
-  infer cxt (EField t k) = Left (InvalidFieldType (show t))
+  infer cxt (EField t k) = do
+    (t, tt) <- infer cxt t
+    case tt of
+         (VConst CType) =>
+            case !(eval (values cxt) t) of
+                 VUnion ts =>
+                    case lookup k ts of
+                         (Just Nothing) => pure $ (EField t k, VUnion ts)
+                         (Just (Just a)) => pure $ (EField t k, vFun a (VUnion ts))
+                         Nothing => Left $ FieldNotFoundError $ show k
+                 x => Left (InvalidFieldType (show t))
+         (VRecord ts) =>
+            case lookup k ts of
+                 (Just a) => pure $ (EField t k, a)
+                 Nothing => Left $ FieldNotFoundError $ show k
+         _ => Left (InvalidFieldType (show t))
   infer cxt (ERecordCompletion t u) = do
     (t, tt) <- infer cxt t
     case tt of

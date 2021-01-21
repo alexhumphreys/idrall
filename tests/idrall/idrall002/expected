@@ -46,9 +46,7 @@ Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/fold", 
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/fold", "1")
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/fold", "2")
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/generate", "0")
-InvalidFieldType: (EVar "x" 0)
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/generate", "1")
-InvalidFieldType: (EVar "x" 0)
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/head", "0")
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/head", "1")
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/indexed", "0")
@@ -60,9 +58,13 @@ AlphaEquivError:2
  not alpha equivalent to:
 0
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/iterate", "0")
-InvalidFieldType: (EVar "y" 0)
+AlphaEquivError:512
+ not alpha equivalent to:
+1
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/iterate", "1")
-InvalidFieldType: (EVar "y" 0)
+AlphaEquivError:512
+ not alpha equivalent to:
+1
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/last", "0")
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/last", "1")
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/length", "0")
@@ -76,20 +78,15 @@ Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/replica
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/reverse", "0")
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/reverse", "1")
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/shifted", "0")
-InvalidFieldType: (EVar "y" 0)
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/shifted", "1")
-InvalidFieldType: (EVar "y" 0)
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/unzip", "0")
-InvalidFieldType: (EVar "x" 0)
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/unzip", "1")
-InvalidFieldType: (EVar "x" 0)
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Monoid", "00")
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Monoid", "01")
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Monoid", "02")
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Monoid", "03")
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Monoid", "04")
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Monoid", "05")
-InvalidFieldType: (EVar "y" 0)
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Monoid", "06")
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Monoid", "07")
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Monoid", "08")
@@ -98,9 +95,13 @@ Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Monoid", "10
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Natural/build", "0")
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Natural/build", "1")
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Natural/enumerate", "0")
-InvalidFieldType: (EVar "x" 0)
+AlphaEquivError:9
+ not alpha equivalent to:
+0
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Natural/enumerate", "1")
-InvalidFieldType: (EVar "x" 0)
+AlphaEquivError:9
+ not alpha equivalent to:
+0
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Natural/even", "0")
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Natural/even", "1")
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Natural/fold", "0")
@@ -154,21 +155,15 @@ AlphaEquivError:(VVar "a" 0)
  not alpha equivalent to:
 (VList (VVar "a" 0))
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Optional/unzip", "0")
-InvalidFieldType: (EVar "x" 0)
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Optional/unzip", "1")
-InvalidFieldType: (EVar "x" 0)
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Text/concat", "0")
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Text/concat", "1")
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Text/concatMap", "0")
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Text/concatMap", "1")
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Text/concatMapSep", "0")
-InvalidFieldType: (EVar "Status" 0)
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Text/concatMapSep", "1")
-InvalidFieldType: (EVar "Status" 0)
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Text/concatSep", "0")
-InvalidFieldType: (EVar "Status" 0)
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Text/concatSep", "1")
-InvalidFieldType: (EVar "Status" 0)
 Testing: ("../../../dhall-lang/tests/type-inference/success/regression", "LambdaInLetScoping1")
 Testing: ("../../../dhall-lang/tests/type-inference/success/regression", "LambdaInLetScoping2")
 Testing: ("../../../dhall-lang/tests/type-inference/success/regression", "RecursiveRecordTypeMergeTripleCollision")
@@ -178,7 +173,6 @@ Testing: ("../../../dhall-lang/tests/type-inference/success/simple/access", "1")
 Testing: ("../../../dhall-lang/tests/type-inference/success/simple", "anonymousFunctionsInTypes")
 Testing: ("../../../dhall-lang/tests/type-inference/success/simple", "combineMixedRecords")
 Testing: ("../../../dhall-lang/tests/type-inference/success/simple", "completion")
-InvalidFieldType: (EVar "Example" 0)
 Testing: ("../../../dhall-lang/tests/type-inference/success/simple", "complexShadowing")
 ErrorMessage: "Parse failed at position 0: char '('"
 Testing: ("../../../dhall-lang/tests/type-inference/success/simple", "fieldsAreTypes")
@@ -190,6 +184,7 @@ Testing: ("../../../dhall-lang/tests/type-inference/success/simple", "orderInsen
 Testing: ("../../../dhall-lang/tests/type-inference/success/simple", "toMapEmptyNormalizeAnnotation")
 ToMapEmpty: Needs an annotation
 Testing: ("../../../dhall-lang/tests/type-inference/success/simple", "unionsOfTypes")
+InvalidFieldType: (EUnion fromList [((MkFieldName "Left"), Just (EPi _ (EConst CType) (EConst CType))), ((MkFieldName "Right"), Just (EConst CType))])
 Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "AssertAlpha")
 Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "AssertNaN")
 AlphaEquivError:+nan.0
@@ -386,7 +381,6 @@ ErrorMessage: "Parse failed at position 152: char '('"
 Testing: ("../../../dhall-lang/tests/type-inference/success", "accessEncodedType")
 ErrorMessage: "Parse failed at position 2: char '('"
 Testing: ("../../../dhall-lang/tests/type-inference/success", "accessType")
-InvalidFieldType: (EVar "record" 0)
 Testing: ("../../../dhall-lang/tests/type-inference/success", "preferMixedRecords")
 Testing: ("../../../dhall-lang/tests/type-inference/success", "preferMixedRecordsSameField")
 Testing: ("../../../dhall-lang/tests/type-inference/success", "prelude")
@@ -395,7 +389,7 @@ Testing: ("../../../dhall-lang/tests/type-inference/success", "recordOfRecordOfT
 ErrorMessage: "Parse failed at position 97: expected the end of the string"
 Testing: ("../../../dhall-lang/tests/type-inference/success", "recordOfTypes")
 Result: 
-Pass: 314
-Fail: 34
+Pass: 328
+Fail: 20
 1/1: Building All (All.idr)
 Main> Main> Bye for now!
