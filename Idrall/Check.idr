@@ -119,18 +119,21 @@ mutual
                               , VNaturalLit 0
                               ]
   eval env ENaturalFold =
-    pure $ VPrim $
-      \c => case c of
-                 VNaturalLit n =>
-                     pure $ VHLam (Typed "natural" vType) $ \natural =>
-                     pure $ VHLam (Typed "succ" (vFun natural natural) ) $ \succ =>
-                     pure $ VHLam (Typed "zero" natural) $ \zero =>
-                       go succ zero n
-                 n =>
-                     pure $ VHLam (NaturalFoldCl n) $ \natural =>
-                     pure $ VPrim $ \succ =>
-                     pure $ VPrim $ \zero =>
-                     pure $ VNaturalFold n natural succ zero
+    pure $ VPrim $ \n =>
+    pure $ VPrim $ \natural =>
+    pure $ VPrim $ \succ =>
+    pure $ VPrim $ \zero =>
+    let inert = VNaturalFold n natural succ zero
+    in case zero of
+            VPrimVar => pure inert
+            _ => case succ of
+                      VPrimVar => pure inert
+                      _ => case natural of
+                                VPrimVar => pure inert
+                                _ => case n of
+                                          VNaturalLit n' =>
+                                              go succ zero n'
+                                          _ => pure inert
   where
     go : Value -> Value -> Nat -> Either Error Value
     go succ acc 0 = pure acc
