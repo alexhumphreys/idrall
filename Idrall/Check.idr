@@ -486,7 +486,7 @@ mutual
         lists = map toRecordList prep
         recordsAsLists = map toRecordList prep
         final = map toRecord recordsAsLists
-        in VListLit (listIndexedType a) final
+        in VListLit (listIndexedType a) (reverse final) -- TODO hacky reverse
   where
     go : List (Nat, Value) -> Value -> List (Nat, Value)
     go [] t = [(0, t)]

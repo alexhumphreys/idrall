@@ -50,21 +50,9 @@ Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/generat
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/head", "0")
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/head", "1")
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/indexed", "0")
-AlphaEquivError:2
- not alpha equivalent to:
-0
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/indexed", "1")
-AlphaEquivError:2
- not alpha equivalent to:
-0
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/iterate", "0")
-AlphaEquivError:512
- not alpha equivalent to:
-1
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/iterate", "1")
-AlphaEquivError:512
- not alpha equivalent to:
-1
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/last", "0")
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/last", "1")
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/length", "0")
@@ -95,13 +83,7 @@ Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Monoid", "10
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Natural/build", "0")
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Natural/build", "1")
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Natural/enumerate", "0")
-AlphaEquivError:9
- not alpha equivalent to:
-0
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Natural/enumerate", "1")
-AlphaEquivError:9
- not alpha equivalent to:
-0
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Natural/even", "0")
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Natural/even", "1")
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Natural/fold", "0")
@@ -389,7 +371,7 @@ Testing: ("../../../dhall-lang/tests/type-inference/success", "recordOfRecordOfT
 ErrorMessage: "Parse failed at position 97: expected the end of the string"
 Testing: ("../../../dhall-lang/tests/type-inference/success", "recordOfTypes")
 Result: 
-Pass: 328
-Fail: 20
+Pass: 334
+Fail: 14
 1/1: Building All (All.idr)
 Main> Main> Bye for now!
