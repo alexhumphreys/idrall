@@ -81,6 +81,7 @@ mutual
     | VRecord (SortedMap FieldName Value)
     | VRecordLit (SortedMap FieldName Value)
     | VUnion (SortedMap FieldName (Maybe Value))
+    | VField Value FieldName
     | VCombine Value Value
     | VCombineTypes Value Value
     | VPrefer Value Value
@@ -219,6 +220,7 @@ mutual
     show (VRecord a) = "(VRecord $ " ++ show a ++ ")"
     show (VRecordLit a) = "(VRecordLit $ " ++ show a ++ ")"
     show (VUnion a) = "(VUnion " ++ show a ++ ")"
+    show (VField x y) = "(VField " ++ show x ++ " " ++ show y ++ ")"
     show (VCombine x y) = "(VCombine " ++ show x ++ " " ++ show y ++ ")"
     show (VCombineTypes x y) = "(VCombineTypes " ++ show x ++ " " ++ show y ++ ")"
     show (VPrefer x y) = "(VPrefer " ++ show x ++ " " ++ show y ++ ")"
