@@ -164,7 +164,6 @@ Testing: ("../../../dhall-lang/tests/type-inference/success/simple", "orderInsen
 Testing: ("../../../dhall-lang/tests/type-inference/success/simple", "toMapEmptyNormalizeAnnotation")
 ToMapEmpty: Needs an annotation
 Testing: ("../../../dhall-lang/tests/type-inference/success/simple", "unionsOfTypes")
-InvalidFieldType: (EUnion fromList [((MkFieldName "Left"), Just (EPi _ (EConst CType) (EConst CType))), ((MkFieldName "Right"), Just (EConst CType))])
 Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "AssertAlpha")
 Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "AssertNaN")
 AlphaEquivError:+nan.0
@@ -368,7 +367,7 @@ ErrorMessage: "Parse failed at position 839: char '('"
 Testing: ("../../../dhall-lang/tests/type-inference/success", "recordOfRecordOfTypes")
 Testing: ("../../../dhall-lang/tests/type-inference/success", "recordOfTypes")
 Result: 
-Pass: 337
-Fail: 11
+Pass: 338
+Fail: 10
 1/1: Building All (All.idr)
 Main> Main> Bye for now!
