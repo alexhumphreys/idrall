@@ -1266,7 +1266,7 @@ mutual
   infer cxt (EField t k) = do
     (t, tt) <- infer cxt t
     case tt of
-         (VConst CType) =>
+         (VConst _) =>
             case !(eval (values cxt) t) of
                  VUnion ts =>
                     case lookup k ts of

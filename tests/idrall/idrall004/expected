@@ -1,4 +1,4 @@
-Testing: ("../../../dhall-lang/tests/type-inference/success/simple", "mixedFieldAccess")
+Testing: ("../../../dhall-lang/tests/type-inference/success/simple", "unionsOfTypes")
 Result: 
 Pass: 1
 Fail: 0
