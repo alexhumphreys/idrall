@@ -928,6 +928,10 @@ vAnyPi t = Left $ Unexpected $ show t ++ " is not a VPi or VHPi"
 data Types = TEmpty
            | TBind Types Name Value
 
+Show Types where
+  show TEmpty = "TEmpty"
+  show (TBind x y z) = "(TBind " ++ show x ++ " " ++ show y ++ " " ++ show z ++ ")"
+
 axiom : U -> Either Error U
 axiom CType = Right Kind
 axiom Kind = Right Sort
@@ -948,6 +952,9 @@ record Cxt where
   constructor MkCxt
   values : Env
   types  : Types
+
+Show Cxt where
+  show x = "(MkCxt { values = " ++ show (values x) ++ ", types = " ++ show 2 ++ "})"
 
 export
 initCxt : Cxt
@@ -1027,11 +1034,11 @@ mutual
   infer cxt (EVar x i) = go (types cxt) i
   where
     go : Types -> Int -> Either Error (Expr Void, Value)
-    go TEmpty i = Left $ MissingVar $ x -- TODO better error message
-    go (TBind ts x' a) i =
+    go TEmpty n = Left $ MissingVar $ x ++ "@" ++ show i ++ "\n in Cxt: " ++ show cxt
+    go (TBind ts x' a) n =
       case x == x' of
-           True => if i == 0 then Right (EVar x i, a) else go ts (i - 1)
-           False => go ts i
+           True => if n == 0 then Right (EVar x i, a) else go ts (n - 1)
+           False => go ts n
   infer cxt (ELam x a t) = do
     (a, ak) <- checkTy cxt a
     av <- eval (values cxt) a
