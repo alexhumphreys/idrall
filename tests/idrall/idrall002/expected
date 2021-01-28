@@ -160,7 +160,6 @@ Testing: ("../../../dhall-lang/tests/type-inference/success/simple", "fieldsAreT
 Testing: ("../../../dhall-lang/tests/type-inference/success/simple", "kindParameter")
 Testing: ("../../../dhall-lang/tests/type-inference/success/simple", "mergeEquivalence")
 Testing: ("../../../dhall-lang/tests/type-inference/success/simple", "mixedFieldAccess")
-ErrorMessage: "Parse failed at position 181: char '('"
 Testing: ("../../../dhall-lang/tests/type-inference/success/simple", "orderInsensitivity")
 Testing: ("../../../dhall-lang/tests/type-inference/success/simple", "toMapEmptyNormalizeAnnotation")
 ToMapEmpty: Needs an annotation
@@ -367,10 +366,9 @@ Testing: ("../../../dhall-lang/tests/type-inference/success", "preferMixedRecord
 Testing: ("../../../dhall-lang/tests/type-inference/success", "prelude")
 ErrorMessage: "Parse failed at position 839: char '('"
 Testing: ("../../../dhall-lang/tests/type-inference/success", "recordOfRecordOfTypes")
-ErrorMessage: "Parse failed at position 97: expected the end of the string"
 Testing: ("../../../dhall-lang/tests/type-inference/success", "recordOfTypes")
 Result: 
-Pass: 335
-Fail: 13
+Pass: 337
+Fail: 11
 1/1: Building All (All.idr)
 Main> Main> Bye for now!

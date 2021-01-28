@@ -207,11 +207,16 @@ projectNames = do
   token "}"
   pure (\e => (EProject e (Left (map MkFieldName xs))))
 
+dottedList : Parser (List1 FieldName)
+dottedList = do
+  ks <- (identity <* spaces) `sepBy1` (token ".")
+  pure $ (map MkFieldName ks)
+
 field : Parser ((Expr ImportStatement) -> (Expr ImportStatement))
 field = do
   token "."
-  i <- identity
-  pure (\e => (EField e (MkFieldName i)))
+  ks <- dottedList
+  pure $ (\e' => foldl EField (EField e' (head ks)) (tail ks))
 
 mutual
   projectByType : Parser ((Expr ImportStatement) -> (Expr ImportStatement))
@@ -292,11 +297,6 @@ mutual
   recordLitPunElem = do
     k <- identity
     pure $ fromList [(MkFieldName k, (EVar k 0))]
-
-  dottedList : Parser (List1 FieldName)
-  dottedList = do
-    ks <- (identity <* spaces) `sepBy1` (token ".")
-    pure $ (map MkFieldName ks)
 
   recordLitDottedElem : Parser (SortedMap FieldName (Expr ImportStatement))
   recordLitDottedElem = do
