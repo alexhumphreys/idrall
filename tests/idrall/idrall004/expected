@@ -1,4 +1,4 @@
-Testing: ("../../../dhall-lang/tests/type-inference/success/simple", "unionsOfTypes")
+Testing: ("../../../dhall-lang/tests/type-inference/success/simple", "toMapEmptyNormalizeAnnotation")
 Result: 
 Pass: 1
 Fail: 0

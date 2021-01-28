@@ -983,7 +983,7 @@ mutual
     (t, a) <- infer cxt t
     case a of
       VConst c => pure (t, c)
-      _        => Left $ ErrorMessage "Not a Type/Kind/Sort" -- TODO Better error message
+      other        => Left $ ErrorMessage $ show other ++ " is not a Type/Kind/Sort"
 
   ||| returns the original `Expr Void` on success
   export
@@ -1246,7 +1246,7 @@ mutual
            in pure (EMerge t u a, !(inferMerge cxt newUnion us Nothing))
          (other, VRecord _) => unexpected "Not a RecordLit or Optional" other
          (_, other) => unexpected "Not a RecordLit" other
-  infer cxt (EToMap t Nothing) = do
+  infer cxt (EToMap t a) = do
     (t, tt) <- infer cxt t
     case tt of
          (VRecord ms) =>
@@ -1255,14 +1255,24 @@ mutual
                 ((k, v) :: ys) => do
                   unify cxt !(inferSkip cxt !(quote (envNames $ values cxt) v)) (VConst CType)
                   foldlM (\x,y => unify cxt x y *> pure x) v (map snd ys)
-                  pure (EToMap t Nothing, toMapTy v)
-                [] => Left $ ToMapEmpty "Needs an annotation"
+                  case a of
+                       Nothing => pure (EToMap t Nothing, toMapTy v)
+                       (Just x) => do unify cxt (toMapTy v) !(eval (values cxt) x)
+                                      pure (EToMap t Nothing, toMapTy v)
+                [] => case a of
+                           (Just x) => do v <- eval (values cxt) x
+                                          case v of
+                                               (VList (VRecord ms')) =>
+                                                  case SortedMap.toList ms' of
+                                                       [] => Left $ ToMapEmpty "wrong annotation type"
+                                                       (((MkFieldName "mapKey"), w) :: ((MkFieldName "mapValue"), w') :: []) => do
+                                                         checkTy cxt !(quote (envNames $ values cxt) w)
+                                                         checkTy cxt !(quote (envNames $ values cxt) w')
+                                                         pure (EToMap t a, v)
+                                                       _ => Left $ ToMapEmpty "wrong annotation type"
+                                               _ => Left $ ToMapEmpty "wrong annotation type"
+                           Nothing => Left $ ToMapEmpty "Needs an annotation"
          other => unexpected "Not a RecordLit" other
-  infer cxt (EToMap t (Just a)) = do
-    (t, tt) <- infer cxt (EToMap t Nothing)
-    av <- eval (values cxt) a
-    unify cxt tt av
-    pure (EToMap t (Just a), av)
   infer cxt (EField t k) = do
     (t, tt) <- infer cxt t
     case tt of

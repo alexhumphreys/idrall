@@ -162,7 +162,6 @@ Testing: ("../../../dhall-lang/tests/type-inference/success/simple", "mergeEquiv
 Testing: ("../../../dhall-lang/tests/type-inference/success/simple", "mixedFieldAccess")
 Testing: ("../../../dhall-lang/tests/type-inference/success/simple", "orderInsensitivity")
 Testing: ("../../../dhall-lang/tests/type-inference/success/simple", "toMapEmptyNormalizeAnnotation")
-ToMapEmpty: Needs an annotation
 Testing: ("../../../dhall-lang/tests/type-inference/success/simple", "unionsOfTypes")
 Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "AssertAlpha")
 Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "AssertNaN")
@@ -367,7 +366,7 @@ ErrorMessage: "Parse failed at position 839: char '('"
 Testing: ("../../../dhall-lang/tests/type-inference/success", "recordOfRecordOfTypes")
 Testing: ("../../../dhall-lang/tests/type-inference/success", "recordOfTypes")
 Result: 
-Pass: 338
-Fail: 10
+Pass: 339
+Fail: 9
 1/1: Building All (All.idr)
 Main> Main> Bye for now!
