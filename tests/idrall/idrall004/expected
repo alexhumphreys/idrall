@@ -1,0 +1,6 @@
+Testing: ("../../../dhall-lang/tests/type-inference/success/simple", "complexShadowing")
+Result: 
+Pass: 1
+Fail: 0
+1/1: Building One (One.idr)
+Main> Main> Bye for now!
