@@ -61,7 +61,7 @@ mutual
 
 public export
 lineComment : Parser String
-lineComment = token "--" *> takeWhile (\c => c /= '\n') <* char '\n'
+lineComment = token "--" *> takeWhile (\c => c /= '\n') <* token "\n"
 
 public export
 whitespace : Parser ()

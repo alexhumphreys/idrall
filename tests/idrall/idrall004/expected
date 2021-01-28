@@ -1,4 +1,4 @@
-Testing: ("../../../dhall-lang/tests/type-inference/success/simple", "complexShadowing")
+Testing: ("../../../dhall-lang/tests/type-inference/success/simple", "mixedFieldAccess")
 Result: 
 Pass: 1
 Fail: 0
