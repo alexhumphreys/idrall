@@ -20,6 +20,7 @@ allTests = MkTestPool []
   [ "idrall001"
   , "idrall002"
   , "idrall003"
+  , "idrall004"
   ]
 
 main : IO ()

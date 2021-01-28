@@ -156,7 +156,6 @@ Testing: ("../../../dhall-lang/tests/type-inference/success/simple", "anonymousF
 Testing: ("../../../dhall-lang/tests/type-inference/success/simple", "combineMixedRecords")
 Testing: ("../../../dhall-lang/tests/type-inference/success/simple", "completion")
 Testing: ("../../../dhall-lang/tests/type-inference/success/simple", "complexShadowing")
-ErrorMessage: "Parse failed at position 0: char '('"
 Testing: ("../../../dhall-lang/tests/type-inference/success/simple", "fieldsAreTypes")
 Testing: ("../../../dhall-lang/tests/type-inference/success/simple", "kindParameter")
 Testing: ("../../../dhall-lang/tests/type-inference/success/simple", "mergeEquivalence")
@@ -371,7 +370,7 @@ Testing: ("../../../dhall-lang/tests/type-inference/success", "recordOfRecordOfT
 ErrorMessage: "Parse failed at position 97: expected the end of the string"
 Testing: ("../../../dhall-lang/tests/type-inference/success", "recordOfTypes")
 Result: 
-Pass: 334
-Fail: 14
+Pass: 335
+Fail: 13
 1/1: Building All (All.idr)
 Main> Main> Bye for now!

@@ -15,6 +15,9 @@ repl: test-setup
 edit-tests: test-setup
 	cd ./tests/idrall/idrall002 && rlwrap idris2 -p contrib -p idrall All.idr
 
+edit-tests-one: test-setup
+	cd ./tests/idrall/idrall004 && rlwrap idris2 -p contrib -p idrall One.idr
+
 clean:
 	rm -f tests/*.idr~
 	rm -f tests/*.ibc

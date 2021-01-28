@@ -76,11 +76,15 @@ natural = token "Natural" *> pure (ENatural)
 double : Parser (Expr ImportStatement)
 double = token "Double" *> pure (EDouble)
 
-naturalLit : Parser (Expr ImportStatement)
-naturalLit = do n <- some digit
-                pure (ENaturalLit (getNatural n))
+naturalNumber : Parser Nat
+naturalNumber = do n <- some digit
+                   pure $ getNatural n
 where getNatural : List (Fin 10) -> Nat
       getNatural = foldl (\a => \b => 10 * a + cast b) 0
+
+naturalLit : Parser (Expr ImportStatement)
+naturalLit = do n <- naturalNumber
+                pure (ENaturalLit n)
 
 -- From lightyear JSON parser
 record Scientific where
@@ -181,8 +185,16 @@ varRegular = do requireFailure reservedNames
                 i <- identity
                 pure (EVar i 0)
 
+varIndexed : Parser (Expr ImportStatement)
+varIndexed = do requireFailure reservedNames
+                i <- identity
+                whitespace
+                token "@"
+                n <- naturalNumber
+                pure (EVar i (cast n))
+
 var : Parser (Expr ImportStatement)
-var = varBackticks <|> varRegular
+var = varBackticks <|> varIndexed <|> varRegular
 
 appl : Parser ((Expr ImportStatement) -> (Expr ImportStatement) -> (Expr ImportStatement))
 appl = do whitespace -- TODO also matches no spaces, but spaces1 messes with the eos parser
