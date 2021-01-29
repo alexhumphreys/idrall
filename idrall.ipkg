@@ -8,6 +8,7 @@ modules = Idrall.Expr
         , Idrall.Resolve
         , Idrall.Parser
         , Idrall.Lexer
+        , Idrall.Eval
         , Idrall.Check
         , Idrall.Error
         , Idrall.Map
