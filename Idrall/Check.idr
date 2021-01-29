@@ -1251,28 +1251,32 @@ mutual
     case tt of
          (VRecord ms) =>
            let xs = SortedMap.toList ms in
-           case xs of
-                ((k, v) :: ys) => do
-                  unify cxt !(inferSkip cxt !(quote (envNames $ values cxt) v)) (VConst CType)
-                  foldlM (\x,y => unify cxt x y *> pure x) v (map snd ys)
-                  case a of
-                       Nothing => pure (EToMap t Nothing, toMapTy v)
-                       (Just x) => do unify cxt (toMapTy v) !(eval (values cxt) x)
-                                      pure (EToMap t Nothing, toMapTy v)
-                [] => case a of
-                           (Just x) => do v <- eval (values cxt) x
-                                          case v of
-                                               (VList (VRecord ms')) =>
-                                                  case SortedMap.toList ms' of
-                                                       [] => Left $ ToMapEmpty "wrong annotation type"
-                                                       (((MkFieldName "mapKey"), w) :: ((MkFieldName "mapValue"), w') :: []) => do
-                                                         checkTy cxt !(quote (envNames $ values cxt) w)
-                                                         checkTy cxt !(quote (envNames $ values cxt) w')
-                                                         pure (EToMap t a, v)
-                                                       _ => Left $ ToMapEmpty "wrong annotation type"
-                                               _ => Left $ ToMapEmpty "wrong annotation type"
-                           Nothing => Left $ ToMapEmpty "Needs an annotation"
+           case (xs, a) of
+                (((k, v) :: ys), Just x) => do
+                  unifyAllValues cxt v ys
+                  unify cxt (toMapTy v) !(eval (values cxt) x)
+                  pure (EToMap t a, toMapTy v)
+                (((k, v) :: ys), Nothing) => do
+                  unifyAllValues cxt v ys
+                  pure (EToMap t a, toMapTy v)
+                ([], Just x) => do v <- checkToMapAnnot cxt !(eval (values cxt) x)
+                                   pure (EToMap t a, v)
+                ([], Nothing) => Left $ ToMapEmpty "Needs an annotation"
          other => unexpected "Not a RecordLit" other
+  where
+    unifyAllValues : Cxt -> Value -> List (FieldName, Value) -> Either Error Value
+    unifyAllValues cxt v vs = do
+      unify cxt !(inferSkip cxt !(quote (envNames $ values cxt) v)) (VConst CType)
+      foldlM (\x,y => unify cxt x y *> pure x) v (map snd vs)
+      pure v
+    checkToMapAnnot : Cxt -> Value -> Either Error Value
+    checkToMapAnnot cxt v@(VList (VRecord ms)) =
+      case SortedMap.toList ms of
+           (((MkFieldName "mapKey"), VText) :: ((MkFieldName "mapValue"), a) :: []) => do
+             checkTy cxt !(quote (envNames $ values cxt) a)
+             pure v
+           other => Left $ ToMapError $ "wrong annotation type" ++ show other
+    checkToMapAnnot cxt other = Left $ ToMapError $ "wrong annotation type: " ++ show other
   infer cxt (EField t k) = do
     (t, tt) <- infer cxt t
     case tt of

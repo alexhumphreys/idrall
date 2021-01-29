@@ -23,6 +23,7 @@ data Error
   | ReadFileError String
   | MergeUnusedHandler String
   | MergeUnhandledCase String
+  | ToMapError String
   | ToMapEmpty String
   | EmptyMerge String
   | InvalidRecordCompletion String
@@ -53,6 +54,7 @@ Show Error where
   show (MergeUnusedHandler str) = "MergeUnusedHandler: " ++ str
   show (MergeUnhandledCase str) = "MergeUnhandledCase: " ++ str
   show (EmptyMerge str) = "EmptyMerge: " ++ str
+  show (ToMapError str) = "ToMapError: " ++ str
   show (ToMapEmpty str) = "ToMapEmpty: " ++ str
   show (InvalidRecordCompletion str) = "InvalidRecordCompletion: " ++ str
   show (CyclicImportError str) = "CyclicImportError: " ++ str
