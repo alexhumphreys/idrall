@@ -1,4 +1,4 @@
-module Idrall.Check
+module Idrall.Eval
 
 import Idrall.Expr
 import Idrall.Error
@@ -17,22 +17,27 @@ nestError x e =
        (Right x') => Right x'
 
 ||| returns `VConst CType`
+export
 vType : Value
 vType = VConst CType
 
 ||| returns `VConst Kind`
+export
 vKind : Value
 vKind = VConst Kind
 
 ||| returns `VConst Sort`
+export
 vSort : Value
 vSort = VConst Sort
 
 -- evaluator
 mutual
+  export
   inst : Closure -> Value -> Either Error Value
   inst = evalClosure
 
+  export
   covering
   evalClosure : Closure -> Value -> Either Error Value
   evalClosure (MkClosure x env e) v
@@ -460,6 +465,7 @@ mutual
            pure $ VRecordLit $ insert head !rest ms
   vWith t ks u = pure $ VWith t ks u
 
+  export
   vProjectByFields : SortedMap FieldName Value -> List FieldName -> Either Error (List (FieldName, Value))
   vProjectByFields ms ks = traverse (lookupRecord ms) ks
   where
@@ -523,6 +529,7 @@ mutual
     Right (VListLit t (xs ++ ys))
   vListAppend x y = Right $ VListAppend x y
 
+  export
   doCombine : Value -> Value -> Either Error Value
   doCombine (VRecordLit x) (VRecordLit y) =
     Right (VRecordLit $ !(mergeWithApp doCombine x y))
@@ -598,6 +605,7 @@ mutual
   convSkip : Env -> Name -> Value -> Value -> Either Error ()
   convSkip env x = conv (Skip env x)
 
+  export
   conv : Env -> Value -> Value -> Either Error ()
   conv env (VLambda _ t) (VLambda _ t') =
     let (x, v, t) = convFreshCl t env in do

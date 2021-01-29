@@ -3,6 +3,7 @@ module Idrall.APIv1
 import Idrall.Expr
 import Idrall.Value
 import Idrall.Error
+import Idrall.Eval
 import Idrall.Check
 import Idrall.Parser
 import Idrall.Resolve
