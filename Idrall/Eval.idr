@@ -195,7 +195,9 @@ mutual
   eval env EIntegerShow =
     Right $ VPrim $
       \c => case c of
-                 VIntegerLit n => pure $ VTextLit (MkVChunks [] (show n))
+                 VIntegerLit n => case n >= 0 of
+                                       True => pure $ VTextLit (MkVChunks [] ("+" ++ (show n)))
+                                       False => pure $ VTextLit (MkVChunks [] (show n))
                  n             => pure $ VIntegerShow n
   eval env EIntegerNegate = Right $ VPrim $
                             \c => case c of
