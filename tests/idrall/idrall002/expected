@@ -21,13 +21,7 @@ Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Bool/show", 
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Double/show", "0")
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Double/show", "1")
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Integer/show", "0")
-AlphaEquivError:"0"
- not alpha equivalent to:
-"+0"
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Integer/show", "1")
-AlphaEquivError:"0"
- not alpha equivalent to:
-"+0"
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Integer/toDouble", "0")
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Integer/toDouble", "1")
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/List/all", "0")
@@ -366,7 +360,7 @@ ErrorMessage: "Parse failed at position 839: char '('"
 Testing: ("../../../dhall-lang/tests/type-inference/success", "recordOfRecordOfTypes")
 Testing: ("../../../dhall-lang/tests/type-inference/success", "recordOfTypes")
 Result: 
-Pass: 339
-Fail: 9
+Pass: 341
+Fail: 7
 1/1: Building All (All.idr)
 Main> Main> Bye for now!
