@@ -363,10 +363,19 @@ mutual
     (x', ty) <- infer cxt x
     traverse (\e => check cxt e ty) xs
     Right $ (EListLit Nothing (x :: xs), VList ty)
-  infer cxt (EListLit (Just x) xs) = do
-    ty <- eval (values cxt) x
-    traverse (\e => check cxt e ty) xs
-    Right $ (EListLit (Just x) xs, ty)
+  infer cxt (EListLit (Just a) []) = do
+    case !(eval (values cxt) a) of
+         VList a' => do
+           ea' <- quote (envNames $ values cxt) a'
+           check cxt ea' (VConst CType)
+           Right $ (EListLit (Just a) [], VList a')
+         other => Left $ ErrorMessage $ "Not a list annotation: " ++ show other
+  infer cxt (EListLit (Just a) (x :: xs)) = do
+    ty <- eval (values cxt) a
+    (a', av) <- infer cxt x
+    traverse (\e => check cxt e av) xs
+    conv (values cxt) ty (VList av)
+    Right $ (EListLit (Just a) (x :: xs), ty)
   infer cxt (EListAppend t u) = do
     (t', tt) <- infer cxt t
     case tt of

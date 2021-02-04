@@ -123,13 +123,7 @@ Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Optional/map
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Optional/null", "0")
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Optional/null", "1")
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Optional/toList", "0")
-AlphaEquivError:(VVar "a" 0)
- not alpha equivalent to:
-(VList (VVar "a" 0))
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Optional/toList", "1")
-AlphaEquivError:(VVar "a" 0)
- not alpha equivalent to:
-(VList (VVar "a" 0))
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Optional/unzip", "0")
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Optional/unzip", "1")
 Testing: ("../../../dhall-lang/tests/type-inference/success/prelude/Text/concat", "0")
@@ -360,7 +354,7 @@ ErrorMessage: "Parse failed at position 839: char '('"
 Testing: ("../../../dhall-lang/tests/type-inference/success", "recordOfRecordOfTypes")
 Testing: ("../../../dhall-lang/tests/type-inference/success", "recordOfTypes")
 Result: 
-Pass: 341
-Fail: 7
+Pass: 343
+Fail: 5
 1/1: Building All (All.idr)
 Main> Main> Bye for now!
