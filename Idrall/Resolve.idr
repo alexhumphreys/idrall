@@ -239,7 +239,10 @@ mutual
                 (Left w) => case resolve h p y of
                                  (MkIOEither y'') => y''
   resolve h p (EEmbed (Raw (LocalFile x))) = resolveLocalFile h p x
-  resolve h p (EEmbed (Raw (EnvVar x))) = MkIOEither (pure (Left (ErrorMessage "TODO not implemented")))
+  resolve h p (EEmbed (Raw (EnvVar x))) = MkIOEither (pure (Left (ErrorMessage "TODO Env var imports not implemented")))
+  resolve h p (EEmbed (Raw (Http x))) = MkIOEither (pure (Left (ErrorMessage "TODO http imports not implemented")))
+  resolve h p (EEmbed (Text a)) = MkIOEither (pure (Left (ErrorMessage "TODO as Text not implemented")))
+  resolve h p (EEmbed (Location a)) = MkIOEither (pure (Left (ErrorMessage "TODO as Location not implemented")))
   resolve h p (EEmbed (Resolved x)) = MkIOEither (pure (Left (ErrorMessage "Already resolved")))
 
   resolveRecord :  (history : List FilePath)
