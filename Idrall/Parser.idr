@@ -157,7 +157,7 @@ reservedNames' =
   , "->", "&&", ":"
   , "List", "Text", "Optional", "Natural", "Integer", "Double"
   , "Some", "None"
-  , "if", "then", "else"
+  , "if", "then", "else", "as"
   , "Type", "Kind", "Sort"]
 
 parseAny : List String -> Parser ()
@@ -447,18 +447,66 @@ mutual
     d <- dirs
     pure (Relative (str :: d))
 
-  pathTerm : Parser (Expr ImportStatement)
+  pathTerm : Parser (ImportStatement)
   pathTerm = do
     ex <- relPath <|> homePath <|> absolutePath
-    pure (EEmbed (Raw (LocalFile (filePathFromPath ex))))
+    pure $ LocalFile (filePathFromPath ex)
 
-  shaPathTerm : Parser (Expr ImportStatement)
-  shaPathTerm = do
-    p <- pathTerm
-    spaces
+  sha : Parser String
+  sha = do
     token "sha256:"
-    many alphaNum
-    pure p
+    x <- many alphaNum
+    pure $ pack x
+
+  data Protocol = HTTP | HTTPS
+  Show Protocol where
+    show HTTP = "http://"
+    show HTTPS = "https://"
+
+  httpImport : Parser (ImportStatement)
+  httpImport = do
+    protocol <- token "http://" <|> token "https://"
+    rest <- takeWhile (\c => c /= ' ')
+    pure $ Http (show protocol ++ rest)
+
+  dhallImportStatement : Parser (ImportStatement)
+  dhallImportStatement = httpImport <|> pathTerm
+
+  importAs : Parser (a -> Import a)
+  importAs = (token "Text" *> pure Text) <|> (token "Location" *> pure Location)
+
+  basicImport : Parser (Expr ImportStatement)
+  basicImport = do
+    i <- dhallImportStatement
+    pure (EEmbed $ Raw i)
+
+  shaImport : Parser (Expr ImportStatement)
+  shaImport = do
+    i <- dhallImportStatement
+    spaces
+    sha <- sha
+    pure (EEmbed $ Raw i)
+
+  asImport : Parser (Expr ImportStatement)
+  asImport = do
+    i <- dhallImportStatement
+    spaces
+    token "as"
+    asType <- importAs
+    pure (EEmbed (asType i))
+
+  shaAndAsImport : Parser (Expr ImportStatement)
+  shaAndAsImport = do
+    i <- dhallImportStatement
+    spaces
+    sha <- optional sha
+    spaces
+    token "as"
+    asType <- importAs
+    pure (EEmbed (asType i))
+
+  dhallImport : Parser (Expr ImportStatement)
+  dhallImport = shaAndAsImport <|> asImport <|> shaImport <|> basicImport
 
   lam : Parser (Expr ImportStatement)
   lam = do
@@ -511,7 +559,7 @@ mutual
      integer <|> integerLit <|>
      text <|> textLiteral <|>
      type <|> kind <|> sort <|>
-     shaPathTerm <|> pathTerm <|> esome <|>
+     dhallImport <|> esome <|>
      recordType <|> recordLit <|>
      union <|> lam <|> pi <|>
      var <|> list <|> parens (whitespace *> expr))

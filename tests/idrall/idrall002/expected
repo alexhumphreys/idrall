@@ -341,9 +341,9 @@ Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "WithNested")
 Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "WithNewField")
 Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "WithNewType")
 Testing: ("../../../dhall-lang/tests/type-inference/success", "CacheImports")
-ErrorMessage: "Parse failed at position 179: char '('"
+ErrorMessage: "TODO as Text not implemented"
 Testing: ("../../../dhall-lang/tests/type-inference/success", "CacheImportsCanonicalize")
-ErrorMessage: "Parse failed at position 152: char '('"
+ErrorMessage: "TODO as Text not implemented"
 Testing: ("../../../dhall-lang/tests/type-inference/success", "accessEncodedType")
 ErrorMessage: "Parse failed at position 2: char '('"
 Testing: ("../../../dhall-lang/tests/type-inference/success", "accessType")

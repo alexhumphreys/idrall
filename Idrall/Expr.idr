@@ -52,10 +52,13 @@ mutual
   data ImportStatement
     = LocalFile FilePath
     | EnvVar String
+    | Http String
 
   public export
   data Import a
     = Raw a
+    | Text a
+    | Location a
     | Resolved (Expr Void)
 
   public export
@@ -209,11 +212,14 @@ export
 Show ImportStatement where
   show (LocalFile x) = "(LocalFile " ++ show x ++ ")"
   show (EnvVar x) = "(EnvVar " ++ x ++ ")"
+  show (Http x) = "(Http " ++ x ++ ")"
 
 mutual
   export
   Show (Import a) where
     show (Raw x) = "(Raw)" -- TODO show x
+    show (Text x) = "(Text)" -- TODO show x
+    show (Location x) = "(Location)" -- TODO show x
     show (Resolved x) = "(Resolved " ++ show x ++ ")"
 
   export
