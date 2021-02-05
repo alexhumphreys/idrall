@@ -345,16 +345,15 @@ ErrorMessage: "TODO as Text not implemented"
 Testing: ("../../../dhall-lang/tests/type-inference/success", "CacheImportsCanonicalize")
 ErrorMessage: "TODO as Text not implemented"
 Testing: ("../../../dhall-lang/tests/type-inference/success", "accessEncodedType")
-ErrorMessage: "Parse failed at position 2: char '('"
 Testing: ("../../../dhall-lang/tests/type-inference/success", "accessType")
 Testing: ("../../../dhall-lang/tests/type-inference/success", "preferMixedRecords")
 Testing: ("../../../dhall-lang/tests/type-inference/success", "preferMixedRecordsSameField")
 Testing: ("../../../dhall-lang/tests/type-inference/success", "prelude")
-ErrorMessage: "Parse failed at position 839: char '('"
+ErrorMessage: "Parse failed at position 604: char '('"
 Testing: ("../../../dhall-lang/tests/type-inference/success", "recordOfRecordOfTypes")
 Testing: ("../../../dhall-lang/tests/type-inference/success", "recordOfTypes")
 Result: 
-Pass: 343
-Fail: 5
+Pass: 344
+Fail: 4
 1/1: Building All (All.idr)
 Main> Main> Bye for now!
