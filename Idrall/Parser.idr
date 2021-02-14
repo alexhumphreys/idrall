@@ -173,7 +173,11 @@ identity : Parser String
 identity = do (identLong <|> identShort) <* whitespace
 
 identBackticks : Parser String
-identBackticks = char '`' *> identity <* token "`"
+identBackticks = do
+  char '`'
+  rest <- takeWhile1 (\c => c /= '`')
+  char '`'
+  pure ("`" ++ rest ++ "`")
 
 varBackticks : Parser (Expr ImportStatement)
 varBackticks = do
@@ -356,8 +360,10 @@ mutual
   -- TODO for multi-let the last let MUST have an `in`, the rest are optional.
   -- Need to parse this somehow.
   letExpr : Parser (Expr ImportStatement)
-  letExpr = token "let" *> do
+  letExpr = do
+    token "let"
     i <- identity <|> identBackticks
+    spaces
     t <- optional (do token ":"; expr)
     token "="
     v <- expr
@@ -616,9 +622,81 @@ mutual
             char '"'
             pure (concat chunks)
 
+  singleQuoteContinue : Parser (Chunks ImportStatement)
+  singleQuoteContinue =
+    choice
+      [ escapeSingleQuotes
+      , interpolation
+      , escapeInterpolation
+      , endLiteral
+      , unescapedCharacterFast
+      , unescapedCharacterSlow
+      , tab
+      , endOfLine
+      ]
+  where
+    escapeSingleQuotes : Parser (Chunks ImportStatement)
+    escapeSingleQuotes = do
+      _ <- string "'''"
+      b <- singleQuoteContinue
+      pure $ (MkChunks [] "''") <+> b
+    interpolation : Parser (Chunks ImportStatement)
+    interpolation = do
+      _ <- string "${"
+      a <- expr
+      _ <- char '}'
+      b <- singleQuoteContinue
+      pure (MkChunks [(neutral, a)] neutral <+> b)
+    escapeInterpolation : Parser (Chunks ImportStatement)
+    escapeInterpolation = do
+      _ <- string "''${"
+      b <- singleQuoteContinue
+      pure $ (MkChunks [] "${") <+> b
+    endLiteral : Parser (Chunks ImportStatement)
+    endLiteral = do
+      _ <- string "''"
+      pure neutral
+    unescapedCharacterFast : Parser (Chunks ImportStatement)
+    unescapedCharacterFast = do
+      a <- takeWhile1 predicate
+      b <- singleQuoteContinue
+      pure (MkChunks [] a <+> b)
+    where
+      predicate : Char -> Bool
+      predicate c =
+          ('\x20' <= c && c <= '\x10FFFF') && c /= '$' && c /= '\''
+    unescapedCharacterSlow : Parser (Chunks ImportStatement)
+    unescapedCharacterSlow = do
+      a <- satisfy predicate
+      b <- singleQuoteContinue
+      pure (MkChunks [] (singleton a) <+> b)
+    where
+      predicate : Char -> Bool
+      predicate c = c == '$' || c == '\''
+    endOfLine : Parser (Chunks ImportStatement)
+    endOfLine = do
+      a <- string "\n" <|> string "\r\n"
+      b <- singleQuoteContinue
+      pure (MkChunks [] a <+> b)
+    tab : Parser (Chunks ImportStatement)
+    tab = do
+      _ <- char '\t' <?> "tab"
+      b <- singleQuoteContinue
+      pure (MkChunks [] "\t" <+> b)
+
+  singleQuoteLiteral : Parser (Chunks ImportStatement)
+  singleQuoteLiteral = do
+    _ <- string "''"
+    _ <- endOfLine
+    a <- singleQuoteContinue
+    pure a -- TODO handle indentation
+  where
+    endOfLine : Parser ()
+    endOfLine = (skip (char '\n') <|> skip (string "\r\n")) <?> "newline"
+
   textLiteral : Parser (Expr ImportStatement)
   textLiteral = (do
-            literal <- doubleQuotedLiteral
+            literal <- doubleQuotedLiteral <|> singleQuoteLiteral
             pure (ETextLit literal) ) <?> "literal"
 
   opExpr : Parser (Expr ImportStatement)

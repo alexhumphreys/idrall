@@ -11,7 +11,7 @@ import Data.List
 import Data.Strings
 
 dirTreeOne : DirTree String
-dirTreeOne = MkDirTree "../../../dhall-lang/tests/type-inference/success/simple" [] ["toMapEmptyNormalizeAnnotation"]
+dirTreeOne = MkDirTree "../../../dhall-lang/tests/type-inference/success" [] ["prelude"]
 
 testGood : IO (Result)
 testGood = runTests dirTreeOne
