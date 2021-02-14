@@ -368,7 +368,7 @@ mutual
 
   piComplex : Parser (Expr ImportStatement)
   piComplex = do
-    (token "forall(" <|> token "∀(")
+    (token "forall(" <|> (token "∀" *> token "("))
     i <- identity
     token ":"
     dom <- expr
