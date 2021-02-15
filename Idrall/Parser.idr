@@ -14,6 +14,8 @@ import Idrall.Lexer
 import Idrall.Expr
 import Idrall.Path
 
+import Debug.Trace
+
 %hide Prelude.pow
 
 builtin : Parser (Expr ImportStatement)
@@ -46,19 +48,19 @@ builtin =
   (string "NaN" *> pure (EDoubleLit (0.0/0.0)))
 
 true : Parser (Expr ImportStatement)
-true = token "True" *> pure (EBoolLit True)
+true = string "True" *> pure (EBoolLit True)
 
 false : Parser (Expr ImportStatement)
-false = token "False" *> pure (EBoolLit False)
+false = string "False" *> pure (EBoolLit False)
 
 bool : Parser (Expr ImportStatement)
-bool = token "Bool" *> pure (EBool)
+bool = string "Bool" *> pure (EBool)
 
 text : Parser (Expr ImportStatement)
-text = token "Text" *> pure (EText)
+text = string "Text" *> pure (EText)
 
 integer : Parser (Expr ImportStatement)
-integer = token "Integer" *> pure (EInteger)
+integer = string "Integer" *> pure (EInteger)
 
 integerLit : Parser (Expr ImportStatement)
 integerLit = do op <- (char '-' <|> char '+')
@@ -71,10 +73,10 @@ where getInteger : List (Fin 10) -> Integer
       getInteger = foldl (\a => \b => 10 * a + cast b) 0
 
 natural : Parser (Expr ImportStatement)
-natural = token "Natural" *> pure (ENatural)
+natural = string "Natural" *> pure (ENatural)
 
 double : Parser (Expr ImportStatement)
-double = token "Double" *> pure (EDouble)
+double = string "Double" *> pure (EDouble)
 
 naturalNumber : Parser Nat
 naturalNumber = do n <- some digit
@@ -154,23 +156,60 @@ identShort = do i <- identFirst
 reservedNames' : List String
 reservedNames' =
   [ "in", "let", "assert", "merge", "toMap"
-  , "->", "&&", ":"
-  , "List", "Text", "Optional", "Natural", "Integer", "Double"
+  , "->", "&&", ":", "forall"
+  , "List", "Text", "Optional", "Natural", "Integer", "Double", "Bool"
+  , "True", "False"
   , "Some", "None"
   , "if", "then", "else", "as"
   , "Type", "Kind", "Sort"]
+
+reservedKeywords' : List String
+reservedKeywords' =
+  [ "Natural/build"
+  , "Natural/fold"
+  , "Natural/isZero"
+  , "Natural/even"
+  , "Natural/odd"
+  , "Natural/subtract"
+  , "Natural/toInteger"
+  , "Natural/show"
+  , "Integer/show"
+  , "Integer/negate"
+  , "Integer/clamp"
+  , "Integer/toDouble"
+  , "Double/show"
+  , "List/build"
+  , "List/fold"
+  , "List/length"
+  , "List/head"
+  , "List/last"
+  , "List/indexed"
+  , "List/reverse"
+  , "List"
+  , "Text/show"
+  , "Text/replace"
+  , "None"
+  , "Optional"
+  , "NaN"
+  ]
 
 parseAny : List String -> Parser ()
 parseAny [] = fail "emptyList" -- TODO use List1 in idris2 to remove this case
 parseAny (x :: xs) = skip (string x) <|> (parseAny xs)
 
+reservedKeywords : Parser ()
+reservedKeywords = do
+  parseAny reservedKeywords'
+
 reservedNames : Parser ()
 reservedNames = do
   parseAny reservedNames'
-  (do space; pure ()) <|> eos
 
 identity : Parser String
-identity = do (identLong <|> identShort) <* whitespace
+identity = do i <- (identLong <|> identShort)
+              case elem i (reservedNames' ++ reservedKeywords') of
+                   True => fail $ show i ++ " is reserved"
+                   False => pure i
 
 identBackticks : Parser String
 identBackticks = do
@@ -185,13 +224,11 @@ varBackticks = do
   pure $ EVar i 0
 
 varRegular : Parser (Expr ImportStatement)
-varRegular = do requireFailure reservedNames
-                i <- identity
+varRegular = do i <- identity
                 pure (EVar i 0)
 
 varIndexed : Parser (Expr ImportStatement)
-varIndexed = do requireFailure reservedNames
-                i <- identity
+varIndexed = do i <- identity
                 whitespace
                 token "@"
                 n <- naturalNumber
@@ -207,7 +244,7 @@ appl = do whitespace -- TODO also matches no spaces, but spaces1 messes with the
 projectNames : Parser ((Expr ImportStatement) -> (Expr ImportStatement))
 projectNames = do
   token ".{"
-  xs <- identity `sepBy` (token ",")
+  xs <- (identity <* spaces) `sepBy` (token ",")
   token "}"
   pure (\e => (EProject e (Left (map MkFieldName xs))))
 
@@ -269,6 +306,7 @@ mutual
   recordTypeElem : Parser (FieldName, Expr ImportStatement)
   recordTypeElem = do
     k <- identity
+    whitespace
     token ":"
     e <- expr
     pure (MkFieldName k, e)
@@ -293,6 +331,7 @@ mutual
   recordLitRegularElem : Parser (SortedMap FieldName (Expr ImportStatement))
   recordLitRegularElem = do
     k <- identity
+    whitespace
     token "="
     e <- expr
     pure $ fromList [(MkFieldName k, e)]
@@ -300,6 +339,7 @@ mutual
   recordLitPunElem : Parser (SortedMap FieldName (Expr ImportStatement))
   recordLitPunElem = do
     k <- identity
+    whitespace
     pure $ fromList [(MkFieldName k, (EVar k 0))]
 
   recordLitDottedElem : Parser (SortedMap FieldName (Expr ImportStatement))
@@ -338,11 +378,13 @@ mutual
   unionSimpleElem : Parser (FieldName, Maybe (Expr ImportStatement))
   unionSimpleElem = do
     k <- identity
+    whitespace
     pure (MkFieldName k, Nothing)
 
   unionComplexElem : Parser (FieldName, Maybe (Expr ImportStatement))
   unionComplexElem = do
     k <- identity
+    whitespace
     token ":"
     e <- expr
     pure (MkFieldName k, Just e)
@@ -354,6 +396,7 @@ mutual
   union = do
     token "<"
     xs <- unionElem `sepBy` (token "|")
+    whitespace
     token ">"
     pure (EUnion (fromList xs))
 
@@ -376,9 +419,10 @@ mutual
   piComplex = do
     (token "forall(" <|> (token "∀" *> token "("))
     i <- identity
+    optional whitespace
     token ":"
     dom <- expr
-    whitespace
+    optional whitespace
     token ")"
     (token "->" <|> token "→")
     ran <- expr
@@ -519,6 +563,7 @@ mutual
     token "λ" <|> token "\\"
     token "("
     i <- identity
+    whitespace
     token ":"
     ty <- expr
     whitespace
@@ -558,17 +603,17 @@ mutual
 
   term : Parser (Expr ImportStatement)
   term = do
-    i <-(builtin <|> mergeExpr <|> toMap <|>
+    i <-(var <|> builtin <|> mergeExpr <|> toMap <|>
      true <|> false <|> bool <|> ifExpr <|>
      double <|> doubleLit <|>
      natural <|> naturalLit <|>
      integer <|> integerLit <|>
      text <|> textLiteral <|>
      type <|> kind <|> sort <|>
-     dhallImport <|> esome <|>
+     esome <|>
      recordType <|> recordLit <|>
      union <|> lam <|> pi <|>
-     var <|> list <|> parens (whitespace *> expr))
+     list <|> dhallImport <|> parens (whitespace *> expr))
     whitespace
     pure i
 
