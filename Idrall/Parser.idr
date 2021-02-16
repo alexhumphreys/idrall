@@ -153,30 +153,32 @@ identShort : Parser String
 identShort = do i <- identFirst
                 pure (singleton i)
 
-reservedNames' : List String
-reservedNames' =
-  [ "in", "let", "assert", "merge", "toMap"
-  , "->", "&&", ":", "forall"
-  , "List", "Text", "Optional", "Natural", "Integer", "Double", "Bool"
-  , "True", "False"
-  , "Some", "None"
-  , "if", "then", "else", "as"
-  , "Type", "Kind", "Sort"]
+reservedKeywords : List String
+reservedKeywords =
+  [ "if", "then", "else"
+  , "let", "in"
+  , "using", "missing"
+  , "assert", "as"
+  , "Infinity", "NaN"
+  , "merge", "toMap"
+  , "forall"
+  , "with"
+  ]
 
-reservedKeywords' : List String
-reservedKeywords' =
-  [ "Natural/build"
-  , "Natural/fold"
+reservedBuiltin : List String
+reservedBuiltin =
+  [ "Natural/fold"
+  , "Natural/build"
   , "Natural/isZero"
   , "Natural/even"
   , "Natural/odd"
-  , "Natural/subtract"
   , "Natural/toInteger"
   , "Natural/show"
+  , "Integer/toDouble"
   , "Integer/show"
   , "Integer/negate"
   , "Integer/clamp"
-  , "Integer/toDouble"
+  , "Natural/subtract"
   , "Double/show"
   , "List/build"
   , "List/fold"
@@ -185,38 +187,59 @@ reservedKeywords' =
   , "List/last"
   , "List/indexed"
   , "List/reverse"
-  , "List"
   , "Text/show"
   , "Text/replace"
-  , "None"
+  , "Bool"
+  , "True"
+  , "False"
   , "Optional"
-  , "NaN"
+  , "None"
+  , "Natural"
+  , "Integer"
+  , "Double"
+  , "Text"
+  , "List"
+  , "Type"
+  , "Kind"
+  , "Sort"
   ]
+
+reservedSome : List String
+reservedSome = ["Some"]
 
 parseAny : List String -> Parser ()
 parseAny [] = fail "emptyList" -- TODO use List1 in idris2 to remove this case
 parseAny (x :: xs) = skip (string x) <|> (parseAny xs)
 
-reservedKeywords : Parser ()
-reservedKeywords = do
-  parseAny reservedKeywords'
-
-reservedNames : Parser ()
-reservedNames = do
-  parseAny reservedNames'
-
 identity : Parser String
 identity = do i <- (identLong <|> identShort)
-              case elem i (reservedNames' ++ reservedKeywords') of
+              case elem i (reservedBuiltin ++ reservedKeywords ++ reservedSome) of
                    True => fail $ show i ++ " is reserved"
                    False => pure i
+
+fieldName' : Parser String
+fieldName' = do
+  i <- (identLong <|> identShort)
+  case elem i reservedKeywords of
+       True => fail $ show i ++ " is reserved"
+       False => pure i
+
+fieldNameBackticks : Parser String
+fieldNameBackticks = do
+  char '`'
+  rest <- takeWhile1 (\c => c /= '`')
+  char '`'
+  pure rest
+
+fieldName : Parser String
+fieldName = fieldNameBackticks <|> fieldName'
 
 identBackticks : Parser String
 identBackticks = do
   char '`'
   rest <- takeWhile1 (\c => c /= '`')
   char '`'
-  pure ("`" ++ rest ++ "`")
+  pure rest
 
 varBackticks : Parser (Expr ImportStatement)
 varBackticks = do
@@ -244,13 +267,13 @@ appl = do whitespace -- TODO also matches no spaces, but spaces1 messes with the
 projectNames : Parser ((Expr ImportStatement) -> (Expr ImportStatement))
 projectNames = do
   token ".{"
-  xs <- (identity <* spaces) `sepBy` (token ",")
+  xs <- (fieldName <* spaces) `sepBy` (token ",")
   token "}"
   pure (\e => (EProject e (Left (map MkFieldName xs))))
 
 dottedList : Parser (List1 FieldName)
 dottedList = do
-  ks <- (identity <* spaces) `sepBy1` (token ".")
+  ks <- (fieldName <* spaces) `sepBy1` (token ".")
   pure $ (map MkFieldName ks)
 
 field : Parser ((Expr ImportStatement) -> (Expr ImportStatement))
@@ -305,7 +328,7 @@ mutual
 
   recordTypeElem : Parser (FieldName, Expr ImportStatement)
   recordTypeElem = do
-    k <- identity
+    k <- fieldName
     whitespace
     token ":"
     e <- expr
@@ -330,7 +353,7 @@ mutual
 
   recordLitRegularElem : Parser (SortedMap FieldName (Expr ImportStatement))
   recordLitRegularElem = do
-    k <- identity
+    k <- fieldName
     whitespace
     token "="
     e <- expr
@@ -338,7 +361,7 @@ mutual
 
   recordLitPunElem : Parser (SortedMap FieldName (Expr ImportStatement))
   recordLitPunElem = do
-    k <- identity
+    k <- fieldName
     whitespace
     pure $ fromList [(MkFieldName k, (EVar k 0))]
 
@@ -377,13 +400,13 @@ mutual
 
   unionSimpleElem : Parser (FieldName, Maybe (Expr ImportStatement))
   unionSimpleElem = do
-    k <- identity
+    k <- fieldName
     whitespace
     pure (MkFieldName k, Nothing)
 
   unionComplexElem : Parser (FieldName, Maybe (Expr ImportStatement))
   unionComplexElem = do
-    k <- identity
+    k <- fieldName
     whitespace
     token ":"
     e <- expr
@@ -603,7 +626,7 @@ mutual
 
   term : Parser (Expr ImportStatement)
   term = do
-    i <-(var <|> builtin <|> mergeExpr <|> toMap <|>
+    i <-(dhallImport <|> var <|> builtin <|> mergeExpr <|> toMap <|>
      true <|> false <|> bool <|> ifExpr <|>
      double <|> doubleLit <|>
      natural <|> naturalLit <|>
@@ -613,7 +636,7 @@ mutual
      esome <|>
      recordType <|> recordLit <|>
      union <|> lam <|> pi <|>
-     list <|> dhallImport <|> parens (whitespace *> expr))
+     list <|> parens (whitespace *> expr))
     whitespace
     pure i
 
