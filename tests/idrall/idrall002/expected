@@ -349,7 +349,7 @@ Testing: ("../../../dhall-lang/tests/type-inference/success", "accessType")
 Testing: ("../../../dhall-lang/tests/type-inference/success", "preferMixedRecords")
 Testing: ("../../../dhall-lang/tests/type-inference/success", "preferMixedRecordsSameField")
 Testing: ("../../../dhall-lang/tests/type-inference/success", "prelude")
-ErrorMessage: "Parse failed at position 604: char '('"
+ErrorMessage: "TODO as Location not implemented"
 Testing: ("../../../dhall-lang/tests/type-inference/success", "recordOfRecordOfTypes")
 Testing: ("../../../dhall-lang/tests/type-inference/success", "recordOfTypes")
 Result: 

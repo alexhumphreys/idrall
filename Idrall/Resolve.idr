@@ -8,8 +8,6 @@ import Idrall.Path
 
 import System.File
 
-import Debug.Trace
-
 parseErrorHandler : String -> Error
 parseErrorHandler x = ErrorMessage (x)
 
@@ -18,7 +16,7 @@ fileErrorHandler x y = ReadFileError (show y ++ " " ++ x)
 
 readFile' : String -> IOEither Error String
 readFile' x =
-  let contents = trace x $ MkIOEither (readFile x) in
+  let contents = MkIOEither (readFile x) in
       mapErr (fileErrorHandler x) contents
 
 nextCurrentPath : (current : Maybe Path) -> (next : Path) -> Path
