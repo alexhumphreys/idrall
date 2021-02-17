@@ -243,6 +243,7 @@ mutual
   resolve h p (EEmbed (Raw (LocalFile x))) = resolveLocalFile h p x
   resolve h p (EEmbed (Raw (EnvVar x))) = MkIOEither (pure (Left (ErrorMessage "TODO Env var imports not implemented")))
   resolve h p (EEmbed (Raw (Http x))) = MkIOEither (pure (Left (ErrorMessage "TODO http imports not implemented")))
+  resolve h p (EEmbed (Raw Missing)) = MkIOEither (pure (Left (ErrorMessage "No valid imports")))
   resolve h p (EEmbed (Text a)) = MkIOEither (pure (Left (ErrorMessage "TODO as Text not implemented")))
   resolve h p (EEmbed (Location a)) = MkIOEither (pure (Left (ErrorMessage "TODO as Location not implemented")))
   resolve h p (EEmbed (Resolved x)) = MkIOEither (pure (Left (ErrorMessage "Already resolved")))

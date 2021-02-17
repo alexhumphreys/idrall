@@ -537,6 +537,11 @@ mutual
     show HTTP = "http://"
     show HTTPS = "https://"
 
+  missingImport : Parser (ImportStatement)
+  missingImport = do
+    string "missing"
+    pure $ Missing
+
   httpImport : Parser (ImportStatement)
   httpImport = do
     protocol <- token "http://" <|> token "https://"
@@ -544,7 +549,7 @@ mutual
     pure $ Http (show protocol ++ rest)
 
   dhallImportStatement : Parser (ImportStatement)
-  dhallImportStatement = httpImport <|> pathTerm
+  dhallImportStatement = httpImport <|> pathTerm <|> missingImport
 
   importAs : Parser (a -> Import a)
   importAs = (token "Text" *> pure Text) <|> (token "Location" *> pure Location)
