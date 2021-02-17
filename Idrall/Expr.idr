@@ -53,6 +53,7 @@ mutual
     = LocalFile FilePath
     | EnvVar String
     | Http String
+    | Missing
 
   public export
   data Import a
@@ -213,6 +214,7 @@ Show ImportStatement where
   show (LocalFile x) = "(LocalFile " ++ show x ++ ")"
   show (EnvVar x) = "(EnvVar " ++ x ++ ")"
   show (Http x) = "(Http " ++ x ++ ")"
+  show Missing = "Missing"
 
 mutual
   export

@@ -46,19 +46,19 @@ builtin =
   (string "NaN" *> pure (EDoubleLit (0.0/0.0)))
 
 true : Parser (Expr ImportStatement)
-true = token "True" *> pure (EBoolLit True)
+true = string "True" *> pure (EBoolLit True)
 
 false : Parser (Expr ImportStatement)
-false = token "False" *> pure (EBoolLit False)
+false = string "False" *> pure (EBoolLit False)
 
 bool : Parser (Expr ImportStatement)
-bool = token "Bool" *> pure (EBool)
+bool = string "Bool" *> pure (EBool)
 
 text : Parser (Expr ImportStatement)
-text = token "Text" *> pure (EText)
+text = string "Text" *> pure (EText)
 
 integer : Parser (Expr ImportStatement)
-integer = token "Integer" *> pure (EInteger)
+integer = string "Integer" *> pure (EInteger)
 
 integerLit : Parser (Expr ImportStatement)
 integerLit = do op <- (char '-' <|> char '+')
@@ -71,10 +71,10 @@ where getInteger : List (Fin 10) -> Integer
       getInteger = foldl (\a => \b => 10 * a + cast b) 0
 
 natural : Parser (Expr ImportStatement)
-natural = token "Natural" *> pure (ENatural)
+natural = string "Natural" *> pure (ENatural)
 
 double : Parser (Expr ImportStatement)
-double = token "Double" *> pure (EDouble)
+double = string "Double" *> pure (EDouble)
 
 naturalNumber : Parser Nat
 naturalNumber = do n <- some digit
@@ -151,43 +151,95 @@ identShort : Parser String
 identShort = do i <- identFirst
                 pure (singleton i)
 
-reservedNames' : List String
-reservedNames' =
-  [ "in", "let", "assert", "merge", "toMap"
-  , "->", "&&", ":"
-  , "List", "Text", "Optional", "Natural", "Integer", "Double"
-  , "Some", "None"
-  , "if", "then", "else", "as"
-  , "Type", "Kind", "Sort"]
+reservedKeywords : List String
+reservedKeywords =
+  [ "if", "then", "else"
+  , "let", "in"
+  , "using", "missing"
+  , "assert", "as"
+  , "Infinity", "NaN"
+  , "merge", "toMap"
+  , "forall"
+  , "with"
+  ]
+
+reservedBuiltin : List String
+reservedBuiltin =
+  [ "Natural/fold"
+  , "Natural/build"
+  , "Natural/isZero"
+  , "Natural/even"
+  , "Natural/odd"
+  , "Natural/toInteger"
+  , "Natural/show"
+  , "Integer/toDouble"
+  , "Integer/show"
+  , "Integer/negate"
+  , "Integer/clamp"
+  , "Natural/subtract"
+  , "Double/show"
+  , "List/build"
+  , "List/fold"
+  , "List/length"
+  , "List/head"
+  , "List/last"
+  , "List/indexed"
+  , "List/reverse"
+  , "Text/show"
+  , "Text/replace"
+  , "Bool"
+  , "True"
+  , "False"
+  , "Optional"
+  , "None"
+  , "Natural"
+  , "Integer"
+  , "Double"
+  , "Text"
+  , "List"
+  , "Type"
+  , "Kind"
+  , "Sort"
+  ]
+
+reservedSome : List String
+reservedSome = ["Some"]
 
 parseAny : List String -> Parser ()
 parseAny [] = fail "emptyList" -- TODO use List1 in idris2 to remove this case
 parseAny (x :: xs) = skip (string x) <|> (parseAny xs)
 
-reservedNames : Parser ()
-reservedNames = do
-  parseAny reservedNames'
-  (do space; pure ()) <|> eos
-
 identity : Parser String
-identity = do (identLong <|> identShort) <* whitespace
+identity = do i <- (identLong <|> identShort)
+              case elem i (reservedBuiltin ++ reservedKeywords ++ reservedSome) of
+                   True => fail $ show i ++ " is reserved"
+                   False => pure i
 
-identBackticks : Parser String
-identBackticks = char '`' *> identity <* token "`"
+fieldName' : Parser String
+fieldName' = do
+  i <- (identLong <|> identShort)
+  case elem i reservedKeywords of
+       True => fail $ show i ++ " is reserved"
+       False => pure i
+
+backticked : Parser String
+backticked = do
+  char '`'
+  rest <- takeWhile1 (\c => c /= '`')
+  char '`'
+  pure rest
 
 varBackticks : Parser (Expr ImportStatement)
 varBackticks = do
-  i <- identBackticks
+  i <- backticked
   pure $ EVar i 0
 
 varRegular : Parser (Expr ImportStatement)
-varRegular = do requireFailure reservedNames
-                i <- identity
+varRegular = do i <- identity
                 pure (EVar i 0)
 
 varIndexed : Parser (Expr ImportStatement)
-varIndexed = do requireFailure reservedNames
-                i <- identity
+varIndexed = do i <- identity
                 whitespace
                 token "@"
                 n <- naturalNumber
@@ -196,6 +248,12 @@ varIndexed = do requireFailure reservedNames
 var : Parser (Expr ImportStatement)
 var = varBackticks <|> varIndexed <|> varRegular
 
+fieldName : Parser String
+fieldName = backticked <|> fieldName'
+
+identityDefinition : Parser String
+identityDefinition = identity <|> backticked
+
 appl : Parser ((Expr ImportStatement) -> (Expr ImportStatement) -> (Expr ImportStatement))
 appl = do whitespace -- TODO also matches no spaces, but spaces1 messes with the eos parser
           pure EApp
@@ -203,13 +261,13 @@ appl = do whitespace -- TODO also matches no spaces, but spaces1 messes with the
 projectNames : Parser ((Expr ImportStatement) -> (Expr ImportStatement))
 projectNames = do
   token ".{"
-  xs <- identity `sepBy` (token ",")
+  xs <- (fieldName <* spaces) `sepBy` (token ",")
   token "}"
   pure (\e => (EProject e (Left (map MkFieldName xs))))
 
 dottedList : Parser (List1 FieldName)
 dottedList = do
-  ks <- (identity <* spaces) `sepBy1` (token ".")
+  ks <- (fieldName <* spaces) `sepBy1` (token ".")
   pure $ (map MkFieldName ks)
 
 field : Parser ((Expr ImportStatement) -> (Expr ImportStatement))
@@ -264,7 +322,8 @@ mutual
 
   recordTypeElem : Parser (FieldName, Expr ImportStatement)
   recordTypeElem = do
-    k <- identity
+    k <- fieldName
+    whitespace
     token ":"
     e <- expr
     pure (MkFieldName k, e)
@@ -288,14 +347,16 @@ mutual
 
   recordLitRegularElem : Parser (SortedMap FieldName (Expr ImportStatement))
   recordLitRegularElem = do
-    k <- identity
+    k <- fieldName
+    whitespace
     token "="
     e <- expr
     pure $ fromList [(MkFieldName k, e)]
 
   recordLitPunElem : Parser (SortedMap FieldName (Expr ImportStatement))
   recordLitPunElem = do
-    k <- identity
+    k <- fieldName
+    whitespace
     pure $ fromList [(MkFieldName k, (EVar k 0))]
 
   recordLitDottedElem : Parser (SortedMap FieldName (Expr ImportStatement))
@@ -333,12 +394,14 @@ mutual
 
   unionSimpleElem : Parser (FieldName, Maybe (Expr ImportStatement))
   unionSimpleElem = do
-    k <- identity
+    k <- fieldName
+    whitespace
     pure (MkFieldName k, Nothing)
 
   unionComplexElem : Parser (FieldName, Maybe (Expr ImportStatement))
   unionComplexElem = do
-    k <- identity
+    k <- fieldName
+    whitespace
     token ":"
     e <- expr
     pure (MkFieldName k, Just e)
@@ -350,14 +413,18 @@ mutual
   union = do
     token "<"
     xs <- unionElem `sepBy` (token "|")
+    whitespace
     token ">"
     pure (EUnion (fromList xs))
 
   -- TODO for multi-let the last let MUST have an `in`, the rest are optional.
   -- Need to parse this somehow.
   letExpr : Parser (Expr ImportStatement)
-  letExpr = token "let" *> do
-    i <- identity <|> identBackticks
+  letExpr = do
+    token "let"
+    optional whitespace
+    i <- identityDefinition
+    spaces
     t <- optional (do token ":"; expr)
     token "="
     v <- expr
@@ -369,10 +436,11 @@ mutual
   piComplex : Parser (Expr ImportStatement)
   piComplex = do
     (token "forall(" <|> (token "∀" *> token "("))
-    i <- identity
+    i <- identityDefinition
+    optional whitespace
     token ":"
     dom <- expr
-    whitespace
+    optional whitespace
     token ")"
     (token "->" <|> token "→")
     ran <- expr
@@ -463,6 +531,11 @@ mutual
     show HTTP = "http://"
     show HTTPS = "https://"
 
+  missingImport : Parser (ImportStatement)
+  missingImport = do
+    string "missing"
+    pure $ Missing
+
   httpImport : Parser (ImportStatement)
   httpImport = do
     protocol <- token "http://" <|> token "https://"
@@ -470,7 +543,7 @@ mutual
     pure $ Http (show protocol ++ rest)
 
   dhallImportStatement : Parser (ImportStatement)
-  dhallImportStatement = httpImport <|> pathTerm
+  dhallImportStatement = httpImport <|> pathTerm <|> missingImport
 
   importAs : Parser (a -> Import a)
   importAs = (token "Text" *> pure Text) <|> (token "Location" *> pure Location)
@@ -512,7 +585,8 @@ mutual
   lam = do
     token "λ" <|> token "\\"
     token "("
-    i <- identity
+    i <- identityDefinition
+    whitespace
     token ":"
     ty <- expr
     whitespace
@@ -552,17 +626,17 @@ mutual
 
   term : Parser (Expr ImportStatement)
   term = do
-    i <-(builtin <|> mergeExpr <|> toMap <|>
+    i <-(dhallImport <|> var <|> builtin <|> mergeExpr <|> toMap <|>
      true <|> false <|> bool <|> ifExpr <|>
      double <|> doubleLit <|>
      natural <|> naturalLit <|>
      integer <|> integerLit <|>
      text <|> textLiteral <|>
      type <|> kind <|> sort <|>
-     dhallImport <|> esome <|>
+     esome <|>
      recordType <|> recordLit <|>
      union <|> lam <|> pi <|>
-     var <|> list <|> parens (whitespace *> expr))
+     list <|> parens (whitespace *> expr))
     whitespace
     pure i
 
@@ -616,9 +690,81 @@ mutual
             char '"'
             pure (concat chunks)
 
+  singleQuoteContinue : Parser (Chunks ImportStatement)
+  singleQuoteContinue =
+    choice
+      [ escapeSingleQuotes
+      , interpolation
+      , escapeInterpolation
+      , endLiteral
+      , unescapedCharacterFast
+      , unescapedCharacterSlow
+      , tab
+      , endOfLine
+      ]
+  where
+    escapeSingleQuotes : Parser (Chunks ImportStatement)
+    escapeSingleQuotes = do
+      _ <- string "'''"
+      b <- singleQuoteContinue
+      pure $ (MkChunks [] "''") <+> b
+    interpolation : Parser (Chunks ImportStatement)
+    interpolation = do
+      _ <- string "${"
+      a <- expr
+      _ <- char '}'
+      b <- singleQuoteContinue
+      pure (MkChunks [(neutral, a)] neutral <+> b)
+    escapeInterpolation : Parser (Chunks ImportStatement)
+    escapeInterpolation = do
+      _ <- string "''${"
+      b <- singleQuoteContinue
+      pure $ (MkChunks [] "${") <+> b
+    endLiteral : Parser (Chunks ImportStatement)
+    endLiteral = do
+      _ <- string "''"
+      pure neutral
+    unescapedCharacterFast : Parser (Chunks ImportStatement)
+    unescapedCharacterFast = do
+      a <- takeWhile1 predicate
+      b <- singleQuoteContinue
+      pure (MkChunks [] a <+> b)
+    where
+      predicate : Char -> Bool
+      predicate c =
+          ('\x20' <= c && c <= '\x10FFFF') && c /= '$' && c /= '\''
+    unescapedCharacterSlow : Parser (Chunks ImportStatement)
+    unescapedCharacterSlow = do
+      a <- satisfy predicate
+      b <- singleQuoteContinue
+      pure (MkChunks [] (singleton a) <+> b)
+    where
+      predicate : Char -> Bool
+      predicate c = c == '$' || c == '\''
+    endOfLine : Parser (Chunks ImportStatement)
+    endOfLine = do
+      a <- string "\n" <|> string "\r\n"
+      b <- singleQuoteContinue
+      pure (MkChunks [] a <+> b)
+    tab : Parser (Chunks ImportStatement)
+    tab = do
+      _ <- char '\t' <?> "tab"
+      b <- singleQuoteContinue
+      pure (MkChunks [] "\t" <+> b)
+
+  singleQuoteLiteral : Parser (Chunks ImportStatement)
+  singleQuoteLiteral = do
+    _ <- string "''"
+    _ <- endOfLine
+    a <- singleQuoteContinue
+    pure a -- TODO handle indentation
+  where
+    endOfLine : Parser ()
+    endOfLine = (skip (char '\n') <|> skip (string "\r\n")) <?> "newline"
+
   textLiteral : Parser (Expr ImportStatement)
   textLiteral = (do
-            literal <- doubleQuotedLiteral
+            literal <- doubleQuotedLiteral <|> singleQuoteLiteral
             pure (ETextLit literal) ) <?> "literal"
 
   opExpr : Parser (Expr ImportStatement)
