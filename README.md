@@ -1,5 +1,7 @@
 # Idrall
 
+![Ubuntu](https://github.com/alexhumphreys/idrall/workflows/Ubuntu/badge.svg)
+
 [Dhall](https://dhall-lang.org) bindings for [Idris](https://www.idris-lang.org).
 
 Parse, evaluate, check/infer types of Dhall expressions.
