@@ -428,6 +428,7 @@ mutual
   letExpr : Parser (Expr ImportStatement)
   letExpr = do
     token "let"
+    optional whitespace
     i <- identity <|> identBackticks
     spaces
     t <- optional (do token ":"; expr)
