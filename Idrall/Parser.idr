@@ -14,8 +14,6 @@ import Idrall.Lexer
 import Idrall.Expr
 import Idrall.Path
 
-import Debug.Trace
-
 %hide Prelude.pow
 
 builtin : Parser (Expr ImportStatement)
@@ -224,18 +222,8 @@ fieldName' = do
        True => fail $ show i ++ " is reserved"
        False => pure i
 
-fieldNameBackticks : Parser String
-fieldNameBackticks = do
-  char '`'
-  rest <- takeWhile1 (\c => c /= '`')
-  char '`'
-  pure rest
-
-fieldName : Parser String
-fieldName = fieldNameBackticks <|> fieldName'
-
-identBackticks : Parser String
-identBackticks = do
+backticked : Parser String
+backticked = do
   char '`'
   rest <- takeWhile1 (\c => c /= '`')
   char '`'
@@ -243,7 +231,7 @@ identBackticks = do
 
 varBackticks : Parser (Expr ImportStatement)
 varBackticks = do
-  i <- identBackticks
+  i <- backticked
   pure $ EVar i 0
 
 varRegular : Parser (Expr ImportStatement)
@@ -259,6 +247,12 @@ varIndexed = do i <- identity
 
 var : Parser (Expr ImportStatement)
 var = varBackticks <|> varIndexed <|> varRegular
+
+fieldName : Parser String
+fieldName = backticked <|> fieldName'
+
+identityDefinition : Parser String
+identityDefinition = identity <|> backticked
 
 appl : Parser ((Expr ImportStatement) -> (Expr ImportStatement) -> (Expr ImportStatement))
 appl = do whitespace -- TODO also matches no spaces, but spaces1 messes with the eos parser
@@ -429,7 +423,7 @@ mutual
   letExpr = do
     token "let"
     optional whitespace
-    i <- identity <|> identBackticks
+    i <- identityDefinition
     spaces
     t <- optional (do token ":"; expr)
     token "="
@@ -442,7 +436,7 @@ mutual
   piComplex : Parser (Expr ImportStatement)
   piComplex = do
     (token "forall(" <|> (token "∀" *> token "("))
-    i <- identity
+    i <- identityDefinition
     optional whitespace
     token ":"
     dom <- expr
@@ -591,7 +585,7 @@ mutual
   lam = do
     token "λ" <|> token "\\"
     token "("
-    i <- identity
+    i <- identityDefinition
     whitespace
     token ":"
     ty <- expr
