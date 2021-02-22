@@ -258,9 +258,9 @@ ex3 = ELet (MkName "x") (EBoolLit True)
         )
 
 mkEnv : Env Ctx ns -> Env Val ns
-mkEnv [] = []
-mkEnv ((IsA y z) :: x) = z :: mkEnv x
-mkEnv ((Def _ z) :: x) = z :: mkEnv x
+mkEnv Nil = Nil
+mkEnv (Extend (IsA y z) x) = Extend z (mkEnv x)
+mkEnv (Extend (Def _ z) x) = Extend z (mkEnv x)
 
 freshen : List Name -> Name -> Name
 
@@ -268,7 +268,7 @@ readBackTyped : {ns:_} -> (ctx : Env Ctx ns) -> (Val ns) -> (Val ns) -> Either S
 readBackTyped ctx (VPi n dom ran) fun =
   let n' = freshen ns n
       nVal = VNeutral dom (NVar n)
-      ctx' = (IsA n dom) :: ctx
+      ctx' = Extend (IsA n dom) ctx
   in
   do ty' <- evalClosure ran nVal
      eTy <- readBackTyped ctx (VType) (ty') -- TODO should be ctx or ctx'?
@@ -292,9 +292,9 @@ synth ctx (ELet n x y) = ?synth_rhs_2
 synth ctx (EPi n x y) = ?synth_rhs_1
 synth ctx (ELam n ty body) = do
   tyV <- eval (mkEnv ctx) EmptyLE ty
-  bodyTy <- synth ((IsA n tyV) :: ctx) body
+  bodyTy <- synth (Extend (IsA n tyV) ctx) body
   _ <- readBackTyped ctx (VType) tyV
-  _ <- readBackTyped ((IsA n tyV) :: ctx) (VType) bodyTy
+  _ <- readBackTyped (Extend (IsA n tyV) ctx) (VType) bodyTy
   Right (VPi n tyV (MkClosure n EmptyLE (mkEnv ctx) body))
 synth ctx (EApp x y) = ?synth_rhs_4
 synth ctx EType = ?synth_rhs_7
