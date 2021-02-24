@@ -107,7 +107,7 @@ mutual
        VNeutral : Ty vars -> Neutral vars -> Val vars
 
   data Env : (tm : List Name -> Type) -> List Name -> Type where
-       Nil : Env tm []
+       Empty : Env tm []
        Extend : (a : tm ns) -> Env tm ns -> Env tm (n :: ns)
 
   data Env' : (tm : List Name -> Type) -> List Name -> Type where
@@ -128,9 +128,17 @@ mutual
        NApp : Neutral vars -> Normal vars -> Neutral vars
 
 -- eval
-data Ctx : List Name -> Type where
-  Def : (Ty vars) -> (Val vars) -> Ctx vars
-  IsA : Name -> (Ty vars) -> Ctx vars
+data Cxt : List Name -> Type where
+  Def : (Ty vars) -> (Val vars) -> Cxt vars
+  IsA : Name -> (Ty vars) -> Cxt vars
+
+data Types = TEmpty
+           | TBind Types Name (Val ns)
+
+record Cxt' where
+  constructor MkCxt'
+  values : Env' Val ns
+  types  : Types
 
 interface Weaken (tm : List Name -> Type) where
   weaken : {n, vars : _} -> tm vars -> tm (n :: vars)
@@ -155,7 +163,7 @@ mutual
   weakenLocs (AppendLE x y) = AppendLE (weakenVal x) (weakenLocs y)
 
   weakenEnv : {n:_} -> Val ns -> Env Val ns -> Env Val (n :: ns) -- TODO not sure about this, or weakenClosure
-  weakenEnv v Nil = Extend v Nil
+  weakenEnv v Empty = Extend v Empty
   weakenEnv v e = Extend v e
 
   weakenVar : {idx:_} -> (mss : List Name) -> IsVar y idx (mss ++ ns) -> IsVar y idx (mss ++ (n :: ns))
@@ -257,46 +265,46 @@ ex3 = ELet (MkName "x") (EBoolLit True)
           )
         )
 
-mkEnv : Env Ctx ns -> Env Val ns
-mkEnv Nil = Nil
+mkEnv : Env Cxt ns -> Env Val ns
+mkEnv Empty = Empty
 mkEnv (Extend (IsA y z) x) = Extend z (mkEnv x)
 mkEnv (Extend (Def _ z) x) = Extend z (mkEnv x)
 
 freshen : List Name -> Name -> Name
 
-readBackTyped : {ns:_} -> (ctx : Env Ctx ns) -> (Val ns) -> (Val ns) -> Either String (Expr ns ())
-readBackTyped ctx (VPi n dom ran) fun =
+readBackTyped : {ns:_} -> (cxt : Env Cxt ns) -> (Val ns) -> (Val ns) -> Either String (Expr ns ())
+readBackTyped cxt (VPi n dom ran) fun =
   let n' = freshen ns n
       nVal = VNeutral dom (NVar n)
-      ctx' = Extend (IsA n dom) ctx
+      cxt' = Extend (IsA n dom) cxt
   in
   do ty' <- evalClosure ran nVal
-     eTy <- readBackTyped ctx (VType) (ty') -- TODO should be ctx or ctx'?
+     eTy <- readBackTyped cxt (VType) (ty') -- TODO should be cxt or cxt'?
      v' <- doApply fun nVal
-     body <- readBackTyped ctx' (weakenVal ty') (weakenVal v')
+     body <- readBackTyped cxt' (weakenVal ty') (weakenVal v')
      Right (ELam n eTy body)
-readBackTyped ctx (VLam n x z) y = ?readBackTyped_rhs_2
-readBackTyped ctx VType VBool = Right EBool
-readBackTyped ctx VBool y = ?readBackTyped_rhs_4
-readBackTyped ctx (VBoolLit x) y = ?readBackTyped_rhs_5
-readBackTyped ctx (VNeutral x z) y = ?readBackTyped_rhs_6
-readBackTyped ctx x y = ?readBackTyped_rhs_7
+readBackTyped cxt (VLam n x z) y = ?readBackTyped_rhs_2
+readBackTyped cxt VType VBool = Right EBool
+readBackTyped cxt VBool y = ?readBackTyped_rhs_4
+readBackTyped cxt (VBoolLit x) y = ?readBackTyped_rhs_5
+readBackTyped cxt (VNeutral x z) y = ?readBackTyped_rhs_6
+readBackTyped cxt x y = ?readBackTyped_rhs_7
 
-synth : {ns:_} -> (ctx : Env Ctx ns) -> Expr ns () -> Either String (Val ns)
-synth ctx (ELocal n idx p) = ?foo
-  --let v = envLookup n idx p ctx in
+synth : {ns:_} -> (cxt : Env Cxt ns) -> Expr ns () -> Either String (Val ns)
+synth cxt (ELocal n idx p) = ?foo
+  --let v = envLookup n idx p cxt in
       --(case v of
             --(Def x y) => Right x
             --(IsA x y) => Right y)
-synth ctx (ELet n x y) = ?synth_rhs_2
-synth ctx (EPi n x y) = ?synth_rhs_1
-synth ctx (ELam n ty body) = do
-  tyV <- eval (mkEnv ctx) EmptyLE ty
-  bodyTy <- synth (Extend (IsA n tyV) ctx) body
-  _ <- readBackTyped ctx (VType) tyV
-  _ <- readBackTyped (Extend (IsA n tyV) ctx) (VType) bodyTy
-  Right (VPi n tyV (MkClosure n EmptyLE (mkEnv ctx) body))
-synth ctx (EApp x y) = ?synth_rhs_4
-synth ctx EType = ?synth_rhs_7
-synth ctx EBool = ?synth_rhs_5
-synth ctx (EBoolLit x) = ?synth_rhs_6
+synth cxt (ELet n x y) = ?synth_rhs_2
+synth cxt (EPi n x y) = ?synth_rhs_1
+synth cxt (ELam n ty body) = do
+  tyV <- eval (mkEnv cxt) EmptyLE ty
+  bodyTy <- synth (Extend (IsA n tyV) cxt) body
+  _ <- readBackTyped cxt (VType) tyV
+  _ <- readBackTyped (Extend (IsA n tyV) cxt) (VType) bodyTy
+  Right (VPi n tyV (MkClosure n EmptyLE (mkEnv cxt) body))
+synth cxt (EApp x y) = ?synth_rhs_4
+synth cxt EType = ?synth_rhs_7
+synth cxt EBool = ?synth_rhs_5
+synth cxt (EBoolLit x) = ?synth_rhs_6
