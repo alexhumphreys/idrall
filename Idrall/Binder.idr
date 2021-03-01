@@ -104,10 +104,11 @@ mutual
        VType : Val vars
        VBool : Val vars
        VBoolLit : Bool -> Val vars
-       VNeutral : Ty vars -> Neutral vars -> Val vars
+       VNeutral : Neutral vars -> Val vars
 
   data Env : (tm : List Name -> Type) -> List Name -> Type where
        Empty : Env tm []
+       Skip : (n : Name) -> Env tm ns -> Env tm (n :: ns)
        Extend : (a : tm ns) -> Env tm ns -> Env tm (n :: ns)
 
   data Env' : (tm : List Name -> Type) -> List Name -> Type where
@@ -162,9 +163,8 @@ mutual
   weakenLocs EmptyLE = EmptyLE
   weakenLocs (AppendLE x y) = AppendLE (weakenVal x) (weakenLocs y)
 
-  weakenEnv : {n:_} -> Val ns -> Env Val ns -> Env Val (n :: ns) -- TODO not sure about this, or weakenClosure
-  weakenEnv v Empty = Extend v Empty
-  weakenEnv v e = Extend v e
+  weakenEnv : {n:_} -> Env Val ns -> Env Val (n :: ns) -- TODO not sure about this, or weakenClosure
+  weakenEnv e = Skip n e
 
   weakenVar : {idx:_} -> (mss : List Name) -> IsVar y idx (mss ++ ns) -> IsVar y idx (mss ++ (n :: ns))
   weakenVar [] x = LaterNotMatch x
@@ -187,7 +187,7 @@ mutual
 
   weakenClosure : {x,n:_} -> Val ns -> Closure x ns -> Closure x (n :: ns)
   weakenClosure ty (MkClosure {mss} x locs env body) =
-    MkClosure x (weakenLocs locs) (weakenEnv ty env) (weakenInner {mss=(x::mss)} body)
+    MkClosure x (weakenLocs locs) (weakenEnv env) (weakenInner {mss=(x::mss)} body)
 
   weakenNeutral : {n:_} -> Neutral ns -> Neutral (n :: ns)
   weakenNeutral (NVar x) = NVar x
@@ -202,14 +202,17 @@ mutual
   weakenVal VType = VType
   weakenVal VBool = VBool
   weakenVal (VBoolLit x) = VBoolLit x
-  weakenVal (VNeutral x y) = VNeutral (weakenVal x) (weakenNeutral y)
+  weakenVal (VNeutral y) = VNeutral (weakenNeutral y)
 
 mutual
 
   ll : {n,ns,ms : _} -> IsVar n idx (ms ++ ns) -> LocalEnv ns ms -> Env Val ns -> Val ns
-  ll {ms = []} First EmptyLE (Extend a ns) = weakenVal a
+  ll {ms = []} First EmptyLE (Extend a env) = weakenVal a
+  ll {ms = []} First EmptyLE (Skip n env) =  VNeutral $ NVar n -- weakenVal (ll First EmptyLE (weakenEnv env))
   ll {ms = []} (LaterMatch p) EmptyLE (Extend _ env) = weakenVal (ll p EmptyLE env)
   ll {ms = []} (LaterNotMatch p) EmptyLE (Extend _ env) = weakenVal (ll p EmptyLE env)
+  ll {ms = []} (LaterMatch p) EmptyLE (Skip _ env) = weakenVal (ll p EmptyLE env)
+  ll {ms = []} (LaterNotMatch p) EmptyLE (Skip _ env) = weakenVal (ll p EmptyLE env)
   ll First (AppendLE y w) env = y
   ll (LaterMatch p) (AppendLE y w) env = ll p w env
   ll (LaterNotMatch p) (AppendLE y w) env = ll p w env
@@ -267,6 +270,7 @@ ex3 = ELet (MkName "x") (EBoolLit True)
 
 mkEnv : Env Cxt ns -> Env Val ns
 mkEnv Empty = Empty
+mkEnv (Skip n env) = Skip n (mkEnv env)
 mkEnv (Extend (IsA y z) x) = Extend z (mkEnv x)
 mkEnv (Extend (Def _ z) x) = Extend z (mkEnv x)
 
@@ -275,7 +279,7 @@ freshen : List Name -> Name -> Name
 readBackTyped : {ns:_} -> (cxt : Env Cxt ns) -> (Val ns) -> (Val ns) -> Either String (Expr ns ())
 readBackTyped cxt (VPi n dom ran) fun =
   let n' = freshen ns n
-      nVal = VNeutral dom (NVar n)
+      nVal = VNeutral (NVar n)
       cxt' = Extend (IsA n dom) cxt
   in
   do ty' <- evalClosure ran nVal
@@ -287,7 +291,7 @@ readBackTyped cxt (VLam n x z) y = ?readBackTyped_rhs_2
 readBackTyped cxt VType VBool = Right EBool
 readBackTyped cxt VBool y = ?readBackTyped_rhs_4
 readBackTyped cxt (VBoolLit x) y = ?readBackTyped_rhs_5
-readBackTyped cxt (VNeutral x z) y = ?readBackTyped_rhs_6
+readBackTyped cxt (VNeutral z) y = ?readBackTyped_rhs_6
 readBackTyped cxt x y = ?readBackTyped_rhs_7
 
 synth : {ns:_} -> (cxt : Env Cxt ns) -> Expr ns () -> Either String (Val ns)
