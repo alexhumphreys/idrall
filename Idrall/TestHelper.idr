@@ -3,6 +3,7 @@ module Idrall.TestHelper
 import Idrall.Error
 import Idrall.IOEither
 import Idrall.APIv1
+import Idrall.Value
 
 import System
 import System.Directory
@@ -123,14 +124,24 @@ mkres (MkIOEither x) = do
 nameCases : (String, String) -> (String, String)
 nameCases (path, c) = (path ++ "/" ++ c ++ "A.dhall", path ++ "/" ++ c ++ "B.dhall")
 
-runTest : (String, String) -> IO Result
-runTest x =
+runTestAB : (String, String) -> (String -> String -> IOEither Error ()) -> IO Result
+runTestAB x f =
   let x' = nameCases x in do
         putStrLn $ "Testing: " ++ show x
-        mkres $ roundTripCheck (fst x') (snd x')
+        mkres $ f (fst x') (snd x')
+
+runTests : DirTree String -> ((String, String) -> IO Result) -> IO Result
+runTests x h =
+  let x' = decorate x in
+      foldlMapM {g=DirTree} {b=Result} {m=IO} h x'
+
+runFormatter : (String -> String -> IOEither Error ()) -> (String, String) -> IO Result
+runFormatter f x = runTestAB x f
 
 public export
-runTests : DirTree String -> IO Result
-runTests x =
-  let x' = decorate x in
-      foldlMapM {g=DirTree} {b=Result} {m=IO} runTest x'
+runTestsCheck : DirTree String -> IO Result
+runTestsCheck x = runTests x (runFormatter roundTripCheck)
+
+public export
+runTestsConv : DirTree String -> IO Result
+runTestsConv x = runTests x (runFormatter roundTripConv)

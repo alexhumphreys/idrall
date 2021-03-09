@@ -114,7 +114,7 @@ scientificToDouble (MkScientific c e) = (fromInteger c) * exp
 parseScientific : Parser Scientific
 parseScientific = do sign <- maybe 1 (const (-1)) `map` optional (char '-') -- TODO handle '+'
                      digits <- some digit
-                     char '.'
+                     _ <- char '.'
                      decimals <- some digit
                      hasExponent <- isJust `map` optional (char 'e')
                      exponent <- if hasExponent then integer else pure 0
@@ -224,9 +224,9 @@ fieldName' = do
 
 backticked : Parser String
 backticked = do
-  char '`'
+  _ <- char '`'
   rest <- takeWhile1 (\c => c /= '`')
-  char '`'
+  _ <- char '`'
   pure rest
 
 varBackticks : Parser (Expr ImportStatement)
@@ -422,14 +422,14 @@ mutual
   letExpr : Parser (Expr ImportStatement)
   letExpr = do
     token "let"
-    optional whitespace
+    _ <- optional whitespace
     i <- identityDefinition
     spaces
     t <- optional (do token ":"; expr)
     token "="
     v <- expr
     whitespace
-    optional (token "in")
+    _ <- optional (token "in")
     e <- expr
     pure (ELet i t v e)
 
@@ -437,10 +437,10 @@ mutual
   piComplex = do
     (token "forall(" <|> (token "∀" *> token "("))
     i <- identityDefinition
-    optional whitespace
+    _ <- optional whitespace
     token ":"
     dom <- expr
-    optional whitespace
+    _ <- optional whitespace
     token ")"
     (token "->" <|> token "→")
     ran <- expr
@@ -499,13 +499,13 @@ mutual
   absolutePath : Parser Path
   absolutePath = do
     requireFailure $ string "//"
-    string "/"
+    _ <- string "/"
     d <- dirs
     pure (Absolute d)
 
   homePath : Parser Path
   homePath = do
-    string "~"
+    _ <- string "~"
     d <- dirs
     pure (Home ("~" :: d))
 
@@ -533,7 +533,7 @@ mutual
 
   missingImport : Parser (ImportStatement)
   missingImport = do
-    string "missing"
+    _ <- string "missing"
     pure $ Missing
 
   httpImport : Parser (ImportStatement)
@@ -642,9 +642,9 @@ mutual
 
   interpolation : Parser (Chunks ImportStatement)
   interpolation = do
-    string "${"
+    _ <- string "${"
     e <- expr
-    char '}'
+    _ <- char '}'
     pure (MkChunks [(neutral, e)] neutral)
 
   unescapedCharacterFast : Parser (Chunks ImportStatement)
@@ -659,23 +659,23 @@ mutual
 
   unescapedCharacterSlow : Parser (Chunks ImportStatement)
   unescapedCharacterSlow = do
-                char '$'
+                _ <- char '$'
                 pure (MkChunks [] "$")
 
   escapedCharacter : Parser (Chunks ImportStatement)
   escapedCharacter =
             do  _ <- char '\\'
                 c <- choice
-                    (the (List (Parser Char))
+                    (the (List $ Lazy (Parser Char))
                     [ char '"' -- quotationMark
                     , char '$' -- dollarSign
                     , char '\\' -- backslash
                     , char '/' -- forwardslash
-                    , do char 'b'; pure '\b' -- backSpace
-                    , do char 'f'; pure '\f' -- formFeed
-                    , do char 'n'; pure '\n' -- lineFeed
-                    , do char 'r'; pure '\r' -- carriageReturn
-                    , do char 't'; pure '\t' -- tab
+                    , do _ <- char 'b'; pure '\b' -- backSpace
+                    , do _ <- char 'f'; pure '\f' -- formFeed
+                    , do _ <- char 'n'; pure '\n' -- lineFeed
+                    , do _ <- char 'r'; pure '\r' -- carriageReturn
+                    , do _ <- char 't'; pure '\t' -- tab
                     , unicode
                     ])
                 pure (MkChunks [] (singleton c))
@@ -685,9 +685,9 @@ mutual
 
   doubleQuotedLiteral : Parser (Chunks ImportStatement)
   doubleQuotedLiteral = do
-            char '"'
+            _ <- char '"'
             chunks <- many doubleQuotedChunk
-            char '"'
+            _ <- char '"'
             pure (concat chunks)
 
   singleQuoteContinue : Parser (Chunks ImportStatement)

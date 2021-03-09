@@ -274,7 +274,7 @@ mutual
   infer cxt (EApp t u) = do
     (t, tt) <- infer cxt t
     (x, a, b) <- vAnyPi tt
-    check cxt u a
+    _ <- check cxt u a
     Right $ (EApp t u, !(b !(eval (values cxt) u)))
   infer cxt (ELet x Nothing a b) = do
     (a, aa) <- infer cxt a
@@ -282,35 +282,35 @@ mutual
     infer (define x v aa cxt) b
   infer cxt (ELet x (Just t) a b) = do
     tt <- eval (values cxt) t
-    check cxt a tt
+    _ <- check cxt a tt
     v <- eval (values cxt) a
     infer (define x v tt cxt) b
   infer cxt (EAnnot x t) = do
     tv <- eval (values cxt) t
-    check cxt x tv
+    _ <- check cxt x tv
     Right $ (EAnnot x t, tv)
   infer cxt EBool = Right $ (EBool, VConst CType)
   infer cxt (EBoolLit x) = Right $ (EBoolLit x, VBool)
   infer cxt (EBoolAnd x y) = do
-    check cxt x VBool
-    check cxt y VBool
+    _ <- check cxt x VBool
+    _ <- check cxt y VBool
     Right $ (EBoolAnd x y, VBool)
   infer cxt (EBoolOr x y) = do
-    check cxt x VBool
-    check cxt y VBool
+    _ <- check cxt x VBool
+    _ <- check cxt y VBool
     Right $ (EBoolOr x y, VBool)
   infer cxt (EBoolEQ x y) = do
-    check cxt x VBool
-    check cxt y VBool
+    _ <- check cxt x VBool
+    _ <- check cxt y VBool
     Right $ (EBoolEQ x y, VBool)
   infer cxt (EBoolNE x y) = do
-    check cxt x VBool
-    check cxt y VBool
+    _ <- check cxt x VBool
+    _ <- check cxt y VBool
     Right $ (EBoolNE x y, VBool)
   infer cxt (EBoolIf b t f) = do
-    check cxt b VBool
+    _ <- check cxt b VBool
     (t, tt) <- infer cxt t
-    check cxt f tt
+    _ <- check cxt f tt
     Right $ (EBoolIf b t f, tt)
   infer cxt ENatural = Right $ (ENatural, VConst CType)
   infer cxt (ENaturalLit k) = Right $ (ENaturalLit k, VNatural)
@@ -323,12 +323,12 @@ mutual
   infer cxt ENaturalToInteger = Right $ (ENaturalToInteger, (vFun VNatural VInteger))
   infer cxt ENaturalShow = Right $ (ENaturalShow, (vFun VNatural VText))
   infer cxt (ENaturalPlus t u) = do
-    check cxt t VNatural
-    check cxt u VNatural
+    _ <- check cxt t VNatural
+    _ <- check cxt u VNatural
     Right $ (ENaturalPlus t u, VNatural)
   infer cxt (ENaturalTimes t u) = do
-    check cxt t VNatural
-    check cxt u VNatural
+    _ <- check cxt t VNatural
+    _ <- check cxt u VNatural
     Right $ (ENaturalTimes t u, VNatural)
   infer cxt EInteger = Right $ (EInteger, VConst CType)
   infer cxt (EIntegerLit x) = Right $ (EIntegerLit x, VInteger)
@@ -342,11 +342,11 @@ mutual
   infer cxt EText = Right $ (EText, VConst CType)
   infer cxt (ETextLit (MkChunks xs x)) =
     let go = mapChunks (\e => check cxt e VText) in do
-    traverse go xs
+    _ <- traverse go xs
     Right $ (ETextLit (MkChunks xs x), VText)
   infer cxt (ETextAppend t u) = do
-    check cxt t VText
-    check cxt u VText
+    _ <- check cxt t VText
+    _ <- check cxt u VText
     pure $ (ETextAppend t u, VText)
   infer cxt ETextShow = pure $ (EIntegerShow, (vFun VText VText))
   infer cxt ETextReplace =
@@ -361,26 +361,26 @@ mutual
     Left $ ErrorMessage "Not type for list" -- TODO better error message
   infer cxt (EListLit Nothing (x :: xs)) = do
     (x', ty) <- infer cxt x
-    traverse (\e => check cxt e ty) xs
+    _ <- traverse (\e => check cxt e ty) xs
     Right $ (EListLit Nothing (x :: xs), VList ty)
   infer cxt (EListLit (Just a) []) = do
     case !(eval (values cxt) a) of
          VList a' => do
            ea' <- quote (envNames $ values cxt) a'
-           check cxt ea' (VConst CType)
+           _ <- check cxt ea' (VConst CType)
            Right $ (EListLit (Just a) [], VList a')
          other => Left $ ErrorMessage $ "Not a list annotation: " ++ show other
   infer cxt (EListLit (Just a) (x :: xs)) = do
     ty <- eval (values cxt) a
     (a', av) <- infer cxt x
-    traverse (\e => check cxt e av) xs
-    conv (values cxt) ty (VList av)
+    _ <- traverse (\e => check cxt e av) xs
+    _ <- conv (values cxt) ty (VList av)
     Right $ (EListLit (Just a) (x :: xs), ty)
   infer cxt (EListAppend t u) = do
     (t', tt) <- infer cxt t
     case tt of
          (VList x) => do
-           check cxt u tt
+           _ <- check cxt u tt
            Right $ (EListAppend t u, tt)
          _ => Left $ ListAppendError "not a list" -- TODO better error message
   infer cxt EListBuild =
@@ -404,13 +404,13 @@ mutual
     Right $ (EOptional, VHPi "a" vType $ \a => Right $ vType)
   infer cxt (ESome t) = do
     (t, tt) <- infer cxt t
-    check cxt !(quote (envNames $ values cxt) tt) vType -- TODO abstract this out?
+    _ <- check cxt !(quote (envNames $ values cxt) tt) vType -- TODO abstract this out?
     pure (ESome t, VOptional tt)
   infer cxt ENone =
     Right $ (ENone, VHPi "a" vType $ \a => Right $ (VOptional a))
   infer cxt e@(EEquivalent t u) = do
     (t, tt) <- infer cxt t
-    check cxt u tt
+    _ <- check cxt u tt
     -- conv (values cxt) tt vType TODO
     Right (e, vType)
   infer cxt (EAssert (EEquivalent a b)) = do
@@ -481,11 +481,11 @@ mutual
            let xs = SortedMap.toList ms in
            case (xs, a) of
                 (((k, v) :: ys), Just x) => do
-                  unifyAllValues cxt v ys
-                  unify cxt (toMapTy v) !(eval (values cxt) x)
+                  _ <- unifyAllValues cxt v ys
+                  _ <- unify cxt (toMapTy v) !(eval (values cxt) x)
                   pure (EToMap t a, toMapTy v)
                 (((k, v) :: ys), Nothing) => do
-                  unifyAllValues cxt v ys
+                  _ <- unifyAllValues cxt v ys
                   pure (EToMap t a, toMapTy v)
                 ([], Just x) => do v <- checkToMapAnnot cxt !(eval (values cxt) x)
                                    pure (EToMap t a, v)
@@ -495,13 +495,13 @@ mutual
     unifyAllValues : Cxt -> Value -> List (FieldName, Value) -> Either Error Value
     unifyAllValues cxt v vs = do
       unify cxt !(inferSkip cxt !(quote (envNames $ values cxt) v)) (VConst CType)
-      foldlM (\x,y => unify cxt x y *> pure x) v (map snd vs)
+      _ <- foldlM (\x,y => unify cxt x y *> pure x) v (map snd vs)
       pure v
     checkToMapAnnot : Cxt -> Value -> Either Error Value
     checkToMapAnnot cxt v@(VList (VRecord ms)) =
       case SortedMap.toList ms of
            (((MkFieldName "mapKey"), VText) :: ((MkFieldName "mapValue"), a) :: []) => do
-             checkTy cxt !(quote (envNames $ values cxt) a)
+             _ <- checkTy cxt !(quote (envNames $ values cxt) a)
              pure v
            other => Left $ ToMapError $ "wrong annotation type" ++ show other
     checkToMapAnnot cxt other = Left $ ToMapError $ "wrong annotation type: " ++ show other

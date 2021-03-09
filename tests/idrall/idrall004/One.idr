@@ -14,7 +14,7 @@ dirTreeOne : DirTree String
 dirTreeOne = MkDirTree "../../../dhall-lang/tests/type-inference/success/simple" [] ["toMapEmptyNormalizeAnnotation"]
 
 testGood : IO (Result)
-testGood = runTests dirTreeOne
+testGood = runTestsCheck dirTreeOne
 
 main : IO ()
 main = do res <- testGood

@@ -15,8 +15,8 @@ import Data.Strings
 
 testAll : IO (Result)
 testAll = do
-  dir <- findTests "../../../dhall-lang/tests/type-inference/success"
-  runTestsCheck dir
+  dir <- findTests "../../../dhall-lang/tests/normalization/success"
+  runTestsConv dir
 
 main : IO ()
 main = do res <- testAll

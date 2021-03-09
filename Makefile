@@ -13,10 +13,10 @@ repl: test-setup
 	rlwrap idris2 -p contrib Idrall/APIv1.idr
 
 edit-tests: test-setup
-	cd ./tests/idrall/idrall002 && rlwrap idris2 -p contrib -p idrall All.idr
+	cd ./tests/idrall/idrall002 && rlwrap idris2 -p contrib -p test -p idrall All.idr
 
 edit-tests-one: test-setup
-	cd ./tests/idrall/idrall004 && rlwrap idris2 -p contrib -p idrall One.idr
+	cd ./tests/idrall/idrall004 && rlwrap idris2 -p contrib -p test -p idrall One.idr
 
 clean:
 	rm -f tests/*.idr~
