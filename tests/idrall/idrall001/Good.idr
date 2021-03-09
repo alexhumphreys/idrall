@@ -17,7 +17,7 @@ asDirTree : DirTree String
 asDirTree = MkDirTree "../../../dhall-lang/tests/type-inference/success/unit" [] expectPass
 
 testGood : IO (Result)
-testGood = runTests asDirTree
+testGood = runTestsCheck asDirTree
 
 main : IO ()
 main = do res <- testGood
