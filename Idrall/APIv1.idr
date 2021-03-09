@@ -48,7 +48,7 @@ roundTripCheck : String -> String -> IOEither Error ()
 roundTripCheck x y = do
   x' <- exprFromString x
   y' <- roundTripEval y
-  liftEither (check initCxt x' y')
+  _ <- liftEither (check initCxt x' y')
   pure ()
 
 public export
@@ -56,13 +56,13 @@ roundTripConv : String -> String -> IOEither Error ()
 roundTripConv x y = do
   do x' <- roundTripEval x
      y' <- roundTripEval y
-     liftEither $ conv Empty x' y'
+     _ <- liftEither $ conv Empty x' y'
      pure ()
 
 public export
 valueFromString : String -> IOEither Error Value
 valueFromString x = do
-  roundTripSynth x
+  _ <- roundTripSynth x
   roundTripEval x
 
 public export

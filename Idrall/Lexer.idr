@@ -69,7 +69,7 @@ whitespace =  skip blockComment <|> skip (some lineComment) <|> spaces
 
 public export
 hexNumber : Parser Int
-hexNumber = choice (the (List (Parser Int)) [ hexDigit, hexUpper, hexLower ])
+hexNumber = choice (the (List (Lazy (Parser Int))) [ hexDigit, hexUpper, hexLower ])
 where
   hexDigit : Parser Int
   hexDigit = do
@@ -110,7 +110,7 @@ validCodepoint c = not (isSurrogate c
 public export
 unicode : Parser Char
 unicode = do
-  char 'u'
+  _ <- char 'u'
   n <- bracedEscapeSequence <|> fourCharacterEscapeSequence
   pure (chr n)
 where
@@ -127,10 +127,10 @@ where
     pure (toNumber (vectToList ns))
   bracedEscapeSequence : Parser Int
   bracedEscapeSequence = do
-    char '{'
+    _ <- char '{'
     ns <- some hexNumber
     guard (validCodepoint (toNumber ns)
           && (toNumber ns) <= 0x10fffd) -- TODO use let with idris2 to DRY
           <|> fail "Invalid Unicode code point"
-    char '}'
+    _ <- char '}'
     pure (toNumber ns)
