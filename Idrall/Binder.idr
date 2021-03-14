@@ -107,13 +107,9 @@ mutual
        EmptyLE : LocalEnv ns []
        AppendLE : Value ns -> LocalEnv ns ms -> LocalEnv ns (n :: ms)
 
-  data Val : List Name -> Type where
-       VPi : (n : Name) -> Ty vars -> Closure n (vars) -> Val vars
-       VLam : (n : Name) -> Ty vars -> Closure n (vars) -> Val vars
-       VType : Val vars
-       VBool : Val vars
-       VBoolLit : Bool -> Val vars
-       VNeutral : Neutral vars -> Val vars
+  data VHPiLam : List Name -> Type where
+       VHListFold : Value vars -> Value vars -> Value vars -> Value vars -> Value vars -> VHPiLam vars
+       VHNaturalIsZero : Value vars -> VHPiLam vars
 
   data Env : (tm : List Name -> Type) -> List Name -> Type where
        Empty : Env tm []
