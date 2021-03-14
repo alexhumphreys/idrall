@@ -88,15 +88,24 @@ checkScope ns (RApp x y) = do
 checkScope ns RType = Right EType
 
 mutual
+  data Value : List Name -> Type where
+       VPi : (n : Name) -> Ty vars -> Closure n (vars) -> Value vars
+       -- VHPi : (n : Name) -> Val vars -> (Val vars -> Val (n :: vars)) -> Val vars
+       VLam : (n : Name) -> Ty vars -> Closure n (vars) -> Value vars
+       VType : Value vars
+       VBool : Value vars
+       VBoolLit : Bool -> Value vars
+       VNeutral : Neutral vars -> Value vars
+
   data Normal : List Name -> Type where
-       MkNormal : Ty vars -> Val vars -> Normal vars
+       MkNormal : Ty vars -> Value vars -> Normal vars
 
   Ty : List Name -> Type
-  Ty vars = Val vars
+  Ty vars = Value vars
 
   data LocalEnv : List Name -> List Name -> Type where
        EmptyLE : LocalEnv ns []
-       AppendLE : Val ns -> LocalEnv ns ms -> LocalEnv ns (n :: ms)
+       AppendLE : Value ns -> LocalEnv ns ms -> LocalEnv ns (n :: ms)
 
   data Val : List Name -> Type where
        VPi : (n : Name) -> Ty vars -> Closure n (vars) -> Val vars
@@ -120,7 +129,7 @@ mutual
        MkClosure : {mss: _} ->
                    (n : Name) ->
                    LocalEnv ns mss ->
-                   Env Val (ns) ->
+                   Env Value (ns) ->
                    Expr (n :: (mss ++ ns)) () ->
                    Closure n ns
 
@@ -130,15 +139,15 @@ mutual
 
 -- eval
 data Cxt : List Name -> Type where
-  Def : (Ty vars) -> (Val vars) -> Cxt vars
+  Def : (Ty vars) -> (Value vars) -> Cxt vars
   IsA : Name -> (Ty vars) -> Cxt vars
 
 data Types = TEmpty
-           | TBind Types Name (Val ns)
+           | TBind Types Name (Value ns)
 
 record Cxt' where
   constructor MkCxt'
-  values : Env' Val ns
+  values : Env' Value ns
   types  : Types
 
 interface Weaken (tm : List Name -> Type) where
@@ -163,7 +172,7 @@ mutual
   weakenLocs EmptyLE = EmptyLE
   weakenLocs (AppendLE x y) = AppendLE (weakenVal x) (weakenLocs y)
 
-  weakenEnv : {n:_} -> Env Val ns -> Env Val (n :: ns) -- TODO not sure about this, or weakenClosure
+  weakenEnv : {n:_} -> Env Value ns -> Env Value (n :: ns) -- TODO not sure about this, or weakenClosure
   weakenEnv e = Skip n e
 
   weakenVar : {idx:_} -> (mss : List Name) -> IsVar y idx (mss ++ ns) -> IsVar y idx (mss ++ (n :: ns))
@@ -185,7 +194,7 @@ mutual
   weakenInner EBool = EBool
   weakenInner (EBoolLit y) = EBoolLit y
 
-  weakenClosure : {x,n:_} -> Val ns -> Closure x ns -> Closure x (n :: ns)
+  weakenClosure : {x,n:_} -> Value ns -> Closure x ns -> Closure x (n :: ns)
   weakenClosure ty (MkClosure {mss} x locs env body) =
     MkClosure x (weakenLocs locs) (weakenEnv env) (weakenInner {mss=(x::mss)} body)
 
@@ -196,8 +205,15 @@ mutual
   weakenNormal : {n:_} -> Normal ns -> Normal (n :: ns)
   weakenNormal (MkNormal x y) = MkNormal (weakenVal x) (weakenVal y)
 
-  weakenVal : {n:_} -> Val ns -> Val (n :: ns)
+  weakenVHPi : {n:_} ->
+               (x : Name) ->
+               (Value ns -> Value (x :: ns)) ->
+               (Value (n :: ns) -> Value (x :: (n :: ns)))
+  weakenVHPi x f = ?weakenVHPi_rhs
+
+  weakenVal : {n:_} -> Value ns -> Value (n :: ns)
   weakenVal (VPi x ty z) = VPi x (weakenVal ty) (weakenClosure ty z)
+  -- weakenVal (VHPi x ty f) = VHPi x (weakenVal ty) (weakenVHPi x f)
   weakenVal (VLam x ty z) = VLam x (weakenVal ty) (weakenClosure ty z)
   weakenVal VType = VType
   weakenVal VBool = VBool
@@ -206,7 +222,7 @@ mutual
 
 mutual
 
-  ll : {n,ns,ms : _} -> IsVar n idx (ms ++ ns) -> LocalEnv ns ms -> Env Val ns -> Val ns
+  ll : {n,ns,ms : _} -> IsVar n idx (ms ++ ns) -> LocalEnv ns ms -> Env Value ns -> Value ns
   ll {ms = []} First EmptyLE (Extend a env) = weakenVal a
   ll {ms = []} First EmptyLE (Skip n env) =  VNeutral $ NVar n -- weakenVal (ll First EmptyLE (weakenEnv env))
   ll {ms = []} (LaterMatch p) EmptyLE (Extend _ env) = weakenVal (ll p EmptyLE env)
@@ -217,7 +233,7 @@ mutual
   ll (LaterMatch p) (AppendLE y w) env = ll p w env
   ll (LaterNotMatch p) (AppendLE y w) env = ll p w env
 
-  eval : {ns,ms : List Name} -> (env : Env Val ns) -> (locs : LocalEnv ns ms) -> Expr (ms ++ ns) () -> Either String (Val ns)
+  eval : {ns,ms : List Name} -> (env : Env Value ns) -> (locs : LocalEnv ns ms) -> Expr (ms ++ ns) () -> Either String (Value ns)
   eval env locs (ELocal n idx p) = Right (ll p locs env)
   eval env locs (ELet n x y) = do
     x' <- eval env locs x
@@ -237,11 +253,11 @@ mutual
   eval env locs EBool = Right VBool
   eval env locs (EBoolLit x) = Right (VBoolLit x)
 
-  evalClosure : {ns:_} -> Closure n ns -> Val ns -> Either String (Val ns)
+  evalClosure : {ns:_} -> Closure n ns -> Value ns -> Either String (Value ns)
   evalClosure (MkClosure n locs env body) arg =
       eval env (AppendLE arg locs) body
 
-  doApply : {ns : _} -> Val ns -> Val ns -> Either String (Val ns)
+  doApply : {ns : _} -> Value ns -> Value ns -> Either String (Value ns)
   doApply (VLam n ty closure) arg = do
     -- eval env' (AppendLE arg locs') body
     evalClosure closure arg
@@ -268,7 +284,7 @@ ex3 = ELet (MkName "x") (EBoolLit True)
           )
         )
 
-mkEnv : Env Cxt ns -> Env Val ns
+mkEnv : Env Cxt ns -> Env Value ns
 mkEnv Empty = Empty
 mkEnv (Skip n env) = Skip n (mkEnv env)
 mkEnv (Extend (IsA y z) x) = Extend z (mkEnv x)
@@ -276,7 +292,7 @@ mkEnv (Extend (Def _ z) x) = Extend z (mkEnv x)
 
 freshen : List Name -> Name -> Name
 
-readBackTyped : {ns:_} -> (cxt : Env Cxt ns) -> (Val ns) -> (Val ns) -> Either String (Expr ns ())
+readBackTyped : {ns:_} -> (cxt : Env Cxt ns) -> (Value ns) -> (Value ns) -> Either String (Expr ns ())
 readBackTyped cxt (VPi n dom ran) fun =
   let n' = freshen ns n
       nVal = VNeutral (NVar n)
@@ -294,7 +310,7 @@ readBackTyped cxt (VBoolLit x) y = ?readBackTyped_rhs_5
 readBackTyped cxt (VNeutral z) y = ?readBackTyped_rhs_6
 readBackTyped cxt x y = ?readBackTyped_rhs_7
 
-synth : {ns:_} -> (cxt : Env Cxt ns) -> Expr ns () -> Either String (Val ns)
+synth : {ns:_} -> (cxt : Env Cxt ns) -> Expr ns () -> Either String (Value ns)
 synth cxt (ELocal n idx p) = ?foo
   --let v = envLookup n idx p cxt in
       --(case v of
