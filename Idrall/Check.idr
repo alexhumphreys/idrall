@@ -582,7 +582,7 @@ mutual
              -> Either Error Value
   inferMerge cxt us rs mv = do
     xs <- inferUnionHandlers (toList us) (toList rs)
-    case Data.List1.fromList xs of
+    case toList1' xs of
          Nothing => checkEmptyMerge mv
          (Just (head ::: tail)) =>
            foldlM (\acc,v => unify cxt acc v *> pure acc) head tail

@@ -293,7 +293,7 @@ mutual
     show (EMerge x y z) = "(EMerge " ++ show x ++ " " ++ show y ++ " " ++ show z ++ ")"
     show (EToMap x y) = "(EToMap " ++ show x ++ " " ++ show y ++ ")"
     show (EField x y) = "(EField " ++ show x ++ " " ++ show y ++ ")"
-    show (EProject x y) = "(EField " ++ show x ++ " " ++ show y ++ ")"
+    show (EProject x y) = "(EProject " ++ show x ++ " " ++ show y ++ ")"
     show (EWith x ks y) = "(EWith " ++ show x ++ " " ++ show ks ++ " " ++ show y ++ ")"
     show (EImportAlt x y) = "(EImportAlt " ++ show x ++ " " ++ show y ++ ")"
     show (EEmbed x) = "(EEmbed " ++ show x ++ ")"
