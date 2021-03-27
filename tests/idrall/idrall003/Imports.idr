@@ -19,7 +19,12 @@ testImportFail : IOEither Error Value
 testImportFail = do
   roundTripEval "/tmp/importFailA.dhall"
 
+testImportEnv : IOEither Error Value
+testImportEnv = do
+  roundTripEval "env:IDRALL_TEST"
+
 main : IO ()
 main = do
   putStrLn !(showIOEither testImport)
   putStrLn !(showIOEither testImportFail)
+  putStrLn !(showIOEither testImportEnv)
