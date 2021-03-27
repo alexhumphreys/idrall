@@ -108,6 +108,7 @@ mutual
        AppendLE : Value ns -> LocalEnv ns ms -> LocalEnv ns (n :: ms)
 
   data VHPiLam : List Name -> Type where
+       -- confused by how to index this constructor. does (n :: vars) end up happening?
        VHListFold : Value vars -> Value vars -> Value vars -> Value vars -> Value vars -> VHPiLam vars
        VHNaturalIsZero : Value vars -> VHPiLam vars
 
