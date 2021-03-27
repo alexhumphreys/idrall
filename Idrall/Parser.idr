@@ -284,6 +284,7 @@ mutual
     token ")"
     pure (\e' => (EProject e' (Right e)))
 
+  -- TODO with is currently right associative and should be left
   withExpr : Parser ((Expr ImportStatement) -> (Expr ImportStatement))
   withExpr = do
     token "with"
