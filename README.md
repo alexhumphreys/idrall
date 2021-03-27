@@ -45,80 +45,10 @@ There's still not much of an API, and this will hopefully change, but this shoul
 
 ## Features
 
-Features marked with a tick should work for parsing, type checking and evaluation.
-
-### Bool
-- [x] Bool Type
-- [x] Bool Literals
-- [x] Keyword: if/then/else
-- [x] Operator: ||
-- [x] Operator: &&
-- [x] Operator: ==
-- [x] Operator: !=
-
-### Natural
-- [x] Natural Type
-- [x] Natural Literals
-- [x] Operator: +
-- [x] Operator: *
-- [x] Function: Natural/even
-- [x] Function: Natural/odd
-- [x] Function: Natural/isZero
-- [x] Function: Natural/subtract
-- [x] Function: Natural/fold
-- [x] Function: Natural/build
-- [x] Function: Natural/show
-- [x] Function: Natural/toInteger
-
-### Integer
-- [x] Integer Type
-- [x] Integer Literals 
-- [x] Function: Integer/negate
-- [x] Function: Integer/clamp
-- [x] Function: Integer/toDouble
-- [x] Function: Integer/show
-
-### Double
-- [x] Double Type
-- [x] Double Literals
-- [x] Function: Double/show
-
-### Text
-- [x] Text Type
-- [x] Text
-- [x] Function: Text/show
-- [x] Function: Text/replace
-- [x] Operator: ++
-
-### List
-- [x] List - Type
-- [x] List
-- [x] Operator: #
-- [x] Function: List/fold
-- [x] Function: List/build
-- [x] Function: List/length
-- [x] Function: List/head
-- [x] Function: List/last
-- [x] Function: List/indexed
-- [x] Function: List/reverse
-
-### Optional
-- [x] Optional - Type
-- [x] Optional
-- [x] Keyword: merge
-
-### Records
-- [x] Record types
-- [x] Record values
-- [x] Operator: ⩓
-- [x] Operator: ∧
-- [x] Operator: ⫽
-- [x] Operator: ::
-- [x] Keyword: merge
-- [x] Keyword: toMap
+Most language features are in and should be working relatively correctly. The import system is incomplete, and other behaviour is also missing.
 
 ### Imports
-- [ ] Keyword: missing
+- [x] Keyword: missing
 - [x] Operator: ?
 - [ ] Keyword: as Text
 - [ ] Keyword: using
@@ -128,11 +58,7 @@ Features marked with a tick should work for parsing, type checking and evaluatio
 - [ ] Semantic integrity checks
 
 ### Other
-- [x] Keyword: let
-- [x] Keyword: assert
-- [x] Pi types: Bool -> Bool
-- [x] Functions: \(x : Bool) -> x
-- [ ] `x@1` style variables
+- [ ] Normalisation under binders
 - [ ] Anything to do with caching
 - [ ] CBOR representation
 
