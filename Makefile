@@ -1,5 +1,7 @@
 .PHONY: build
 
+export IDRALL_TEST=True
+
 git-submodule-update:
 	git submodule update --remote
 

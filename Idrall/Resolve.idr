@@ -6,6 +6,7 @@ import Idrall.IOEither
 import Idrall.Parser
 import Idrall.Path
 
+import System
 import System.File
 
 parseErrorHandler : String -> Error
@@ -13,6 +14,12 @@ parseErrorHandler x = ErrorMessage (x)
 
 fileErrorHandler : String -> FileError -> Error
 fileErrorHandler x y = ReadFileError (show y ++ " " ++ x)
+
+readEnvVar : String -> IOEither Error String
+readEnvVar x =
+  MkIOEither $ do
+    Just x' <- getEnv x | Nothing => pure $ Left $ EnvVarError $ "Env var \{x} not found"
+    pure $ pure x'
 
 readFile' : String -> IOEither Error String
 readFile' x =
@@ -41,6 +48,12 @@ alreadyImported xs x = case elem x xs of
                             True => Left (CyclicImportError ((show x) ++ " in " ++ (show xs)))
 
 mutual
+  resolveEnvVar : (history : List FilePath) -> Maybe FilePath -> String -> IOEither Error (Expr Void)
+  resolveEnvVar h p x = do
+    str <- readEnvVar x
+    expr <- mapErr parseErrorHandler (liftEither (parseExpr str))
+    resolve h p (fst expr)
+
   resolveLocalFile : (history : List FilePath) -> (current : Maybe FilePath) -> (next : FilePath) -> IOEither Error (Expr Void)
   resolveLocalFile h current next =
     let combinedFilePaths = combinePaths current next in
@@ -239,7 +252,7 @@ mutual
                 (Left w) => case resolve h p y of
                                  (MkIOEither y'') => y''
   resolve h p (EEmbed (Raw (LocalFile x))) = resolveLocalFile h p x
-  resolve h p (EEmbed (Raw (EnvVar x))) = MkIOEither (pure (Left (ErrorMessage "TODO Env var imports not implemented")))
+  resolve h p (EEmbed (Raw (EnvVar x))) = resolveEnvVar h p x
   resolve h p (EEmbed (Raw (Http x))) = MkIOEither (pure (Left (ErrorMessage "TODO http imports not implemented")))
   resolve h p (EEmbed (Raw Missing)) = MkIOEither (pure (Left (ErrorMessage "No valid imports")))
   resolve h p (EEmbed (Text a)) = MkIOEither (pure (Left (ErrorMessage "TODO as Text not implemented")))

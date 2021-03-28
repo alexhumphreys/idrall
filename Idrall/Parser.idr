@@ -527,6 +527,12 @@ mutual
     x <- many alphaNum
     pure $ pack x
 
+  envVar : Parser (ImportStatement)
+  envVar = do
+    token "env:"
+    x <- many (alphaNum <|> char '_')
+    pure $ EnvVar $ pack x
+
   data Protocol = HTTP | HTTPS
   Show Protocol where
     show HTTP = "http://"
@@ -544,7 +550,7 @@ mutual
     pure $ Http (show protocol ++ rest)
 
   dhallImportStatement : Parser (ImportStatement)
-  dhallImportStatement = httpImport <|> pathTerm <|> missingImport
+  dhallImportStatement = httpImport <|> pathTerm <|> envVar <|> missingImport
 
   importAs : Parser (a -> Import a)
   importAs = (token "Text" *> pure Text) <|> (token "Location" *> pure Location)

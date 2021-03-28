@@ -28,6 +28,7 @@ data Error
   | EmptyMerge String
   | InvalidRecordCompletion String
   | CyclicImportError String
+  | EnvVarError String
   | NestedError Error Error
 
 public export
@@ -58,5 +59,6 @@ Show Error where
   show (ToMapEmpty str) = "ToMapEmpty: " ++ str
   show (InvalidRecordCompletion str) = "InvalidRecordCompletion: " ++ str
   show (CyclicImportError str) = "CyclicImportError: " ++ str
+  show (EnvVarError str) = "EnvVarError " ++ show str
   show (NestedError e e') =
     show e ++ "\n" ++ show e'
