@@ -28,6 +28,8 @@ data RawExpr a
   | RType
   | RBool
   | RBoolLit Bool
+  | RNatural
+  | RNaturalLit Nat
 
 data Expr : (ns : List Name) -> a -> Type where
      ELocal : (n : Name) -> (idx : Nat) -> (p : IsVar n idx ns) -> Expr ns a
@@ -38,6 +40,8 @@ data Expr : (ns : List Name) -> a -> Type where
      EType : Expr ns a
      EBool : Expr ns a
      EBoolLit : Bool -> Expr ns a
+     ENatural : Expr ns a
+     ENaturalLit : Nat -> Expr ns a
 
 checkLocal : (n : Name) -> (k : Nat) -> (ns : List Name) -> Either String (IsVar n k ns)
 checkLocal n Z [] = Left "Not in empty"
@@ -81,6 +85,8 @@ checkScope ns (RLam x y z) = do
   Right (ELam x y' z')
 checkScope ns RBool = Right EBool
 checkScope ns (RBoolLit x) = Right (EBoolLit x)
+checkScope ns RNatural = Right ENatural
+checkScope ns (RNaturalLit x) = Right (ENaturalLit x)
 checkScope ns (RApp x y) = do
   x' <- checkScope ns x
   y' <- checkScope ns y
@@ -95,10 +101,9 @@ mutual
        VType : Value vars
        VBool : Value vars
        VBoolLit : Bool -> Value vars
+       VNatural : Value vars
+       VNaturalLit : Nat -> Value vars
        VNeutral : Neutral vars -> Value vars
-
-  data Normal : List Name -> Type where
-       MkNormal : Ty vars -> Value vars -> Normal vars
 
   Ty : List Name -> Type
   Ty vars = Value vars
@@ -127,25 +132,23 @@ mutual
 
   data Neutral : List Name -> Type where
        NVar : Name -> Neutral vars
-       NApp : Neutral vars -> Normal vars -> Neutral vars
-       NBoolAnd : Neutral vars -> Normal vars -> Neutral vars
+       NApp : Value vars -> Value vars -> Neutral vars
+       NNaturalIsZero : Value vars -> Neutral vars
+       NNaturalFold : Value vars -> Value vars -> Value vars -> Value vars -> Value vars -> Neutral vars
 
   data Builtin : List Name -> Type where
        -- confused by how to index this constructor. does (n :: vars) end up happening?
-       BListFold : Value vars -> Value vars -> Value vars -> Value vars -> Value vars -> Builtin vars
-       BBoolAnd : Value vars -> Value vars -> Builtin vars
+       BNaturalFold : Value vars -> Value vars -> Value vars -> Value vars -> Value vars -> Builtin vars
+       BNaturalIsZero : Value vars -> Builtin vars
 
   -- do i need to pass 5 values to handle the longest builtins, or is it handled in the Builtin Type?
   -- return a value vars, or an Either? I guess this can fail...
   apply : Builtin vars -> Value vars
-  apply (BListFold x y z w v) = ?apply_rhs_1
-  apply (BBoolAnd x y) = case (x, y) of
-                              ((VBoolLit True), u) => u
-                              ((VBoolLit False), u) => VBoolLit False
-                              (t, (VBoolLit True)) => t
-                              (t, (VBoolLit False)) => VBoolLit False
-                              (t, u) => ?jjjj
-
+  apply (BNaturalFold a c list cons nil) = ?apply_rhs_1
+  apply (BNaturalIsZero x) =
+    case x of
+         (VNaturalLit k) => VBoolLit $ k == 0
+         t => VNeutral (NNaturalIsZero t)
 
 -- eval
 data Cxt : List Name -> Type where
@@ -203,6 +206,8 @@ mutual
   weakenInner EType = EType
   weakenInner EBool = EBool
   weakenInner (EBoolLit y) = EBoolLit y
+  weakenInner ENatural = ENatural
+  weakenInner (ENaturalLit y) = ENaturalLit y
 
   weakenClosure : {x,n:_} -> Value ns -> Closure x ns -> Closure x (n :: ns)
   weakenClosure ty (MkClosure {mss} x locs env body) =
@@ -210,11 +215,11 @@ mutual
 
   weakenNeutral : {n:_} -> Neutral ns -> Neutral (n :: ns)
   weakenNeutral (NVar x) = NVar x
-  weakenNeutral (NApp x y) = NApp (weakenNeutral x) (weakenNormal y)
-  weakenNeutral (NBoolAnd x y) = ?kjkjl
-
-  weakenNormal : {n:_} -> Normal ns -> Normal (n :: ns)
-  weakenNormal (MkNormal x y) = MkNormal (weakenVal x) (weakenVal y)
+  weakenNeutral (NApp x y) = NApp (weakenVal x) (weakenVal y)
+  weakenNeutral (NNaturalFold x y z v w) =
+    NNaturalFold (weakenVal x) (weakenVal y) (weakenVal z) (weakenVal v) (weakenVal w)
+  weakenNeutral (NNaturalIsZero x) =
+    NNaturalIsZero (weakenVal x)
 
   weakenVHPi : {n:_} ->
                (x : Name) ->
@@ -229,6 +234,8 @@ mutual
   weakenVal VType = VType
   weakenVal VBool = VBool
   weakenVal (VBoolLit x) = VBoolLit x
+  weakenVal VNatural = VNatural
+  weakenVal (VNaturalLit x) = VNaturalLit x
   weakenVal (VNeutral y) = VNeutral (weakenNeutral y)
 
 mutual
@@ -263,6 +270,8 @@ mutual
   eval env locs EType = Right VType
   eval env locs EBool = Right VBool
   eval env locs (EBoolLit x) = Right (VBoolLit x)
+  eval env locs ENatural = Right VNatural
+  eval env locs (ENaturalLit x) = Right (VNaturalLit x)
 
   evalClosure : {ns:_} -> Closure n ns -> Value ns -> Either String (Value ns)
   evalClosure (MkClosure n locs env body) arg =
@@ -318,8 +327,10 @@ readBackTyped cxt (VLam n x z) y = ?readBackTyped_rhs_2
 readBackTyped cxt VType VBool = Right EBool
 readBackTyped cxt VBool y = ?readBackTyped_rhs_4
 readBackTyped cxt (VBoolLit x) y = ?readBackTyped_rhs_5
-readBackTyped cxt (VNeutral z) y = ?readBackTyped_rhs_6
-readBackTyped cxt x y = ?readBackTyped_rhs_7
+readBackTyped cxt VNatural y = ?readBackTyped_rhs_6
+readBackTyped cxt (VNaturalLit x) y = ?readBackTyped_rhs_7
+readBackTyped cxt (VNeutral z) y = ?readBackTyped_rhs_8
+readBackTyped cxt x y = ?readBackTyped_rhs_9
 
 synth : {ns:_} -> (cxt : Env Cxt ns) -> Expr ns () -> Either String (Value ns)
 synth cxt (ELocal n idx p) = ?foo
@@ -339,3 +350,5 @@ synth cxt (EApp x y) = ?synth_rhs_4
 synth cxt EType = ?synth_rhs_7
 synth cxt EBool = ?synth_rhs_5
 synth cxt (EBoolLit x) = ?synth_rhs_6
+synth cxt ENatural = ?synth_rhs_8
+synth cxt (ENaturalLit x) = ?synth_rhs_9
