@@ -107,11 +107,6 @@ mutual
        EmptyLE : LocalEnv ns []
        AppendLE : Value ns -> LocalEnv ns ms -> LocalEnv ns (n :: ms)
 
-  data VHPiLam : List Name -> Type where
-       -- confused by how to index this constructor. does (n :: vars) end up happening?
-       VHListFold : Value vars -> Value vars -> Value vars -> Value vars -> Value vars -> VHPiLam vars
-       VHNaturalIsZero : Value vars -> VHPiLam vars
-
   data Env : (tm : List Name -> Type) -> List Name -> Type where
        Empty : Env tm []
        Skip : (n : Name) -> Env tm ns -> Env tm (n :: ns)
@@ -133,6 +128,24 @@ mutual
   data Neutral : List Name -> Type where
        NVar : Name -> Neutral vars
        NApp : Neutral vars -> Normal vars -> Neutral vars
+       NBoolAnd : Neutral vars -> Normal vars -> Neutral vars
+
+  data Builtin : List Name -> Type where
+       -- confused by how to index this constructor. does (n :: vars) end up happening?
+       BListFold : Value vars -> Value vars -> Value vars -> Value vars -> Value vars -> Builtin vars
+       BBoolAnd : Value vars -> Value vars -> Builtin vars
+
+  -- do i need to pass 5 values to handle the longest builtins, or is it handled in the Builtin Type?
+  -- return a value vars, or an Either? I guess this can fail...
+  apply : Builtin vars -> Value vars
+  apply (BListFold x y z w v) = ?apply_rhs_1
+  apply (BBoolAnd x y) = case (x, y) of
+                              ((VBoolLit True), u) => u
+                              ((VBoolLit False), u) => VBoolLit False
+                              (t, (VBoolLit True)) => t
+                              (t, (VBoolLit False)) => VBoolLit False
+                              (t, u) => ?jjjj
+
 
 -- eval
 data Cxt : List Name -> Type where
@@ -198,6 +211,7 @@ mutual
   weakenNeutral : {n:_} -> Neutral ns -> Neutral (n :: ns)
   weakenNeutral (NVar x) = NVar x
   weakenNeutral (NApp x y) = NApp (weakenNeutral x) (weakenNormal y)
+  weakenNeutral (NBoolAnd x y) = ?kjkjl
 
   weakenNormal : {n:_} -> Normal ns -> Normal (n :: ns)
   weakenNormal (MkNormal x y) = MkNormal (weakenVal x) (weakenVal y)
