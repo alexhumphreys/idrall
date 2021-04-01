@@ -137,7 +137,9 @@ mutual
        NNaturalFold : Value vars -> Value vars -> Value vars -> Value vars -> Value vars -> Neutral vars
 
   data Builtin : List Name -> Type where
-       -- confused by how to index this constructor. does (n :: vars) end up happening?
+       -- 1. confused by how to index this constructor. does (n :: vars) end up happening?
+       -- 2. how would partially applying this look, what would it return in eval? Need to bring back VHLam?
+       -- 3. i guess parsing would be `token "Natural/fold" *> pure BNaturalFold`...?
        BNaturalFold : Value vars -> Value vars -> Value vars -> Value vars -> Value vars -> Builtin vars
        BNaturalIsZero : Value vars -> Builtin vars
 
