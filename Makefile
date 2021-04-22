@@ -27,6 +27,7 @@ clean:
 	rm -f Idrall/*.ibc
 	rm -rf build/
 	rm -rf tests/build/
+	@${MAKE} -C tests clean
 
 build:
 	idris2 --build idrall.ipkg

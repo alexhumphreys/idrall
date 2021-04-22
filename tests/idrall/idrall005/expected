@@ -1,4 +1,5 @@
-Testing: ("../../../dhall-lang/tests/normalization/success/haskell-tutorial/access", "0")
+1/1: Building All (All.idr)
+Main> Testing: ("../../../dhall-lang/tests/normalization/success/haskell-tutorial/access", "0")
 Testing: ("../../../dhall-lang/tests/normalization/success/haskell-tutorial/access", "1")
 Testing: ("../../../dhall-lang/tests/normalization/success/haskell-tutorial/combineTypes", "0")
 Testing: ("../../../dhall-lang/tests/normalization/success/haskell-tutorial/combineTypes", "1")
@@ -386,5 +387,4 @@ AlphaEquivError:(VTextAppend (VTextLit (MkVChunks [("            ", (VMerge (VRe
 Result: 
 Pass: 217
 Fail: 52
-1/1: Building All (All.idr)
-Main> Main> Bye for now!
+Main> Bye for now!
