@@ -1,4 +1,5 @@
-Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "AssertTrivial")
+1/1: Building Good (Good.idr)
+Main> Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "AssertTrivial")
 Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "Bool")
 Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "Function")
 Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "Natural")
@@ -43,5 +44,4 @@ Testing: ("../../../dhall-lang/tests/type-inference/success/unit", "ListIndexed"
 Result: 
 Pass: 42
 Fail: 0
-1/1: Building Good (Good.idr)
-Main> Main> Bye for now!
+Main> Bye for now!

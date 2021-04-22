@@ -1,5 +1,5 @@
-Success: (VNaturalLit 3)
+1/1: Building Imports (Imports.idr)
+Main> Success: (VNaturalLit 3)
 Error: CyclicImportError: (MkFilePath (Absolute ["tmp"]) Just "importFailA.dhall") in [(MkFilePath (Absolute ["tmp"]) Just "importFailB.dhall"), (MkFilePath (Absolute ["tmp"]) Just "importFailA.dhall")]
 Success: (VBoolLit True)
-1/1: Building Imports (Imports.idr)
-Main> Main> Bye for now!
+Main> Bye for now!
