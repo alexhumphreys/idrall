@@ -38,6 +38,7 @@ mutual
   qAppM : List Name -> Expr Void -> List Value -> Either Error (Expr Void)
   qAppM env x args = foldlM (qApp env) x args
 
+  export
   quote : List Name -> Value -> Either Error (Expr Void)
   quote env (VConst k) = Right $ EConst k
   quote env (VVar x i) = Right $ qVar x i env
