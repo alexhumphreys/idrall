@@ -37,6 +37,22 @@ roundTripEval x = do
   x' <- exprFromString x
   liftEither (eval Empty x')
 
+evalQuote : Expr Void -> Either Error (Expr Void)
+evalQuote x = do
+  v <- eval Empty x
+  e <- quote [] v
+  pure e
+
+export
+roundTripEvalQuoteConv : String -> String -> IOEither Error ()
+roundTripEvalQuoteConv x y = do
+  xE <- exprFromString x
+  xNf <- liftEither (evalQuote xE)
+  yE <- exprFromString y
+  yNf <- liftEither (evalQuote yE)
+  _ <- liftEither $ conv Empty !(liftEither $ eval Empty xNf) !(liftEither $ eval Empty yNf)
+  pure ()
+
 public export
 roundTripSynth : String -> IOEither Error (Expr Void, Value)
 roundTripSynth x = do

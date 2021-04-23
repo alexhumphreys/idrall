@@ -144,4 +144,4 @@ runTestsCheck x = runTests x (runFormatter roundTripCheck)
 
 public export
 runTestsConv : DirTree String -> IO Result
-runTestsConv x = runTests x (runFormatter roundTripConv)
+runTestsConv x = runTests x (runFormatter roundTripEvalQuoteConv)
