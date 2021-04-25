@@ -94,10 +94,9 @@ record Scientific where
 
 scientificToDouble : Scientific -> Double
 scientificToDouble (MkScientific c e) =
-  let c' = fromInteger c
-      x = pow' 10 (fromInteger (- e)) in
-    if e < 0 then c' / x
-             else c' * x
+  let c' = fromInteger c in
+    if e < 0 then c' / pow' 10 (fromInteger (- e))
+             else c' * pow' 10 (fromInteger e)
   where
     pow' : (Num a) => a -> Nat -> a
     pow' x Z = 1
@@ -106,10 +105,11 @@ scientificToDouble (MkScientific c e) =
 parseScientific : Parser Scientific
 parseScientific = do sign <- maybe 1 (const (-1)) `map` optional (char '-') -- TODO handle '+'
                      digits <- some digit
-                     _ <- char '.'
-                     decimals <- some digit
+                     hasDecimals <- isJust `map` optional (char '.')
+                     decimals <- if hasDecimals then some digit else pure []
                      hasExponent <- isJust `map` optional (char 'e')
                      exponent <- if hasExponent then integer else pure 0
+                     _ <- if hasExponent || hasDecimals then pure () else fail "not a doubleLit"
                      pure $ MkScientific (sign * fromDigits (digits ++ decimals))
                                          (exponent - cast (length decimals))
   where fromDigits : List (Fin 10) -> Integer
@@ -625,10 +625,12 @@ mutual
 
   term : Parser (Expr ImportStatement)
   term = do
-    i <-(dhallImport <|> var <|> builtin <|> mergeExpr <|> toMap <|>
+    i <-(dhallImport <|>
+     doubleLit <|>
+     naturalLit <|>
+     var <|> builtin <|> mergeExpr <|> toMap <|>
      true <|> false <|> bool <|> ifExpr <|>
-     double <|> doubleLit <|>
-     natural <|> naturalLit <|>
+     natural <|> double <|>
      integer <|> integerLit <|>
      text <|> textLiteral <|>
      type <|> kind <|> sort <|>
