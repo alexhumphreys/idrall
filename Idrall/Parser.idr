@@ -92,24 +92,16 @@ record Scientific where
   coefficient : Integer
   exponent : Integer
 
--- parses "2.3" as 2.3000000000000003
--- but "2.31" as 2.31
 scientificToDouble : Scientific -> Double
-scientificToDouble (MkScientific c e) = (fromInteger c) * exp
+scientificToDouble (MkScientific c e) =
+  let c' = fromInteger c
+      x = pow' 10 (fromInteger (- e)) in
+    if e < 0 then c' / x
+             else c' * x
   where
     pow' : (Num a) => a -> Nat -> a
     pow' x Z = 1
     pow' x (S n) = x * (pow' x n)
-    fromIntegerNat : Integer -> Nat
-    fromIntegerNat 0 = Z
-    fromIntegerNat n =
-      if (n > 0) then
-        S (fromIntegerNat (assert_smaller n (n - 1)))
-      else
-        Z
-    exp : Double
-    exp = if e < 0 then 1 / pow' 10 (fromIntegerNat (- e))
-                   else pow' 10 (fromIntegerNat e)
 
 parseScientific : Parser Scientific
 parseScientific = do sign <- maybe 1 (const (-1)) `map` optional (char '-') -- TODO handle '+'
