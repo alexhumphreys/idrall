@@ -116,7 +116,6 @@ mutual
   eval env ENaturalBuild =
     pure $ VPrim $
       \c => case c of
-                 VHLam (NaturalFoldCl x) _ => pure x
                  VPrimVar => pure $ VNaturalBuild VPrimVar
                  t => vAppM t [ VNatural
                               , VHLam (Typed "n" VNatural) $ \n =>
