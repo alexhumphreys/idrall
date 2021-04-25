@@ -116,7 +116,6 @@ mutual
   eval env ENaturalBuild =
     pure $ VPrim $
       \c => case c of
-                 VHLam (NaturalFoldCl x) _ => pure x
                  VPrimVar => pure $ VNaturalBuild VPrimVar
                  t => vAppM t [ VNatural
                               , VHLam (Typed "n" VNatural) $ \n =>
@@ -166,11 +165,20 @@ mutual
                  VNaturalLit n => pure $ VBoolLit (isOdd n)
                  n             => pure $ VNaturalOdd n
   eval env ENaturalSubtract = do
-    Right $ VPrim $
-      \x => Right $ VPrim $
-        \y => case (x, y) of
-                   (VNaturalLit n, VNaturalLit n') => pure $ VNaturalLit (minus n' n)
-                   (n, n') => pure $ VNaturalSubtract n' n'
+    pure $ VPrim $
+      \x => case x of
+                 VNaturalLit 0 => pure $ VHLam NaturalSubtractZero (\y => pure y)
+                 x'@(VNaturalLit m) => pure $ VPrim $
+                      \y => case y of
+                                 -- unintuitive order for `minus`, but this is correct
+                                 (VNaturalLit n) => pure $ VNaturalLit (minus n m)
+                                 y' => pure $ VNaturalSubtract x' y'
+                 x' => pure $ VPrim $
+                      \y => case y of
+                                 (VNaturalLit 0) => pure $ VNaturalLit 0
+                                 y' => case conv env x' y' of
+                                            (Right _) => pure $ VNaturalLit 0
+                                            (Left _) => pure $ VNaturalSubtract x' y'
   eval env ENaturalShow =
     Right $ VPrim $
       \c => case c of
@@ -286,18 +294,24 @@ mutual
                                 , VListLit (Just a) []
                                 ]
   eval env EListFold =
-    Right $ VPrim $
-      \a => Right $ VPrim $
-        \c => case c of
-                   (VListLit _ as) =>
-                     Right $ VHLam (Typed "list" vType) $ \list =>
-                     Right $ VHLam (Typed "cons" (vFun a $ vFun list list) ) $ \cons =>
-                     Right $ VHLam (Typed "nil"  list) $ \nil =>
-                       foldrM (\x,b => vAppM cons [x, b]) nil as
-                   as => Right $ VHLam (ListFoldCl as) $
-                        \t => Right $ VPrim $
-                        \c' => Right $ VPrim $
-                        \n => Right $ VListFold a as t c' n
+    pure $ VPrim $ \a =>
+    pure $ VPrim $ \as =>
+    pure $ VPrim $ \list =>
+    pure $ VPrim $ \cons =>
+    pure $ VPrim $ \nil =>
+      let inert = pure $ VListFold a as list cons nil in
+        case nil of
+        VPrimVar => inert
+        _ => case cons of
+            VPrimVar => inert
+            _ => case list of
+                VPrimVar => inert
+                _ => case a of
+                    VPrimVar => inert
+                    _ => case as of
+                        VListLit _ as' =>
+                           foldrM (\x,b => vAppM cons [x, b]) nil as'
+                        _ => inert
     where
       foldrM : (Foldable t, Monad m) => (funcM: b -> a -> m a) -> (init: a) -> (input: t b) -> m a
       foldrM fm a0 = foldr (\b,ma => ma >>= fm b) (pure a0)

@@ -49,6 +49,8 @@ mutual
   quote env (VHLam (Typed x a) t) =
     let (x', v) = fresh x env in
     Right $ ELam x' !(quote env a) !(quoteBind x env !(t v))
+  quote env (VHLam NaturalSubtractZero _) =
+    pure $ EApp ENaturalSubtract (ENaturalLit 0)
   quote env (VHLam _ t) = quote env !(t VPrimVar)
   quote env (VPi a b) =
     let (x, v, b') = freshCl b env in
