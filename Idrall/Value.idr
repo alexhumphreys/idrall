@@ -112,7 +112,6 @@ mutual
   data HLamInfo
     = Prim
     | Typed String Value
-    | ListFoldCl Value
 
 ||| Returns `VHPi "_" a (\_ => Right b)`
 ||| Non-dependent function arrow
@@ -129,7 +128,6 @@ mutual
   Show HLamInfo where
     show Prim = "Prim"
     show (Typed x y) = "(Typed " ++ show x ++ " " ++ show y ++ ")"
-    show (ListFoldCl x) = "(ListFoldCl " ++ show x ++ ")"
 
   public export
   Show Env where

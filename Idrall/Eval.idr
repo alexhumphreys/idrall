@@ -285,18 +285,24 @@ mutual
                                 , VListLit (Just a) []
                                 ]
   eval env EListFold =
-    Right $ VPrim $
-      \a => Right $ VPrim $
-        \c => case c of
-                   (VListLit _ as) =>
-                     Right $ VHLam (Typed "list" vType) $ \list =>
-                     Right $ VHLam (Typed "cons" (vFun a $ vFun list list) ) $ \cons =>
-                     Right $ VHLam (Typed "nil"  list) $ \nil =>
-                       foldrM (\x,b => vAppM cons [x, b]) nil as
-                   as => Right $ VHLam (ListFoldCl as) $
-                        \t => Right $ VPrim $
-                        \c' => Right $ VPrim $
-                        \n => Right $ VListFold a as t c' n
+    pure $ VPrim $ \a =>
+    pure $ VPrim $ \as =>
+    pure $ VPrim $ \list =>
+    pure $ VPrim $ \cons =>
+    pure $ VPrim $ \nil =>
+      let inert = pure $ VListFold a as list cons nil in
+        case nil of
+        VPrimVar => inert
+        _ => case cons of
+            VPrimVar => inert
+            _ => case list of
+                VPrimVar => inert
+                _ => case a of
+                    VPrimVar => inert
+                    _ => case as of
+                        VListLit _ as' =>
+                           foldrM (\x,b => vAppM cons [x, b]) nil as'
+                        _ => inert
     where
       foldrM : (Foldable t, Monad m) => (funcM: b -> a -> m a) -> (init: a) -> (input: t b) -> m a
       foldrM fm a0 = foldr (\b,ma => ma >>= fm b) (pure a0)
