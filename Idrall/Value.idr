@@ -112,6 +112,7 @@ mutual
   data HLamInfo
     = Prim
     | Typed String Value
+    | NaturalSubtractZero
 
 ||| Returns `VHPi "_" a (\_ => Right b)`
 ||| Non-dependent function arrow
@@ -128,6 +129,7 @@ mutual
   Show HLamInfo where
     show Prim = "Prim"
     show (Typed x y) = "(Typed " ++ show x ++ " " ++ show y ++ ")"
+    show NaturalSubtractZero = "NaturalSubtractZero"
 
   public export
   Show Env where

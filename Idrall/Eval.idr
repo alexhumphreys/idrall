@@ -165,11 +165,20 @@ mutual
                  VNaturalLit n => pure $ VBoolLit (isOdd n)
                  n             => pure $ VNaturalOdd n
   eval env ENaturalSubtract = do
-    Right $ VPrim $
-      \x => Right $ VPrim $
-        \y => case (x, y) of
-                   (VNaturalLit n, VNaturalLit n') => pure $ VNaturalLit (minus n' n)
-                   (n, n') => pure $ VNaturalSubtract n' n'
+    pure $ VPrim $
+      \x => case x of
+                 VNaturalLit 0 => pure $ VHLam NaturalSubtractZero (\y => pure y)
+                 x'@(VNaturalLit m) => pure $ VPrim $
+                      \y => case y of
+                                 -- unintuitive order for `minus`, but this is correct
+                                 (VNaturalLit n) => pure $ VNaturalLit (minus n m)
+                                 y' => pure $ VNaturalSubtract x' y'
+                 x' => pure $ VPrim $
+                      \y => case y of
+                                 (VNaturalLit 0) => pure $ VNaturalLit 0
+                                 y' => case conv env x' y' of
+                                            (Right _) => pure $ VNaturalLit 0
+                                            (Left _) => pure $ VNaturalSubtract x' y'
   eval env ENaturalShow =
     Right $ VPrim $
       \c => case c of
