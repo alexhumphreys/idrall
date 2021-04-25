@@ -102,15 +102,26 @@ scientificToDouble (MkScientific c e) =
     pow' x Z = 1
     pow' x (S n) = x * (pow' x n)
 
+data Sign
+  = PlusSign
+  | MinusSign
+
+signToInt : Maybe Sign -> Integer
+signToInt (Just MinusSign) = -1
+signToInt _ = 1
+
+parseSign : Parser Sign
+parseSign = char '-' *> pure MinusSign <|> char '+' *> pure PlusSign
+
 parseScientific : Parser Scientific
-parseScientific = do sign <- maybe 1 (const (-1)) `map` optional (char '-') -- TODO handle '+'
+parseScientific = do sign <- optional parseSign
                      digits <- some digit
                      hasDecimals <- isJust `map` optional (char '.')
                      decimals <- if hasDecimals then some digit else pure []
                      hasExponent <- isJust `map` optional (char 'e')
                      exponent <- if hasExponent then integer else pure 0
-                     _ <- if hasExponent || hasDecimals then pure () else fail "not a doubleLit"
-                     pure $ MkScientific (sign * fromDigits (digits ++ decimals))
+                     guard (hasExponent || hasDecimals)
+                     pure $ MkScientific ((signToInt sign) * fromDigits (digits ++ decimals))
                                          (exponent - cast (length decimals))
   where fromDigits : List (Fin 10) -> Integer
         fromDigits = foldl (\a, b => 10 * a + cast b) 0
