@@ -578,6 +578,7 @@ mutual
   convErr : (Show x) => x -> x -> Either Error a
   convErr x y = Left $ AlphaEquivError $ show x ++ "\n not alpha equivalent to:\n" ++ show y
 
+  export
   strFromChunks : List (String, Value) -> Maybe String
   strFromChunks [] = Just neutral
   strFromChunks ((str, (VTextLit (MkVChunks xys' y))) :: xs') = do
