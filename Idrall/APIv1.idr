@@ -37,6 +37,13 @@ roundTripEval x = do
   x' <- exprFromString x
   liftEither (eval Empty x')
 
+export
+roundTripCheckEval : String -> IOEither Error Value
+roundTripCheckEval x = do
+  x' <- exprFromString x
+  _ <- liftEither (infer initCxt x')
+  liftEither (eval Empty x')
+
 evalQuote : Expr Void -> Either Error (Expr Void)
 evalQuote x = do
   v <- eval Empty x

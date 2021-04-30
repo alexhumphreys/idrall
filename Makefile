@@ -11,6 +11,9 @@ test-setup:
 	echo './importFailA.dhall' > /tmp/importFailB.dhall
 	echo './importFailB.dhall' > /tmp/importFailA.dhall
 
+demo: test-setup
+	rlwrap idris2 -p contrib  Idrall/Demo.idr
+
 repl: test-setup
 	rlwrap idris2 -p contrib Idrall/APIv1.idr
 
