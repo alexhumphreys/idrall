@@ -192,9 +192,9 @@ mutual
   eval env (ENaturalPlus t u) = pure $ vNaturalPlus !(eval env t) !(eval env u)
   eval env (ENaturalTimes t u) =
     case (!(eval env t), !(eval env u)) of
+         (VNaturalLit 0, u) => pure $ VNaturalLit 0
          (VNaturalLit 1, u) => pure u
          (t, VNaturalLit 1) => pure t
-         (VNaturalLit 0, u) => pure $ VNaturalLit 0
          (t, VNaturalLit 0) => pure $ VNaturalLit 0
          (VNaturalLit t, VNaturalLit u) => pure (VNaturalLit $ t * u)
          (t, u) => pure $ VNaturalTimes t u
