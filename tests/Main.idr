@@ -16,7 +16,7 @@ import Test.Golden
 %default covering
 
 allTests : TestPool
-allTests = MkTestPool []
+allTests = MkTestPool "dhall-lang tests" []
   [ "idrall001"
   , "idrall002"
   , "idrall003"
