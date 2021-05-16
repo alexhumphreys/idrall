@@ -95,12 +95,12 @@ where
   go : List (Name, TTImp) -> Elab ()
   go [] =  pure ()
   go ((n, t) :: ys) = do
-    logMsg "" 0 ("Name: " ++ show n)
-    logTerm "" 0 "Type" t
+    logMsg "" 7 ("Name: " ++ show n)
+    logTerm "" 7 "Type" t
     go ys
   more : (Name, List (Name, TTImp)) -> Elab ()
   more (n, xs) = do
-    logMsg "" 0 ("name1: " ++ show n)
+    logMsg "" 7 ("name1: " ++ show n)
     go xs
 
 public export
@@ -143,19 +143,10 @@ deriveFromDhall : (name : Name) -> Elab ()
 deriveFromDhall n =
   do [(n, _)] <- getType n
              | _ => fail "Ambiguous name"
-     -- logMsg "" 0 ("Resolved name: " ++ show n)
-
      let funName = UN ("fromDhall" ++ show (stripNs n))
-     -- logMsg "" 0 ("funName: " ++ show funName)
-
      let objName = UN ("__impl_fromDhall" ++ show (stripNs n))
-     -- logMsg "" 0 ("objName: " ++ show objName)
 
      conNames <- getCons n
-     -- logMsg "" 0 ("Constructors: " ++ show conNames)
-
-     argName <- genReadableSym "arg"
-     -- logMsg "" 0 ("argName: " ++ show argName)
 
      -- get the constructors of the record
      cons <- for conNames $ \n => do
@@ -165,6 +156,8 @@ deriveFromDhall n =
        pure (conName, args)
 
      logCons cons
+
+     argName <- genReadableSym "arg"
 
      -- given constructors, lookup names in json object for those constructors
      clauses <- traverse (\(cn, as) => genClause funName cn argName (reverse as)) cons
@@ -202,5 +195,4 @@ deriveFromDhall n =
                                        `(~acc <*> (pure $ lookup (MkFieldName ~name) ~(var m) >>= fromDhall))
                                      _ => `(~acc <*> (lookup (MkFieldName ~name) ~(var m) >>= fromDhall)))
                           `(pure ~(var t)) xs
-          logMsg "" 0 ("hellloo")
           pure (rhs)

@@ -1,13 +1,1 @@
 "Just (MkExample3 Just 3 4 5 True [True, False])"
-LOG 0: name1: Main.MkExample3
-LOG 0: Name: mn
-LOG 0: Type: (Prelude.Types.Maybe Prelude.Types.Nat)
-LOG 0: Name: n
-LOG 0: Type: Prelude.Types.Nat
-LOG 0: Name: i
-LOG 0: Type: Integer
-LOG 0: Name: b
-LOG 0: Type: Prelude.Basics.Bool
-LOG 0: Name: lb
-LOG 0: Type: (Prelude.Basics.List Prelude.Basics.Bool)
-LOG 0: hellloo
