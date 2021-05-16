@@ -138,6 +138,7 @@ FromDhall a => FromDhall (Maybe a) where
   fromDhall ENone = neutral
   fromDhall _ = neutral
 
+export
 deriveFromDhall : (name : Name) -> Elab ()
 deriveFromDhall n =
   do [(n, _)] <- getType n

@@ -24,9 +24,15 @@ allTests = MkTestPool "dhall-lang tests" []
   , "idrall005"
   ]
 
+deriveTests : TestPool
+deriveTests = MkTestPool "derive tests" []
+  [ "derive001"
+  ]
+
 main : IO ()
 main = runner
   [ testPaths "idrall" allTests
+  , testPaths "derive" deriveTests
   ] where
 
     testPaths : String -> TestPool -> TestPool
