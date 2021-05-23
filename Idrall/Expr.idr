@@ -285,7 +285,7 @@ mutual
     show (EAssert x) = "(EAssert " ++ show x ++ ")"
     show (ERecord x) = "(ERecord " ++ show x ++ ")"
     show (ERecordLit x) = "(ERecordLit " ++ show x ++ ")"
-    show (EUnion x) = "(EUnion " ++ show x ++ ")"
+    show (EUnion x) = "(EUnion $ " ++ show x ++ ")"
     show (ECombine x y) = "(ECombine " ++ show x ++ " " ++ show y ++ ")"
     show (ECombineTypes x y) = "(ECombineTypes " ++ show x ++ " " ++ show y ++ ")"
     show (EPrefer x y) = "(EPrefer " ++ show x ++ " " ++ show y ++ ")"
