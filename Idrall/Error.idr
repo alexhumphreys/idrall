@@ -29,6 +29,7 @@ data Error
   | InvalidRecordCompletion String
   | CyclicImportError String
   | EnvVarError String
+  | FromDhallError String
   | NestedError Error Error
 
 public export
@@ -60,5 +61,6 @@ Show Error where
   show (InvalidRecordCompletion str) = "InvalidRecordCompletion: " ++ str
   show (CyclicImportError str) = "CyclicImportError: " ++ str
   show (EnvVarError str) = "EnvVarError " ++ show str
+  show (FromDhallError str) = "FromDhallError " ++ show str
   show (NestedError e e') =
     show e ++ "\n" ++ show e'

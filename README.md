@@ -8,11 +8,38 @@ Parse, evaluate, check/infer types of Dhall expressions.
 
 ## Status
 
-Still a work in progress, but for a given dhall expression with not much imports, this should be able to parse/type check and attempt evaluation. Type checker is complete (one test is failing but that is due to [this Idris2 issue](https://github.com/idris-lang/Idris2/issues/29). Need to start running the other tests like parsing/normalisation etc. Everything around imports needs some work, and also not sure what the API should look like.
+Still a work in progress, but for a given dhall expression with not much imports, idrall should be able to parse/type check and attempt evaluation. Type checker is pretty complete (one test is failing but that is due to [this Idris2 issue](https://github.com/idris-lang/Idris2/issues/29). Need to start running the other tests like parsing/normalisation etc. Everything around imports needs some work. There's now an elaborator reflection, but it's pretty new so will see how it handles.
 
-## Usage (very alpha, YMMV)
+## Derive Usage (WIP)
 
-These are all janky names and subject to change.
+For an example of how to do a whole `parse -> resolve -> typecheck -> eval` pass of a dhall file, and marshall it into an idris type, check out the file [`./examples/Package.idr`](https://github.com/alexhumphreys/idrall/blob/master/examples/Package.idr)
+
+There Is a `FromDhall` interface that you can use elaborator reflection to derive. You can use it for both ADTs and Records like so:
+
+```
+-- ADT example
+data ExADT1
+  = Foo
+  | Bar Bool
+  | Baz (Maybe Bool)
+
+%runElab (deriveFromDhall ADT `{{ ExADT1 }})
+
+-- Record example
+record ExRec1 where
+  constructor MkExRec1
+  mn : Maybe Nat
+
+%runElab (deriveFromDhall Record `{{ ExRec1 }})
+```
+
+There's implementations of `FromDhall` for `String`, `Nat`, `Integer`, `Bool`, `Double`, and `List`/`Maybe` of those. That interface gives you the `fromDhall` function you can use on dhall expression to get a `Maybe` of your Idris ADT or Record. See the `./tests/derive` dir for some examples.
+
+The behaviour of this isn't thought out yet. For example, the `deriveFromDhall ADT` function ignores the dhall union and just looks for matching constructors. Also `deriveFromDhall Record` ignores extra fields on the dhall record. This behaviour may change. Also, as the elaborator reflection returns a `Maybe`, there's no good error messages when `fromDhall` fails, so that'll need updating.
+
+## Indepth Usage (very alpha, YMMV)
+
+Functions for parsing/evaluating/typechecking/resolving dhall expressions, should you need to ve a lot of control over how those things happen. These are all janky names and subject to change.
 
 There's some functions in `Idrall/APIv1.idr` that expose the parsing/type checking/evaluation. The `valueFromString` function takes a dhall string, infers it's type, then evaluates it. If you have `idris2` installed you can run the following shell commands (prefixed with a `$`) from the root dir of this repo:
 
@@ -21,10 +48,10 @@ $ idris2 Idrall/APIv1.idr -p contrib --client ':exec doStuff valueFromString "{h
 Success: (VNaturalLit 5)
 ```
 
-You can also create local dhall files, like the one provided at `samples/if-function.dhall`:
+You can also create local dhall files, like the one provided at `examples/if-function.dhall`:
 
 ```
-$ cat samples/if-function.dhall
+$ cat examples/if-function.dhall
 let f = λ(x : Bool) →
   if x
   then "it's true!"
@@ -35,7 +62,7 @@ in f True
 and use `valueFromString` to evaluate them as follows. Note the path in the string:
 
 ```
-$ idris2 Idrall/APIv1.idr -p contrib --client ':exec doStuff valueFromString "./samples/if-function.dhall"'
+$ idris2 Idrall/APIv1.idr -p contrib --client ':exec doStuff valueFromString "./examples/if-function.dhall"'
 Success: (VTextLit (MkVChunks [] "it's true!"))
 ```
 

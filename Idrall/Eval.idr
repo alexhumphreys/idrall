@@ -579,6 +579,17 @@ mutual
   convErr x y = Left $ AlphaEquivError $ show x ++ "\n not alpha equivalent to:\n" ++ show y
 
   export
+  strFromExpr : Expr Void -> Maybe String
+  strFromExpr (ETextLit (MkChunks [] x)) = pure x
+  strFromExpr (ETextLit (MkChunks (start :: xs) end)) =
+    let mid = traverse go xs in
+    pure $ !(go start) ++ (foldl (<+>) "" !mid) ++ end
+  where
+    go : (String, Expr Void) -> Maybe String
+    go (x, e) = pure $ x ++ !(strFromExpr e)
+  strFromExpr _ = Nothing
+
+  export
   strFromChunks : List (String, Value) -> Maybe String
   strFromChunks [] = Just neutral
   strFromChunks ((str, (VTextLit (MkVChunks xys' y))) :: xs') = do

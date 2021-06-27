@@ -1,6 +1,0 @@
-:exec doStuff roundTripEval "(λ(x : Natural) → 2 + 3 + x) 10"
-:exec doStuff roundTripSynth "True"
-:exec doStuff roundTripSynth "Natural"
-:exec doStuff roundTripEval "./foo.dhall"
-:exec doStuff roundTripSynth "./foo.dhall"
-:exec doStuff roundTripSynth "env:IDRALL_TEST"
