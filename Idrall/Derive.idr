@@ -5,6 +5,7 @@ import Data.List1
 import public Data.String
 
 import Idrall.Expr
+import Idrall.Eval
 
 %language ElabReflection
 
@@ -86,7 +87,10 @@ getArgs (IPi _ _ _ (Just n) argTy retTy) = ((n, argTy) ::) <$> getArgs retTy
 getArgs (IPi _ _ _ Nothing _ _) = fail $ "All arguments must be explicitly named"
 getArgs _ = pure []
 
-logCons : (List (Name, List (Name, TTImp))) -> Elab ()
+Cons : Type
+Cons = (List (Name, List (Name, TTImp)))
+
+logCons : Cons -> Elab ()
 logCons [] = pure ()
 logCons (x :: xs) = do
   more x
@@ -95,13 +99,13 @@ where
   go : List (Name, TTImp) -> Elab ()
   go [] =  pure ()
   go ((n, t) :: ys) = do
-    logMsg "" 7 ("Name: " ++ show n)
-    logTerm "" 7 "Type" t
+    logMsg "" 7 ("ArgName: " ++ show n)
+    logTerm "" 7 "ArgType" t
     go ys
   more : (Name, List (Name, TTImp)) -> Elab ()
-  more (n, xs) = do
-    logMsg "" 7 ("name1: " ++ show n)
-    go xs
+  more (constructor', args) = do
+    logMsg "" 7 ("Constructor: " ++ show constructor')
+    go args
 
 public export
 interface FromDhall a where
@@ -128,6 +132,10 @@ FromDhall Double where
   fromDhall _ = neutral
 
 export
+FromDhall String where
+  fromDhall x = strFromExpr x
+
+export
 FromDhall a => FromDhall (List a) where
   fromDhall (EListLit _ xs) = pure $ !(traverse fromDhall xs)
   fromDhall _ = neutral
@@ -138,17 +146,25 @@ FromDhall a => FromDhall (Maybe a) where
   fromDhall ENone = neutral
   fromDhall _ = neutral
 
-export
-deriveFromDhall : (name : Name) -> Elab ()
-deriveFromDhall n =
-  do [(n, _)] <- getType n
-             | _ => fail "Ambiguous name"
-     let funName = UN ("fromDhall" ++ show (stripNs n))
-     let objName = UN ("__impl_fromDhall" ++ show (stripNs n))
+||| Used with FromDhall interface, to dervice implementations
+||| for ADTs or Records
+public export
+data IdrisType
+  = ADT
+  | Record
 
-     conNames <- getCons n
+export
+deriveFromDhall : IdrisType -> (name : Name) -> Elab ()
+deriveFromDhall it n =
+  do [(name, _)] <- getType n
+             | _ => fail "Ambiguous name"
+     let funName = UN ("fromDhall" ++ show (stripNs name))
+     let objName = UN ("__impl_fromDhall" ++ show (stripNs name))
+
+     conNames <- getCons name
 
      -- get the constructors of the record
+     -- cons : (List (Name, List (Name, TTImp)))
      cons <- for conNames $ \n => do
        [(conName, conImpl)] <- getType n
          | _ => fail $ show n ++ "constructor must be in scope and unique"
@@ -159,14 +175,8 @@ deriveFromDhall n =
 
      argName <- genReadableSym "arg"
 
-     -- given constructors, lookup names in json object for those constructors
-     clauses <- traverse (\(cn, as) => genClause funName cn argName (reverse as)) cons
+     clauses <- genClauses it funName argName cons
 
-     -- create function from JSON to Maybe Example
-     -- using the above clauses as patterns
-     let name = n
-     let clauses = [patClause `(~(var funName) (ERecordLit ~(bindvar $ show argName)))
-                              (foldl (\acc, x => `(~x <|> ~acc)) `(Nothing) (clauses))]
      let funClaim = IClaim EmptyFC MW Export [Inline] (MkTy EmptyFC EmptyFC funName `(Expr Void -> Maybe ~(var name)))
      -- add a catch all pattern
      let funDecl = IDef EmptyFC funName (clauses ++ [patClause `(~(var funName) ~implicit') `(Nothing)])
@@ -185,14 +195,37 @@ deriveFromDhall n =
      let objDecl = IDef EmptyFC objName [(PatClause EmptyFC (var objName) objrhs)]
      declare [objClaim, objDecl]
   where
-    ||| moved from where clause
-    genClause : Name -> Name -> Name -> List (Name, TTImp) -> Elab (TTImp)
-    genClause funName t m xs = do
+    ||| moved from where clause, used for record constuctors
+    genClauseRecord : Name -> Name -> List (Name, TTImp) -> Elab (TTImp)
+    genClauseRecord constructor' arg xs = do
           let rhs = foldr (\(n, type), acc =>
                             let name = primStr $ (show n) in
                                 case type of
                                      `(Prelude.Types.Maybe _) => do
-                                       `(~acc <*> (pure $ lookup (MkFieldName ~name) ~(var m) >>= fromDhall))
-                                     _ => `(~acc <*> (lookup (MkFieldName ~name) ~(var m) >>= fromDhall)))
-                          `(pure ~(var t)) xs
+                                       `(~acc <*> (pure $ lookup (MkFieldName ~name) ~(var arg) >>= fromDhall))
+                                     _ => `(~acc <*> (lookup (MkFieldName ~name) ~(var arg) >>= fromDhall)))
+                          `(pure ~(var constructor')) xs
           pure (rhs)
+    genClauseADT : Name -> Name -> Name -> List (Name, TTImp) -> Elab (TTImp, TTImp)
+    genClauseADT funName constructor' arg xs =
+      let cn = primStr (show $ stripNs constructor')
+          debug = show $ constructor'
+          debug2 = show $ map fst xs
+          lhs = `(~(var funName) (EApp (EField (EUnion xs) (MkFieldName ~cn)) ~(bindvar $ show arg)))
+          in do
+          case xs of
+               [] => pure $ (lhs, `(pure ~(var constructor')))
+               ((n, `(Prelude.Types.Maybe _)) :: []) => pure $ (lhs, `(pure ~(var constructor') <*> fromDhall ~(var arg)))
+               ((n, _) :: []) => pure $ (lhs, `(pure ~(var constructor') <*> fromDhall ~(var arg)))
+               (x :: _) => fail $ "too many args for constructor: " ++ show constructor'
+    genClauses : IdrisType -> Name -> Name -> Cons -> Elab (List Clause)
+    genClauses ADT funName arg cons = do
+      -- given constructors, lookup fields in dhall unions for those constructors
+      clausesADT <- traverse (\(cn, as) => genClauseADT funName cn arg (reverse as)) cons
+      pure $ map (\x => patClause (fst x) (snd x)) clausesADT
+    genClauses Record funName arg cons = do
+      -- given constructors, lookup names in dhall records for those constructors
+      clausesRecord <- traverse (\(cn, as) => genClauseRecord cn arg (reverse as)) cons
+      -- create clause from dhall to `Maybe a` using the above clauses as the rhs
+      pure $ pure $ patClause `(~(var funName) (ERecordLit ~(bindvar $ show arg)))
+                              (foldl (\acc, x => `(~x <|> ~acc)) `(Nothing) (clausesRecord))

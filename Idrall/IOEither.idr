@@ -32,6 +32,10 @@ liftEither : Either e a -> IOEither e a
 liftEither = MkIOEither . pure
 
 export
+liftIOEither : IOEither e a -> IO (Either e a)
+liftIOEither (MkIOEither x) = x
+
+export
 mapErr : (e -> e') -> IOEither e a -> IOEither e' a
 mapErr f (MkIOEither x) = MkIOEither (do
   x' <- x

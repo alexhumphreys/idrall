@@ -16,4 +16,5 @@ modules = Idrall.Expr
         , Idrall.Path
         , Idrall.TestHelper
         , Idrall.APIv1
+        , Idrall.API.V2
         , Idrall.Derive

@@ -1,0 +1,5 @@
+cp ../../../examples/Package.idr .
+cp ../../../examples/package.dhall .
+idris2 --no-banner --no-color --console-width 0 -p contrib -p idrall Package.idr --exec main
+
+rm -rf build
