@@ -7,7 +7,7 @@ import Data.Vect
 import Data.List
 import Data.Nat
 import Data.String.Parser
-import Data.Strings
+import Data.String
 import Data.List1
 
 -- Not a real Lexer, more a collection of small parsing utilities.

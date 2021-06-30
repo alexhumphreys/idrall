@@ -8,7 +8,7 @@ import Idrall.Eval
 
 import Data.List
 import Data.List1
-import Data.Strings
+import Data.String
 
 countName' : Name -> List Name -> Int
 countName' x env = go 0 env

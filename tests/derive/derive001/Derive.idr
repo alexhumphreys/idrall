@@ -8,7 +8,7 @@ import Idrall.Derive
 
 import System.Directory
 import Data.List
-import Data.Strings
+import Data.String
 import Language.Reflection
 
 %language ElabReflection
