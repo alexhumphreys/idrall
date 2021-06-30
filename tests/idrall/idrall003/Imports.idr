@@ -9,7 +9,7 @@ import Idrall.APIv1
 
 import System.Directory
 import Data.List
-import Data.Strings
+import Data.String
 
 testImport : IOEither Error Value
 testImport = do

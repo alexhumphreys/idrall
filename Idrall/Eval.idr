@@ -7,7 +7,7 @@ import Idrall.Map
 
 import Data.List
 import Data.List1
-import Data.Strings
+import Data.String
 
 -- alpha equivalence
 nestError : Either Error b -> Error -> Either Error b

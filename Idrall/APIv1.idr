@@ -12,7 +12,7 @@ import Idrall.Path
 
 import System.Directory
 import Data.List
-import Data.Strings
+import Data.String
 
 -- Test Stuff
 

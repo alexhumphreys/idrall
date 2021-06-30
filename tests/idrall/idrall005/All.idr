@@ -10,8 +10,8 @@ import Idrall.Parser
 import System
 import System.Directory
 import Data.List
-import Data.Strings
-import Data.Strings
+import Data.String
+import Data.String
 
 testAll : IO (Result)
 testAll = do

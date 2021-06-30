@@ -8,7 +8,7 @@ import Idrall.Value
 import System
 import System.Directory
 import Data.List
-import Data.Strings
+import Data.String
 
 public export
 record DirTree a where

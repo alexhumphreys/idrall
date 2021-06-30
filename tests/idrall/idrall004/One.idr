@@ -8,7 +8,7 @@ import Idrall.APIv1
 
 import System.Directory
 import Data.List
-import Data.Strings
+import Data.String
 
 dirTreeOne : DirTree String
 dirTreeOne = MkDirTree "../../../dhall-lang/tests/type-inference/success/simple" [] ["toMapEmptyNormalizeAnnotation"]
