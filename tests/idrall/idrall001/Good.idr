@@ -20,5 +20,6 @@ testGood : IO (Result)
 testGood = runTestsCheck asDirTree
 
 main : IO ()
-main = do res <- testGood
-          printLn res
+main = do
+  res <- runTestsOnly expectPass "../../../dhall-lang/tests/type-inference/success" roundTripCheck
+  putStrLn $ ppResult res

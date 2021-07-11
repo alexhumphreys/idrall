@@ -19,5 +19,6 @@ testAll = do
   runTestsCheck dir
 
 main : IO ()
-main = do res <- testAll
-          printLn $ res
+main = do
+  res <- runTests2 "../../../dhall-lang/tests/type-inference/success" roundTripCheck
+  putStrLn $ ppResult res

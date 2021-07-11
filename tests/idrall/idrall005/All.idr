@@ -19,5 +19,6 @@ testAll = do
   runTestsConv dir
 
 main : IO ()
-main = do res <- testAll
-          printLn $ res
+main = do
+  res <- runTests2 "../../../dhall-lang/tests/normalization/success" roundTripConv
+  putStrLn $ ppResult res
