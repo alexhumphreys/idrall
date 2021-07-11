@@ -7,8 +7,12 @@ import Idrall.Value
 
 import System
 import System.Directory
+import System.Path
+import System.Directory.Tree
+
 import Data.List
 import Data.String
+import Data.String.Extra
 
 public export
 record DirTree a where
@@ -112,7 +116,7 @@ decorate : DirTree a -> DirTree (String, a) -- TODO use path
 decorate (MkDirTree path ds cs) =
   MkDirTree path (map decorate ds) (map (\c=> (path, c)) cs)
 
-mkres : IOEither Error () -> IO Result
+mkres : IOEither Error a -> IO Result
 mkres (MkIOEither x) = do
   x' <- x
   case x' of
@@ -145,3 +149,60 @@ runTestsCheck x = runTests x (runFormatter roundTripCheck)
 public export
 runTestsConv : DirTree String -> IO Result
 runTestsConv x = runTests x (runFormatter roundTripEvalQuoteConv)
+
+printDir : IO ()
+printDir =
+  let foo = explore $ parse "./dhall-lang/tests/type-inference/success"
+  in do
+    print !(foo)
+
+searchy : {root : _} -> FileName root -> Bool
+searchy x =
+  let fileNameStr = fileName x in
+    isSuffixOf "A.dhall" fileNameStr
+
+justA : IO ()
+justA =
+  let dir = explore $ parse "./dhall-lang/tests/type-inference/success"
+      doFilt = System.Directory.Tree.filter searchy (\_ => True)
+  in do
+    print $ doFilt !dir
+
+simplePrint : {root : _} -> FileName root -> Lazy (IO String) -> IO String
+simplePrint x next = do
+  _ <- putStrLn $ show $ toFilePath x
+  pure $ !next
+
+data TestPair
+  = MkTestPair String String
+
+Show TestPair where
+  show (MkTestPair a b) = a ++ " : " ++ b
+
+fileNameAB : {root : _} -> FileName root -> TestPair
+fileNameAB a =
+  let fileA = show $ toFilePath a
+      fileB = aToB fileA
+  in do
+    MkTestPair fileA fileB
+  where
+    aToB : String -> String
+    aToB a = (dropLast 7 a) ++ "B.dhall" -- 7 chars in "A.dhall"
+
+runTestPair : TestPair -> (String -> String -> IOEither Error a) -> IOEither Error a
+runTestPair (MkTestPair a b) f = f a b
+
+simpleTest : {root : _} -> FileName root -> Lazy (IO Result) -> IO Result
+simpleTest x next = do
+  res <- mkres $ runTestPair (fileNameAB x) roundTripCheck
+  pure $ res <+> !next -- !next
+
+printFlat : IO ()
+printFlat =
+  let dir = explore $ parse "./dhall-lang/tests/type-inference/success"
+      doFilt = System.Directory.Tree.filter searchy (\_ => True)
+  in do
+    let as = doFilt !dir
+    x <- depthFirst simpleTest as $ pure neutral
+    putStrLn "------------------"
+    putStrLn $ show x
