@@ -23,14 +23,14 @@ data ExADT1
   | Bar Bool
   | Baz (Maybe Bool)
 
-%runElab (deriveFromDhall ADT `{{ ExADT1 }})
+%runElab (deriveFromDhall ADT `{ ExADT1 })
 
 -- Record example
 record ExRec1 where
   constructor MkExRec1
   mn : Maybe Nat
 
-%runElab (deriveFromDhall Record `{{ ExRec1 }})
+%runElab (deriveFromDhall Record `{ ExRec1 })
 ```
 
 There's implementations of `FromDhall` for `String`, `Nat`, `Integer`, `Bool`, `Double`, and `List`/`Maybe` of those. That interface gives you the `fromDhall` function you can use on dhall expression to get a `Maybe` of your Idris ADT or Record. See the `./tests/derive` dir for some examples.

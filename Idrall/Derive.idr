@@ -25,8 +25,8 @@ mkTy = MkTy EmptyFC EmptyFC
 
 ||| Creates a variable from the given name
 |||
-||| Names are best created using quotes: `{{ AName }},
-||| `{{ In.Namespacs.Name }}.
+||| Names are best created using quotes: `{ AName },
+||| `{ In.Namespacs.Name }.
 |||
 ||| Likewise, if the name is already known at the time of
 ||| writing, use quotes for defining variables directly: `(AName)
@@ -183,7 +183,7 @@ deriveFromDhall it n =
 
      -- declare the fuction in the env
      declare [funClaim, funDecl]
-     [(ifName, _)] <- getType `{{FromDhall}}
+     [(ifName, _)] <- getType `{FromDhall}
        | _ => fail "FromDhall interface must be in scope and unique"
      [NS _ (DN _ ifCon)] <- getCons ifName
        | _ => fail "Interface constructor error"
