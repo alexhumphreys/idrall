@@ -16,23 +16,23 @@ import Data.String.Extra
 
 public export
 record Result where
-  constructor MkRecord
+  constructor MkResult
   pass : Nat
   fail : Nat
 
 public export
 Show Result where
-  show (MkRecord pass fail) = "Result: " ++ "\n" ++
+  show (MkResult pass fail) = "Result: " ++ "\n" ++
                               "Pass: " ++ show pass ++ "\n" ++
                               "Fail: " ++ show fail
 
 public export
 Semigroup Result where
-  (<+>) (MkRecord pass fail) (MkRecord pass' fail') = MkRecord (pass + pass') (fail + fail')
+  (<+>) (MkResult pass fail) (MkResult pass' fail') = MkResult (pass + pass') (fail + fail')
 
 public export
 Monoid Result where
-  neutral = MkRecord 0 0
+  neutral = MkResult 0 0
 
 -- TODO open idris2 PR?
 foldlMapM : (Foldable g, Monoid b, Applicative m) => (a -> m b) -> g a -> m b
@@ -47,8 +47,8 @@ mkres (MkIOEither x) = do
   case x' of
        (Left y) => do
          printLn y
-         pure (MkRecord 0 1)
-       (Right y) => pure (MkRecord 1 0)
+         pure (MkResult 0 1)
+       (Right y) => pure (MkResult 1 0)
 
 data TestPair
   = MkTestPair String String
@@ -118,7 +118,7 @@ runTestsOnly onlyList path f = runTests' path f ((matchFiles onlyList) :: defaul
 
 public export
 ppResult : Result -> String
-ppResult (MkRecord pass fail) =
+ppResult (MkResult pass fail) =
   """
   Result:
   Pass: \{show pass}
