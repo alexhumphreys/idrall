@@ -29,7 +29,7 @@ Show ExRec1 where
   show (MkExRec1 mn n i b d lb st mst) =
     "(MkExample3 \{show mn} \{show n} \{show i} \{show b} \{show d} \{show lb} \{show st} \{show mst})"
 
-%runElab (deriveFromDhall Record `{{ ExRec1 }})
+%runElab (deriveFromDhall Record `{ ExRec1 })
 
 exRec1 : Maybe ExRec1
 exRec1 = fromDhall
@@ -54,7 +54,7 @@ Show ExADT1 where
   show (Bar x) = "(Bar \{show x})"
   show (Baz x) = "(Baz \{show x})"
 
-%runElab (deriveFromDhall ADT `{{ ExADT1 }})
+%runElab (deriveFromDhall ADT `{ ExADT1 })
 
 exADT1 : Maybe ExADT1
 exADT1 = fromDhall

@@ -11,7 +11,7 @@ record Package where
   sourceDir : Maybe String
   depends : Maybe (List String)
   modules : List String
-%runElab (deriveFromDhall Record `{{ Package }})
+%runElab (deriveFromDhall Record `{ Package })
 
 Show Package where
   show (MkPackage package sourceDir depends modules) =

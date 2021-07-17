@@ -178,7 +178,7 @@ deriveFromDhall opts n = do
     let funClaim = IClaim EmptyFC MW Export [Inline] (MkTy EmptyFC EmptyFC funName `(Expr Void -> Maybe ~(var name)))
     let funDecl = IDef EmptyFC funName (clauses ++ [patClause `(~(var funName) ~implicit') `(Nothing)])
     declare [funClaim, funDecl]
-    [(ifName, _)] <- getType `{{FromDhall}}
+    [(ifName, _)] <- getType `{FromDhall}
       | _ => fail "FromDhall interface must be in scope and unique"
     [NS _ (DN _ ifCon)] <- getCons ifName
       | _ => fail "Interface constructor error"
