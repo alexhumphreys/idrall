@@ -10,12 +10,6 @@ import System.Directory
 import Data.List
 import Data.String
 
-dirTreeOne : DirTree String
-dirTreeOne = MkDirTree "../../../dhall-lang/tests/type-inference/success/simple" [] ["toMapEmptyNormalizeAnnotation"]
-
-testGood : IO (Result)
-testGood = runTestsCheck dirTreeOne
-
 expectPass : List String
 expectPass = ["toMapEmptyNormalizeAnnotationA.dhall"]
 

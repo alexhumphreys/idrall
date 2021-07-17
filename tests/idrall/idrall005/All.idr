@@ -13,12 +13,7 @@ import Data.List
 import Data.String
 import Data.String
 
-testAll : IO (Result)
-testAll = do
-  dir <- findTests "../../../dhall-lang/tests/normalization/success"
-  runTestsConv dir
-
 main : IO ()
 main = do
-  res <- runTests2 "../../../dhall-lang/tests/normalization/success" roundTripConv
+  res <- runTests "../../../dhall-lang/tests/normalization/success" roundTripConv
   putStrLn $ ppResult res
