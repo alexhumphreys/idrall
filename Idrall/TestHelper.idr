@@ -20,6 +20,11 @@ record Result where
   pass : Nat
   fail : Nat
 
+record ResultFail where
+  constructor MkResultFail
+  shouldFail : Nat
+  passedButShouldNot : Nat
+
 public export
 Show Result where
   show (MkResult pass fail) = "Result: " ++ "\n" ++
@@ -41,14 +46,27 @@ foldlMapM f = foldr f' (pure neutral)
   f' : a -> m b -> m b
   f' x y = liftA2 (<+>) (f x) y
 
-mkres : IOEither Error a -> IO Result
+log : Show a => Bool -> a -> IO ()
+log False _ = pure ()
+log True x = printLn x
+
+mkres : Show a
+      => {default True printLeft : Bool}
+      -> {default False printRight : Bool}
+      -> IOEither Error a
+      -> IO Result
 mkres (MkIOEither x) = do
   x' <- x
   case x' of
        (Left y) => do
-         printLn y
+         log printLeft y
          pure (MkResult 0 1)
-       (Right y) => pure (MkResult 1 0)
+       (Right y) => do
+         log printRight y
+         pure (MkResult 1 0)
+
+flipRes : Result -> Result
+flipRes (MkResult pass fail) = MkResult fail pass
 
 data TestPair
   = MkTestPair String String
@@ -82,7 +100,17 @@ defaultFilters = [findAFiles]
       let fileNameStr = fileName x in
         isSuffixOf "A.dhall" fileNameStr
 
-runTests' : (path : String)
+doFilter : {root : _}
+         -> List ({root : _} -> FileName root -> Bool)
+         -> Tree root
+         -> Tree root
+doFilter [] x = x
+doFilter (f :: xs) x =
+  doFilter xs (System.Directory.Tree.filter f (\_ => True) x)
+
+-- running tests
+runTests' : Show a
+          => (path : String)
           -> (String -> String -> IOEither Error a)
           -> (filters : List ({root : _} -> FileName root -> Bool))
           -> IO Result
@@ -93,29 +121,50 @@ runTests' path f filters =
     res <- depthFirst doTest (sort testFiles) $ pure neutral
     pure res
     where
-    runTestPair : TestPair -> (String -> String -> IOEither Error a) -> IOEither Error a
+    runTestPair : Show a
+                => TestPair
+                -> (String -> String -> IOEither Error a)
+                -> IOEither Error a
     runTestPair (MkTestPair a b) f = f a b
     doTest : {root : _} -> FileName root -> Lazy (IO Result) -> IO Result
     doTest x next = do
       putStrLn $ "Testing: \{show $ toFilePath x}"
       res <- mkres $ runTestPair (fileNameAB x) f
       pure $ res <+> !next
-    doFilter : {root : _}
-             -> List ({root : _} -> FileName root -> Bool)
-             -> Tree root
-             -> Tree root
-    doFilter [] x = x
-    doFilter (f :: xs) x =
-      doFilter xs (System.Directory.Tree.filter f (\_ => True) x)
 
 public export
-runTests : (path : String) -> (String -> String -> IOEither Error a) -> IO Result
+runTests : Show a => (path : String) -> (String -> String -> IOEither Error a) -> IO Result
 runTests path f = runTests' path f defaultFilters
 
 public export
-runTestsOnly : (onlyList : List String) -> (path : String) -> (String -> String -> IOEither Error a) -> IO Result
+runTestsOnly : Show a => (onlyList : List String) -> (path : String) -> (String -> String -> IOEither Error a) -> IO Result
 runTestsOnly onlyList path f = runTests' path f ((matchFiles onlyList) :: defaultFilters)
 
+runTestFail' : Show a => (path : String)
+             -> (String -> IOEither Error a)
+             -> (filters : List ({root : _} -> FileName root -> Bool))
+             -> IO Result
+runTestFail' path f filters =
+  let dir = explore $ parse path
+      testFiles = doFilter filters !dir
+  in do
+    res <- depthFirst doTest (sort testFiles) $ pure neutral
+    pure $ res
+  where
+    doTest : {root : _} -> FileName root -> Lazy (IO Result) -> IO Result
+    doTest x next = do
+      putStrLn $ "Testing: \{show $ toFilePath x}"
+      res <- mkres {printLeft=False} {printRight=True} $ f (fileName x)
+      pure $ res <+> !next
+
+public export
+runTestFail : Show a
+            => (path : String)
+            -> (String -> IOEither Error a)
+            -> IO Result
+runTestFail path f = runTestFail' path f []
+
+-- printing results
 public export
 ppResult : Result -> String
 ppResult (MkResult pass fail) =
@@ -123,4 +172,13 @@ ppResult (MkResult pass fail) =
   Result:
   Pass: \{show pass}
   Fail: \{show fail}
+  """
+
+public export
+ppResultFail : Result -> String
+ppResultFail (MkResult pass fail) =
+  """
+  Result:
+  Failed as intended: \{show fail}
+  Passed but shouldn't: \{show pass}
   """
