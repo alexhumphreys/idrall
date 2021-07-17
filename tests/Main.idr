@@ -24,6 +24,11 @@ allTests = MkTestPool "dhall-lang tests" [] Default
   , "idrall005"
   ]
 
+failTests : TestPool
+failTests = MkTestPool "dhall-lang expected fail tests" [] Default
+  [ "failure001"
+  ]
+
 deriveTests : TestPool
 deriveTests = MkTestPool "derive tests" [] Default
   [ "derive001"
@@ -37,6 +42,7 @@ examplesTests = MkTestPool "examples tests" [] Default
 main : IO ()
 main = runner
   [ testPaths "idrall" allTests
+  , testPaths "failure" failTests
   , testPaths "derive" deriveTests
   , testPaths "examples" examplesTests
   ] where
