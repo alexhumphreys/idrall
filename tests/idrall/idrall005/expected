@@ -1,378 +1,378 @@
 1/1: Building All (All.idr)
-Main> Testing: ("../../../dhall-lang/tests/normalization/success/haskell-tutorial/access", "0")
-Testing: ("../../../dhall-lang/tests/normalization/success/haskell-tutorial/access", "1")
-Testing: ("../../../dhall-lang/tests/normalization/success/haskell-tutorial/combineTypes", "0")
-Testing: ("../../../dhall-lang/tests/normalization/success/haskell-tutorial/combineTypes", "1")
+Main> Testing: ../../../dhall-lang/tests/normalization/success/WithRecordValueA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/remoteSystemsA.dhall
+AlphaEquivError:(VTextAppend (VTextLit (MkVChunks [("            ", (VMerge (VRecordLit $ fromList [((MkFieldName "None"), (VField (VVar "x" 0) (MkFieldName "host"))), ((MkFieldName "Some"), (VLambda VText (MkClosure "user" (Extend (Extend (Extend (Extend Empty "Text/concatMap" (VLambda (VConst CType) (MkClosure "a" Empty (ELam f (EPi _ (EVar "a" 0) EText) (ELam xs (EApp EList (EVar "a" 0)) (EApp (EApp (EApp (EApp (EApp EListFold (EVar "a" 0)) (EVar "xs" 0)) EText) (ELam x (EVar "a" 0) (ELam y EText (ETextAppend (EApp (EVar "f" 0) (EVar "x" 0)) (EVar "y" 0))))) (ETextLit MkChunks [] ""))))))) "Text/concatSep" (VLambda VText (MkClosure "separator" (Extend (Extend Empty "Text/concatMap" (VLambda (VConst CType) (MkClosure "a" Empty (ELam f (EPi _ (EVar "a" 0) EText) (ELam xs (EApp EList (EVar "a" 0)) (EApp (EApp (EApp (EApp (EApp EListFold (EVar "a" 0)) (EVar "xs" 0)) EText) (ELam x (EVar "a" 0) (ELam y EText (ETextAppend (EApp (EVar "f" 0) (EVar "x" 0)) (EVar "y" 0))))) (ETextLit MkChunks [] ""))))))) "Status" (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)])) (ELam elements (EApp EList EText) (ELet "status" Nothing (EApp (EApp (EApp (EApp (EApp EListFold EText) (EVar "elements" 0)) (EVar "Status" 0)) (ELam element EText (ELam status (EVar "Status" 0) (EMerge (ERecordLit fromList [((MkFieldName "Empty"), (EApp (EField (EVar "Status" 0) (MkFieldName "NonEmpty")) (EVar "element" 0))), ((MkFieldName "NonEmpty"), (ELam result EText (EApp (EField (EVar "Status" 0) (MkFieldName "NonEmpty")) (ETextAppend (ETextAppend (EVar "element" 0) (EVar "separator" 0)) (EVar "result" 0)))))]) (EVar "status" 0) Nothing)))) (EField (EVar "Status" 0) (MkFieldName "Empty"))) (EMerge (ERecordLit fromList [((MkFieldName "Empty"), (ETextLit MkChunks [] "")), ((MkFieldName "NonEmpty"), (ELam result EText (EVar "result" 0)))]) (EVar "status" 0) Nothing)))))) "Row" (VRecord $ fromList [((MkFieldName "cores"), VNatural), ((MkFieldName "host"), VText), ((MkFieldName "key"), VText), ((MkFieldName "mandatoryFeatures"), (VList VText)), ((MkFieldName "platforms"), (VList VText)), ((MkFieldName "speedFactor"), VNatural), ((MkFieldName "supportedFeatures"), (VList VText)), ((MkFieldName "user"), (VOptional VText))])) "row" (VVar "x" 0)) (ETextLit MkChunks [("", (EVar "user" 0)), ("@", (EField (EVar "row" 0) (MkFieldName "host")))] ""))))]) (VField (VVar "x" 0) (MkFieldName "user")) Nothing)), (" ", (VMerge (VRecordLit $ fromList [((MkFieldName "Empty"), (VTextLit (MkVChunks [] ""))), ((MkFieldName "NonEmpty"), (VLambda VText (MkClosure "result" (Extend (Extend (Extend (Extend (Extend Empty "Text/concatMap" (VLambda (VConst CType) (MkClosure "a" Empty (ELam f (EPi _ (EVar "a" 0) EText) (ELam xs (EApp EList (EVar "a" 0)) (EApp (EApp (EApp (EApp (EApp EListFold (EVar "a" 0)) (EVar "xs" 0)) EText) (ELam x (EVar "a" 0) (ELam y EText (ETextAppend (EApp (EVar "f" 0) (EVar "x" 0)) (EVar "y" 0))))) (ETextLit MkChunks [] ""))))))) "Status" (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)])) "separator" (VTextLit (MkVChunks [] ","))) "elements" (VField (VVar "x" 0) (MkFieldName "platforms"))) "status" (VListFold VText (VField (VVar "x" 0) (MkFieldName "platforms")) (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)]) (VLambda VText (MkClosure "element" (Extend (Extend (Extend (Extend Empty "Text/concatMap" (VLambda (VConst CType) (MkClosure "a" Empty (ELam f (EPi _ (EVar "a" 0) EText) (ELam xs (EApp EList (EVar "a" 0)) (EApp (EApp (EApp (EApp (EApp EListFold (EVar "a" 0)) (EVar "xs" 0)) EText) (ELam x (EVar "a" 0) (ELam y EText (ETextAppend (EApp (EVar "f" 0) (EVar "x" 0)) (EVar "y" 0))))) (ETextLit MkChunks [] ""))))))) "Status" (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)])) "separator" (VTextLit (MkVChunks [] ","))) "elements" (VField (VVar "x" 0) (MkFieldName "platforms"))) (ELam status (EVar "Status" 0) (EMerge (ERecordLit fromList [((MkFieldName "Empty"), (EApp (EField (EVar "Status" 0) (MkFieldName "NonEmpty")) (EVar "element" 0))), ((MkFieldName "NonEmpty"), (ELam result EText (EApp (EField (EVar "Status" 0) (MkFieldName "NonEmpty")) (ETextAppend (ETextAppend (EVar "element" 0) (EVar "separator" 0)) (EVar "result" 0)))))]) (EVar "status" 0) Nothing)))) (VInject fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)] (MkFieldName "Empty") Nothing))) (EVar "result" 0))))]) (VListFold VText (VField (VVar "x" 0) (MkFieldName "platforms")) (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)]) (VLambda VText (MkClosure "element" (Extend (Extend (Extend (Extend Empty "Text/concatMap" (VLambda (VConst CType) (MkClosure "a" Empty (ELam f (EPi _ (EVar "a" 0) EText) (ELam xs (EApp EList (EVar "a" 0)) (EApp (EApp (EApp (EApp (EApp EListFold (EVar "a" 0)) (EVar "xs" 0)) EText) (ELam x (EVar "a" 0) (ELam y EText (ETextAppend (EApp (EVar "f" 0) (EVar "x" 0)) (EVar "y" 0))))) (ETextLit MkChunks [] ""))))))) "Status" (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)])) "separator" (VTextLit (MkVChunks [] ","))) "elements" (VField (VVar "x" 0) (MkFieldName "platforms"))) (ELam status (EVar "Status" 0) (EMerge (ERecordLit fromList [((MkFieldName "Empty"), (EApp (EField (EVar "Status" 0) (MkFieldName "NonEmpty")) (EVar "element" 0))), ((MkFieldName "NonEmpty"), (ELam result EText (EApp (EField (EVar "Status" 0) (MkFieldName "NonEmpty")) (ETextAppend (ETextAppend (EVar "element" 0) (EVar "separator" 0)) (EVar "result" 0)))))]) (EVar "status" 0) Nothing)))) (VInject fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)] (MkFieldName "Empty") Nothing)) Nothing)), (" ", (VField (VVar "x" 0) (MkFieldName "key"))), (" ", (VIntegerShow (VNaturalToInteger (VField (VVar "x" 0) (MkFieldName "cores"))))), (" ", (VIntegerShow (VNaturalToInteger (VField (VVar "x" 0) (MkFieldName "speedFactor"))))), (" ", (VMerge (VRecordLit $ fromList [((MkFieldName "Empty"), (VTextLit (MkVChunks [] ""))), ((MkFieldName "NonEmpty"), (VLambda VText (MkClosure "result" (Extend (Extend (Extend (Extend (Extend Empty "Text/concatMap" (VLambda (VConst CType) (MkClosure "a" Empty (ELam f (EPi _ (EVar "a" 0) EText) (ELam xs (EApp EList (EVar "a" 0)) (EApp (EApp (EApp (EApp (EApp EListFold (EVar "a" 0)) (EVar "xs" 0)) EText) (ELam x (EVar "a" 0) (ELam y EText (ETextAppend (EApp (EVar "f" 0) (EVar "x" 0)) (EVar "y" 0))))) (ETextLit MkChunks [] ""))))))) "Status" (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)])) "separator" (VTextLit (MkVChunks [] ","))) "elements" (VField (VVar "x" 0) (MkFieldName "supportedFeatures"))) "status" (VListFold VText (VField (VVar "x" 0) (MkFieldName "supportedFeatures")) (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)]) (VLambda VText (MkClosure "element" (Extend (Extend (Extend (Extend Empty "Text/concatMap" (VLambda (VConst CType) (MkClosure "a" Empty (ELam f (EPi _ (EVar "a" 0) EText) (ELam xs (EApp EList (EVar "a" 0)) (EApp (EApp (EApp (EApp (EApp EListFold (EVar "a" 0)) (EVar "xs" 0)) EText) (ELam x (EVar "a" 0) (ELam y EText (ETextAppend (EApp (EVar "f" 0) (EVar "x" 0)) (EVar "y" 0))))) (ETextLit MkChunks [] ""))))))) "Status" (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)])) "separator" (VTextLit (MkVChunks [] ","))) "elements" (VField (VVar "x" 0) (MkFieldName "supportedFeatures"))) (ELam status (EVar "Status" 0) (EMerge (ERecordLit fromList [((MkFieldName "Empty"), (EApp (EField (EVar "Status" 0) (MkFieldName "NonEmpty")) (EVar "element" 0))), ((MkFieldName "NonEmpty"), (ELam result EText (EApp (EField (EVar "Status" 0) (MkFieldName "NonEmpty")) (ETextAppend (ETextAppend (EVar "element" 0) (EVar "separator" 0)) (EVar "result" 0)))))]) (EVar "status" 0) Nothing)))) (VInject fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)] (MkFieldName "Empty") Nothing))) (EVar "result" 0))))]) (VListFold VText (VField (VVar "x" 0) (MkFieldName "supportedFeatures")) (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)]) (VLambda VText (MkClosure "element" (Extend (Extend (Extend (Extend Empty "Text/concatMap" (VLambda (VConst CType) (MkClosure "a" Empty (ELam f (EPi _ (EVar "a" 0) EText) (ELam xs (EApp EList (EVar "a" 0)) (EApp (EApp (EApp (EApp (EApp EListFold (EVar "a" 0)) (EVar "xs" 0)) EText) (ELam x (EVar "a" 0) (ELam y EText (ETextAppend (EApp (EVar "f" 0) (EVar "x" 0)) (EVar "y" 0))))) (ETextLit MkChunks [] ""))))))) "Status" (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)])) "separator" (VTextLit (MkVChunks [] ","))) "elements" (VField (VVar "x" 0) (MkFieldName "supportedFeatures"))) (ELam status (EVar "Status" 0) (EMerge (ERecordLit fromList [((MkFieldName "Empty"), (EApp (EField (EVar "Status" 0) (MkFieldName "NonEmpty")) (EVar "element" 0))), ((MkFieldName "NonEmpty"), (ELam result EText (EApp (EField (EVar "Status" 0) (MkFieldName "NonEmpty")) (ETextAppend (ETextAppend (EVar "element" 0) (EVar "separator" 0)) (EVar "result" 0)))))]) (EVar "status" 0) Nothing)))) (VInject fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)] (MkFieldName "Empty") Nothing)) Nothing)), (" ", (VMerge (VRecordLit $ fromList [((MkFieldName "Empty"), (VTextLit (MkVChunks [] ""))), ((MkFieldName "NonEmpty"), (VLambda VText (MkClosure "result" (Extend (Extend (Extend (Extend (Extend Empty "Text/concatMap" (VLambda (VConst CType) (MkClosure "a" Empty (ELam f (EPi _ (EVar "a" 0) EText) (ELam xs (EApp EList (EVar "a" 0)) (EApp (EApp (EApp (EApp (EApp EListFold (EVar "a" 0)) (EVar "xs" 0)) EText) (ELam x (EVar "a" 0) (ELam y EText (ETextAppend (EApp (EVar "f" 0) (EVar "x" 0)) (EVar "y" 0))))) (ETextLit MkChunks [] ""))))))) "Status" (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)])) "separator" (VTextLit (MkVChunks [] ","))) "elements" (VField (VVar "x" 0) (MkFieldName "mandatoryFeatures"))) "status" (VListFold VText (VField (VVar "x" 0) (MkFieldName "mandatoryFeatures")) (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)]) (VLambda VText (MkClosure "element" (Extend (Extend (Extend (Extend Empty "Text/concatMap" (VLambda (VConst CType) (MkClosure "a" Empty (ELam f (EPi _ (EVar "a" 0) EText) (ELam xs (EApp EList (EVar "a" 0)) (EApp (EApp (EApp (EApp (EApp EListFold (EVar "a" 0)) (EVar "xs" 0)) EText) (ELam x (EVar "a" 0) (ELam y EText (ETextAppend (EApp (EVar "f" 0) (EVar "x" 0)) (EVar "y" 0))))) (ETextLit MkChunks [] ""))))))) "Status" (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)])) "separator" (VTextLit (MkVChunks [] ","))) "elements" (VField (VVar "x" 0) (MkFieldName "mandatoryFeatures"))) (ELam status (EVar "Status" 0) (EMerge (ERecordLit fromList [((MkFieldName "Empty"), (EApp (EField (EVar "Status" 0) (MkFieldName "NonEmpty")) (EVar "element" 0))), ((MkFieldName "NonEmpty"), (ELam result EText (EApp (EField (EVar "Status" 0) (MkFieldName "NonEmpty")) (ETextAppend (ETextAppend (EVar "element" 0) (EVar "separator" 0)) (EVar "result" 0)))))]) (EVar "status" 0) Nothing)))) (VInject fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)] (MkFieldName "Empty") Nothing))) (EVar "result" 0))))]) (VListFold VText (VField (VVar "x" 0) (MkFieldName "mandatoryFeatures")) (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)]) (VLambda VText (MkClosure "element" (Extend (Extend (Extend (Extend Empty "Text/concatMap" (VLambda (VConst CType) (MkClosure "a" Empty (ELam f (EPi _ (EVar "a" 0) EText) (ELam xs (EApp EList (EVar "a" 0)) (EApp (EApp (EApp (EApp (EApp EListFold (EVar "a" 0)) (EVar "xs" 0)) EText) (ELam x (EVar "a" 0) (ELam y EText (ETextAppend (EApp (EVar "f" 0) (EVar "x" 0)) (EVar "y" 0))))) (ETextLit MkChunks [] ""))))))) "Status" (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)])) "separator" (VTextLit (MkVChunks [] ","))) "elements" (VField (VVar "x" 0) (MkFieldName "mandatoryFeatures"))) (ELam status (EVar "Status" 0) (EMerge (ERecordLit fromList [((MkFieldName "Empty"), (EApp (EField (EVar "Status" 0) (MkFieldName "NonEmpty")) (EVar "element" 0))), ((MkFieldName "NonEmpty"), (ELam result EText (EApp (EField (EVar "Status" 0) (MkFieldName "NonEmpty")) (ETextAppend (ETextAppend (EVar "element" 0) (EVar "separator" 0)) (EVar "result" 0)))))]) (EVar "status" 0) Nothing)))) (VInject fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)] (MkFieldName "Empty") Nothing)) Nothing))] "\n            ")) (VVar "y" 0))
+ not alpha equivalent to:
+(VTextLit (MkVChunks [("          ", (VMerge (VRecordLit $ fromList [((MkFieldName "None"), (VField (VVar "x" 0) (MkFieldName "host"))), ((MkFieldName "Some"), (VLambda VText (MkClosure "user" (Extend (Extend (Extend Empty "xs" (VVar "xs" 0)) "x" (VVar "x" 0)) "y" (VVar "y" 0)) (ETextLit MkChunks [("", (EVar "user" 0)), ("@", (EField (EVar "x" 0) (MkFieldName "host")))] ""))))]) (VField (VVar "x" 0) (MkFieldName "user")) Nothing)), (" ", (VMerge (VRecordLit $ fromList [((MkFieldName "Empty"), (VTextLit (MkVChunks [] ""))), ((MkFieldName "NonEmpty"), (VLambda VText (MkClosure "result" (Extend (Extend (Extend Empty "xs" (VVar "xs" 0)) "x" (VVar "x" 0)) "y" (VVar "y" 0)) (EVar "result" 0))))]) (VListFold VText (VField (VVar "x" 0) (MkFieldName "platforms")) (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)]) (VLambda VText (MkClosure "element" (Extend (Extend (Extend Empty "xs" (VVar "xs" 0)) "x" (VVar "x" 0)) "y" (VVar "y" 0)) (ELam status (EUnion $ fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just EText)]) (EMerge (ERecordLit fromList [((MkFieldName "Empty"), (EApp (EField (EUnion $ fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just EText)]) (MkFieldName "NonEmpty")) (EVar "element" 0))), ((MkFieldName "NonEmpty"), (ELam result EText (EApp (EField (EUnion $ fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just EText)]) (MkFieldName "NonEmpty")) (ETextLit MkChunks [("", (EVar "element" 0)), (",", (EVar "result" 0))] ""))))]) (EVar "status" 0) Nothing)))) (VInject fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)] (MkFieldName "Empty") Nothing)) Nothing)), (" ", (VField (VVar "x" 0) (MkFieldName "key"))), (" ", (VIntegerShow (VNaturalToInteger (VField (VVar "x" 0) (MkFieldName "cores"))))), (" ", (VIntegerShow (VNaturalToInteger (VField (VVar "x" 0) (MkFieldName "speedFactor"))))), (" ", (VMerge (VRecordLit $ fromList [((MkFieldName "Empty"), (VTextLit (MkVChunks [] ""))), ((MkFieldName "NonEmpty"), (VLambda VText (MkClosure "result" (Extend (Extend (Extend Empty "xs" (VVar "xs" 0)) "x" (VVar "x" 0)) "y" (VVar "y" 0)) (EVar "result" 0))))]) (VListFold VText (VField (VVar "x" 0) (MkFieldName "supportedFeatures")) (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)]) (VLambda VText (MkClosure "element" (Extend (Extend (Extend Empty "xs" (VVar "xs" 0)) "x" (VVar "x" 0)) "y" (VVar "y" 0)) (ELam status (EUnion $ fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just EText)]) (EMerge (ERecordLit fromList [((MkFieldName "Empty"), (EApp (EField (EUnion $ fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just EText)]) (MkFieldName "NonEmpty")) (EVar "element" 0))), ((MkFieldName "NonEmpty"), (ELam result EText (EApp (EField (EUnion $ fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just EText)]) (MkFieldName "NonEmpty")) (ETextLit MkChunks [("", (EVar "element" 0)), (",", (EVar "result" 0))] ""))))]) (EVar "status" 0) Nothing)))) (VInject fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)] (MkFieldName "Empty") Nothing)) Nothing)), (" ", (VMerge (VRecordLit $ fromList [((MkFieldName "Empty"), (VTextLit (MkVChunks [] ""))), ((MkFieldName "NonEmpty"), (VLambda VText (MkClosure "result" (Extend (Extend (Extend Empty "xs" (VVar "xs" 0)) "x" (VVar "x" 0)) "y" (VVar "y" 0)) (EVar "result" 0))))]) (VListFold VText (VField (VVar "x" 0) (MkFieldName "mandatoryFeatures")) (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)]) (VLambda VText (MkClosure "element" (Extend (Extend (Extend Empty "xs" (VVar "xs" 0)) "x" (VVar "x" 0)) "y" (VVar "y" 0)) (ELam status (EUnion $ fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just EText)]) (EMerge (ERecordLit fromList [((MkFieldName "Empty"), (EApp (EField (EUnion $ fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just EText)]) (MkFieldName "NonEmpty")) (EVar "element" 0))), ((MkFieldName "NonEmpty"), (ELam result EText (EApp (EField (EUnion $ fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just EText)]) (MkFieldName "NonEmpty")) (ETextLit MkChunks [("", (EVar "element" 0)), (",", (EVar "result" 0))] ""))))]) (EVar "status" 0) Nothing)))) (VInject fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)] (MkFieldName "Empty") Nothing)) Nothing)), ("\n          ", (VVar "y" 0))] ""))
+Testing: ../../../dhall-lang/tests/normalization/success/haskell-tutorial/access/0A.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/haskell-tutorial/access/1A.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/haskell-tutorial/combineTypes/0A.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/haskell-tutorial/combineTypes/1A.dhall
 ErrorMessage: "Parse failed at position 25: expected the end of the string"
-Testing: ("../../../dhall-lang/tests/normalization/success/haskell-tutorial/prefer", "0")
-Testing: ("../../../dhall-lang/tests/normalization/success/haskell-tutorial/projection", "0")
-Testing: ("../../../dhall-lang/tests/normalization/success/regression", "NaturalFoldExtraArg")
-Testing: ("../../../dhall-lang/tests/normalization/success/regression", "TrickyBinderIdentity")
-Testing: ("../../../dhall-lang/tests/normalization/success/regression", "UnsaturatedBuiltins")
-Testing: ("../../../dhall-lang/tests/normalization/success/simple", "completion")
-Testing: ("../../../dhall-lang/tests/normalization/success/simple", "doubleShow")
+Testing: ../../../dhall-lang/tests/normalization/success/haskell-tutorial/prefer/0A.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/haskell-tutorial/projection/0A.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/regression/NaturalFoldExtraArgA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/regression/TrickyBinderIdentityA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/regression/UnsaturatedBuiltinsA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/simple/completionA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/simple/doubleShowA.dhall
 ErrorMessage: "Parse failed at position 0: char '('"
-Testing: ("../../../dhall-lang/tests/normalization/success/simple", "enum")
-Testing: ("../../../dhall-lang/tests/normalization/success/simple", "equalNoCommute")
-Testing: ("../../../dhall-lang/tests/normalization/success/simple", "integerShow")
-Testing: ("../../../dhall-lang/tests/normalization/success/simple", "integerToDouble")
+Testing: ../../../dhall-lang/tests/normalization/success/simple/enumA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/simple/equalNoCommuteA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/simple/integerShowA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/simple/integerToDoubleA.dhall
 ErrorMessage: "Parse failed at position 0: char '('"
-Testing: ("../../../dhall-lang/tests/normalization/success/simple", "letAvoidCapture")
-Testing: ("../../../dhall-lang/tests/normalization/success/simple", "letenum")
-Testing: ("../../../dhall-lang/tests/normalization/success/simple", "letlet")
-Testing: ("../../../dhall-lang/tests/normalization/success/simple", "listBuild")
-Testing: ("../../../dhall-lang/tests/normalization/success/simple", "multiLine")
-Testing: ("../../../dhall-lang/tests/normalization/success/simple", "naturalBuild")
-Testing: ("../../../dhall-lang/tests/normalization/success/simple", "notEqualNoCommute")
-Testing: ("../../../dhall-lang/tests/normalization/success/simple", "plusNoCommute")
-Testing: ("../../../dhall-lang/tests/normalization/success/simple", "simpleAddition")
-Testing: ("../../../dhall-lang/tests/normalization/success/simple", "sortOperator")
-Testing: ("../../../dhall-lang/tests/normalization/success/simple", "timesNoCommute")
-Testing: ("../../../dhall-lang/tests/normalization/success/simplifications", "and")
-Testing: ("../../../dhall-lang/tests/normalization/success/simplifications", "eq")
-Testing: ("../../../dhall-lang/tests/normalization/success/simplifications", "ifThenElse")
-Testing: ("../../../dhall-lang/tests/normalization/success/simplifications", "issue661")
+Testing: ../../../dhall-lang/tests/normalization/success/simple/letAvoidCaptureA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/simple/letenumA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/simple/letletA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/simple/listBuildA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/simple/multiLineA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/simple/naturalBuildA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/simple/notEqualNoCommuteA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/simple/plusNoCommuteA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/simple/simpleAdditionA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/simple/sortOperatorA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/simple/timesNoCommuteA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/simplifications/andA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/simplifications/eqA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/simplifications/ifThenElseA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/simplifications/issue661A.dhall
 Unexpected: Not a RecordLit. Value: (VPrefer (VVar "old" 0) (VRecordLit $ fromList [((MkFieldName "b"), (VTextLit (MkVChunks [] "Hello")))]))
-Testing: ("../../../dhall-lang/tests/normalization/success/simplifications", "ne")
-Testing: ("../../../dhall-lang/tests/normalization/success/simplifications", "or")
-Testing: ("../../../dhall-lang/tests/normalization/success/simplifications", "rightBiasedMergeWithinRecordProjectionWithinFieldSelection0")
+Testing: ../../../dhall-lang/tests/normalization/success/simplifications/neA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/simplifications/orA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/simplifications/rightBiasedMergeWithinRecordProjectionWithinFieldSelection0A.dhall
 ErrorMessage: "Parse failed at position 56: expected the end of the string"
-Testing: ("../../../dhall-lang/tests/normalization/success/simplifications", "rightBiasedMergeWithinRecordProjectionWithinFieldSelection1")
+Testing: ../../../dhall-lang/tests/normalization/success/simplifications/rightBiasedMergeWithinRecordProjectionWithinFieldSelection1A.dhall
 ErrorMessage: "Parse failed at position 75: expected the end of the string"
-Testing: ("../../../dhall-lang/tests/normalization/success/simplifications", "rightBiasedMergeWithinRecursiveRecordMergeWithinFieldselection")
+Testing: ../../../dhall-lang/tests/normalization/success/simplifications/rightBiasedMergeWithinRecursiveRecordMergeWithinFieldselectionA.dhall
 AlphaEquivError:(VField (VCombineTypes (VPrefer (VVar "x" 0) (VRecordLit $ fromList [((MkFieldName "b"), (VNaturalLit 0))])) (VRecordLit $ fromList [((MkFieldName "a"), (VRecordLit $ fromList [((MkFieldName "c"), (VNaturalLit 1))]))])) (MkFieldName "b"))
  not alpha equivalent to:
 (VNaturalLit 0)
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "AssertNormalizeArgument")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "BareInterpolation")
+Testing: ../../../dhall-lang/tests/normalization/success/unit/AssertNormalizeArgumentA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/BareInterpolationA.dhall
 AlphaEquivError:(VTextLit (MkVChunks [("", (VVar "x" 0))] ""))
  not alpha equivalent to:
 (VVar "x" 0)
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "Bool")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "Completion")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "Double")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "DoubleLiteral")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "DoubleShow")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "DoubleShowValue")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "EmptyAlternative")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "EmptyToMap")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "EquivalenceNormalizeArguments")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "FunctionApplicationCapture")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "FunctionApplicationNoSubstitute")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "FunctionApplicationNormalizeArguments")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "FunctionApplicationSubstitute")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "FunctionNormalizeArguments")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "FunctionTypeNormalizeArguments")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "IfAlternativesIdentical")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "IfFalse")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "IfNormalizePredicateAndBranches")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "IfTrivial")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "IfTrue")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "Integer")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "IntegerClamp")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "IntegerClampNegative")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "IntegerClampPositive")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "IntegerClampZero")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "IntegerNegate")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "IntegerNegateNegative")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "IntegerNegatePositive")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "IntegerNegateZero")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "IntegerNegative")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "IntegerPositive")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "IntegerShow-12")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "IntegerShow12")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "IntegerShow")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "IntegerToDouble-12")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "IntegerToDouble12")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "IntegerToDouble")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "Kind")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "Let")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "LetWithType")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "List")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "ListBuild")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "ListBuildFoldFusion")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "ListBuildImplementation")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "ListFold")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "ListFoldEmpty")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "ListFoldOne")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "ListHead")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "ListHeadEmpty")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "ListHeadTwo")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "ListIndexed")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "ListIndexedEmpty")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "ListIndexedOne")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "ListLast")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "ListLastEmpty")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "ListLastTwo")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "ListLength")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "ListLengthEmpty")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "ListLengthOne")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "ListNormalizeElements")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "ListNormalizeTypeAnnotation")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "ListReverse")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "ListReverseEmpty")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "ListReverseTwo")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "Merge")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "MergeEmptyAlternative")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "MergeNone")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "MergeNormalizeArguments")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "MergeSome")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "MergeWithType")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "MergeWithTypeNormalizeArguments")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "Natural")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "NaturalBuild")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "NaturalBuildFoldFusion")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "NaturalBuildImplementation")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "NaturalEven")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "NaturalEvenOne")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "NaturalEvenZero")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "NaturalFold")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "NaturalFoldOne")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "NaturalFoldZero")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "NaturalIsZero")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "NaturalIsZeroOne")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "NaturalIsZeroZero")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "NaturalLiteral")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "NaturalOdd")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "NaturalOddOne")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "NaturalOddZero")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "NaturalShow")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "NaturalShowOne")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "NaturalSubtractEquivalent")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "NaturalSubtractFromZero")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "NaturalSubtractGreater")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "NaturalSubtractLess")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "NaturalSubtractNormalize")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "NaturalSubtractZero0")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "NaturalSubtractZero1")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "NaturalToInteger")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "NaturalToIntegerOne")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "NestedRecordProjection")
+Testing: ../../../dhall-lang/tests/normalization/success/unit/BoolA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/CompletionA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/DoubleA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/DoubleLiteralA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/DoubleShowA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/DoubleShowValueA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/EmptyAlternativeA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/EmptyToMapA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/EquivalenceNormalizeArgumentsA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/FunctionApplicationCaptureA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/FunctionApplicationNoSubstituteA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/FunctionApplicationNormalizeArgumentsA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/FunctionApplicationSubstituteA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/FunctionNormalizeArgumentsA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/FunctionTypeNormalizeArgumentsA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/IfAlternativesIdenticalA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/IfFalseA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/IfNormalizePredicateAndBranchesA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/IfTrivialA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/IfTrueA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/IntegerA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/IntegerClampA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/IntegerClampNegativeA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/IntegerClampPositiveA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/IntegerClampZeroA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/IntegerNegateA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/IntegerNegateNegativeA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/IntegerNegatePositiveA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/IntegerNegateZeroA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/IntegerNegativeA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/IntegerPositiveA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/IntegerShow-12A.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/IntegerShow12A.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/IntegerShowA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/IntegerToDouble-12A.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/IntegerToDouble12A.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/IntegerToDoubleA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/KindA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/LetA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/LetWithTypeA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/ListA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/ListBuildA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/ListBuildFoldFusionA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/ListBuildImplementationA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/ListFoldA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/ListFoldEmptyA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/ListFoldOneA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/ListHeadA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/ListHeadEmptyA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/ListHeadTwoA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/ListIndexedA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/ListIndexedEmptyA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/ListIndexedOneA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/ListLastA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/ListLastEmptyA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/ListLastTwoA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/ListLengthA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/ListLengthEmptyA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/ListLengthOneA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/ListNormalizeElementsA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/ListNormalizeTypeAnnotationA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/ListReverseA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/ListReverseEmptyA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/ListReverseTwoA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/MergeA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/MergeEmptyAlternativeA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/MergeNoneA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/MergeNormalizeArgumentsA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/MergeSomeA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/MergeWithTypeA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/MergeWithTypeNormalizeArgumentsA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/NaturalA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/NaturalBuildA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/NaturalBuildFoldFusionA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/NaturalBuildImplementationA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/NaturalEvenA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/NaturalEvenOneA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/NaturalEvenZeroA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/NaturalFoldA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/NaturalFoldOneA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/NaturalFoldZeroA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/NaturalIsZeroA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/NaturalIsZeroOneA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/NaturalIsZeroZeroA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/NaturalLiteralA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/NaturalOddA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/NaturalOddOneA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/NaturalOddZeroA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/NaturalShowA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/NaturalShowOneA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/NaturalSubtractEquivalentA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/NaturalSubtractFromZeroA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/NaturalSubtractGreaterA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/NaturalSubtractLessA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/NaturalSubtractNormalizeA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/NaturalSubtractZero0A.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/NaturalSubtractZero1A.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/NaturalToIntegerA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/NaturalToIntegerOneA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/NestedRecordProjectionA.dhall
 ErrorMessage: "Parse failed at position 52: expected the end of the string"
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "NestedRecordProjectionByType")
+Testing: ../../../dhall-lang/tests/normalization/success/unit/NestedRecordProjectionByTypeA.dhall
 ErrorMessage: "Parse failed at position 70: expected the end of the string"
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "None")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "OperatorAndEquivalentArguments")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "OperatorAndLhsFalse")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "OperatorAndLhsTrue")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "OperatorAndNormalizeArguments")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "OperatorAndRhsFalse")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "OperatorAndRhsTrue")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "OperatorEqualEquivalentArguments")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "OperatorEqualLhsTrue")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "OperatorEqualNormalizeArguments")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "OperatorEqualRhsTrue")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "OperatorListConcatenateLhsEmpty")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "OperatorListConcatenateListList")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "OperatorListConcatenateNormalizeArguments")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "OperatorListConcatenateRhsEmpty")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "OperatorNotEqualEquivalentArguments")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "OperatorNotEqualLhsFalse")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "OperatorNotEqualNormalizeArguments")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "OperatorNotEqualRhsFalse")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "OperatorOrEquivalentArguments")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "OperatorOrLhsFalse")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "OperatorOrLhsTrue")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "OperatorOrNormalizeArguments")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "OperatorOrRhsFalse")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "OperatorOrRhsTrue")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "OperatorPlusLhsZero")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "OperatorPlusNormalizeArguments")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "OperatorPlusOneAndOne")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "OperatorPlusRhsZero")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "OperatorTextConcatenateLhsEmpty")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "OperatorTextConcatenateLhsNonEmpty")
+Testing: ../../../dhall-lang/tests/normalization/success/unit/NoneA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/OperatorAndEquivalentArgumentsA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/OperatorAndLhsFalseA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/OperatorAndLhsTrueA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/OperatorAndNormalizeArgumentsA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/OperatorAndRhsFalseA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/OperatorAndRhsTrueA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/OperatorEqualEquivalentArgumentsA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/OperatorEqualLhsTrueA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/OperatorEqualNormalizeArgumentsA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/OperatorEqualRhsTrueA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/OperatorListConcatenateLhsEmptyA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/OperatorListConcatenateListListA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/OperatorListConcatenateNormalizeArgumentsA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/OperatorListConcatenateRhsEmptyA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/OperatorNotEqualEquivalentArgumentsA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/OperatorNotEqualLhsFalseA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/OperatorNotEqualNormalizeArgumentsA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/OperatorNotEqualRhsFalseA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/OperatorOrEquivalentArgumentsA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/OperatorOrLhsFalseA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/OperatorOrLhsTrueA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/OperatorOrNormalizeArgumentsA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/OperatorOrRhsFalseA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/OperatorOrRhsTrueA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/OperatorPlusLhsZeroA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/OperatorPlusNormalizeArgumentsA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/OperatorPlusOneAndOneA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/OperatorPlusRhsZeroA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/OperatorTextConcatenateLhsEmptyA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/OperatorTextConcatenateLhsNonEmptyA.dhall
 AlphaEquivError:(VTextAppend (VTextLit (MkVChunks [] "hai")) (VVar "x" 0))
  not alpha equivalent to:
 (VTextLit (MkVChunks [("hai", (VVar "x" 0))] ""))
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "OperatorTextConcatenateRhsEmpty")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "OperatorTextConcatenateRhsNonEmpty")
+Testing: ../../../dhall-lang/tests/normalization/success/unit/OperatorTextConcatenateRhsEmptyA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/OperatorTextConcatenateRhsNonEmptyA.dhall
 AlphaEquivError:(VTextAppend (VVar "x" 0) (VTextLit (MkVChunks [] "hai")))
  not alpha equivalent to:
 (VTextLit (MkVChunks [("", (VVar "x" 0))] "hai"))
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "OperatorTextConcatenateTextText")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "OperatorTimesLhsOne")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "OperatorTimesLhsZero")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "OperatorTimesNormalizeArguments")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "OperatorTimesRhsOne")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "OperatorTimesRhsZero")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "OperatorTimesTwoAndTwo")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "Optional")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "Record")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "RecordEmpty")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "RecordLitAllSugars")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "RecordLitDottedFields")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "RecordLitDuplicateFieldsNoCollisions")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "RecordLitNixLike")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "RecordLitPun1")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "RecordLitPun2")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "RecordLitTriplicateFields")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "RecordProjection")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "RecordProjectionByTypeEmpty")
+Testing: ../../../dhall-lang/tests/normalization/success/unit/OperatorTextConcatenateTextTextA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/OperatorTimesLhsOneA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/OperatorTimesLhsZeroA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/OperatorTimesNormalizeArgumentsA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/OperatorTimesRhsOneA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/OperatorTimesRhsZeroA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/OperatorTimesTwoAndTwoA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/OptionalA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/RecordA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/RecordEmptyA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/RecordLitAllSugarsA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/RecordLitDottedFieldsA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/RecordLitDuplicateFieldsNoCollisionsA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/RecordLitNixLikeA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/RecordLitPun1A.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/RecordLitPun2A.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/RecordLitTriplicateFieldsA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/RecordProjectionA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/RecordProjectionByTypeEmptyA.dhall
 Unexpected: Not a RecordLit. Value: (VRecordLit $ fromList [((MkFieldName "a"), (VNaturalLit 10)), ((MkFieldName "b"), (VSome (VNaturalLit 10)))])
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "RecordProjectionByTypeNonEmpty")
+Testing: ../../../dhall-lang/tests/normalization/success/unit/RecordProjectionByTypeNonEmptyA.dhall
 Unexpected: Not a RecordLit. Value: (VRecordLit $ fromList [((MkFieldName "a"), (VNaturalLit 10)), ((MkFieldName "b"), (VSome (VNaturalLit 10))), ((MkFieldName "c"), (VListLit Nothing[(VTextLit (MkVChunks [] "text"))]))])
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "RecordProjectionByTypeNormalizeProjection")
+Testing: ../../../dhall-lang/tests/normalization/success/unit/RecordProjectionByTypeNormalizeProjectionA.dhall
 Unexpected: Not a RecordLit. Value: (VVar "x" 0)
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "RecordProjectionByTypeWithinFieldSelection")
+Testing: ../../../dhall-lang/tests/normalization/success/unit/RecordProjectionByTypeWithinFieldSelectionA.dhall
 ErrorMessage: "Parse failed at position 68: expected the end of the string"
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "RecordProjectionEmpty")
+Testing: ../../../dhall-lang/tests/normalization/success/unit/RecordProjectionEmptyA.dhall
 Unexpected: Not a RecordLit. Value: (VVar "x" 0)
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "RecordProjectionNormalizeArguments")
+Testing: ../../../dhall-lang/tests/normalization/success/unit/RecordProjectionNormalizeArgumentsA.dhall
 Unexpected: Not a RecordLit. Value: (VVar "x" 0)
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "RecordProjectionNormalizeFields")
+Testing: ../../../dhall-lang/tests/normalization/success/unit/RecordProjectionNormalizeFieldsA.dhall
 Unexpected: Not a RecordLit. Value: (VVar "x" 0)
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "RecordProjectionWithinFieldSelection")
+Testing: ../../../dhall-lang/tests/normalization/success/unit/RecordProjectionWithinFieldSelectionA.dhall
 ErrorMessage: "Parse failed at position 52: expected the end of the string"
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "RecordSelection")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "RecordSelectionNormalizeArguments")
+Testing: ../../../dhall-lang/tests/normalization/success/unit/RecordSelectionA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/RecordSelectionNormalizeArgumentsA.dhall
 AlphaEquivError:(VField (VVar "x" 0) (MkFieldName "a"))
  not alpha equivalent to:
 (VField (VVar "x" 0) (MkFieldName "a"))
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "RecordType")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "RecordTypeEmpty")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "RecursiveRecordMergeCollision")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "RecursiveRecordMergeLhsEmpty")
+Testing: ../../../dhall-lang/tests/normalization/success/unit/RecordTypeA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/RecordTypeEmptyA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/RecursiveRecordMergeCollisionA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/RecursiveRecordMergeLhsEmptyA.dhall
 AlphaEquivError:(VCombineTypes (VRecordLit $ fromList []) (VVar "x" 0))
  not alpha equivalent to:
 (VVar "x" 0)
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "RecursiveRecordMergeNoCollision")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "RecursiveRecordMergeNormalizeArguments")
+Testing: ../../../dhall-lang/tests/normalization/success/unit/RecursiveRecordMergeNoCollisionA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/RecursiveRecordMergeNormalizeArgumentsA.dhall
 AlphaEquivError:(VCombineTypes (VVar "x" 0) (VRecordLit $ fromList []))
  not alpha equivalent to:
 (VVar "x" 0)
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "RecursiveRecordMergeRhsEmpty")
+Testing: ../../../dhall-lang/tests/normalization/success/unit/RecursiveRecordMergeRhsEmptyA.dhall
 AlphaEquivError:(VCombineTypes (VVar "x" 0) (VRecordLit $ fromList []))
  not alpha equivalent to:
 (VVar "x" 0)
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "RecursiveRecordMergeWithinFieldSelection0")
+Testing: ../../../dhall-lang/tests/normalization/success/unit/RecursiveRecordMergeWithinFieldSelection0A.dhall
 AlphaEquivError:(VField (VCombineTypes (VVar "x" 0) (VRecordLit $ fromList [((MkFieldName "a"), (VNaturalLit 0)), ((MkFieldName "b"), (VNaturalLit 1))])) (MkFieldName "a"))
  not alpha equivalent to:
 (VField (VCombineTypes (VVar "x" 0) (VRecordLit $ fromList [((MkFieldName "a"), (VNaturalLit 0))])) (MkFieldName "a"))
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "RecursiveRecordMergeWithinFieldSelection1")
+Testing: ../../../dhall-lang/tests/normalization/success/unit/RecursiveRecordMergeWithinFieldSelection1A.dhall
 AlphaEquivError:(VField (VCombineTypes (VVar "x" 0) (VRecordLit $ fromList [((MkFieldName "a"), (VNaturalLit 1))])) (MkFieldName "b"))
  not alpha equivalent to:
 (VField (VVar "x" 0) (MkFieldName "b"))
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "RecursiveRecordMergeWithinFieldSelection2")
+Testing: ../../../dhall-lang/tests/normalization/success/unit/RecursiveRecordMergeWithinFieldSelection2A.dhall
 AlphaEquivError:(VField (VCombineTypes (VRecordLit $ fromList [((MkFieldName "a"), (VNaturalLit 1))]) (VVar "x" 0)) (MkFieldName "b"))
  not alpha equivalent to:
 (VField (VVar "x" 0) (MkFieldName "b"))
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "RecursiveRecordMergeWithinFieldSelection3")
+Testing: ../../../dhall-lang/tests/normalization/success/unit/RecursiveRecordMergeWithinFieldSelection3A.dhall
 AlphaEquivError:(VField (VCombineTypes (VRecordLit $ fromList [((MkFieldName "a"), (VNaturalLit 0)), ((MkFieldName "b"), (VNaturalLit 1))]) (VVar "x" 0)) (MkFieldName "a"))
  not alpha equivalent to:
 (VField (VCombineTypes (VRecordLit $ fromList [((MkFieldName "a"), (VNaturalLit 0))]) (VVar "x" 0)) (MkFieldName "a"))
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "RecursiveRecordTypeMergeCollision")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "RecursiveRecordTypeMergeDeep")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "RecursiveRecordTypeMergeLhsEmpty")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "RecursiveRecordTypeMergeNoCollision")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "RecursiveRecordTypeMergeNormalizeArguments")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "RecursiveRecordTypeMergeRhsEmpty")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "RecursiveRecordTypeMergeSorts")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "RightBiasedMergeEquivalentArguments")
+Testing: ../../../dhall-lang/tests/normalization/success/unit/RecursiveRecordTypeMergeCollisionA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/RecursiveRecordTypeMergeDeepA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/RecursiveRecordTypeMergeLhsEmptyA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/RecursiveRecordTypeMergeNoCollisionA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/RecursiveRecordTypeMergeNormalizeArgumentsA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/RecursiveRecordTypeMergeRhsEmptyA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/RecursiveRecordTypeMergeSortsA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/RightBiasedMergeEquivalentArgumentsA.dhall
 AlphaEquivError:(VPrefer (VVar "x" 0) (VVar "x" 0))
  not alpha equivalent to:
 (VVar "x" 0)
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "RightBiasedMergeWithinFieldSelection0")
+Testing: ../../../dhall-lang/tests/normalization/success/unit/RightBiasedMergeWithinFieldSelection0A.dhall
 AlphaEquivError:(VField (VPrefer (VVar "x" 0) (VRecordLit $ fromList [((MkFieldName "a"), (VNaturalLit 0))])) (MkFieldName "a"))
  not alpha equivalent to:
 (VNaturalLit 0)
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "RightBiasedMergeWithinFieldSelection1")
+Testing: ../../../dhall-lang/tests/normalization/success/unit/RightBiasedMergeWithinFieldSelection1A.dhall
 AlphaEquivError:(VField (VPrefer (VVar "x" 0) (VRecordLit $ fromList [((MkFieldName "a"), (VNaturalLit 0))])) (MkFieldName "b"))
  not alpha equivalent to:
 (VField (VVar "x" 0) (MkFieldName "b"))
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "RightBiasedMergeWithinFieldSelection2")
+Testing: ../../../dhall-lang/tests/normalization/success/unit/RightBiasedMergeWithinFieldSelection2A.dhall
 AlphaEquivError:(VField (VPrefer (VRecordLit $ fromList [((MkFieldName "a"), (VVar "y" 0))]) (VVar "x" 0)) (MkFieldName "b"))
  not alpha equivalent to:
 (VField (VVar "x" 0) (MkFieldName "b"))
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "RightBiasedMergeWithinFieldSelection3")
+Testing: ../../../dhall-lang/tests/normalization/success/unit/RightBiasedMergeWithinFieldSelection3A.dhall
 AlphaEquivError:(VField (VPrefer (VRecordLit $ fromList [((MkFieldName "a"), (VNaturalLit 0)), ((MkFieldName "b"), (VNaturalLit 1))]) (VVar "x" 0)) (MkFieldName "a"))
  not alpha equivalent to:
 (VField (VPrefer (VRecordLit $ fromList [((MkFieldName "a"), (VNaturalLit 0))]) (VVar "x" 0)) (MkFieldName "a"))
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "RightBiasedRecordMergeCollision")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "RightBiasedRecordMergeLhsEmpty")
+Testing: ../../../dhall-lang/tests/normalization/success/unit/RightBiasedRecordMergeCollisionA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/RightBiasedRecordMergeLhsEmptyA.dhall
 AlphaEquivError:(VPrefer (VRecordLit $ fromList []) (VVar "x" 0))
  not alpha equivalent to:
 (VVar "x" 0)
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "RightBiasedRecordMergeNoCollision")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "RightBiasedRecordMergeNormalizeArguments")
+Testing: ../../../dhall-lang/tests/normalization/success/unit/RightBiasedRecordMergeNoCollisionA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/RightBiasedRecordMergeNormalizeArgumentsA.dhall
 AlphaEquivError:(VPrefer (VVar "x" 0) (VRecordLit $ fromList []))
  not alpha equivalent to:
 (VVar "x" 0)
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "RightBiasedRecordMergeRhsEmpty")
+Testing: ../../../dhall-lang/tests/normalization/success/unit/RightBiasedRecordMergeRhsEmptyA.dhall
 AlphaEquivError:(VPrefer (VVar "x" 0) (VRecordLit $ fromList []))
  not alpha equivalent to:
 (VVar "x" 0)
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "RightBiasedRecordMergeWithinRecordProjection")
+Testing: ../../../dhall-lang/tests/normalization/success/unit/RightBiasedRecordMergeWithinRecordProjectionA.dhall
 Unexpected: Not a RecordLit. Value: (VPrefer (VVar "x" 0) (VRecordLit $ fromList [((MkFieldName "a"), (VNaturalLit 1)), ((MkFieldName "b"), (VNaturalLit 2))]))
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "SomeNormalizeArguments")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "Sort")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "Text")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "TextInterpolate")
+Testing: ../../../dhall-lang/tests/normalization/success/unit/SomeNormalizeArgumentsA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/SortA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/TextA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/TextInterpolateA.dhall
 AlphaEquivError:"s"
  not alpha equivalent to:
 "sb"
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "TextLitNested1")
+Testing: ../../../dhall-lang/tests/normalization/success/unit/TextLitNested1A.dhall
 AlphaEquivError:(VTextLit (MkVChunks [("", (VTextLit (MkVChunks [] ""))), ("", (VVar "x" 0))] ""))
  not alpha equivalent to:
 (VVar "x" 0)
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "TextLitNested2")
+Testing: ../../../dhall-lang/tests/normalization/success/unit/TextLitNested2A.dhall
 AlphaEquivError:(VTextLit (MkVChunks [("", (VTextLit (MkVChunks [("", (VVar "x" 0))] "")))] ""))
  not alpha equivalent to:
 (VVar "x" 0)
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "TextLitNested3")
+Testing: ../../../dhall-lang/tests/normalization/success/unit/TextLitNested3A.dhall
 AlphaEquivError:(VTextLit (MkVChunks [("", (VTextLit (MkVChunks [("", (VTextLit (MkVChunks [] "")))] ""))), ("", (VVar "x" 0))] ""))
  not alpha equivalent to:
 (VVar "x" 0)
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "TextLiteral")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "TextNormalizeInterpolations")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "TextReplaceAbstract")
+Testing: ../../../dhall-lang/tests/normalization/success/unit/TextLiteralA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/TextNormalizeInterpolationsA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/TextReplaceAbstractA.dhall
 ErrorMessage: "could not make string for replacement"
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "TextReplaceAbstractHaystack")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "TextReplaceEmpty")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "TextReplaceMultiple")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "TextReplaceNFCUnicode")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "TextReplaceNormalization")
+Testing: ../../../dhall-lang/tests/normalization/success/unit/TextReplaceAbstractHaystackA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/TextReplaceEmptyA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/TextReplaceMultipleA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/TextReplaceNFCUnicodeA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/TextReplaceNormalizationA.dhall
 ErrorMessage: "Parse failed at position 117: expected the end of the string"
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "TextReplaceSimple")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "TextReplaceUnicode")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "TextReplaceVar")
+Testing: ../../../dhall-lang/tests/normalization/success/unit/TextReplaceSimpleA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/TextReplaceUnicodeA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/TextReplaceVarA.dhall
 AlphaEquivError:(VTextReplace (VTextLit (MkVChunks [] "a")) (VVar "x" 0) (VTextLit (MkVChunks [] "aaa")))
  not alpha equivalent to:
 (VTextLit (MkVChunks [("", (VVar "x" 0)), ("", (VVar "x" 0)), ("", (VVar "x" 0))] ""))
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "TextShow")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "TextShowAllEscapes")
+Testing: ../../../dhall-lang/tests/normalization/success/unit/TextShowA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/TextShowAllEscapesA.dhall
 ErrorMessage: "Parse failed at position 10: expected the end of the string"
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "TextShowEmpty")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "TextShowInterpolated")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "ToMap")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "ToMapWithType")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "True")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "Type")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "TypeAnnotation")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "UnionProjectConstructor")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "UnionType")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "UnionTypeEmpty")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "UnionTypeNormalizeArguments")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "Variable")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "With")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "WithChained")
+Testing: ../../../dhall-lang/tests/normalization/success/unit/TextShowEmptyA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/TextShowInterpolatedA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/ToMapA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/ToMapWithTypeA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/TrueA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/TypeA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/TypeAnnotationA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/UnionProjectConstructorA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/UnionTypeA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/UnionTypeEmptyA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/UnionTypeNormalizeArgumentsA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/VariableA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/WithA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/WithChainedA.dhall
 AlphaEquivError:fromList [((MkFieldName "a"), (VNaturalLit 1)), ((MkFieldName "b"), (VWith (VNaturalLit 2) [(MkFieldName "c")] (VNaturalLit 3)))]
  not alpha equivalent to:
 fromList [((MkFieldName "a"), (VNaturalLit 1)), ((MkFieldName "b"), (VNaturalLit 2)), ((MkFieldName "c"), (VNaturalLit 3))]
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "WithCreateIntermediateRecords")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "WithDesugar")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "WithNested")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "WithPartiallyAbstract")
-Testing: ("../../../dhall-lang/tests/normalization/success/unit", "WithPriority")
+Testing: ../../../dhall-lang/tests/normalization/success/unit/WithCreateIntermediateRecordsA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/WithDesugarA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/WithNestedA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/WithPartiallyAbstractA.dhall
+Testing: ../../../dhall-lang/tests/normalization/success/unit/WithPriorityA.dhall
 AlphaEquivError:(VWith (VNaturalLit 2) [(MkFieldName "a")] (VNaturalLit 3))
  not alpha equivalent to:
 (VNaturalLit 3)
-Testing: ("../../../dhall-lang/tests/normalization/success", "WithRecordValue")
-Testing: ("../../../dhall-lang/tests/normalization/success", "remoteSystems")
-AlphaEquivError:(VTextAppend (VTextLit (MkVChunks [("            ", (VMerge (VRecordLit $ fromList [((MkFieldName "None"), (VField (VVar "x" 0) (MkFieldName "host"))), ((MkFieldName "Some"), (VLambda VText (MkClosure "user" (Extend (Extend (Extend Empty "xs" (VVar "xs" 0)) "x" (VVar "x" 0)) "y" (VVar "y" 0)) (ETextLit MkChunks [("", (EVar "user" 0)), ("@", (EField (EVar "x" 0) (MkFieldName "host")))] ""))))]) (VField (VVar "x" 0) (MkFieldName "user")) Nothing)), (" ", (VMerge (VRecordLit $ fromList [((MkFieldName "Empty"), (VTextLit (MkVChunks [] ""))), ((MkFieldName "NonEmpty"), (VLambda VText (MkClosure "result" (Extend (Extend (Extend Empty "xs" (VVar "xs" 0)) "x" (VVar "x" 0)) "y" (VVar "y" 0)) (EVar "result" 0))))]) (VListFold VText (VField (VVar "x" 0) (MkFieldName "platforms")) (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)]) (VLambda VText (MkClosure "element" (Extend (Extend (Extend Empty "xs" (VVar "xs" 0)) "x" (VVar "x" 0)) "y" (VVar "y" 0)) (ELam status (EUnion $ fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just EText)]) (EMerge (ERecordLit fromList [((MkFieldName "Empty"), (EApp (EField (EUnion $ fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just EText)]) (MkFieldName "NonEmpty")) (EVar "element" 0))), ((MkFieldName "NonEmpty"), (ELam result EText (EApp (EField (EUnion $ fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just EText)]) (MkFieldName "NonEmpty")) (ETextAppend (ETextAppend (EVar "element" 0) (ETextLit MkChunks [] ",")) (EVar "result" 0)))))]) (EVar "status" 0) Nothing)))) (VInject fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)] (MkFieldName "Empty") Nothing)) Nothing)), (" ", (VField (VVar "x" 0) (MkFieldName "key"))), (" ", (VIntegerShow (VNaturalToInteger (VField (VVar "x" 0) (MkFieldName "cores"))))), (" ", (VIntegerShow (VNaturalToInteger (VField (VVar "x" 0) (MkFieldName "speedFactor"))))), (" ", (VMerge (VRecordLit $ fromList [((MkFieldName "Empty"), (VTextLit (MkVChunks [] ""))), ((MkFieldName "NonEmpty"), (VLambda VText (MkClosure "result" (Extend (Extend (Extend Empty "xs" (VVar "xs" 0)) "x" (VVar "x" 0)) "y" (VVar "y" 0)) (EVar "result" 0))))]) (VListFold VText (VField (VVar "x" 0) (MkFieldName "supportedFeatures")) (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)]) (VLambda VText (MkClosure "element" (Extend (Extend (Extend Empty "xs" (VVar "xs" 0)) "x" (VVar "x" 0)) "y" (VVar "y" 0)) (ELam status (EUnion $ fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just EText)]) (EMerge (ERecordLit fromList [((MkFieldName "Empty"), (EApp (EField (EUnion $ fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just EText)]) (MkFieldName "NonEmpty")) (EVar "element" 0))), ((MkFieldName "NonEmpty"), (ELam result EText (EApp (EField (EUnion $ fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just EText)]) (MkFieldName "NonEmpty")) (ETextAppend (ETextAppend (EVar "element" 0) (ETextLit MkChunks [] ",")) (EVar "result" 0)))))]) (EVar "status" 0) Nothing)))) (VInject fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)] (MkFieldName "Empty") Nothing)) Nothing)), (" ", (VMerge (VRecordLit $ fromList [((MkFieldName "Empty"), (VTextLit (MkVChunks [] ""))), ((MkFieldName "NonEmpty"), (VLambda VText (MkClosure "result" (Extend (Extend (Extend Empty "xs" (VVar "xs" 0)) "x" (VVar "x" 0)) "y" (VVar "y" 0)) (EVar "result" 0))))]) (VListFold VText (VField (VVar "x" 0) (MkFieldName "mandatoryFeatures")) (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)]) (VLambda VText (MkClosure "element" (Extend (Extend (Extend Empty "xs" (VVar "xs" 0)) "x" (VVar "x" 0)) "y" (VVar "y" 0)) (ELam status (EUnion $ fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just EText)]) (EMerge (ERecordLit fromList [((MkFieldName "Empty"), (EApp (EField (EUnion $ fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just EText)]) (MkFieldName "NonEmpty")) (EVar "element" 0))), ((MkFieldName "NonEmpty"), (ELam result EText (EApp (EField (EUnion $ fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just EText)]) (MkFieldName "NonEmpty")) (ETextAppend (ETextAppend (EVar "element" 0) (ETextLit MkChunks [] ",")) (EVar "result" 0)))))]) (EVar "status" 0) Nothing)))) (VInject fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)] (MkFieldName "Empty") Nothing)) Nothing))] "\n            ")) (VVar "y" 0))
- not alpha equivalent to:
-(VTextLit (MkVChunks [("          ", (VMerge (VRecordLit $ fromList [((MkFieldName "None"), (VField (VVar "x" 0) (MkFieldName "host"))), ((MkFieldName "Some"), (VLambda VText (MkClosure "user" (Extend (Extend (Extend Empty "xs" (VVar "xs" 0)) "x" (VVar "x" 0)) "y" (VVar "y" 0)) (ETextLit MkChunks [("", (EVar "user" 0)), ("@", (EField (EVar "x" 0) (MkFieldName "host")))] ""))))]) (VField (VVar "x" 0) (MkFieldName "user")) Nothing)), (" ", (VMerge (VRecordLit $ fromList [((MkFieldName "Empty"), (VTextLit (MkVChunks [] ""))), ((MkFieldName "NonEmpty"), (VLambda VText (MkClosure "result" (Extend (Extend (Extend Empty "xs" (VVar "xs" 0)) "x" (VVar "x" 0)) "y" (VVar "y" 0)) (EVar "result" 0))))]) (VListFold VText (VField (VVar "x" 0) (MkFieldName "platforms")) (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)]) (VLambda VText (MkClosure "element" (Extend (Extend (Extend Empty "xs" (VVar "xs" 0)) "x" (VVar "x" 0)) "y" (VVar "y" 0)) (ELam status (EUnion $ fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just EText)]) (EMerge (ERecordLit fromList [((MkFieldName "Empty"), (EApp (EField (EUnion $ fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just EText)]) (MkFieldName "NonEmpty")) (EVar "element" 0))), ((MkFieldName "NonEmpty"), (ELam result EText (EApp (EField (EUnion $ fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just EText)]) (MkFieldName "NonEmpty")) (ETextLit MkChunks [("", (EVar "element" 0)), (",", (EVar "result" 0))] ""))))]) (EVar "status" 0) Nothing)))) (VInject fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)] (MkFieldName "Empty") Nothing)) Nothing)), (" ", (VField (VVar "x" 0) (MkFieldName "key"))), (" ", (VIntegerShow (VNaturalToInteger (VField (VVar "x" 0) (MkFieldName "cores"))))), (" ", (VIntegerShow (VNaturalToInteger (VField (VVar "x" 0) (MkFieldName "speedFactor"))))), (" ", (VMerge (VRecordLit $ fromList [((MkFieldName "Empty"), (VTextLit (MkVChunks [] ""))), ((MkFieldName "NonEmpty"), (VLambda VText (MkClosure "result" (Extend (Extend (Extend Empty "xs" (VVar "xs" 0)) "x" (VVar "x" 0)) "y" (VVar "y" 0)) (EVar "result" 0))))]) (VListFold VText (VField (VVar "x" 0) (MkFieldName "supportedFeatures")) (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)]) (VLambda VText (MkClosure "element" (Extend (Extend (Extend Empty "xs" (VVar "xs" 0)) "x" (VVar "x" 0)) "y" (VVar "y" 0)) (ELam status (EUnion $ fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just EText)]) (EMerge (ERecordLit fromList [((MkFieldName "Empty"), (EApp (EField (EUnion $ fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just EText)]) (MkFieldName "NonEmpty")) (EVar "element" 0))), ((MkFieldName "NonEmpty"), (ELam result EText (EApp (EField (EUnion $ fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just EText)]) (MkFieldName "NonEmpty")) (ETextLit MkChunks [("", (EVar "element" 0)), (",", (EVar "result" 0))] ""))))]) (EVar "status" 0) Nothing)))) (VInject fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)] (MkFieldName "Empty") Nothing)) Nothing)), (" ", (VMerge (VRecordLit $ fromList [((MkFieldName "Empty"), (VTextLit (MkVChunks [] ""))), ((MkFieldName "NonEmpty"), (VLambda VText (MkClosure "result" (Extend (Extend (Extend Empty "xs" (VVar "xs" 0)) "x" (VVar "x" 0)) "y" (VVar "y" 0)) (EVar "result" 0))))]) (VListFold VText (VField (VVar "x" 0) (MkFieldName "mandatoryFeatures")) (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)]) (VLambda VText (MkClosure "element" (Extend (Extend (Extend Empty "xs" (VVar "xs" 0)) "x" (VVar "x" 0)) "y" (VVar "y" 0)) (ELam status (EUnion $ fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just EText)]) (EMerge (ERecordLit fromList [((MkFieldName "Empty"), (EApp (EField (EUnion $ fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just EText)]) (MkFieldName "NonEmpty")) (EVar "element" 0))), ((MkFieldName "NonEmpty"), (ELam result EText (EApp (EField (EUnion $ fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just EText)]) (MkFieldName "NonEmpty")) (ETextLit MkChunks [("", (EVar "element" 0)), (",", (EVar "result" 0))] ""))))]) (EVar "status" 0) Nothing)))) (VInject fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)] (MkFieldName "Empty") Nothing)) Nothing)), ("\n          ", (VVar "y" 0))] ""))
-Result: 
+Result:
 Pass: 221
 Fail: 48
 Main> Bye for now!
