@@ -90,7 +90,7 @@ runTests' path f filters =
   let dir = explore $ parse path
       testFiles = doFilter filters !dir
   in do
-    res <- depthFirst doTest testFiles $ pure neutral
+    res <- depthFirst doTest (sort testFiles) $ pure neutral
     pure res
     where
     runTestPair : TestPair -> (String -> String -> IOEither Error a) -> IOEither Error a
