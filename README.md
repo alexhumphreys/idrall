@@ -105,7 +105,7 @@ make install
 
 ## Tests
 
-Note: You'll need to clone this repo with submodules for the tests to run, as they depend on the `dhall-lang` project test files. After that, you can run:
+Note: You'll need to clone the submodules (`git submodule update --init`) for the tests to run, as they depend on the `dhall-lang` project test files. After that, you can run:
 
 ```
 make test
