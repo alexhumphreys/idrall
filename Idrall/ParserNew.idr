@@ -117,11 +117,11 @@ chainl1 p op = do
   x <- p
   rest x
 where
-  rest : a -> Grammar (Token RawTokenKind) True (a)
-  rest a1 = do
+  rest : a -> Grammar (Token RawTokenKind) False (a)
+  rest a1 = (do
     f <- op
     a2 <- p
-    rest (f a1 a2) <|> pure a1
+    rest (f a1 a2)) <|> pure a1
 
 infixOp : Grammar (Token RawTokenKind) True ()
         -> (a -> a -> a)
