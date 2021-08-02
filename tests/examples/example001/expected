@@ -1,1 +1,1 @@
-Right MkPackage "myidrispackage" Nothing Nothing ["MyIdrisPackage.Main", "MyIdrisPackage.Foo"]
+Right MkPackage "myidrispackage" Just "./" Just ["contrib"] ["MyIdrisPackage.Main", "MyIdrisPackage.Foo"]
