@@ -23,25 +23,27 @@ record ExRec1 where
   lb : List Bool
   st : String
   mst : Maybe String
+  mst2 : Maybe String
   -- a6 : Nat
 
 Show ExRec1 where
-  show (MkExRec1 mn n i b d lb st mst) =
-    "(MkExample3 \{show mn} \{show n} \{show i} \{show b} \{show d} \{show lb} \{show st} \{show mst})"
+  show (MkExRec1 mn n i b d lb st mst mst2) =
+    "(MkExample3 \{show mn} \{show n} \{show i} \{show b} \{show d} \{show lb} \{show st} \{show mst} \{show mst2})"
 
 %runElab (deriveFromDhall Record `{ ExRec1 })
 
 exRec1 : Maybe ExRec1
 exRec1 = fromDhall
   (ERecordLit $
-    fromList [ (MkFieldName "mn", ENaturalLit 3)
+    fromList [ (MkFieldName "mn", ESome $ ENaturalLit 3)
              , (MkFieldName "n", ENaturalLit 4)
              , (MkFieldName "i", EIntegerLit 5)
              , (MkFieldName "b", EBoolLit True)
              , (MkFieldName "d", EDoubleLit 2.0)
              , (MkFieldName "lb", EListLit (Just EBool) [EBoolLit True, EBoolLit False])
              , (MkFieldName "st", (ETextLit (MkChunks [] "hello")))
-             , (MkFieldName "mst", (ETextLit (MkChunks [] "hello")))
+             , (MkFieldName "mst", ESome $ (ETextLit (MkChunks [] "hello")))
+             , (MkFieldName "mst2", ENone)
              ])
 
 data ExADT1

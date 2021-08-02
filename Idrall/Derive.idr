@@ -142,8 +142,9 @@ FromDhall a => FromDhall (List a) where
 
 export
 FromDhall a => FromDhall (Maybe a) where
-  fromDhall (ESome x) = pure $ fromDhall x
-  fromDhall ENone = neutral
+  fromDhall (ESome x) =
+    pure $ fromDhall x
+  fromDhall ENone = pure $ neutral
   fromDhall _ = neutral
 
 ||| Used with FromDhall interface, to dervice implementations
@@ -201,8 +202,6 @@ deriveFromDhall it n =
           let rhs = foldr (\(n, type), acc =>
                             let name = primStr $ (show n) in
                                 case type of
-                                     `(Prelude.Types.Maybe _) => do
-                                       `(~acc <*> (pure $ lookup (MkFieldName ~name) ~(var arg) >>= fromDhall))
                                      _ => `(~acc <*> (lookup (MkFieldName ~name) ~(var arg) >>= fromDhall)))
                           `(pure ~(var constructor')) xs
           pure (rhs)
@@ -215,7 +214,6 @@ deriveFromDhall it n =
           in do
           case xs of
                [] => pure $ (lhs, `(pure ~(var constructor')))
-               ((n, `(Prelude.Types.Maybe _)) :: []) => pure $ (lhs, `(pure ~(var constructor') <*> fromDhall ~(var arg)))
                ((n, _) :: []) => pure $ (lhs, `(pure ~(var constructor') <*> fromDhall ~(var arg)))
                (x :: _) => fail $ "too many args for constructor: " ++ show constructor'
     genClauses : IdrisType -> Name -> Name -> Cons -> Elab (List Clause)
