@@ -144,7 +144,7 @@ export
 FromDhall a => FromDhall (Maybe a) where
   fromDhall (ESome x) =
     pure $ fromDhall x
-  fromDhall ENone = pure $ neutral
+  fromDhall (EApp ENone _) = pure $ neutral
   fromDhall _ = neutral
 
 ||| Used with FromDhall interface, to dervice implementations

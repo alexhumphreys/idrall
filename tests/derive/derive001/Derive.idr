@@ -43,7 +43,7 @@ exRec1 = fromDhall
              , (MkFieldName "lb", EListLit (Just EBool) [EBoolLit True, EBoolLit False])
              , (MkFieldName "st", (ETextLit (MkChunks [] "hello")))
              , (MkFieldName "mst", ESome $ (ETextLit (MkChunks [] "hello")))
-             , (MkFieldName "mst2", ENone)
+             , (MkFieldName "mst2", (EApp ENone EText))
              ])
 
 data ExADT1
