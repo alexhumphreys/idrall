@@ -102,18 +102,45 @@ lexRaw str =
     -- map TokenData.tok tokens
     tokens
 
+public export
+FilePos : Type
+FilePos = (Nat, Nat)
+
+-- does fancy stuff for idris, for now it can just be a Maybe filename
+
+OriginDesc : Type
+OriginDesc = Maybe String
+
+public export
+data FC = MkFC        OriginDesc FilePos FilePos
+        | ||| Virtual FCs are FC attached to desugared/generated code.
+          MkVirtualFC OriginDesc FilePos FilePos
+        | EmptyFC
+
+Show FC where
+  show (MkFC Nothing x y) = "\{show x}-\{show y}"
+  show (MkFC (Just s) x y) = "\{s}:\{show x}-\{show y}"
+  show (MkVirtualFC x y z) = "MkVirtualFCTODO"
+  show EmptyFC = "(,)"
+
+both : (a -> b) -> (a, a) -> (b, b)
+both f x = (f (fst x), f (snd x))
+
+boundToFC : OriginDesc -> WithBounds t -> FC
+boundToFC mbModIdent b = MkFC mbModIdent (both cast $ start b) (both cast $ end b)
+
 ||| Raw AST representation generated directly from the parser
 data Expr a
-  = EVar String
-  | EBoolLit Bool
-  | EBoolAnd (Expr a) (Expr a)
-  | ELet String (Expr a) (Expr a)
+  = EVar FC String
+  | EBoolLit FC Bool
+  | EBoolAnd FC (Expr a) (Expr a)
+  | ELet FC String (Expr a) (Expr a)
 
 Show (Expr a) where
-  show (EVar x) = "EVar \{show x}"
-  show (EBoolLit x) = "EBoolLit \{show x}"
-  show (EBoolAnd x y) = "(EBoolAnd \{show x} \{show y})"
-  show (ELet x y z) = "TODO"
+  show (EVar fc x) = "(\{show fc}:EVar \{show x})"
+  show (EBoolLit fc x) = "\{show fc}:EBoolLit \{show x}"
+  show (EBoolAnd fc x y) = "(EBoolAnd \{show x} \{show y})"
+  show (ELet fc x y z) = "TODO"
 
 chainl1 : Grammar state (TokenRawTokenKind) True (a)
        -> Grammar state (TokenRawTokenKind) True (a -> a -> a)
@@ -136,25 +163,25 @@ infixOp l ctor = do
   Text.Parser.Core.pure ctor
 
 mutual
-  builtinTerm : String -> Grammar state (TokenRawTokenKind) False (Expr ())
+  builtinTerm : WithBounds (TokType Ident) -> Grammar state (TokenRawTokenKind) False (Expr ())
   builtinTerm _ = fail "TODO not implemented"
 
-  boolTerm : String -> Grammar state (TokenRawTokenKind) False (Expr ())
-  boolTerm "True" = pure $ EBoolLit True
-  boolTerm "False" = pure $ EBoolLit False
-  boolTerm _ = fail "unrecognised const"
+  boolTerm : WithBounds (TokType Ident) -> Grammar state (TokenRawTokenKind) False (Expr ())
+  boolTerm b@(MkBounded "True" isIrrelevant bounds) = pure $ EBoolLit (boundToFC Nothing b) True
+  boolTerm b@(MkBounded "False" isIrrelevant bounds) = pure $ EBoolLit (boundToFC Nothing b) False
+  boolTerm (MkBounded _ isIrrelevant bounds) = fail "unrecognised const"
 
   varTerm : Grammar state (TokenRawTokenKind) True (Expr ())
   varTerm = do
-      name <- match Ident
+      name <- bounds $ match Ident
       builtinTerm name <|> boolTerm name <|> toVar (isKeyword name)
   where
-    isKeyword : String -> Maybe $ Expr ()
-    isKeyword x =
-      let isKeyword = elem x keywords
+    isKeyword : WithBounds (TokType Ident) -> Maybe $ Expr ()
+    isKeyword b@(MkBounded val isIrrelevant bounds) =
+      let isKeyword = elem val keywords
       in case (isKeyword) of
               (True) => Nothing
-              (False) => pure $ EVar x
+              (False) => pure $ EVar (boundToFC Nothing b) val
     toVar : Maybe $ Expr () -> Grammar state (TokenRawTokenKind) False (Expr ())
     toVar Nothing = fail "is reserved word"
     toVar (Just x) = pure x
@@ -162,11 +189,15 @@ mutual
   atom : Grammar state (TokenRawTokenKind) True (Expr ())
   atom = varTerm <|> (between (match $ Symbol "(") (match $ Symbol ")") exprTerm)
 
-  boolOp : Grammar state (TokenRawTokenKind) True (Expr () -> Expr () -> Expr ())
-  boolOp = infixOp (match $ Symbol "&&") EBoolAnd
+  boolOp : FC -> Grammar state (TokenRawTokenKind) True (Expr () -> Expr () -> Expr ())
+  boolOp fc = infixOp (match $ Symbol "&&") (EBoolAnd fc)
 
   exprTerm : Grammar state (TokenRawTokenKind) True (Expr ())
-  exprTerm = chainl1 atom boolOp
+  exprTerm = do
+    start <- location
+    x <- chainl1 atom (boolOp EmptyFC)
+    -- end <- location
+    pure x -- TODO start here trying to work out how to span a EBoolAnd
 
 Show (Bounds) where
   show (MkBounds startLine startCol endLine endCol) =
