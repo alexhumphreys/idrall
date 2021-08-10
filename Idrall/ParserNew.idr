@@ -11,12 +11,14 @@ import Text.Bounded
 data RawTokenKind
   = Ident
   | Symbol String
+  | Keyword String
   | White
   | Unrecognised
 
 Eq RawTokenKind where
   (==) Ident Ident = True
   (==) (Symbol x) (Symbol y) = x == y
+  (==) (Keyword x) (Keyword y) = x == y
   (==) White White = True
   (==) Unrecognised Unrecognised = True
   (==) _ _ = False
@@ -24,23 +26,27 @@ Eq RawTokenKind where
 Show RawTokenKind where
   show (Ident) = "Ident"
   show (Symbol x) = "Symbol \{show x}"
+  show (Keyword x) = "Keyword \{show x}"
   show (White) = "White"
   show (Unrecognised) = "Unrecognised"
 
 TokenKind RawTokenKind where
   TokType Ident = String
   TokType (Symbol _) = ()
+  TokType (Keyword _) = ()
   TokType White = ()
   TokType Unrecognised = String
 
   tokValue Ident x = x
   tokValue (Symbol _) _ = ()
+  tokValue (Keyword _) _ = ()
   tokValue White _ = ()
   tokValue Unrecognised x = x
 
 Show (Token RawTokenKind) where
   show (Tok Ident text) = "Ident \{show $ Token.tokValue Ident text}"
   show (Tok (Symbol x) _) = "Symbol \{show $ x}"
+  show (Tok (Keyword x) _) = "Keyword \{show $ x}"
   show (Tok White _) = "White"
   show (Tok (Unrecognised) text) = "Unrecognised \{show $ Token.tokValue Unrecognised text}"
 
@@ -79,7 +85,7 @@ parseIdent x =
   let isKeyword = elem x keywords
       isBuiltin = elem x builtins in
   case (isKeyword, isBuiltin) of
-       (True, False) => Tok Ident x -- TODO keyword
+       (True, False) => Tok (Keyword x) x -- Keyword x -- TODO keyword
        (False, True) => Tok Ident x -- TODO Builtin
        (_, _) => Tok Ident x
 
@@ -140,7 +146,7 @@ Show (Expr a) where
   show (EVar fc x) = "(\{show fc}:EVar \{show x})"
   show (EBoolLit fc x) = "\{show fc}:EBoolLit \{show x}"
   show (EBoolAnd fc x y) = "(EBoolAnd \{show x} \{show y})"
-  show (ELet fc x y z) = "TODO"
+  show (ELet fc x y z) = "(ELet \{show fc} \{show x} \{show y} \{show x})"
 
 chainl1 : Grammar state (TokenRawTokenKind) True (a)
        -> Grammar state (TokenRawTokenKind) True (a -> a -> a)
@@ -186,6 +192,24 @@ mutual
     toVar Nothing = fail "is reserved word"
     toVar (Just x) = pure x
 
+  letBinding : Grammar state (TokenRawTokenKind) True (Expr ())
+  letBinding = do
+    start <- location
+    tokenW $ match $ Keyword "let"
+    name <- tokenW $ match $ Ident
+    tokenW $ match $ Symbol "="
+    e <- exprTerm
+    match $ White
+    tokenW $ match $ Keyword "in"
+    e' <- exprTerm
+    pure $ ELet EmptyFC name e e'
+  where
+    tokenW : Grammar state (TokenRawTokenKind) True a -> Grammar state (TokenRawTokenKind) True a
+    tokenW p = do
+      x <- p
+      match $ White
+      pure x
+
   atom : Grammar state (TokenRawTokenKind) True (Expr ())
   atom = varTerm <|> (between (match $ Symbol "(") (match $ Symbol ")") exprTerm)
 
@@ -194,10 +218,8 @@ mutual
 
   exprTerm : Grammar state (TokenRawTokenKind) True (Expr ())
   exprTerm = do
-    start <- location
-    x <- chainl1 atom (boolOp EmptyFC)
-    -- end <- location
-    pure x -- TODO start here trying to work out how to span a EBoolAnd
+    letBinding <|>
+    chainl1 atom (boolOp EmptyFC)
 
 Show (Bounds) where
   show (MkBounds startLine startCol endLine endCol) =
