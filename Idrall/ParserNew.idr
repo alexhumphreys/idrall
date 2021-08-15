@@ -135,6 +135,17 @@ both f x = (f (fst x), f (snd x))
 boundToFC : OriginDesc -> WithBounds t -> FC
 boundToFC mbModIdent b = MkFC mbModIdent (both cast $ start b) (both cast $ end b)
 
+mergeBounds : FC -> FC -> FC
+mergeBounds (MkFC x start _) (MkFC y _ end) = (MkFC x start end)
+mergeBounds (MkFC x start _) (MkVirtualFC y _ end) = (MkFC x start end)
+mergeBounds f@(MkFC x start end) EmptyFC = f
+mergeBounds (MkVirtualFC x start _) (MkFC y _ end) = (MkFC y start end)
+mergeBounds (MkVirtualFC x start _) (MkVirtualFC y _ end) = (MkVirtualFC x start end)
+mergeBounds f@(MkVirtualFC x start end) EmptyFC = f
+mergeBounds EmptyFC f@(MkFC x start end) = f
+mergeBounds EmptyFC f@(MkVirtualFC x start end) = f
+mergeBounds EmptyFC EmptyFC = EmptyFC
+
 ||| Raw AST representation generated directly from the parser
 data Expr a
   = EVar FC String
@@ -145,8 +156,20 @@ data Expr a
 Show (Expr a) where
   show (EVar fc x) = "(\{show fc}:EVar \{show x})"
   show (EBoolLit fc x) = "\{show fc}:EBoolLit \{show x}"
-  show (EBoolAnd fc x y) = "(EBoolAnd \{show x} \{show y})"
-  show (ELet fc x y z) = "(ELet \{show fc} \{show x} \{show y} \{show x})"
+  show (EBoolAnd fc x y) = "(\{show fc}:EBoolAnd \{show x} \{show y})"
+  show (ELet fc x y z) = "(ELet \{show fc} \{show x} \{show y} \{show z})"
+
+getBounds : Expr a -> FC
+getBounds (EVar x _) = x
+getBounds (EBoolLit x _) = x
+getBounds (EBoolAnd x _ _) = x
+getBounds (ELet x _ _ _) = x
+
+updateBounds : FC -> Expr a -> Expr a
+updateBounds x (EVar _ z) = EVar x z
+updateBounds x (EBoolLit _ z) = EBoolLit x z
+updateBounds x (EBoolAnd _ z w) = EBoolAnd x z w
+updateBounds x (ELet _ z w v) = ELet x z w v
 
 chainl1 : Grammar state (TokenRawTokenKind) True (a)
        -> Grammar state (TokenRawTokenKind) True (a -> a -> a)
@@ -167,6 +190,16 @@ infixOp : Grammar state (TokenRawTokenKind) True ()
 infixOp l ctor = do
   l
   Text.Parser.Core.pure ctor
+
+boundedOp : (FC -> Expr a -> Expr a -> Expr a)
+          -> Expr a
+          -> Expr a
+          -> Expr a
+boundedOp op x y =
+  let xB = getBounds x
+      yB = getBounds y
+      mB = mergeBounds xB yB in
+      op mB x y
 
 mutual
   builtinTerm : WithBounds (TokType Ident) -> Grammar state (TokenRawTokenKind) False (Expr ())
@@ -214,7 +247,7 @@ mutual
   atom = varTerm <|> (between (match $ Symbol "(") (match $ Symbol ")") exprTerm)
 
   boolOp : FC -> Grammar state (TokenRawTokenKind) True (Expr () -> Expr () -> Expr ())
-  boolOp fc = infixOp (match $ Symbol "&&") (EBoolAnd fc)
+  boolOp fc = infixOp (match $ Symbol "&&") (boundedOp EBoolAnd)
 
   exprTerm : Grammar state (TokenRawTokenKind) True (Expr ())
   exprTerm = do
