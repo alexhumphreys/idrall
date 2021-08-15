@@ -8,3 +8,5 @@ build/
 /tests/**/*.dylib
 /tests/**/*.dll
 /tests/build/exec
+
+Inigo.ipkg

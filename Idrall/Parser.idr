@@ -493,7 +493,7 @@ mutual
   -- https://github.com/dhall-lang/dhall-haskell/blob/56bf1163a1331f72f7a55c06ab5ef77a60960630/dhall/src/Dhall/Syntax.hs#L1107
   -- https://github.com/dhall-lang/dhall-haskell/blob/56bf1163a1331f72f7a55c06ab5ef77a60960630/dhall/src/Dhall/Parser/Token.hs#L584
   dirCharacters : Parser Char
-  dirCharacters = alphaNum <|> (char '-') <|> (char '.')
+  dirCharacters = alphaNum <|> (char '@') <|> (char '_') <|> (char '-') <|> (char '.')
 
   dirs : Parser (List String)
   dirs = do
