@@ -1,13 +1,13 @@
 module Idrall.APIv1
 
-import Idrall.Expr
-import Idrall.Value
-import Idrall.Error
+import public Idrall.Expr
+import public Idrall.Value
+import public Idrall.Error
 import Idrall.Eval
 import Idrall.Check
 import Idrall.Parser
 import Idrall.Resolve
-import Idrall.IOEither
+import public Idrall.IOEither
 import Idrall.Path
 
 import System.Directory
@@ -78,6 +78,13 @@ roundTripSynth : String -> IOEither Error (Expr Void, Value)
 roundTripSynth x = do
   x' <- exprFromString x
   liftEither (infer initCxt x')
+
+export
+roundTripSynthEvalQuote : String -> IOEither Error (Expr Void)
+roundTripSynthEvalQuote x = do
+  x' <- exprFromString x
+  _ <- liftEither (infer initCxt x')
+  liftEither (evalQuote x')
 
 public export
 roundTripCheck : String -> String -> IOEither Error ()

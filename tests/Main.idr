@@ -37,6 +37,7 @@ deriveTests = MkTestPool "derive tests" [] Default
 examplesTests : TestPool
 examplesTests = MkTestPool "examples tests" [] Default
   [ "example001"
+  , "inigo001"
   ]
 
 main : IO ()
