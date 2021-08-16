@@ -8,6 +8,8 @@ import Text.Token
 import Text.Lexer
 import Text.Bounded
 
+import Idrall.Parser.Core
+
 data RawTokenKind
   = Ident
   | Symbol String
@@ -96,6 +98,12 @@ rawTokenMap =
     , (exact "&&", Symbol "&&")
     , (exact "(", Symbol "(")
     , (exact ")", Symbol ")")
+    , (exact "{", Symbol "{")
+    , (exact "}", Symbol "}")
+    , (exact "[", Symbol "[")
+    , (exact "]", Symbol "]")
+    , (exact ",", Symbol ",")
+    , (exact ".", Symbol ".")
     , (space, White)
     ]) ++ [(ident, (\x => parseIdent x))])
     ++ (toTokenMap $ [ (any, Unrecognised) ])
@@ -152,24 +160,28 @@ data Expr a
   | EBoolLit FC Bool
   | EBoolAnd FC (Expr a) (Expr a)
   | ELet FC String (Expr a) (Expr a)
+  | EList FC (List (Expr a))
 
 Show (Expr a) where
   show (EVar fc x) = "(\{show fc}:EVar \{show x})"
   show (EBoolLit fc x) = "\{show fc}:EBoolLit \{show x}"
   show (EBoolAnd fc x y) = "(\{show fc}:EBoolAnd \{show x} \{show y})"
-  show (ELet fc x y z) = "(ELet \{show fc} \{show x} \{show y} \{show z})"
+  show (ELet fc x y z) = "(\{show fc}:ELet \{show fc} \{show x} \{show y} \{show z})"
+  show (EList fc x) = "(\{show fc}:EList \{show fc} \{show x})"
 
 getBounds : Expr a -> FC
 getBounds (EVar x _) = x
 getBounds (EBoolLit x _) = x
 getBounds (EBoolAnd x _ _) = x
 getBounds (ELet x _ _ _) = x
+getBounds (EList x _) = x
 
 updateBounds : FC -> Expr a -> Expr a
 updateBounds x (EVar _ z) = EVar x z
 updateBounds x (EBoolLit _ z) = EBoolLit x z
 updateBounds x (EBoolAnd _ z w) = EBoolAnd x z w
 updateBounds x (ELet _ z w v) = ELet x z w v
+updateBounds x (EList _ z) = EList x z
 
 chainl1 : Grammar state (TokenRawTokenKind) True (a)
        -> Grammar state (TokenRawTokenKind) True (a -> a -> a)
@@ -201,6 +213,12 @@ boundedOp op x y =
       mB = mergeBounds xB yB in
       op mB x y
 
+tokenW : Grammar state (TokenRawTokenKind) True a -> Grammar state (TokenRawTokenKind) True a
+tokenW p = do
+  x <- p
+  match $ White
+  pure x
+
 mutual
   builtinTerm : WithBounds (TokType Ident) -> Grammar state (TokenRawTokenKind) False (Expr ())
   builtinTerm _ = fail "TODO not implemented"
@@ -227,27 +245,35 @@ mutual
 
   letBinding : Grammar state (TokenRawTokenKind) True (Expr ())
   letBinding = do
-    start <- location
-    tokenW $ match $ Keyword "let"
+    start <- bounds $ tokenW $ match $ Keyword "let"
     name <- tokenW $ match $ Ident
     tokenW $ match $ Symbol "="
     e <- exprTerm
     match $ White
-    tokenW $ match $ Keyword "in"
+    end <- bounds $ tokenW $ match $ Keyword "in" -- TODO is this a good end position?
     e' <- exprTerm
-    pure $ ELet EmptyFC name e e'
-  where
-    tokenW : Grammar state (TokenRawTokenKind) True a -> Grammar state (TokenRawTokenKind) True a
-    tokenW p = do
-      x <- p
-      match $ White
-      pure x
+    pure $ ELet (mergeBounds (boundToFC Nothing start) (boundToFC Nothing end)) name e e'
 
   atom : Grammar state (TokenRawTokenKind) True (Expr ())
-  atom = varTerm <|> (between (match $ Symbol "(") (match $ Symbol ")") exprTerm)
+  atom = varTerm <|> listExpr <|> (between (match $ Symbol "(") (match $ Symbol ")") exprTerm)
 
   boolOp : FC -> Grammar state (TokenRawTokenKind) True (Expr () -> Expr () -> Expr ())
   boolOp fc = infixOp (match $ Symbol "&&") (boundedOp EBoolAnd)
+
+  listExpr : Grammar state (TokenRawTokenKind) True (Expr ())
+  listExpr = emptyList <|> populatedList
+  where
+    emptyList : Grammar state (TokenRawTokenKind) True (Expr ())
+    emptyList = do
+      start <- bounds $ match $ Symbol "["
+      end <- bounds $ match $ Symbol "]"
+      pure $ EList (mergeBounds (boundToFC Nothing start) (boundToFC Nothing end)) []
+    populatedList : Grammar state (TokenRawTokenKind) True (Expr ())
+    populatedList = do
+      start <- bounds $ match $ Symbol "["
+      es <- sepBy1 (match $ Symbol ",") exprTerm
+      end <- bounds $ match $ Symbol "]"
+      pure $ EList (mergeBounds (boundToFC Nothing start) (boundToFC Nothing end)) (forget es)
 
   exprTerm : Grammar state (TokenRawTokenKind) True (Expr ())
   exprTerm = do
