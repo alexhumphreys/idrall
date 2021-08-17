@@ -1,6 +1,7 @@
 module Idrall.ParserNew
 
 import Data.List
+import Data.List1
 
 import Text.Parser
 import Text.Quantity
@@ -80,14 +81,14 @@ builtins : List String
 builtins = ["True", "False"]
 
 keywords : List String
-keywords = ["let", "in"]
+keywords = ["let", "in", "with"]
 
 parseIdent : String -> TokenRawTokenKind
 parseIdent x =
   let isKeyword = elem x keywords
       isBuiltin = elem x builtins in
   case (isKeyword, isBuiltin) of
-       (True, False) => Tok (Keyword x) x -- Keyword x -- TODO keyword
+       (True, False) => Tok (Keyword x) x
        (False, True) => Tok Ident x -- TODO Builtin
        (_, _) => Tok Ident x
 
@@ -161,6 +162,7 @@ data Expr a
   | EBoolAnd FC (Expr a) (Expr a)
   | ELet FC String (Expr a) (Expr a)
   | EList FC (List (Expr a))
+  | EWith FC (Expr a) (List1 String) (Expr a)
 
 Show (Expr a) where
   show (EVar fc x) = "(\{show fc}:EVar \{show x})"
@@ -168,6 +170,7 @@ Show (Expr a) where
   show (EBoolAnd fc x y) = "(\{show fc}:EBoolAnd \{show x} \{show y})"
   show (ELet fc x y z) = "(\{show fc}:ELet \{show fc} \{show x} \{show y} \{show z})"
   show (EList fc x) = "(\{show fc}:EList \{show fc} \{show x})"
+  show (EWith fc x s y) = "(\{show fc}:EWith \{show fc} \{show x} \{show s} \{show y})"
 
 getBounds : Expr a -> FC
 getBounds (EVar x _) = x
@@ -175,6 +178,7 @@ getBounds (EBoolLit x _) = x
 getBounds (EBoolAnd x _ _) = x
 getBounds (ELet x _ _ _) = x
 getBounds (EList x _) = x
+getBounds (EWith x _ _ _) = x
 
 updateBounds : FC -> Expr a -> Expr a
 updateBounds x (EVar _ z) = EVar x z
@@ -182,6 +186,27 @@ updateBounds x (EBoolLit _ z) = EBoolLit x z
 updateBounds x (EBoolAnd _ z w) = EBoolAnd x z w
 updateBounds x (ELet _ z w v) = ELet x z w v
 updateBounds x (EList _ z) = EList x z
+updateBounds x (EWith _ z s y) = EWith x z s y
+
+{-
+chainr1 : Monad m => (p : ParserT str m a)
+                  -> (op: ParserT str m (a -> a -> a))
+                  -> ParserT str m a
+chainr1 p op = p >>= rest
+  where rest a1 = (do f <- op
+                      a2 <- p >>= rest
+                      rest (f a1 a2)) <|> pure a1
+-}
+
+chainr1 : Grammar state (TokenRawTokenKind) True (a)
+       -> Grammar state (TokenRawTokenKind) True (a -> a -> a)
+       -> Grammar state (TokenRawTokenKind) True (a)
+chainr1 p op = p >>= rest
+where
+  rest : a -> Grammar state (TokenRawTokenKind) False (a)
+  rest a1 = (do f <- op
+                a2 <- p >>= rest
+                rest (f a1 a2)) <|> pure a1
 
 chainl1 : Grammar state (TokenRawTokenKind) True (a)
        -> Grammar state (TokenRawTokenKind) True (a -> a -> a)
@@ -216,10 +241,16 @@ boundedOp op x y =
 tokenW : Grammar state (TokenRawTokenKind) True a -> Grammar state (TokenRawTokenKind) True a
 tokenW p = do
   x <- p
-  match $ White
+  _ <- optional $ match $ White
   pure x
 
 mutual
+  dottedList : Grammar state (TokenRawTokenKind) True (List1 String)
+  dottedList = do
+    x <- sepBy1 (match $ Symbol ".") (match Ident)
+    match $ White
+    pure x
+
   builtinTerm : WithBounds (TokType Ident) -> Grammar state (TokenRawTokenKind) False (Expr ())
   builtinTerm _ = fail "TODO not implemented"
 
@@ -231,6 +262,7 @@ mutual
   varTerm : Grammar state (TokenRawTokenKind) True (Expr ())
   varTerm = do
       name <- bounds $ match Ident
+      _ <- optional $ match White
       builtinTerm name <|> boolTerm name <|> toVar (isKeyword name)
   where
     isKeyword : WithBounds (TokType Ident) -> Maybe $ Expr ()
@@ -258,7 +290,7 @@ mutual
   atom = varTerm <|> listExpr <|> (between (match $ Symbol "(") (match $ Symbol ")") exprTerm)
 
   boolOp : FC -> Grammar state (TokenRawTokenKind) True (Expr () -> Expr () -> Expr ())
-  boolOp fc = infixOp (match $ Symbol "&&") (boundedOp EBoolAnd)
+  boolOp fc = infixOp (tokenW $ match $ Symbol "&&") (boundedOp EBoolAnd)
 
   listExpr : Grammar state (TokenRawTokenKind) True (Expr ())
   listExpr = emptyList <|> populatedList
@@ -275,10 +307,38 @@ mutual
       end <- bounds $ match $ Symbol "]"
       pure $ EList (mergeBounds (boundToFC Nothing start) (boundToFC Nothing end)) (forget es)
 
+  withOp : FC -> Grammar state (TokenRawTokenKind) True (Expr () -> Expr () -> Expr ())
+  withOp fc =
+    let foo = the (List1 String) ("foo":::[]) in
+    do
+      tokenW $ match $ Keyword "with"
+      dl <- dottedList
+      pure (boundedOp (with' dl))
+  where
+    with' : List1 String -> FC -> Expr a -> Expr a -> Expr a
+    with' xs fc x y = EWith fc x xs y
+
+  withTerm : Grammar state (TokenRawTokenKind) True (Expr ())
+  withTerm = chainl1 atom (go EmptyFC)
+  where
+    with' : List1 String -> FC -> Expr a -> Expr a -> Expr a
+    with' xs fc x y = EWith fc x xs y
+    go : FC -> Grammar state (TokenRawTokenKind) True (Expr () -> Expr () -> Expr ())
+    go fc =
+      let foo = the (List1 String) ("foo":::[]) in
+      do
+        tokenW $ match $ Keyword "with"
+        dl <- dottedList
+        pure (boundedOp (with' dl))
+        -- TODO how to pass `dl` instead of `foo`
+
+  boolTerm' : Grammar state (TokenRawTokenKind) True (Expr ())
+  boolTerm' = chainl1 atom (boolOp EmptyFC)
+
   exprTerm : Grammar state (TokenRawTokenKind) True (Expr ())
   exprTerm = do
     letBinding <|>
-    chainl1 atom (boolOp EmptyFC)
+    chainl1 boolTerm' (withOp EmptyFC)
 
 Show (Bounds) where
   show (MkBounds startLine startCol endLine endCol) =
@@ -296,10 +356,10 @@ doParse input = do
   let tokens = lexRaw input
   putStrLn $ "tokens: " ++ show tokens
 
-  Right (rawTerms, x) <- pure $ parse exprTerm tokens
+  Right (expr, x) <- pure $ parse exprTerm tokens
     | Left e => printLn $ show e
   putStrLn $
     """
-    rawTerms: \{show rawTerms}
+    expr: \{show expr}
     x: \{show x}
     """
