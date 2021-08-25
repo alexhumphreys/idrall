@@ -187,7 +187,7 @@ mutual
       in case (isKeyword) of
               (True) => Nothing
               (False) => pure $ EVar (boundToFC Nothing b) val
-    toVar : Maybe $ Expr () -> Grammar state (TokenRawToken) False (Expr ())
+    toVar : Maybe (Expr ()) -> Grammar state (TokenRawToken) False (Expr ())
     toVar Nothing = fail "is reserved word"
     toVar (Just x) = pure x
 
@@ -276,10 +276,6 @@ finalParser = do
   e <- exprTerm
   eof
   pure e
-
-Show (Bounds) where
-  show (MkBounds startLine startCol endLine endCol) =
-    "sl:\{show startLine} sc:\{show startCol} el:\{show endLine} ec:\{show endCol}"
 
 Show (ParsingError (TokenRawToken)) where
   show (Error x xs) =
