@@ -57,6 +57,7 @@ mergeBounds EmptyFC EmptyFC = EmptyFC
 ||| Raw AST representation generated directly from the parser
 data Expr a
   = EVar FC String
+  | EApp FC (Expr a) (Expr a)
   | EBoolLit FC Bool
   | EBoolAnd FC (Expr a) (Expr a)
   | ELet FC String (Expr a) (Expr a)
@@ -65,6 +66,7 @@ data Expr a
 
 Show (Expr a) where
   show (EVar fc x) = "(\{show fc}:EVar \{show x})"
+  show (EApp fc x y) = "(\{show fc}:EApp \{show x} \{show y})"
   show (EBoolLit fc x) = "\{show fc}:EBoolLit \{show x}"
   show (EBoolAnd fc x y) = "(\{show fc}:EBoolAnd \{show x} \{show y})"
   show (ELet fc x y z) = "(\{show fc}:ELet \{show fc} \{show x} \{show y} \{show z})"
@@ -80,6 +82,7 @@ prettyDottedList (x :: xs) = pretty x <+> pretty "." <+> prettyDottedList xs
 Pretty (Expr ()) where
   pretty (EVar fc x) = pretty x
   pretty (EBoolLit fc x) = pretty $ show x
+  pretty (EApp fc x y) = pretty x <++> pretty y
   pretty (EBoolAnd fc x y) = pretty x <++> pretty "&&" <++> pretty y
   pretty (ELet fc x y z) = pretty "let" <+> pretty x <+> pretty y <+> pretty z
   pretty (EList fc xs) = pretty xs
@@ -89,6 +92,7 @@ Pretty (Expr ()) where
 
 getBounds : Expr a -> FC
 getBounds (EVar x _) = x
+getBounds (EApp x _ _) = x
 getBounds (EBoolLit x _) = x
 getBounds (EBoolAnd x _ _) = x
 getBounds (ELet x _ _ _) = x
@@ -97,6 +101,7 @@ getBounds (EWith x _ _ _) = x
 
 updateBounds : FC -> Expr a -> Expr a
 updateBounds x (EVar _ z) = EVar x z
+updateBounds x (EApp _ z w) = EApp x z w
 updateBounds x (EBoolLit _ z) = EBoolLit x z
 updateBounds x (EBoolAnd _ z w) = EBoolAnd x z w
 updateBounds x (ELet _ z w v) = ELet x z w v
@@ -166,7 +171,6 @@ mutual
   varTerm : Grammar state (TokenRawToken) True (Expr ())
   varTerm = do
       name <- bounds $ match Ident
-      _ <- optional $ match White
       builtinTerm name <|> boolLit name <|> toVar (isKeyword name)
   where
     isKeyword : WithBounds (TokType Ident) -> Maybe $ Expr ()
@@ -191,7 +195,9 @@ mutual
     pure $ ELet (mergeBounds (boundToFC Nothing start) (boundToFC Nothing end)) name e e'
 
   atom : Grammar state (TokenRawToken) True (Expr ())
-  atom = varTerm <|> listExpr <|> (between (match $ Symbol "(") (match $ Symbol ")") exprTerm)
+  atom = do
+    a <- varTerm <|> listExpr <|> (between (match $ Symbol "(") (match $ Symbol ")") exprTerm)
+    pure a
 
   listExpr : Grammar state (TokenRawToken) True (Expr ())
   listExpr = emptyList <|> populatedList
@@ -209,12 +215,20 @@ mutual
       pure $ EList (mergeBounds (boundToFC Nothing start) (boundToFC Nothing end)) (forget es)
 
   boolOp : FC -> Grammar state (TokenRawToken) True (Expr () -> Expr () -> Expr ())
-  boolOp fc = infixOp (tokenW $ match $ Symbol "&&") (boundedOp EBoolAnd)
+  boolOp fc = infixOp (do
+                      _ <- optional $ match White
+                      tokenW $ match $ Symbol "&&") (boundedOp EBoolAnd)
+
+  appOp : FC -> Grammar state (TokenRawToken) True (Expr () -> Expr () -> Expr ())
+  appOp fc = infixOp (match $ White) (boundedOp EApp)
 
   withOp : FC -> Grammar state (TokenRawToken) True (Expr () -> Expr () -> Expr ())
   withOp fc =
     let foo = the (List1 String) ("foo":::[]) in
     do
+      -- TODO find a better solution than just `match White` at the start of
+      -- every operator
+      _ <- optional $ match White
       tokenW $ match $ Keyword "with"
       dl <- dottedList
       _ <- optional $ match White
@@ -227,10 +241,19 @@ mutual
   boolTerm : Grammar state (TokenRawToken) True (Expr ())
   boolTerm = chainl1 atom (boolOp EmptyFC)
 
+  appTerm : Grammar state (TokenRawToken) True (Expr ())
+  appTerm = chainl1 boolTerm (appOp EmptyFC)
+
   exprTerm : Grammar state (TokenRawToken) True (Expr ())
   exprTerm = do
     letBinding <|>
-    chainl1 boolTerm (withOp EmptyFC)
+    chainl1 appTerm (withOp EmptyFC)
+
+finalParser : Grammar state (TokenRawToken) True (Expr ())
+finalParser = do
+  e <- exprTerm
+  eof
+  pure e
 
 Show (Bounds) where
   show (MkBounds startLine startCol endLine endCol) =
@@ -248,7 +271,7 @@ doParse input = do
   let tokens = lexRaw input
   putStrLn $ "tokens: " ++ show tokens
 
-  Right (expr, x) <- pure $ parse exprTerm tokens
+  Right (expr, x) <- pure $ parse exprTerm tokens -- TODO use finalParser
     | Left e => printLn $ show e
   let doc = the (Doc (Expr ())) $ pretty expr
   putStrLn $
