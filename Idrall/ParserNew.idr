@@ -9,113 +9,7 @@ import Text.Token
 import Text.Lexer
 import Text.Bounded
 
-import Idrall.Parser.Core
-
-data RawTokenKind
-  = Ident
-  | Symbol String
-  | Keyword String
-  | White
-  | Unrecognised
-
-Eq RawTokenKind where
-  (==) Ident Ident = True
-  (==) (Symbol x) (Symbol y) = x == y
-  (==) (Keyword x) (Keyword y) = x == y
-  (==) White White = True
-  (==) Unrecognised Unrecognised = True
-  (==) _ _ = False
-
-Show RawTokenKind where
-  show (Ident) = "Ident"
-  show (Symbol x) = "Symbol \{show x}"
-  show (Keyword x) = "Keyword \{show x}"
-  show (White) = "White"
-  show (Unrecognised) = "Unrecognised"
-
-TokenKind RawTokenKind where
-  TokType Ident = String
-  TokType (Symbol _) = ()
-  TokType (Keyword _) = ()
-  TokType White = ()
-  TokType Unrecognised = String
-
-  tokValue Ident x = x
-  tokValue (Symbol _) _ = ()
-  tokValue (Keyword _) _ = ()
-  tokValue White _ = ()
-  tokValue Unrecognised x = x
-
-Show (Token RawTokenKind) where
-  show (Tok Ident text) = "Ident \{show $ Token.tokValue Ident text}"
-  show (Tok (Symbol x) _) = "Symbol \{show $ x}"
-  show (Tok (Keyword x) _) = "Keyword \{show $ x}"
-  show (Tok White _) = "White"
-  show (Tok (Unrecognised) text) = "Unrecognised \{show $ Token.tokValue Unrecognised text}"
-
-TokenRawTokenKind : Type
-TokenRawTokenKind = Token RawTokenKind
-
-isIdentStart : Char -> Bool
-isIdentStart '_' = True
-isIdentStart x  = isAlpha x || x > chr 160
-
-isIdentTrailing : Char -> Bool
-isIdentTrailing '_' = True
-isIdentTrailing '/' = True
-isIdentTrailing x = isAlphaNum x || x > chr 160
-
-export %inline
-isIdent : String -> Bool
-isIdent string =
-  case unpack string of
-    []      => False
-    (x::xs) => isIdentStart x && all (isIdentTrailing) xs
-
-ident : Lexer
-ident = do
-  (pred $ isIdentStart) <+> (many . pred $ isIdentTrailing)
-
-
-builtins : List String
-builtins = ["True", "False"]
-
-keywords : List String
-keywords = ["let", "in", "with"]
-
-parseIdent : String -> TokenRawTokenKind
-parseIdent x =
-  let isKeyword = elem x keywords
-      isBuiltin = elem x builtins in
-  case (isKeyword, isBuiltin) of
-       (True, False) => Tok (Keyword x) x
-       (False, True) => Tok Ident x -- TODO Builtin
-       (_, _) => Tok Ident x
-
-rawTokenMap : TokenMap (TokenRawTokenKind)
-rawTokenMap =
-   ((toTokenMap $
-    [ (exact "=", Symbol "=")
-    , (exact "&&", Symbol "&&")
-    , (exact "(", Symbol "(")
-    , (exact ")", Symbol ")")
-    , (exact "{", Symbol "{")
-    , (exact "}", Symbol "}")
-    , (exact "[", Symbol "[")
-    , (exact "]", Symbol "]")
-    , (exact ",", Symbol ",")
-    , (exact ".", Symbol ".")
-    , (space, White)
-    ]) ++ [(ident, (\x => parseIdent x))])
-    ++ (toTokenMap $ [ (any, Unrecognised) ])
-
-lexRaw : String -> List (WithBounds TokenRawTokenKind)
-lexRaw str =
-  let
-    (tokens, _, _, _) = lex rawTokenMap str -- those _ contain the source positions
-  in
-    -- map TokenData.tok tokens
-    tokens
+import Idrall.Parser.Lexer
 
 public export
 FilePos : Type
@@ -188,42 +82,32 @@ updateBounds x (ELet _ z w v) = ELet x z w v
 updateBounds x (EList _ z) = EList x z
 updateBounds x (EWith _ z s y) = EWith x z s y
 
-{-
-chainr1 : Monad m => (p : ParserT str m a)
-                  -> (op: ParserT str m (a -> a -> a))
-                  -> ParserT str m a
-chainr1 p op = p >>= rest
-  where rest a1 = (do f <- op
-                      a2 <- p >>= rest
-                      rest (f a1 a2)) <|> pure a1
--}
-
-chainr1 : Grammar state (TokenRawTokenKind) True (a)
-       -> Grammar state (TokenRawTokenKind) True (a -> a -> a)
-       -> Grammar state (TokenRawTokenKind) True (a)
+chainr1 : Grammar state (TokenRawToken) True (a)
+       -> Grammar state (TokenRawToken) True (a -> a -> a)
+       -> Grammar state (TokenRawToken) True (a)
 chainr1 p op = p >>= rest
 where
-  rest : a -> Grammar state (TokenRawTokenKind) False (a)
+  rest : a -> Grammar state (TokenRawToken) False (a)
   rest a1 = (do f <- op
                 a2 <- p >>= rest
                 rest (f a1 a2)) <|> pure a1
 
-chainl1 : Grammar state (TokenRawTokenKind) True (a)
-       -> Grammar state (TokenRawTokenKind) True (a -> a -> a)
-       -> Grammar state (TokenRawTokenKind) True (a)
+chainl1 : Grammar state (TokenRawToken) True (a)
+       -> Grammar state (TokenRawToken) True (a -> a -> a)
+       -> Grammar state (TokenRawToken) True (a)
 chainl1 p op = do
   x <- p
   rest x
 where
-  rest : a -> Grammar state (TokenRawTokenKind) False (a)
+  rest : a -> Grammar state (TokenRawToken) False (a)
   rest a1 = (do
     f <- op
     a2 <- p
     rest (f a1 a2)) <|> pure a1
 
-infixOp : Grammar state (TokenRawTokenKind) True ()
+infixOp : Grammar state (TokenRawToken) True ()
         -> (a -> a -> a)
-        -> Grammar state (TokenRawTokenKind) True (a -> a -> a)
+        -> Grammar state (TokenRawToken) True (a -> a -> a)
 infixOp l ctor = do
   l
   Text.Parser.Core.pure ctor
@@ -238,28 +122,28 @@ boundedOp op x y =
       mB = mergeBounds xB yB in
       op mB x y
 
-tokenW : Grammar state (TokenRawTokenKind) True a -> Grammar state (TokenRawTokenKind) True a
+tokenW : Grammar state (TokenRawToken) True a -> Grammar state (TokenRawToken) True a
 tokenW p = do
   x <- p
   _ <- optional $ match $ White
   pure x
 
 mutual
-  dottedList : Grammar state (TokenRawTokenKind) True (List1 String)
+  dottedList : Grammar state (TokenRawToken) True (List1 String)
   dottedList = do
     x <- sepBy1 (match $ Symbol ".") (match Ident)
     match $ White
     pure x
 
-  builtinTerm : WithBounds (TokType Ident) -> Grammar state (TokenRawTokenKind) False (Expr ())
+  builtinTerm : WithBounds (TokType Ident) -> Grammar state (TokenRawToken) False (Expr ())
   builtinTerm _ = fail "TODO not implemented"
 
-  boolTerm : WithBounds (TokType Ident) -> Grammar state (TokenRawTokenKind) False (Expr ())
+  boolTerm : WithBounds (TokType Ident) -> Grammar state (TokenRawToken) False (Expr ())
   boolTerm b@(MkBounded "True" isIrrelevant bounds) = pure $ EBoolLit (boundToFC Nothing b) True
   boolTerm b@(MkBounded "False" isIrrelevant bounds) = pure $ EBoolLit (boundToFC Nothing b) False
   boolTerm (MkBounded _ isIrrelevant bounds) = fail "unrecognised const"
 
-  varTerm : Grammar state (TokenRawTokenKind) True (Expr ())
+  varTerm : Grammar state (TokenRawToken) True (Expr ())
   varTerm = do
       name <- bounds $ match Ident
       _ <- optional $ match White
@@ -271,11 +155,11 @@ mutual
       in case (isKeyword) of
               (True) => Nothing
               (False) => pure $ EVar (boundToFC Nothing b) val
-    toVar : Maybe $ Expr () -> Grammar state (TokenRawTokenKind) False (Expr ())
+    toVar : Maybe $ Expr () -> Grammar state (TokenRawToken) False (Expr ())
     toVar Nothing = fail "is reserved word"
     toVar (Just x) = pure x
 
-  letBinding : Grammar state (TokenRawTokenKind) True (Expr ())
+  letBinding : Grammar state (TokenRawToken) True (Expr ())
   letBinding = do
     start <- bounds $ tokenW $ match $ Keyword "let"
     name <- tokenW $ match $ Ident
@@ -286,28 +170,28 @@ mutual
     e' <- exprTerm
     pure $ ELet (mergeBounds (boundToFC Nothing start) (boundToFC Nothing end)) name e e'
 
-  atom : Grammar state (TokenRawTokenKind) True (Expr ())
+  atom : Grammar state (TokenRawToken) True (Expr ())
   atom = varTerm <|> listExpr <|> (between (match $ Symbol "(") (match $ Symbol ")") exprTerm)
 
-  boolOp : FC -> Grammar state (TokenRawTokenKind) True (Expr () -> Expr () -> Expr ())
-  boolOp fc = infixOp (tokenW $ match $ Symbol "&&") (boundedOp EBoolAnd)
-
-  listExpr : Grammar state (TokenRawTokenKind) True (Expr ())
+  listExpr : Grammar state (TokenRawToken) True (Expr ())
   listExpr = emptyList <|> populatedList
   where
-    emptyList : Grammar state (TokenRawTokenKind) True (Expr ())
+    emptyList : Grammar state (TokenRawToken) True (Expr ())
     emptyList = do
       start <- bounds $ match $ Symbol "["
       end <- bounds $ match $ Symbol "]"
       pure $ EList (mergeBounds (boundToFC Nothing start) (boundToFC Nothing end)) []
-    populatedList : Grammar state (TokenRawTokenKind) True (Expr ())
+    populatedList : Grammar state (TokenRawToken) True (Expr ())
     populatedList = do
       start <- bounds $ match $ Symbol "["
       es <- sepBy1 (match $ Symbol ",") exprTerm
       end <- bounds $ match $ Symbol "]"
       pure $ EList (mergeBounds (boundToFC Nothing start) (boundToFC Nothing end)) (forget es)
 
-  withOp : FC -> Grammar state (TokenRawTokenKind) True (Expr () -> Expr () -> Expr ())
+  boolOp : FC -> Grammar state (TokenRawToken) True (Expr () -> Expr () -> Expr ())
+  boolOp fc = infixOp (tokenW $ match $ Symbol "&&") (boundedOp EBoolAnd)
+
+  withOp : FC -> Grammar state (TokenRawToken) True (Expr () -> Expr () -> Expr ())
   withOp fc =
     let foo = the (List1 String) ("foo":::[]) in
     do
@@ -318,12 +202,12 @@ mutual
     with' : List1 String -> FC -> Expr a -> Expr a -> Expr a
     with' xs fc x y = EWith fc x xs y
 
-  withTerm : Grammar state (TokenRawTokenKind) True (Expr ())
+  withTerm : Grammar state (TokenRawToken) True (Expr ())
   withTerm = chainl1 atom (go EmptyFC)
   where
     with' : List1 String -> FC -> Expr a -> Expr a -> Expr a
     with' xs fc x y = EWith fc x xs y
-    go : FC -> Grammar state (TokenRawTokenKind) True (Expr () -> Expr () -> Expr ())
+    go : FC -> Grammar state (TokenRawToken) True (Expr () -> Expr () -> Expr ())
     go fc =
       let foo = the (List1 String) ("foo":::[]) in
       do
@@ -332,10 +216,10 @@ mutual
         pure (boundedOp (with' dl))
         -- TODO how to pass `dl` instead of `foo`
 
-  boolTerm' : Grammar state (TokenRawTokenKind) True (Expr ())
+  boolTerm' : Grammar state (TokenRawToken) True (Expr ())
   boolTerm' = chainl1 atom (boolOp EmptyFC)
 
-  exprTerm : Grammar state (TokenRawTokenKind) True (Expr ())
+  exprTerm : Grammar state (TokenRawToken) True (Expr ())
   exprTerm = do
     letBinding <|>
     chainl1 boolTerm' (withOp EmptyFC)
@@ -344,7 +228,7 @@ Show (Bounds) where
   show (MkBounds startLine startCol endLine endCol) =
     "sl:\{show startLine} sc:\{show startCol} el:\{show endLine} ec:\{show endCol}"
 
-Show (ParsingError (TokenRawTokenKind)) where
+Show (ParsingError (TokenRawToken)) where
   show (Error x xs) =
     """
     error: \{x}
