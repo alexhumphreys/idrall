@@ -9,6 +9,10 @@ import Text.Token
 import Text.Lexer
 import Text.Bounded
 
+import Text.PrettyPrint.Prettyprinter
+import Text.PrettyPrint.Prettyprinter.Util
+import Text.PrettyPrint.Prettyprinter.Doc
+
 import Idrall.Parser.Lexer
 
 public export
@@ -25,6 +29,7 @@ data FC = MkFC        OriginDesc FilePos FilePos
         | ||| Virtual FCs are FC attached to desugared/generated code.
           MkVirtualFC OriginDesc FilePos FilePos
         | EmptyFC
+%name FC fc
 
 Show FC where
   show (MkFC Nothing x y) = "\{show x}-\{show y}"
@@ -65,6 +70,22 @@ Show (Expr a) where
   show (ELet fc x y z) = "(\{show fc}:ELet \{show fc} \{show x} \{show y} \{show z})"
   show (EList fc x) = "(\{show fc}:EList \{show fc} \{show x})"
   show (EWith fc x s y) = "(\{show fc}:EWith \{show fc} \{show x} \{show s} \{show y})"
+
+
+prettyDottedList : List String -> Doc ann
+prettyDottedList [] = pretty ""
+prettyDottedList (x :: []) = pretty x
+prettyDottedList (x :: xs) = pretty x <+> pretty "." <+> prettyDottedList xs
+
+Pretty (Expr ()) where
+  pretty (EVar fc x) = pretty x
+  pretty (EBoolLit fc x) = pretty $ show x
+  pretty (EBoolAnd fc x y) = pretty x <++> pretty "&&" <++> pretty y
+  pretty (ELet fc x y z) = pretty "let" <+> pretty x <+> pretty y <+> pretty z
+  pretty (EList fc xs) = pretty xs
+  pretty (EWith fc x xs y) =
+    pretty x <++> pretty "with" <++>
+    prettyDottedList (forget xs) <++> pretty "=" <++> pretty y
 
 getBounds : Expr a -> FC
 getBounds (EVar x _) = x
@@ -132,7 +153,6 @@ mutual
   dottedList : Grammar state (TokenRawToken) True (List1 String)
   dottedList = do
     x <- sepBy1 (match $ Symbol ".") (match Ident)
-    match $ White
     pure x
 
   builtinTerm : WithBounds (TokType Ident) -> Grammar state (TokenRawToken) False (Expr ())
@@ -197,6 +217,8 @@ mutual
     do
       tokenW $ match $ Keyword "with"
       dl <- dottedList
+      _ <- optional $ match White
+      tokenW $ match $ Symbol "="
       pure (boundedOp (with' dl))
   where
     with' : List1 String -> FC -> Expr a -> Expr a -> Expr a
@@ -228,8 +250,10 @@ doParse input = do
 
   Right (expr, x) <- pure $ parse exprTerm tokens
     | Left e => printLn $ show e
+  let doc = the (Doc (Expr ())) $ pretty expr
   putStrLn $
     """
     expr: \{show expr}
     x: \{show x}
+    pretty: \{show doc}
     """
