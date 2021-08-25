@@ -9,8 +9,6 @@ import Text.Token
 import Text.Lexer
 import Text.Bounded
 
-import Idrall.Parser.Core
-
 public export
 data RawToken
   = Ident
