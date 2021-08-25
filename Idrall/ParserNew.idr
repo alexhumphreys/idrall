@@ -82,32 +82,32 @@ updateBounds x (ELet _ z w v) = ELet x z w v
 updateBounds x (EList _ z) = EList x z
 updateBounds x (EWith _ z s y) = EWith x z s y
 
-chainr1 : Grammar state (TokenRawToken) True (a)
-       -> Grammar state (TokenRawToken) True (a -> a -> a)
-       -> Grammar state (TokenRawToken) True (a)
+chainr1 : Grammar state t True (a)
+       -> Grammar state t True (a -> a -> a)
+       -> Grammar state t True (a)
 chainr1 p op = p >>= rest
 where
-  rest : a -> Grammar state (TokenRawToken) False (a)
+  rest : a -> Grammar state t False (a)
   rest a1 = (do f <- op
                 a2 <- p >>= rest
                 rest (f a1 a2)) <|> pure a1
 
-chainl1 : Grammar state (TokenRawToken) True (a)
-       -> Grammar state (TokenRawToken) True (a -> a -> a)
-       -> Grammar state (TokenRawToken) True (a)
+chainl1 : Grammar state t True (a)
+       -> Grammar state t True (a -> a -> a)
+       -> Grammar state t True (a)
 chainl1 p op = do
   x <- p
   rest x
 where
-  rest : a -> Grammar state (TokenRawToken) False (a)
+  rest : a -> Grammar state t False (a)
   rest a1 = (do
     f <- op
     a2 <- p
     rest (f a1 a2)) <|> pure a1
 
-infixOp : Grammar state (TokenRawToken) True ()
+infixOp : Grammar state t True ()
         -> (a -> a -> a)
-        -> Grammar state (TokenRawToken) True (a -> a -> a)
+        -> Grammar state t True (a -> a -> a)
 infixOp l ctor = do
   l
   Text.Parser.Core.pure ctor
@@ -138,16 +138,16 @@ mutual
   builtinTerm : WithBounds (TokType Ident) -> Grammar state (TokenRawToken) False (Expr ())
   builtinTerm _ = fail "TODO not implemented"
 
-  boolTerm : WithBounds (TokType Ident) -> Grammar state (TokenRawToken) False (Expr ())
-  boolTerm b@(MkBounded "True" isIrrelevant bounds) = pure $ EBoolLit (boundToFC Nothing b) True
-  boolTerm b@(MkBounded "False" isIrrelevant bounds) = pure $ EBoolLit (boundToFC Nothing b) False
-  boolTerm (MkBounded _ isIrrelevant bounds) = fail "unrecognised const"
+  boolLit : WithBounds (TokType Ident) -> Grammar state (TokenRawToken) False (Expr ())
+  boolLit b@(MkBounded "True" isIrrelevant bounds) = pure $ EBoolLit (boundToFC Nothing b) True
+  boolLit b@(MkBounded "False" isIrrelevant bounds) = pure $ EBoolLit (boundToFC Nothing b) False
+  boolLit (MkBounded _ isIrrelevant bounds) = fail "unrecognised const"
 
   varTerm : Grammar state (TokenRawToken) True (Expr ())
   varTerm = do
       name <- bounds $ match Ident
       _ <- optional $ match White
-      builtinTerm name <|> boolTerm name <|> toVar (isKeyword name)
+      builtinTerm name <|> boolLit name <|> toVar (isKeyword name)
   where
     isKeyword : WithBounds (TokType Ident) -> Maybe $ Expr ()
     isKeyword b@(MkBounded val isIrrelevant bounds) =
@@ -202,27 +202,13 @@ mutual
     with' : List1 String -> FC -> Expr a -> Expr a -> Expr a
     with' xs fc x y = EWith fc x xs y
 
-  withTerm : Grammar state (TokenRawToken) True (Expr ())
-  withTerm = chainl1 atom (go EmptyFC)
-  where
-    with' : List1 String -> FC -> Expr a -> Expr a -> Expr a
-    with' xs fc x y = EWith fc x xs y
-    go : FC -> Grammar state (TokenRawToken) True (Expr () -> Expr () -> Expr ())
-    go fc =
-      let foo = the (List1 String) ("foo":::[]) in
-      do
-        tokenW $ match $ Keyword "with"
-        dl <- dottedList
-        pure (boundedOp (with' dl))
-        -- TODO how to pass `dl` instead of `foo`
-
-  boolTerm' : Grammar state (TokenRawToken) True (Expr ())
-  boolTerm' = chainl1 atom (boolOp EmptyFC)
+  boolTerm : Grammar state (TokenRawToken) True (Expr ())
+  boolTerm = chainl1 atom (boolOp EmptyFC)
 
   exprTerm : Grammar state (TokenRawToken) True (Expr ())
   exprTerm = do
     letBinding <|>
-    chainl1 boolTerm' (withOp EmptyFC)
+    chainl1 boolTerm (withOp EmptyFC)
 
 Show (Bounds) where
   show (MkBounds startLine startCol endLine endCol) =
