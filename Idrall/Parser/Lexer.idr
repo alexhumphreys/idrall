@@ -103,6 +103,7 @@ rawTokenMap =
    ((toTokenMap $
     [ (exact "=", Symbol "=")
     , (exact "&&", Symbol "&&")
+    , (exact "->", Symbol "->")
     , (exact "(", Symbol "(")
     , (exact ")", Symbol ")")
     , (exact "{", Symbol "{")

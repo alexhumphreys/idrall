@@ -58,6 +58,7 @@ mergeBounds EmptyFC EmptyFC = EmptyFC
 data Expr a
   = EVar FC String
   | EApp FC (Expr a) (Expr a)
+  | EPi FC String (Expr a) (Expr a)
   | EBoolLit FC Bool
   | EBoolAnd FC (Expr a) (Expr a)
   | ELet FC String (Expr a) (Expr a)
@@ -67,6 +68,7 @@ data Expr a
 Show (Expr a) where
   show (EVar fc x) = "(\{show fc}:EVar \{show x})"
   show (EApp fc x y) = "(\{show fc}:EApp \{show x} \{show y})"
+  show (EPi fc n x y) = "(\{show fc}:EPi \{show n} \{show x} \{show y})"
   show (EBoolLit fc x) = "\{show fc}:EBoolLit \{show x}"
   show (EBoolAnd fc x y) = "(\{show fc}:EBoolAnd \{show x} \{show y})"
   show (ELet fc x y z) = "(\{show fc}:ELet \{show fc} \{show x} \{show y} \{show z})"
@@ -83,6 +85,10 @@ Pretty (Expr ()) where
   pretty (EVar fc x) = pretty x
   pretty (EBoolLit fc x) = pretty $ show x
   pretty (EApp fc x y) = pretty x <++> pretty y
+  pretty (EPi fc "_" x y) = pretty x <++> pretty "->" <++> pretty y
+  pretty (EPi fc n x y) =
+    pretty "forall(" <+> pretty n <++> pretty ":" <++> pretty x <+> pretty ")"
+      <++> pretty "->" <++> pretty y
   pretty (EBoolAnd fc x y) = pretty x <++> pretty "&&" <++> pretty y
   pretty (ELet fc x y z) = pretty "let" <+> pretty x <+> pretty y <+> pretty z
   pretty (EList fc xs) = pretty xs
@@ -93,6 +99,7 @@ Pretty (Expr ()) where
 getBounds : Expr a -> FC
 getBounds (EVar x _) = x
 getBounds (EApp x _ _) = x
+getBounds (EPi x _ _ _) = x
 getBounds (EBoolLit x _) = x
 getBounds (EBoolAnd x _ _) = x
 getBounds (ELet x _ _ _) = x
@@ -102,6 +109,7 @@ getBounds (EWith x _ _ _) = x
 updateBounds : FC -> Expr a -> Expr a
 updateBounds x (EVar _ z) = EVar x z
 updateBounds x (EApp _ z w) = EApp x z w
+updateBounds x (EPi _ n z w) = EPi x n z w
 updateBounds x (EBoolLit _ z) = EBoolLit x z
 updateBounds x (EBoolAnd _ z w) = EBoolAnd x z w
 updateBounds x (ELet _ z w v) = ELet x z w v
@@ -215,16 +223,27 @@ mutual
       pure $ EList (mergeBounds (boundToFC Nothing start) (boundToFC Nothing end)) (forget es)
 
   boolOp : FC -> Grammar state (TokenRawToken) True (Expr () -> Expr () -> Expr ())
-  boolOp fc = infixOp (do
-                      _ <- optional $ match White
-                      tokenW $ match $ Symbol "&&") (boundedOp EBoolAnd)
+  boolOp fc =
+    infixOp (do
+      _ <- optional $ match White
+      tokenW $ match $ Symbol "&&")
+      (boundedOp EBoolAnd)
+
+  piOp : FC -> Grammar state (TokenRawToken) True (Expr () -> Expr () -> Expr ())
+  piOp fc =
+    infixOp (do
+      _ <- optional $ match White
+      tokenW $ match $ Symbol "->")
+      (boundedOp $ epi' "foo")
+  where
+    epi' : String -> FC -> Expr a -> Expr a -> Expr a
+    epi' n fc y z = EPi fc n y z
 
   appOp : FC -> Grammar state (TokenRawToken) True (Expr () -> Expr () -> Expr ())
   appOp fc = infixOp (match $ White) (boundedOp EApp)
 
   withOp : FC -> Grammar state (TokenRawToken) True (Expr () -> Expr () -> Expr ())
   withOp fc =
-    let foo = the (List1 String) ("foo":::[]) in
     do
       -- TODO find a better solution than just `match White` at the start of
       -- every operator
@@ -241,8 +260,11 @@ mutual
   boolTerm : Grammar state (TokenRawToken) True (Expr ())
   boolTerm = chainl1 atom (boolOp EmptyFC)
 
+  piTerm : Grammar state (TokenRawToken) True (Expr ())
+  piTerm = chainr1 boolTerm (piOp EmptyFC)
+
   appTerm : Grammar state (TokenRawToken) True (Expr ())
-  appTerm = chainl1 boolTerm (appOp EmptyFC)
+  appTerm = chainl1 piTerm (appOp EmptyFC)
 
   exprTerm : Grammar state (TokenRawToken) True (Expr ())
   exprTerm = do
