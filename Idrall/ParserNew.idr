@@ -284,9 +284,18 @@ Show (ParsingError (TokenRawToken)) where
     tokens: \{show xs}
     """
 
+removeComments : List (WithBounds TokenRawToken) -> List (WithBounds TokenRawToken)
+removeComments xs = filter pred xs
+where
+  pred : WithBounds TokenRawToken -> Bool
+  pred bounds = let tok = kind $ val bounds in
+    case tok of
+         Comment => False
+         _ => True
+
 doParse : String -> IO ()
 doParse input = do
-  let tokens = lexRaw input
+  let tokens = removeComments $ lexRaw input
   putStrLn $ "tokens: " ++ show tokens
 
   Right (expr, x) <- pure $ parse exprTerm tokens -- TODO use finalParser

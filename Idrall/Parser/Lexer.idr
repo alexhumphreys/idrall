@@ -15,6 +15,7 @@ data RawToken
   | Symbol String
   | Keyword String
   | White
+  | Comment
   | Unrecognised
 
 export
@@ -23,6 +24,7 @@ Eq RawToken where
   (==) (Symbol x) (Symbol y) = x == y
   (==) (Keyword x) (Keyword y) = x == y
   (==) White White = True
+  (==) Comment Comment = True
   (==) Unrecognised Unrecognised = True
   (==) _ _ = False
 
@@ -32,6 +34,7 @@ Show RawToken where
   show (Symbol x) = "Symbol \{show x}"
   show (Keyword x) = "Keyword \{show x}"
   show (White) = "White"
+  show (Comment) = "Comment"
   show (Unrecognised) = "Unrecognised"
 
 public export
@@ -40,12 +43,14 @@ TokenKind RawToken where
   TokType (Symbol _) = ()
   TokType (Keyword _) = ()
   TokType White = ()
+  TokType Comment = String
   TokType Unrecognised = String
 
   tokValue Ident x = x
   tokValue (Symbol _) _ = ()
   tokValue (Keyword _) _ = ()
   tokValue White _ = ()
+  tokValue Comment x = x
   tokValue Unrecognised x = x
 
 export
@@ -54,6 +59,7 @@ Show (Token RawToken) where
   show (Tok (Symbol x) _) = "Symbol \{show $ x}"
   show (Tok (Keyword x) _) = "Keyword \{show $ x}"
   show (Tok White _) = "White"
+  show (Tok Comment text) = "Comment \{show $ Token.tokValue Comment text}"
   show (Tok (Unrecognised) text) = "Unrecognised \{show $ Token.tokValue Unrecognised text}"
 
 public export
@@ -80,6 +86,52 @@ ident : Lexer
 ident = do
   (pred $ isIdentStart) <+> (many . pred $ isIdentTrailing)
 
+mutual
+  ||| The mutually defined functions represent different states in a
+  ||| small automaton.
+  ||| `toEndComment` is the default state and it will munch through
+  ||| the input until we detect a special character (a dash, an
+  ||| opening brace, or a double quote) and then switch to the
+  ||| appropriate state.
+  toEndComment : (k : Nat) -> Recognise (k /= 0)
+  toEndComment Z = empty
+  toEndComment (S k)
+               = some (pred (\c => c /= '-' && c /= '{' && c /= '"'))
+                        <+> toEndComment (S k)
+             <|> is '{' <+> singleBrace k
+             <|> is '-' <+> singleDash k
+             <|> stringLit <+> toEndComment (S k)
+
+  ||| After reading a single brace, we may either finish reading an
+  ||| opening delimiter or ignore it (e.g. it could be an implicit
+  ||| binder).
+  singleBrace : (k : Nat) -> Lexer
+  singleBrace k
+     =  is '-' <+> many (is '-')    -- opening delimiter
+               <+> singleDash (S k) -- handles the {----} special case
+    <|> toEndComment (S k)          -- not a valid comment
+
+  ||| After reading a single dash, we may either find another one,
+  ||| meaning we may have started reading a line comment, or find
+  ||| a closing brace meaning we have found a closing delimiter.
+  singleDash : (k : Nat) -> Lexer
+  singleDash k
+     =  is '-' <+> doubleDash k    -- comment or closing delimiter
+    <|> is '}' <+> toEndComment k  -- closing delimiter
+    <|> toEndComment (S k)         -- not a valid comment
+
+  ||| After reading a double dash, we are potentially reading a line
+  ||| comment unless the series of uninterrupted dashes is ended with
+  ||| a closing brace in which case it is a closing delimiter.
+  doubleDash : (k : Nat) -> Lexer
+  doubleDash k = with Prelude.(::)
+      many (is '-') <+> choice            -- absorb all dashes
+        [ is '}' <+> toEndComment k                      -- closing delimiter
+        , many (isNot '\n') <+> toEndComment (S k)       -- line comment
+        ]
+
+blockComment : Lexer
+blockComment = is '{' <+> is '-' <+> toEndComment 1
 
 export
 builtins : List String
@@ -100,6 +152,7 @@ parseIdent x =
 
 rawTokenMap : TokenMap (TokenRawToken)
 rawTokenMap =
+   [(blockComment, (\x => Tok Comment x))] ++
    ((toTokenMap $
     [ (exact "=", Symbol "=")
     , (exact "&&", Symbol "&&")
