@@ -7,6 +7,7 @@ import Text.Parser
 import Text.Quantity
 import Text.Token
 import Text.Lexer
+import Text.Lexer.Tokenizer
 import Text.Bounded
 
 public export
@@ -14,6 +15,9 @@ data RawToken
   = Ident
   | Symbol String
   | Keyword String
+  | InterpBegin
+  | InterpEnd
+  | StringLit String
   | White
   | Comment
   | Unrecognised
@@ -23,6 +27,9 @@ Eq RawToken where
   (==) Ident Ident = True
   (==) (Symbol x) (Symbol y) = x == y
   (==) (Keyword x) (Keyword y) = x == y
+  (==) InterpBegin InterpBegin = True
+  (==) InterpEnd InterpEnd = True
+  (==) (StringLit x) (StringLit y) = x == y
   (==) White White = True
   (==) Comment Comment = True
   (==) Unrecognised Unrecognised = True
@@ -33,15 +40,21 @@ Show RawToken where
   show (Ident) = "Ident"
   show (Symbol x) = "Symbol \{show x}"
   show (Keyword x) = "Keyword \{show x}"
-  show (White) = "White"
-  show (Comment) = "Comment"
-  show (Unrecognised) = "Unrecognised"
+  show InterpBegin = "InterpBegin"
+  show InterpEnd = "InterpEnd"
+  show (StringLit x) = "StringLit \{show x}"
+  show White = "White"
+  show Comment = "Comment"
+  show Unrecognised = "Unrecognised"
 
 public export
 TokenKind RawToken where
   TokType Ident = String
   TokType (Symbol _) = ()
   TokType (Keyword _) = ()
+  TokType InterpBegin = ()
+  TokType InterpEnd = ()
+  TokType (StringLit _) = ()
   TokType White = ()
   TokType Comment = String
   TokType Unrecognised = String
@@ -49,6 +62,9 @@ TokenKind RawToken where
   tokValue Ident x = x
   tokValue (Symbol _) _ = ()
   tokValue (Keyword _) _ = ()
+  tokValue InterpBegin _ = ()
+  tokValue InterpEnd _ = ()
+  tokValue (StringLit _) _ = ()
   tokValue White _ = ()
   tokValue Comment x = x
   tokValue Unrecognised x = x
@@ -58,6 +74,9 @@ Show (Token RawToken) where
   show (Tok Ident text) = "Ident \{show $ Token.tokValue Ident text}"
   show (Tok (Symbol x) _) = "Symbol \{show $ x}"
   show (Tok (Keyword x) _) = "Keyword \{show $ x}"
+  show (Tok InterpBegin _) = "InterpBegin"
+  show (Tok InterpEnd _) = "InterpEnd"
+  show (Tok (StringLit x) _) = "StringLit \{show x}"
   show (Tok White _) = "White"
   show (Tok Comment text) = "Comment \{show $ Token.tokValue Comment text}"
   show (Tok (Unrecognised) text) = "Unrecognised \{show $ Token.tokValue Unrecognised text}"
@@ -85,6 +104,23 @@ isIdent string =
 ident : Lexer
 ident = do
   (pred $ isIdentStart) <+> (many . pred $ isIdentTrailing)
+
+export
+builtins : List String
+builtins = ["True", "False"]
+
+export
+keywords : List String
+keywords = ["let", "in", "with"]
+
+parseIdent : String -> RawToken
+parseIdent x =
+  let isKeyword = elem x keywords
+      isBuiltin = elem x builtins in
+  case (isKeyword, isBuiltin) of
+       (True, False) => (Keyword x)
+       (False, True) => Ident -- TODO Builtin
+       (_, _) => Ident
 
 mutual
   ||| The mutually defined functions represent different states in a
@@ -133,22 +169,50 @@ mutual
 blockComment : Lexer
 blockComment = is '{' <+> is '-' <+> toEndComment 1
 
-export
-builtins : List String
-builtins = ["True", "False"]
+stringBegin : Lexer
+stringBegin = many (is '#') <+> (is '"')
 
-export
-keywords : List String
-keywords = ["let", "in", "with"]
+stringEnd : String
+stringEnd = "\""
 
-parseIdent : String -> TokenRawToken
-parseIdent x =
-  let isKeyword = elem x keywords
-      isBuiltin = elem x builtins in
-  case (isKeyword, isBuiltin) of
-       (True, False) => Tok (Keyword x) x
-       (False, True) => Tok Ident x -- TODO Builtin
-       (_, _) => Tok Ident x
+multilineEnd : String
+multilineEnd = "''"
+
+multilineBegin : Lexer
+multilineBegin = exact "''"
+
+mutual
+  stringTokens : Bool -> Tokenizer RawToken
+  stringTokens multi =
+    let escapeChars = "\\"
+        interpStart = "${"
+        escapeLexer = escape (exact escapeChars) any
+        charLexer = non $ exact (if multi then multilineEnd else stringEnd)
+    in match (someUntil (exact interpStart) (escapeLexer <|> charLexer)) (\x => StringLit x)
+       <|> compose (exact interpStart)
+                   (const InterpBegin)
+                   (const ())
+                   (\_ => rawTokens)
+                   (const $ is '}')
+                   (const InterpEnd)
+
+  rawTokens : Tokenizer RawToken
+  rawTokens =
+    match blockComment (const Comment)
+    <|> match (exact "=") Symbol
+    <|> match (exact "&&") Symbol
+    <|> match (exact "->") Symbol
+    <|> match (exact "(") Symbol
+    <|> match (exact ")") Symbol
+    <|> match (exact "{") Symbol
+    <|> match (exact "}") Symbol
+    <|> match (exact "[") Symbol
+    <|> match (exact "]") Symbol
+    <|> match (exact ",") Symbol
+    <|> match (exact ".") Symbol
+    <|> match space (const White)
+    <|> match ident parseIdent
+    <|> match any (const Unrecognised)
 
 rawTokenMap : TokenMap (TokenRawToken)
 rawTokenMap =
@@ -166,7 +230,8 @@ rawTokenMap =
     , (exact ",", Symbol ",")
     , (exact ".", Symbol ".")
     , (space, White)
-    ]) ++ [(ident, (\x => parseIdent x))])
+    ]) -- ++ [(ident, (\x => parseIdent x))]
+    )
     ++ (toTokenMap $ [ (any, Unrecognised) ])
 
 export

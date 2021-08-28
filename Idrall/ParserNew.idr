@@ -162,6 +162,13 @@ tokenW p = do
   _ <- optional $ match $ White
   pure x
 
+anyIdent : Grammar state (RawToken) True RawToken
+anyIdent =
+  terminal "expected identity" $
+    \case
+      Ident => Just Ident
+      _ => Nothing
+
 mutual
   dottedList : Grammar state (TokenRawToken) True (List1 String)
   dottedList = do
