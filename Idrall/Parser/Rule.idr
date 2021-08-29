@@ -44,6 +44,39 @@ symbol req =
       _ => Nothing
 
 export
+textBoundary : Rule ()
+textBoundary =
+  terminal "expected \" or ''" $
+    \case
+      StringBegin _ => Just ()
+      StringEnd => Just ()
+      _ => Nothing
+
+export
+textLit : Rule String
+textLit =
+  terminal "expected valid Text" $
+    \case
+      StringLit x => Just x
+      _ => Nothing
+
+export
+interpBegin : Rule ()
+interpBegin =
+  terminal "expected ${" $
+    \case
+      InterpBegin => Just ()
+      _ => Nothing
+
+export
+interpEnd : Rule ()
+interpEnd =
+  terminal "expected }" $
+    \case
+      InterpEnd => Just ()
+      _ => Nothing
+
+export
 identPart : Rule String
 identPart =
   terminal "expected name" $

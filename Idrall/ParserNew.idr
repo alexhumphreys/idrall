@@ -44,6 +44,9 @@ both f x = (f (fst x), f (snd x))
 boundToFC : OriginDesc -> WithBounds t -> FC
 boundToFC mbModIdent b = MkFC mbModIdent (both cast $ start b) (both cast $ end b)
 
+boundToFC2 : OriginDesc -> WithBounds t -> WithBounds t -> FC
+boundToFC2 mbModIdent s e = MkFC mbModIdent (both cast $ start s) (both cast $ end e)
+
 mergeBounds : FC -> FC -> FC
 mergeBounds (MkFC x start _) (MkFC y _ end) = (MkFC x start end)
 mergeBounds (MkFC x start _) (MkVirtualFC y _ end) = (MkFC x start end)
@@ -55,26 +58,46 @@ mergeBounds EmptyFC f@(MkFC x start end) = f
 mergeBounds EmptyFC f@(MkVirtualFC x start end) = f
 mergeBounds EmptyFC EmptyFC = EmptyFC
 
-||| Raw AST representation generated directly from the parser
-data Expr a
-  = EVar FC String
-  | EApp FC (Expr a) (Expr a)
-  | EPi FC String (Expr a) (Expr a)
-  | EBoolLit FC Bool
-  | EBoolAnd FC (Expr a) (Expr a)
-  | ELet FC String (Expr a) (Expr a)
-  | EList FC (List (Expr a))
-  | EWith FC (Expr a) (List1 String) (Expr a)
+mutual
+  public export
+  data Chunks a = MkChunks (List (String, Expr a)) String
 
-Show (Expr a) where
-  show (EVar fc x) = "(\{show fc}:EVar \{show x})"
-  show (EApp fc x y) = "(\{show fc}:EApp \{show x} \{show y})"
-  show (EPi fc n x y) = "(\{show fc}:EPi \{show n} \{show x} \{show y})"
-  show (EBoolLit fc x) = "\{show fc}:EBoolLit \{show x}"
-  show (EBoolAnd fc x y) = "(\{show fc}:EBoolAnd \{show x} \{show y})"
-  show (ELet fc x y z) = "(\{show fc}:ELet \{show fc} \{show x} \{show y} \{show z})"
-  show (EList fc x) = "(\{show fc}:EList \{show fc} \{show x})"
-  show (EWith fc x s y) = "(\{show fc}:EWith \{show fc} \{show x} \{show s} \{show y})"
+  ||| Raw AST representation generated directly from the parser
+  data Expr a
+    = EVar FC String
+    | EApp FC (Expr a) (Expr a)
+    | EPi FC String (Expr a) (Expr a)
+    | EBoolLit FC Bool
+    | EBoolAnd FC (Expr a) (Expr a)
+    | ELet FC String (Expr a) (Expr a)
+    | EList FC (List (Expr a))
+    | EWith FC (Expr a) (List1 String) (Expr a)
+    | ETextLit FC (Chunks a)
+
+public export
+Semigroup (Chunks a) where
+  (<+>) (MkChunks xysL zL) (MkChunks [] zR) = MkChunks xysL (zL <+> zR)
+  (<+>) (MkChunks xysL zL) (MkChunks ((x, y) :: xysR) zR) =
+    MkChunks (xysL ++ (zL <+> x, y)::xysR) zR
+
+public export
+Monoid (Chunks a) where
+  neutral = MkChunks [] neutral
+
+mutual
+  Show (Chunks a) where
+    show (MkChunks xs x) = "MkChunks \{show xs} \{show x}"
+
+  Show (Expr a) where
+    show (EVar fc x) = "(\{show fc}:EVar \{show x})"
+    show (EApp fc x y) = "(\{show fc}:EApp \{show x} \{show y})"
+    show (EPi fc n x y) = "(\{show fc}:EPi \{show n} \{show x} \{show y})"
+    show (EBoolLit fc x) = "\{show fc}:EBoolLit \{show x}"
+    show (EBoolAnd fc x y) = "(\{show fc}:EBoolAnd \{show x} \{show y})"
+    show (ELet fc x y z) = "(\{show fc}:ELet \{show fc} \{show x} \{show y} \{show z})"
+    show (EList fc x) = "(\{show fc}:EList \{show fc} \{show x})"
+    show (EWith fc x s y) = "(\{show fc}:EWith \{show fc} \{show x} \{show s} \{show y})"
+    show (ETextLit fc cs) = "(\{show fc}:ETextLit \{show fc} \{show cs}"
 
 
 prettyDottedList : List String -> Doc ann
@@ -82,20 +105,26 @@ prettyDottedList [] = pretty ""
 prettyDottedList (x :: []) = pretty x
 prettyDottedList (x :: xs) = pretty x <+> pretty "." <+> prettyDottedList xs
 
-Pretty (Expr ()) where
-  pretty (EVar fc x) = pretty x
-  pretty (EBoolLit fc x) = pretty $ show x
-  pretty (EApp fc x y) = pretty x <++> pretty y
-  pretty (EPi fc "_" x y) = pretty x <++> pretty "->" <++> pretty y
-  pretty (EPi fc n x y) =
-    pretty "forall(" <+> pretty n <++> pretty ":" <++> pretty x <+> pretty ")"
-      <++> pretty "->" <++> pretty y
-  pretty (EBoolAnd fc x y) = pretty x <++> pretty "&&" <++> pretty y
-  pretty (ELet fc x y z) = pretty "let" <+> pretty x <+> pretty y <+> pretty z
-  pretty (EList fc xs) = pretty xs
-  pretty (EWith fc x xs y) =
-    pretty x <++> pretty "with" <++>
-    prettyDottedList (forget xs) <++> pretty "=" <++> pretty y
+mutual
+  Pretty (Chunks ()) where
+    pretty (MkChunks xs x) = pretty xs <+> pretty x
+
+  Pretty (Expr ()) where
+    pretty (EVar fc x) = pretty x
+    pretty (EBoolLit fc x) = pretty $ show x
+    pretty (EApp fc x y) = pretty x <++> pretty y
+    pretty (EPi fc "_" x y) = pretty x <++> pretty "->" <++> pretty y
+    pretty (EPi fc n x y) =
+      pretty "forall(" <+> pretty n <++> pretty ":" <++> pretty x <+> pretty ")"
+        <++> pretty "->" <++> pretty y
+    pretty (EBoolAnd fc x y) = pretty x <++> pretty "&&" <++> pretty y
+    pretty (ELet fc x y z) = pretty "let" <+> pretty x <+> pretty y <+> pretty z
+    pretty (EList fc xs) = pretty xs
+    pretty (EWith fc x xs y) =
+      pretty x <++> pretty "with" <++>
+      prettyDottedList (forget xs) <++> pretty "=" <++> pretty y
+    pretty (ETextLit fc cs) =
+      pretty cs
 
 getBounds : Expr a -> FC
 getBounds (EVar x _) = x
@@ -106,6 +135,7 @@ getBounds (EBoolAnd x _ _) = x
 getBounds (ELet x _ _ _) = x
 getBounds (EList x _) = x
 getBounds (EWith x _ _ _) = x
+getBounds (ETextLit x _) = x
 
 updateBounds : FC -> Expr a -> Expr a
 updateBounds x (EVar _ z) = EVar x z
@@ -116,6 +146,7 @@ updateBounds x (EBoolAnd _ z w) = EBoolAnd x z w
 updateBounds x (ELet _ z w v) = ELet x z w v
 updateBounds x (EList _ z) = EList x z
 updateBounds x (EWith _ z s y) = EWith x z s y
+updateBounds x (ETextLit _ z) = ETextLit x z
 
 public export
 Rule : Type -> Type -> Type
@@ -175,6 +206,23 @@ mutual
   builtinTerm : WithBounds String -> Grammar state (TokenRawToken) False (Expr ())
   builtinTerm _ = fail "TODO not implemented"
 
+  textLit : Grammar state (TokenRawToken) True (Expr ())
+  textLit = do
+    start <- bounds $ textBoundary
+    chunks <- some (interpLit <|> chunkLit)
+    end <- bounds $ textBoundary
+    pure $ ETextLit (boundToFC2 Nothing start end) (foldl (<+>) neutral chunks)
+  where
+    interpLit : Rule (Chunks ())
+    interpLit = do
+      e <- between interpBegin interpEnd exprTerm
+      pure $ MkChunks [("", e)] ""
+
+    chunkLit : Rule (Chunks ())
+    chunkLit = do
+      str <- Parser.Rule.textLit
+      pure (MkChunks [] str)
+
   boolLit : WithBounds String -> Grammar state (TokenRawToken) False (Expr ())
   boolLit b@(MkBounded "True" isIrrelevant bounds) = pure $ EBoolLit (boundToFC Nothing b) True
   boolLit b@(MkBounded "False" isIrrelevant bounds) = pure $ EBoolLit (boundToFC Nothing b) False
@@ -208,7 +256,7 @@ mutual
 
   atom : Grammar state (TokenRawToken) True (Expr ())
   atom = do
-    a <- varTerm <|> listExpr <|> (between (symbol "(") (symbol ")") exprTerm)
+    a <- varTerm <|> textLit <|> listExpr <|> (between (symbol "(") (symbol ")") exprTerm)
     pure a
 
   listExpr : Grammar state (TokenRawToken) True (Expr ())
@@ -317,7 +365,7 @@ doParse input = do
     """
 
 normalString : String
-normalString = "\"foo\""
+normalString = "\"f\noo\""
 
 interpString : String
 interpString = "\"fo ${True && \"ba ${False} r\"} o\""

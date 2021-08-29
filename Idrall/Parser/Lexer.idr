@@ -55,45 +55,6 @@ Show RawToken where
   show Unrecognised = "Unrecognised"
   show EndInput = "EndInput"
 
-{-
-public export
-TokenKind RawToken where
-  TokType (Ident _) = ()
-  TokType (Symbol _) = ()
-  TokType (Keyword _) = ()
-  TokType InterpBegin = ()
-  TokType InterpEnd = ()
-  TokType (StringLit _) = ()
-  TokType White = ()
-  TokType (Comment _) = ()
-  TokType Unrecognised = String
-  TokType EndInput = ()
-
-  tokValue (Ident _) _ = ()
-  tokValue (Symbol _) _ = ()
-  tokValue (Keyword _) _ = ()
-  tokValue InterpBegin _ = ()
-  tokValue InterpEnd _ = ()
-  tokValue (StringLit _) _ = ()
-  tokValue White _ = ()
-  tokValue (Comment _) _ = ()
-  tokValue Unrecognised x = x
-  tokValue EndInput _ = ()
-
-export
-Show (Token RawToken) where
-  show (Tok (Ident x) _) = "Ident \{show x}"
-  show (Tok (Symbol x) _) = "Symbol \{show x}"
-  show (Tok (Keyword x) _) = "Keyword \{show x}"
-  show (Tok InterpBegin _) = "InterpBegin"
-  show (Tok InterpEnd _) = "InterpEnd"
-  show (Tok (StringLit x) _) = "StringLit \{show x}"
-  show (Tok White _) = "White"
-  show (Tok (Comment x) _) = "Comment \{show x}"
-  show (Tok (Unrecognised) text) = "Unrecognised \{show $ Token.tokValue Unrecognised text}"
-  show (Tok EndInput _) = "EndInput"
-  -}
-
 public export
 TokenRawToken : Type
 TokenRawToken = RawToken
