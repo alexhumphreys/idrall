@@ -7,12 +7,17 @@ import Text.Lexer
 import public Text.Lexer.Tokenizer
 
 public export
+data IsMultiline = Multi | Single
+
+public export
 data RawToken
   = Ident String
   | Symbol String
   | Keyword String
   | InterpBegin
   | InterpEnd
+  | StringBegin IsMultiline
+  | StringEnd
   | StringLit String
   | White
   | Comment String
@@ -26,6 +31,8 @@ Eq RawToken where
   (==) (Keyword x) (Keyword y) = x == y
   (==) InterpBegin InterpBegin = True
   (==) InterpEnd InterpEnd = True
+  (==) (StringBegin x) (StringBegin y) = ?kjkj
+  (==) StringEnd StringEnd = True
   (==) (StringLit x) (StringLit y) = x == y
   (==) White White = True
   (==) (Comment x) (Comment y) =  x == y
@@ -40,12 +47,15 @@ Show RawToken where
   show (Keyword x) = "Keyword \{show x}"
   show InterpBegin = "InterpBegin"
   show InterpEnd = "InterpEnd"
+  show (StringBegin x) = "StringBegin"
+  show StringEnd = "StringEnd"
   show (StringLit x) = "StringLit \{show x}"
   show White = "White"
   show (Comment x) = "Comment \{show x}"
   show Unrecognised = "Unrecognised"
   show EndInput = "EndInput"
 
+{-
 public export
 TokenKind RawToken where
   TokType (Ident _) = ()
@@ -82,6 +92,7 @@ Show (Token RawToken) where
   show (Tok (Comment x) _) = "Comment \{show x}"
   show (Tok (Unrecognised) text) = "Unrecognised \{show $ Token.tokValue Unrecognised text}"
   show (Tok EndInput _) = "EndInput"
+  -}
 
 public export
 TokenRawToken : Type
@@ -172,7 +183,7 @@ blockComment : Lexer
 blockComment = is '{' <+> is '-' <+> toEndComment 1
 
 stringBegin : Lexer
-stringBegin = many (is '#') <+> (is '"')
+stringBegin = is '"'
 
 stringEnd : String
 stringEnd = "\""
@@ -184,8 +195,8 @@ multilineBegin : Lexer
 multilineBegin = exact "''"
 
 mutual
-  stringTokens : Bool -> Tokenizer RawToken
-  stringTokens multi =
+  stringTokens : Bool -> Nat -> Tokenizer RawToken
+  stringTokens multi _ =
     let escapeChars = "\\"
         interpStart = "${"
         escapeLexer = escape (exact escapeChars) any
@@ -214,40 +225,13 @@ mutual
     <|> match (exact ".") Symbol
     <|> match space (const White)
     <|> match ident parseIdent
+    <|> compose stringBegin
+                (const $ StringBegin Single)
+                (\x => 0)
+                (stringTokens False)
+                (\hashtag => exact stringEnd <+> reject (is '"'))
+                (const StringEnd)
     <|> match any (const Unrecognised)
-
-{-
-rawTokenMap : TokenMap (TokenRawToken)
-rawTokenMap =
-   [(blockComment, (\x => Tok (Comment x) x))] ++
-   ((toTokenMap $
-    [ (exact "=", Symbol "=")
-    , (exact "&&", Symbol "&&")
-    , (exact "->", Symbol "->")
-    , (exact "(", Symbol "(")
-    , (exact ")", Symbol ")")
-    , (exact "{", Symbol "{")
-    , (exact "}", Symbol "}")
-    , (exact "[", Symbol "[")
-    , (exact "]", Symbol "]")
-    , (exact ",", Symbol ",")
-    , (exact ".", Symbol ".")
-    , (space, White)
-    ]) -- ++ [(ident, (\x => parseIdent x))]
-    )
-    ++ (toTokenMap $ [ (any, Unrecognised) ])
-    -}
-
-{-
-export
-lexRaw : String -> List (WithBounds TokenRawToken)
-lexRaw str =
-  let
-    (tokens, _, _, _) = lex rawTokenMap str -- those _ contain the source positions
-  in
-    -- map TokenData.tok tokens
-    tokens
-    -}
 
 export
 lexTo : Lexer ->

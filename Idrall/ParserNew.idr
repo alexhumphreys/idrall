@@ -315,3 +315,9 @@ doParse input = do
     x: \{show x}
     pretty: \{show doc}
     """
+
+normalString : String
+normalString = "\"foo\""
+
+interpString : String
+interpString = "\"fo ${True && \"ba ${False} r\"} o\""
