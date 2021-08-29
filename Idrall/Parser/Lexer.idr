@@ -3,87 +3,89 @@ module Idrall.Parser.Lexer
 import Data.List
 import Data.List1
 
-import Text.Parser
-import Text.Quantity
-import Text.Token
 import Text.Lexer
-import Text.Lexer.Tokenizer
-import Text.Bounded
+import public Text.Lexer.Tokenizer
 
 public export
 data RawToken
-  = Ident
+  = Ident String
   | Symbol String
   | Keyword String
   | InterpBegin
   | InterpEnd
   | StringLit String
   | White
-  | Comment
+  | Comment String
   | Unrecognised
+  | EndInput
 
 export
 Eq RawToken where
-  (==) Ident Ident = True
+  (==) (Ident x) (Ident y) = x == y
   (==) (Symbol x) (Symbol y) = x == y
   (==) (Keyword x) (Keyword y) = x == y
   (==) InterpBegin InterpBegin = True
   (==) InterpEnd InterpEnd = True
   (==) (StringLit x) (StringLit y) = x == y
   (==) White White = True
-  (==) Comment Comment = True
+  (==) (Comment x) (Comment y) =  x == y
   (==) Unrecognised Unrecognised = True
+  (==) EndInput EndInput = True
   (==) _ _ = False
 
 export
 Show RawToken where
-  show (Ident) = "Ident"
+  show (Ident x) = "Ident \{show x}"
   show (Symbol x) = "Symbol \{show x}"
   show (Keyword x) = "Keyword \{show x}"
   show InterpBegin = "InterpBegin"
   show InterpEnd = "InterpEnd"
   show (StringLit x) = "StringLit \{show x}"
   show White = "White"
-  show Comment = "Comment"
+  show (Comment x) = "Comment \{show x}"
   show Unrecognised = "Unrecognised"
+  show EndInput = "EndInput"
 
 public export
 TokenKind RawToken where
-  TokType Ident = String
+  TokType (Ident _) = ()
   TokType (Symbol _) = ()
   TokType (Keyword _) = ()
   TokType InterpBegin = ()
   TokType InterpEnd = ()
   TokType (StringLit _) = ()
   TokType White = ()
-  TokType Comment = String
+  TokType (Comment _) = ()
   TokType Unrecognised = String
+  TokType EndInput = ()
 
-  tokValue Ident x = x
+  tokValue (Ident _) _ = ()
   tokValue (Symbol _) _ = ()
   tokValue (Keyword _) _ = ()
   tokValue InterpBegin _ = ()
   tokValue InterpEnd _ = ()
   tokValue (StringLit _) _ = ()
   tokValue White _ = ()
-  tokValue Comment x = x
+  tokValue (Comment _) _ = ()
   tokValue Unrecognised x = x
+  tokValue EndInput _ = ()
 
 export
 Show (Token RawToken) where
-  show (Tok Ident text) = "Ident \{show $ Token.tokValue Ident text}"
-  show (Tok (Symbol x) _) = "Symbol \{show $ x}"
-  show (Tok (Keyword x) _) = "Keyword \{show $ x}"
+  show (Tok (Ident x) _) = "Ident \{show x}"
+  show (Tok (Symbol x) _) = "Symbol \{show x}"
+  show (Tok (Keyword x) _) = "Keyword \{show x}"
   show (Tok InterpBegin _) = "InterpBegin"
   show (Tok InterpEnd _) = "InterpEnd"
   show (Tok (StringLit x) _) = "StringLit \{show x}"
   show (Tok White _) = "White"
-  show (Tok Comment text) = "Comment \{show $ Token.tokValue Comment text}"
+  show (Tok (Comment x) _) = "Comment \{show x}"
   show (Tok (Unrecognised) text) = "Unrecognised \{show $ Token.tokValue Unrecognised text}"
+  show (Tok EndInput _) = "EndInput"
 
 public export
 TokenRawToken : Type
-TokenRawToken = Token RawToken
+TokenRawToken = RawToken
 
 isIdentStart : Char -> Bool
 isIdentStart '_' = True
@@ -119,8 +121,8 @@ parseIdent x =
       isBuiltin = elem x builtins in
   case (isKeyword, isBuiltin) of
        (True, False) => (Keyword x)
-       (False, True) => Ident -- TODO Builtin
-       (_, _) => Ident
+       (False, True) => Ident x -- TODO Builtin
+       (_, _) => Ident x
 
 mutual
   ||| The mutually defined functions represent different states in a
@@ -198,7 +200,7 @@ mutual
 
   rawTokens : Tokenizer RawToken
   rawTokens =
-    match blockComment (const Comment)
+    match blockComment Comment
     <|> match (exact "=") Symbol
     <|> match (exact "&&") Symbol
     <|> match (exact "->") Symbol
@@ -214,9 +216,10 @@ mutual
     <|> match ident parseIdent
     <|> match any (const Unrecognised)
 
+{-
 rawTokenMap : TokenMap (TokenRawToken)
 rawTokenMap =
-   [(blockComment, (\x => Tok Comment x))] ++
+   [(blockComment, (\x => Tok (Comment x) x))] ++
    ((toTokenMap $
     [ (exact "=", Symbol "=")
     , (exact "&&", Symbol "&&")
@@ -233,7 +236,9 @@ rawTokenMap =
     ]) -- ++ [(ident, (\x => parseIdent x))]
     )
     ++ (toTokenMap $ [ (any, Unrecognised) ])
+    -}
 
+{-
 export
 lexRaw : String -> List (WithBounds TokenRawToken)
 lexRaw str =
@@ -242,3 +247,24 @@ lexRaw str =
   in
     -- map TokenData.tok tokens
     tokens
+    -}
+
+export
+lexTo : Lexer ->
+        String -> Either (StopReason, Int, Int, String) (List (WithBounds RawToken))
+lexTo reject str
+    = case lexTo reject rawTokens str of
+           -- Add the EndInput token so that we'll have a line and column
+           -- number to read when storing spans in the file
+           (tok, (EndInput, l, c, _)) => Right (filter notComment tok ++
+                                      [MkBounded EndInput False (MkBounds l c l c)])
+           (_, fail) => Left fail
+    where
+      notComment : WithBounds RawToken -> Bool
+      notComment t = case t.val of
+                          Comment _ => False
+                          _ => True
+
+export
+lex : String -> Either (StopReason, Int, Int, String) (List (WithBounds RawToken))
+lex = lexTo (pred $ const False)

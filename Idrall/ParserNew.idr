@@ -14,6 +14,7 @@ import Text.PrettyPrint.Prettyprinter.Util
 import Text.PrettyPrint.Prettyprinter.Doc
 
 import Idrall.Parser.Lexer
+import Idrall.Parser.Rule
 
 public export
 FilePos : Type
@@ -116,6 +117,14 @@ updateBounds x (ELet _ z w v) = ELet x z w v
 updateBounds x (EList _ z) = EList x z
 updateBounds x (EWith _ z s y) = EWith x z s y
 
+public export
+Rule : Type -> Type -> Type
+Rule state ty = Grammar state RawToken True ty
+
+public export
+EmptyRule : Type -> Type -> Type
+EmptyRule state ty = Grammar state RawToken False ty
+
 chainr1 : Grammar state t True (a)
        -> Grammar state t True (a -> a -> a)
        -> Grammar state t True (a)
@@ -159,36 +168,24 @@ boundedOp op x y =
 tokenW : Grammar state (TokenRawToken) True a -> Grammar state (TokenRawToken) True a
 tokenW p = do
   x <- p
-  _ <- optional $ match $ White
+  _ <- optional whitespace
   pure x
 
-anyIdent : Grammar state (RawToken) True RawToken
-anyIdent =
-  terminal "expected identity" $
-    \case
-      Ident => Just Ident
-      _ => Nothing
-
 mutual
-  dottedList : Grammar state (TokenRawToken) True (List1 String)
-  dottedList = do
-    x <- sepBy1 (match $ Symbol ".") (match Ident)
-    pure x
-
-  builtinTerm : WithBounds (TokType Ident) -> Grammar state (TokenRawToken) False (Expr ())
+  builtinTerm : WithBounds String -> Grammar state (TokenRawToken) False (Expr ())
   builtinTerm _ = fail "TODO not implemented"
 
-  boolLit : WithBounds (TokType Ident) -> Grammar state (TokenRawToken) False (Expr ())
+  boolLit : WithBounds String -> Grammar state (TokenRawToken) False (Expr ())
   boolLit b@(MkBounded "True" isIrrelevant bounds) = pure $ EBoolLit (boundToFC Nothing b) True
   boolLit b@(MkBounded "False" isIrrelevant bounds) = pure $ EBoolLit (boundToFC Nothing b) False
   boolLit (MkBounded _ isIrrelevant bounds) = fail "unrecognised const"
 
   varTerm : Grammar state (TokenRawToken) True (Expr ())
   varTerm = do
-      name <- bounds $ match Ident
+      name <- bounds $ identPart
       builtinTerm name <|> boolLit name <|> toVar (isKeyword name)
   where
-    isKeyword : WithBounds (TokType Ident) -> Maybe $ Expr ()
+    isKeyword : WithBounds String -> Maybe $ Expr ()
     isKeyword b@(MkBounded val isIrrelevant bounds) =
       let isKeyword = elem val keywords
       in case (isKeyword) of
@@ -200,18 +197,18 @@ mutual
 
   letBinding : Grammar state (TokenRawToken) True (Expr ())
   letBinding = do
-    start <- bounds $ tokenW $ match $ Keyword "let"
-    name <- tokenW $ match $ Ident
-    tokenW $ match $ Symbol "="
+    start <- bounds $ tokenW $ keyword "let"
+    name <- tokenW $ identPart
+    xxx <- tokenW $ symbol "="
     e <- exprTerm
-    match $ White
-    end <- bounds $ tokenW $ match $ Keyword "in" -- TODO is this a good end position?
+    xxx <- whitespace
+    end <- bounds $ tokenW $ keyword "in" -- TODO is this a good end position?
     e' <- exprTerm
     pure $ ELet (mergeBounds (boundToFC Nothing start) (boundToFC Nothing end)) name e e'
 
   atom : Grammar state (TokenRawToken) True (Expr ())
   atom = do
-    a <- varTerm <|> listExpr <|> (between (match $ Symbol "(") (match $ Symbol ")") exprTerm)
+    a <- varTerm <|> listExpr <|> (between (symbol "(") (symbol ")") exprTerm)
     pure a
 
   listExpr : Grammar state (TokenRawToken) True (Expr ())
@@ -219,46 +216,46 @@ mutual
   where
     emptyList : Grammar state (TokenRawToken) True (Expr ())
     emptyList = do
-      start <- bounds $ match $ Symbol "["
-      end <- bounds $ match $ Symbol "]"
+      start <- bounds $ symbol "["
+      end <- bounds $ symbol "]"
       pure $ EList (mergeBounds (boundToFC Nothing start) (boundToFC Nothing end)) []
     populatedList : Grammar state (TokenRawToken) True (Expr ())
     populatedList = do
-      start <- bounds $ match $ Symbol "["
-      es <- sepBy1 (match $ Symbol ",") exprTerm
-      end <- bounds $ match $ Symbol "]"
+      start <- bounds $ symbol "["
+      es <- sepBy1 (symbol ",") exprTerm
+      end <- bounds $ symbol "]"
       pure $ EList (mergeBounds (boundToFC Nothing start) (boundToFC Nothing end)) (forget es)
 
   boolOp : FC -> Grammar state (TokenRawToken) True (Expr () -> Expr () -> Expr ())
   boolOp fc =
     infixOp (do
-      _ <- optional $ match White
-      tokenW $ match $ Symbol "&&")
+      _ <- optional whitespace
+      tokenW $ symbol "&&")
       (boundedOp EBoolAnd)
 
   piOp : FC -> Grammar state (TokenRawToken) True (Expr () -> Expr () -> Expr ())
   piOp fc =
     infixOp (do
-      _ <- optional $ match White
-      tokenW $ match $ Symbol "->")
+      _ <- optional whitespace
+      tokenW $ symbol "->")
       (boundedOp $ epi' "foo")
   where
     epi' : String -> FC -> Expr a -> Expr a -> Expr a
     epi' n fc y z = EPi fc n y z
 
   appOp : FC -> Grammar state (TokenRawToken) True (Expr () -> Expr () -> Expr ())
-  appOp fc = infixOp (match $ White) (boundedOp EApp)
+  appOp fc = infixOp whitespace (boundedOp EApp)
 
   withOp : FC -> Grammar state (TokenRawToken) True (Expr () -> Expr () -> Expr ())
   withOp fc =
     do
       -- TODO find a better solution than just `match White` at the start of
       -- every operator
-      _ <- optional $ match White
-      tokenW $ match $ Keyword "with"
+      _ <- optional $ whitespace
+      tokenW $ keyword "with"
       dl <- dottedList
-      _ <- optional $ match White
-      tokenW $ match $ Symbol "="
+      _ <- optional $ whitespace
+      tokenW $ symbol "="
       pure (boundedOp (with' dl))
   where
     with' : List1 String -> FC -> Expr a -> Expr a -> Expr a
@@ -294,19 +291,23 @@ Show (ParsingError (TokenRawToken)) where
 removeComments : List (WithBounds TokenRawToken) -> List (WithBounds TokenRawToken)
 removeComments xs = filter pred xs
 where
-  pred : WithBounds TokenRawToken -> Bool
-  pred bounds = let tok = kind $ val bounds in
+  pred : WithBounds RawToken -> Bool
+  pred bounds = let tok = val bounds in
     case tok of
-         Comment => False
+         Comment _ => False
          _ => True
+
+doParse' : String -> Either e a
 
 doParse : String -> IO ()
 doParse input = do
-  let tokens = removeComments $ lexRaw input
+  Right tokens <- pure $ Idrall.Parser.Lexer.lex input
+    | Left e => printLn $ show e
   putStrLn $ "tokens: " ++ show tokens
 
   Right (expr, x) <- pure $ parse exprTerm tokens -- TODO use finalParser
     | Left e => printLn $ show e
+
   let doc = the (Doc (Expr ())) $ pretty expr
   putStrLn $
     """
