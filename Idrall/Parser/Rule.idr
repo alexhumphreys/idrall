@@ -85,9 +85,16 @@ identPart =
       _ => Nothing
 
 export
+embedPath : Rule String
+embedPath =
+  terminal "expected import path" $
+    \case
+      FilePath x => Just x
+      _ => Nothing
+
+export
 dottedList : Rule (List1 String)
 dottedList = do
   -- x <- sepBy1 (match $ Symbol ".") (identPart)
   x <- sepBy1 (symbol ".") (identPart)
   pure x
-

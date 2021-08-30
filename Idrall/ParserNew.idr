@@ -47,6 +47,9 @@ boundToFC mbModIdent b = MkFC mbModIdent (both cast $ start b) (both cast $ end 
 boundToFC2 : OriginDesc -> WithBounds t -> WithBounds t -> FC
 boundToFC2 mbModIdent s e = MkFC mbModIdent (both cast $ start s) (both cast $ end e)
 
+initBounds : OriginDesc
+initBounds = Nothing
+
 mergeBounds : FC -> FC -> FC
 mergeBounds (MkFC x start _) (MkFC y _ end) = (MkFC x start end)
 mergeBounds (MkFC x start _) (MkVirtualFC y _ end) = (MkFC x start end)
@@ -73,6 +76,7 @@ mutual
     | EList FC (List (Expr a))
     | EWith FC (Expr a) (List1 String) (Expr a)
     | ETextLit FC (Chunks a)
+    | EEmbed FC String
 
 public export
 Semigroup (Chunks a) where
@@ -98,7 +102,7 @@ mutual
     show (EList fc x) = "(\{show fc}:EList \{show fc} \{show x})"
     show (EWith fc x s y) = "(\{show fc}:EWith \{show fc} \{show x} \{show s} \{show y})"
     show (ETextLit fc cs) = "(\{show fc}:ETextLit \{show fc} \{show cs}"
-
+    show (EEmbed fc x) = "(\{show fc}:EEmbed \{show fc} \{show x}"
 
 prettyDottedList : List String -> Doc ann
 prettyDottedList [] = pretty ""
@@ -123,8 +127,8 @@ mutual
     pretty (EWith fc x xs y) =
       pretty x <++> pretty "with" <++>
       prettyDottedList (forget xs) <++> pretty "=" <++> pretty y
-    pretty (ETextLit fc cs) =
-      pretty cs
+    pretty (ETextLit fc cs) = pretty cs
+    pretty (EEmbed fc x) = pretty x
 
 getBounds : Expr a -> FC
 getBounds (EVar x _) = x
@@ -136,6 +140,7 @@ getBounds (ELet x _ _ _) = x
 getBounds (EList x _) = x
 getBounds (EWith x _ _ _) = x
 getBounds (ETextLit x _) = x
+getBounds (EEmbed x _) = x
 
 updateBounds : FC -> Expr a -> Expr a
 updateBounds x (EVar _ z) = EVar x z
@@ -147,6 +152,7 @@ updateBounds x (ELet _ z w v) = ELet x z w v
 updateBounds x (EList _ z) = EList x z
 updateBounds x (EWith _ z s y) = EWith x z s y
 updateBounds x (ETextLit _ z) = ETextLit x z
+updateBounds x (EEmbed _ z) = EEmbed x z
 
 public export
 Rule : Type -> Type -> Type
@@ -206,12 +212,17 @@ mutual
   builtinTerm : WithBounds String -> Grammar state (TokenRawToken) False (Expr ())
   builtinTerm _ = fail "TODO not implemented"
 
+  embed : Grammar state (TokenRawToken) True (Expr ())
+  embed = do
+    s <- bounds $ embedPath
+    pure $ EEmbed (boundToFC initBounds s) (val s)
+
   textLit : Grammar state (TokenRawToken) True (Expr ())
   textLit = do
     start <- bounds $ textBoundary
     chunks <- some (interpLit <|> chunkLit)
     end <- bounds $ textBoundary
-    pure $ ETextLit (boundToFC2 Nothing start end) (foldl (<+>) neutral chunks)
+    pure $ ETextLit (boundToFC2 initBounds start end) (foldl (<+>) neutral chunks)
   where
     interpLit : Rule (Chunks ())
     interpLit = do
@@ -224,8 +235,8 @@ mutual
       pure (MkChunks [] str)
 
   boolLit : WithBounds String -> Grammar state (TokenRawToken) False (Expr ())
-  boolLit b@(MkBounded "True" isIrrelevant bounds) = pure $ EBoolLit (boundToFC Nothing b) True
-  boolLit b@(MkBounded "False" isIrrelevant bounds) = pure $ EBoolLit (boundToFC Nothing b) False
+  boolLit b@(MkBounded "True" isIrrelevant bounds) = pure $ EBoolLit (boundToFC initBounds b) True
+  boolLit b@(MkBounded "False" isIrrelevant bounds) = pure $ EBoolLit (boundToFC initBounds b) False
   boolLit (MkBounded _ isIrrelevant bounds) = fail "unrecognised const"
 
   varTerm : Grammar state (TokenRawToken) True (Expr ())
@@ -238,7 +249,7 @@ mutual
       let isKeyword = elem val keywords
       in case (isKeyword) of
               (True) => Nothing
-              (False) => pure $ EVar (boundToFC Nothing b) val
+              (False) => pure $ EVar (boundToFC initBounds b) val
     toVar : Maybe (Expr ()) -> Grammar state (TokenRawToken) False (Expr ())
     toVar Nothing = fail "is reserved word"
     toVar (Just x) = pure x
@@ -252,11 +263,13 @@ mutual
     xxx <- whitespace
     end <- bounds $ tokenW $ keyword "in" -- TODO is this a good end position?
     e' <- exprTerm
-    pure $ ELet (mergeBounds (boundToFC Nothing start) (boundToFC Nothing end)) name e e'
+    pure $ ELet (mergeBounds (boundToFC initBounds start) (boundToFC initBounds end)) name e e'
 
   atom : Grammar state (TokenRawToken) True (Expr ())
   atom = do
-    a <- varTerm <|> textLit <|> listExpr <|> (between (symbol "(") (symbol ")") exprTerm)
+    a <- varTerm <|> textLit
+      <|> embed
+      <|> listExpr <|> (between (symbol "(") (symbol ")") exprTerm)
     pure a
 
   listExpr : Grammar state (TokenRawToken) True (Expr ())
@@ -266,13 +279,13 @@ mutual
     emptyList = do
       start <- bounds $ symbol "["
       end <- bounds $ symbol "]"
-      pure $ EList (mergeBounds (boundToFC Nothing start) (boundToFC Nothing end)) []
+      pure $ EList (mergeBounds (boundToFC initBounds start) (boundToFC initBounds end)) []
     populatedList : Grammar state (TokenRawToken) True (Expr ())
     populatedList = do
       start <- bounds $ symbol "["
       es <- sepBy1 (symbol ",") exprTerm
       end <- bounds $ symbol "]"
-      pure $ EList (mergeBounds (boundToFC Nothing start) (boundToFC Nothing end)) (forget es)
+      pure $ EList (mergeBounds (boundToFC initBounds start) (boundToFC initBounds end)) (forget es)
 
   boolOp : FC -> Grammar state (TokenRawToken) True (Expr () -> Expr () -> Expr ())
   boolOp fc =

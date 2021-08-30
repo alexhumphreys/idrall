@@ -23,6 +23,7 @@ data RawToken
   | Comment String
   | Unrecognised
   | EndInput
+  | FilePath String
 
 export
 Eq RawToken where
@@ -38,6 +39,7 @@ Eq RawToken where
   (==) (Comment x) (Comment y) =  x == y
   (==) Unrecognised Unrecognised = True
   (==) EndInput EndInput = True
+  (==) (FilePath x) (FilePath y) = x == y
   (==) _ _ = False
 
 export
@@ -54,30 +56,11 @@ Show RawToken where
   show (Comment x) = "Comment \{show x}"
   show Unrecognised = "Unrecognised"
   show EndInput = "EndInput"
+  show (FilePath x) = "FilePath \{show x}"
 
 public export
 TokenRawToken : Type
 TokenRawToken = RawToken
-
-isIdentStart : Char -> Bool
-isIdentStart '_' = True
-isIdentStart x  = isAlpha x || x > chr 160
-
-isIdentTrailing : Char -> Bool
-isIdentTrailing '_' = True
-isIdentTrailing '/' = True
-isIdentTrailing x = isAlphaNum x || x > chr 160
-
-export %inline
-isIdent : String -> Bool
-isIdent string =
-  case unpack string of
-    []      => False
-    (x::xs) => isIdentStart x && all (isIdentTrailing) xs
-
-ident : Lexer
-ident = do
-  (pred $ isIdentStart) <+> (many . pred $ isIdentTrailing)
 
 export
 builtins : List String
@@ -86,6 +69,19 @@ builtins = ["True", "False"]
 export
 keywords : List String
 keywords = ["let", "in", "with"]
+
+-- variables
+ident : Lexer
+ident = do
+  (pred $ isIdentStart) <+> (many . pred $ isIdentTrailing)
+where
+  isIdentStart : Char -> Bool
+  isIdentStart '_' = True
+  isIdentStart x  = isAlpha x || x > chr 160
+  isIdentTrailing : Char -> Bool
+  isIdentTrailing '_' = True
+  isIdentTrailing '/' = True
+  isIdentTrailing x = isAlphaNum x || x > chr 160
 
 parseIdent : String -> RawToken
 parseIdent x =
@@ -96,6 +92,7 @@ parseIdent x =
        (False, True) => Ident x -- TODO Builtin
        (_, _) => Ident x
 
+-- comments
 mutual
   ||| The mutually defined functions represent different states in a
   ||| small automaton.
@@ -143,6 +140,18 @@ mutual
 blockComment : Lexer
 blockComment = is '{' <+> is '-' <+> toEndComment 1
 
+-- imports
+embed : Tokenizer RawToken
+embed = match (embedStart <+> (someUntil (space) (escapeLexer <|> charLexer))) FilePath
+where
+  embedStart : Lexer
+  embedStart = exact "./" <|> exact "~/" <|> exact "/"
+  escapeLexer : Lexer
+  escapeLexer = escape (exact "\\") any
+  charLexer : Lexer
+  charLexer = any
+
+-- strings
 stringBegin : Lexer
 stringBegin = is '"'
 
@@ -151,9 +160,6 @@ stringEnd = "\""
 
 multilineEnd : String
 multilineEnd = "''"
-
-multilineBegin : Lexer
-multilineBegin = exact "''"
 
 mutual
   stringTokens : Bool -> Nat -> Tokenizer RawToken
@@ -173,6 +179,7 @@ mutual
   rawTokens : Tokenizer RawToken
   rawTokens =
     match blockComment Comment
+    <|> embed
     <|> match (exact "=") Symbol
     <|> match (exact "&&") Symbol
     <|> match (exact "->") Symbol
