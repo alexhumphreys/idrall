@@ -8,6 +8,10 @@ import public Text.Lexer.Tokenizer
 
 public export
 data IsMultiline = Multi | Single
+Eq IsMultiline where
+  (==) Multi Multi = True
+  (==) Single Single = True
+  (==) _ _ = False
 
 public export
 data RawToken
@@ -32,7 +36,7 @@ Eq RawToken where
   (==) (Keyword x) (Keyword y) = x == y
   (==) InterpBegin InterpBegin = True
   (==) InterpEnd InterpEnd = True
-  (==) (StringBegin x) (StringBegin y) = ?kjkj
+  (==) (StringBegin x) (StringBegin y) = x == y
   (==) StringEnd StringEnd = True
   (==) (StringLit x) (StringLit y) = x == y
   (==) White White = True

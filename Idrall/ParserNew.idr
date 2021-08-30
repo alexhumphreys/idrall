@@ -78,6 +78,32 @@ mutual
     | ETextLit FC (Chunks a)
     | EEmbed FC String
 
+mkExprFC : OriginDesc -> WithBounds x -> (FC -> x -> Expr a) -> Expr a
+mkExprFC od e mkE = mkE (boundToFC od e) (val e)
+
+getBounds : Expr a -> FC
+getBounds (EVar x _) = x
+getBounds (EApp x _ _) = x
+getBounds (EPi x _ _ _) = x
+getBounds (EBoolLit x _) = x
+getBounds (EBoolAnd x _ _) = x
+getBounds (ELet x _ _ _) = x
+getBounds (EList x _) = x
+getBounds (EWith x _ _ _) = x
+getBounds (ETextLit x _) = x
+getBounds (EEmbed x _) = x
+
+updateBounds : FC -> Expr a -> Expr a
+updateBounds x (EVar _ z) = EVar x z
+updateBounds x (EApp _ z w) = EApp x z w
+updateBounds x (EPi _ n z w) = EPi x n z w
+updateBounds x (EBoolLit _ z) = EBoolLit x z
+updateBounds x (EBoolAnd _ z w) = EBoolAnd x z w
+updateBounds x (ELet _ z w v) = ELet x z w v
+updateBounds x (EList _ z) = EList x z
+updateBounds x (EWith _ z s y) = EWith x z s y
+updateBounds x (ETextLit _ z) = ETextLit x z
+updateBounds x (EEmbed _ z) = EEmbed x z
 public export
 Semigroup (Chunks a) where
   (<+>) (MkChunks xysL zL) (MkChunks [] zR) = MkChunks xysL (zL <+> zR)
@@ -129,30 +155,6 @@ mutual
       prettyDottedList (forget xs) <++> pretty "=" <++> pretty y
     pretty (ETextLit fc cs) = pretty cs
     pretty (EEmbed fc x) = pretty x
-
-getBounds : Expr a -> FC
-getBounds (EVar x _) = x
-getBounds (EApp x _ _) = x
-getBounds (EPi x _ _ _) = x
-getBounds (EBoolLit x _) = x
-getBounds (EBoolAnd x _ _) = x
-getBounds (ELet x _ _ _) = x
-getBounds (EList x _) = x
-getBounds (EWith x _ _ _) = x
-getBounds (ETextLit x _) = x
-getBounds (EEmbed x _) = x
-
-updateBounds : FC -> Expr a -> Expr a
-updateBounds x (EVar _ z) = EVar x z
-updateBounds x (EApp _ z w) = EApp x z w
-updateBounds x (EPi _ n z w) = EPi x n z w
-updateBounds x (EBoolLit _ z) = EBoolLit x z
-updateBounds x (EBoolAnd _ z w) = EBoolAnd x z w
-updateBounds x (ELet _ z w v) = ELet x z w v
-updateBounds x (EList _ z) = EList x z
-updateBounds x (EWith _ z s y) = EWith x z s y
-updateBounds x (ETextLit _ z) = ETextLit x z
-updateBounds x (EEmbed _ z) = EEmbed x z
 
 public export
 Rule : Type -> Type -> Type
@@ -215,7 +217,7 @@ mutual
   embed : Grammar state (TokenRawToken) True (Expr ())
   embed = do
     s <- bounds $ embedPath
-    pure $ EEmbed (boundToFC initBounds s) (val s)
+    pure $ mkExprFC initBounds s EEmbed
 
   textLit : Grammar state (TokenRawToken) True (Expr ())
   textLit = do
@@ -357,8 +359,6 @@ where
     case tok of
          Comment _ => False
          _ => True
-
-doParse' : String -> Either e a
 
 doParse : String -> IO ()
 doParse input = do
