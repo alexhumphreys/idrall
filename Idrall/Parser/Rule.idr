@@ -106,3 +106,11 @@ dottedList = do
   -- x <- sepBy1 (match $ Symbol ".") (identPart)
   x <- sepBy1 (symbol ".") (identPart)
   pure x
+
+export
+builtin : Rule String
+builtin =
+  terminal "expected builtin" $
+    \case
+      Builtin x => Just x
+      _ => Nothing

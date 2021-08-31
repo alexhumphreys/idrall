@@ -74,39 +74,117 @@ mutual
     | EBoolLit FC Bool
     | EBoolAnd FC (Expr a) (Expr a)
     | ELet FC String (Expr a) (Expr a)
-    | EList FC (List (Expr a))
+    | EListLit FC (List (Expr a))
     | EWith FC (Expr a) (List1 String) (Expr a)
     | ETextLit FC (Chunks a)
+    | ENaturalBuild FC
+    | ENaturalFold FC
+    | ENaturalIsZero FC
+    | ENaturalEven FC
+    | ENaturalOdd FC
+    | ENaturalSubtract FC
+    | ENaturalToInteger FC
+    | ENaturalShow FC
+    | EIntegerShow FC
+    | EIntegerNegate FC
+    | EIntegerClamp FC
+    | EIntegerToDouble FC
+    | EDoubleShow FC
+    | EListBuild FC
+    | EListFold FC
+    | EListLength FC
+    | EListHead FC
+    | EListLast FC
+    | EListIndexed FC
+    | EListReverse FC
+    | EList FC
+    | ETextShow FC
+    | ETextReplace FC
+    | ENone FC
+    | EOptional FC
     | EEmbed FC String
 
 mkExprFC : OriginDesc -> WithBounds x -> (FC -> x -> Expr a) -> Expr a
 mkExprFC od e mkE = mkE (boundToFC od e) (val e)
 
+mkExprFC0 : OriginDesc -> WithBounds x -> (FC -> Expr a) -> Expr a
+mkExprFC0 od e mkE = mkE (boundToFC od e)
+
 getBounds : Expr a -> FC
-getBounds (EVar x _) = x
-getBounds (EApp x _ _) = x
-getBounds (EPi x _ _ _) = x
-getBounds (EDoubleLit x _) = x
-getBounds (EBoolLit x _) = x
-getBounds (EBoolAnd x _ _) = x
-getBounds (ELet x _ _ _) = x
-getBounds (EList x _) = x
-getBounds (EWith x _ _ _) = x
-getBounds (ETextLit x _) = x
-getBounds (EEmbed x _) = x
+getBounds (EVar fc _) = fc
+getBounds (EApp fc _ _) = fc
+getBounds (EPi fc _ _ _) = fc
+getBounds (EDoubleLit fc _) = fc
+getBounds (EBoolLit fc _) = fc
+getBounds (EBoolAnd fc _ _) = fc
+getBounds (ELet fc _ _ _) = fc
+getBounds (EListLit fc _) = fc
+getBounds (EWith fc _ _ _) = fc
+getBounds (ETextLit fc _) = fc
+getBounds (ENaturalBuild fc) = fc
+getBounds (ENaturalFold fc) = fc
+getBounds (ENaturalIsZero fc) = fc
+getBounds (ENaturalEven fc) = fc
+getBounds (ENaturalOdd fc) = fc
+getBounds (ENaturalSubtract fc) = fc
+getBounds (ENaturalToInteger fc) = fc
+getBounds (ENaturalShow fc) = fc
+getBounds (EIntegerShow fc) = fc
+getBounds (EIntegerNegate fc) = fc
+getBounds (EIntegerClamp fc) = fc
+getBounds (EIntegerToDouble fc) = fc
+getBounds (EDoubleShow fc) = fc
+getBounds (EListBuild fc) = fc
+getBounds (EListFold fc) = fc
+getBounds (EListLength fc) = fc
+getBounds (EListHead fc) = fc
+getBounds (EListLast fc) = fc
+getBounds (EListIndexed fc) = fc
+getBounds (EListReverse fc) = fc
+getBounds (EList fc) = fc
+getBounds (ETextShow fc) = fc
+getBounds (ETextReplace fc) = fc
+getBounds (ENone fc) = fc
+getBounds (EOptional fc) = fc
+getBounds (EEmbed fc _) = fc
 
 updateBounds : FC -> Expr a -> Expr a
-updateBounds x (EVar _ z) = EVar x z
-updateBounds x (EApp _ z w) = EApp x z w
-updateBounds x (EPi _ n z w) = EPi x n z w
-updateBounds x (EDoubleLit _ z) = EDoubleLit x z
-updateBounds x (EBoolLit _ z) = EBoolLit x z
-updateBounds x (EBoolAnd _ z w) = EBoolAnd x z w
-updateBounds x (ELet _ z w v) = ELet x z w v
-updateBounds x (EList _ z) = EList x z
-updateBounds x (EWith _ z s y) = EWith x z s y
-updateBounds x (ETextLit _ z) = ETextLit x z
-updateBounds x (EEmbed _ z) = EEmbed x z
+updateBounds fc (EVar _ z) = EVar fc z
+updateBounds fc (EApp _ z w) = EApp fc z w
+updateBounds fc (EPi _ n z w) = EPi fc n z w
+updateBounds fc (EDoubleLit _ z) = EDoubleLit fc z
+updateBounds fc (EBoolLit _ z) = EBoolLit fc z
+updateBounds fc (EBoolAnd _ z w) = EBoolAnd fc z w
+updateBounds fc (ELet _ z w v) = ELet fc z w v
+updateBounds fc (EListLit _ z) = EListLit fc z
+updateBounds fc (EWith _ z s y) = EWith fc z s y
+updateBounds fc (ETextLit _ z) = ETextLit fc z
+updateBounds fc (ENaturalBuild _) = ENaturalBuild fc
+updateBounds fc (ENaturalFold _) = ENaturalFold fc
+updateBounds fc (ENaturalIsZero _) = ENaturalIsZero fc
+updateBounds fc (ENaturalEven _) = ENaturalEven fc
+updateBounds fc (ENaturalOdd _) = ENaturalOdd fc
+updateBounds fc (ENaturalSubtract _) = ENaturalSubtract fc
+updateBounds fc (ENaturalToInteger _) = ENaturalToInteger fc
+updateBounds fc (ENaturalShow _) = ENaturalShow fc
+updateBounds fc (EIntegerShow _) = EIntegerShow fc
+updateBounds fc (EIntegerNegate _) = EIntegerNegate fc
+updateBounds fc (EIntegerClamp _) = EIntegerClamp fc
+updateBounds fc (EIntegerToDouble _) = EIntegerToDouble fc
+updateBounds fc (EDoubleShow _) = EDoubleShow fc
+updateBounds fc (EListBuild _) = EListBuild fc
+updateBounds fc (EListFold _) = EListFold fc
+updateBounds fc (EListLength _) = EListLength fc
+updateBounds fc (EListHead _) = EListHead fc
+updateBounds fc (EListLast _) = EListLast fc
+updateBounds fc (EListIndexed _) = EListIndexed fc
+updateBounds fc (EListReverse _) = EListReverse fc
+updateBounds fc (EList _) = EList fc
+updateBounds fc (ETextShow _) = ETextShow fc
+updateBounds fc (ETextReplace _) = ETextReplace fc
+updateBounds fc (ENone _) = ENone fc
+updateBounds fc (EOptional _) = EOptional fc
+updateBounds fc (EEmbed _ z) = EEmbed fc z
 
 public export
 Semigroup (Chunks a) where
@@ -130,10 +208,35 @@ mutual
     show (EBoolLit fc x) = "\{show fc}:EBoolLit \{show x}"
     show (EBoolAnd fc x y) = "(\{show fc}:EBoolAnd \{show x} \{show y})"
     show (ELet fc x y z) = "(\{show fc}:ELet \{show fc} \{show x} \{show y} \{show z})"
-    show (EList fc x) = "(\{show fc}:EList \{show fc} \{show x})"
+    show (EListLit fc x) = "(\{show fc}:EListLit \{show fc} \{show x})"
     show (EWith fc x s y) = "(\{show fc}:EWith \{show fc} \{show x} \{show s} \{show y})"
     show (ETextLit fc cs) = "(\{show fc}:ETextLit \{show fc} \{show cs}"
-    show (EEmbed fc x) = "(\{show fc}:EEmbed \{show fc} \{show x}"
+    show (ENaturalBuild fc) = "(\{show fc}:ENaturalShow)"
+    show (ENaturalFold fc) = "(\{show fc}:ENaturalShow)"
+    show (ENaturalIsZero fc) = "(\{show fc}:ENaturalShow)"
+    show (ENaturalEven fc) = "(\{show fc}:ENaturalShow)"
+    show (ENaturalOdd fc) = "(\{show fc}:ENaturalShow)"
+    show (ENaturalSubtract fc) = "(\{show fc}:ENaturalShow)"
+    show (ENaturalToInteger fc) = "(\{show fc}:ENaturalShow)"
+    show (ENaturalShow fc) = "(\{show fc}:ENaturalShow)"
+    show (EIntegerShow fc) = "(\{show fc}:EIntegerShow)"
+    show (EIntegerNegate fc) = "(\{show fc}:EIntegerShow)"
+    show (EIntegerClamp fc) = "(\{show fc}:EIntegerShow)"
+    show (EIntegerToDouble fc) = "(\{show fc}:EIntegerShow)"
+    show (EDoubleShow fc) = "(\{show fc}:EDoubleShow)"
+    show (EListBuild fc) = "(\{show fc}:EListBuild)"
+    show (EListFold fc) = "(\{show fc}:EListFold)"
+    show (EListLength fc) = "(\{show fc}:EListLength)"
+    show (EListHead fc) = "(\{show fc}:EListHead)"
+    show (EListLast fc) = "(\{show fc}:EListLast)"
+    show (EListIndexed fc) = "(\{show fc}:EListIndexed)"
+    show (EListReverse fc) = "(\{show fc}:EListReverse)"
+    show (EList fc) = "(\{show fc}:EList)"
+    show (ETextShow fc) = "(\{show fc}:ETextShow)"
+    show (ETextReplace fc) = "(\{show fc}:ETextReplace)"
+    show (ENone fc) = "(\{show fc}:ENone)"
+    show (EOptional fc) = "(\{show fc}:EOptional)"
+    show (EEmbed fc x) = "(\{show fc}:EEmbed \{show fc} \{show x})"
 
 prettyDottedList : List String -> Doc ann
 prettyDottedList [] = pretty ""
@@ -155,11 +258,36 @@ mutual
     pretty (EBoolLit fc x) = pretty $ show x
     pretty (EBoolAnd fc x y) = pretty x <++> pretty "&&" <++> pretty y
     pretty (ELet fc x y z) = pretty "let" <+> pretty x <+> pretty y <+> pretty z
-    pretty (EList fc xs) = pretty xs
+    pretty (EListLit fc xs) = pretty xs
     pretty (EWith fc x xs y) =
       pretty x <++> pretty "with" <++>
       prettyDottedList (forget xs) <++> pretty "=" <++> pretty y
     pretty (ETextLit fc cs) = pretty cs
+    pretty (ENaturalBuild fc) = pretty "Natural/build"
+    pretty (ENaturalFold fc) = pretty "Natural/fold"
+    pretty (ENaturalIsZero fc) = pretty "Natural/isZero"
+    pretty (ENaturalEven fc) = pretty "Natural/Even"
+    pretty (ENaturalOdd fc) = pretty "Natural/Odd"
+    pretty (ENaturalSubtract fc) = pretty "Natural/subtract"
+    pretty (ENaturalToInteger fc) = pretty "Natural/toInteger"
+    pretty (ENaturalShow fc) = pretty "Natural/show"
+    pretty (EIntegerShow fc) = pretty "Integer/show"
+    pretty (EIntegerNegate fc) = pretty "Integer/negate"
+    pretty (EIntegerClamp fc) = pretty "Integer/clamp"
+    pretty (EIntegerToDouble fc) = pretty "Integer/toDouble"
+    pretty (EDoubleShow fc) = pretty "Double/show"
+    pretty (EListBuild fc) = pretty "List/build"
+    pretty (EListFold fc) = pretty "List/fold"
+    pretty (EListLength fc) = pretty "List/length"
+    pretty (EListHead fc) = pretty "List/head"
+    pretty (EListLast fc) = pretty "List/last"
+    pretty (EListIndexed fc) = pretty "List/indexed"
+    pretty (EListReverse fc) = pretty "List/indexed"
+    pretty (EList fc) = pretty "List"
+    pretty (ETextShow fc) = pretty "Text/show"
+    pretty (ETextReplace fc) = pretty "Text/replace"
+    pretty (ENone fc) = pretty "None"
+    pretty (EOptional fc) = pretty "Optional"
     pretty (EEmbed fc x) = pretty x
 
 public export
@@ -216,10 +344,41 @@ tokenW p = do
   _ <- optional whitespace
   pure x
 
-mutual
-  builtinTerm : WithBounds String -> Grammar state (TokenRawToken) False (Expr ())
-  builtinTerm _ = fail "TODO not implemented"
+builtinTerm : WithBounds String -> Grammar state (TokenRawToken) False (Expr ())
+builtinTerm str =
+  case val str of
+     "Natural/build" => pure $ cons ENaturalBuild
+     "Natural/fold" => pure $ cons ENaturalFold
+     "Natural/isZero" => pure $ cons ENaturalIsZero
+     "Natural/even" => pure $ cons ENaturalEven
+     "Natural/odd" => pure $ cons ENaturalOdd
+     "Natural/subtract" => pure $ cons ENaturalSubtract
+     "Natural/toInteger" => pure $ cons ENaturalToInteger
+     "Natural/show" => pure $ cons ENaturalShow
+     "Integer/show" => pure $ cons EIntegerShow
+     "Integer/negate" => pure $ cons EIntegerNegate
+     "Integer/clamp" => pure $ cons EIntegerClamp
+     "Integer/toDouble" => pure $ cons EIntegerToDouble
+     "Double/show" => pure $ cons EDoubleShow
+     "List/build" => pure $ cons EListBuild
+     "List/fold" => pure $ cons EListFold
+     "List/length" => pure $ cons EListLength
+     "List/head" => pure $ cons EListHead
+     "List/last" => pure $ cons EListLast
+     "List/indexed" => pure $ cons EListIndexed
+     "List/reverse" => pure $ cons EListReverse
+     "List" => pure $ cons EList
+     "Text/show" => pure $ cons ETextShow
+     "Text/replace" => pure $ cons ETextReplace
+     "None" => pure $ cons ENone
+     "Optional" => pure $ cons EOptional
+     "NaN" => pure $ EDoubleLit (boundToFC initBounds str) (0.0/0.0)
+     x => fail "Expected builtin name"
+  where
+    cons : (FC -> Expr ()) -> Expr ()
+    cons = mkExprFC0 initBounds str
 
+mutual
   embed : Grammar state (TokenRawToken) True (Expr ())
   embed = do
     s <- bounds $ embedPath
@@ -252,10 +411,15 @@ mutual
   boolLit b@(MkBounded "False" isIrrelevant bounds) = pure $ EBoolLit (boundToFC initBounds b) False
   boolLit (MkBounded _ isIrrelevant bounds) = fail "unrecognised const"
 
+  builtin : Grammar state (TokenRawToken) True (Expr ())
+  builtin = do
+      name <- bounds $ Rule.builtin
+      builtinTerm name
+
   varTerm : Grammar state (TokenRawToken) True (Expr ())
   varTerm = do
       name <- bounds $ identPart
-      builtinTerm name <|> boolLit name <|> toVar (isKeyword name)
+      boolLit name <|> toVar (isKeyword name)
   where
     isKeyword : WithBounds String -> Maybe $ Expr ()
     isKeyword b@(MkBounded val isIrrelevant bounds) =
@@ -282,7 +446,7 @@ mutual
   atom = do
     a <- varTerm <|> textLit
       <|> doubleLit
-      <|> embed
+      <|> builtin <|> embed
       <|> listExpr <|> (between (symbol "(") (symbol ")") exprTerm)
     pure a
 
@@ -293,13 +457,13 @@ mutual
     emptyList = do
       start <- bounds $ symbol "["
       end <- bounds $ symbol "]"
-      pure $ EList (mergeBounds (boundToFC initBounds start) (boundToFC initBounds end)) []
+      pure $ EListLit (mergeBounds (boundToFC initBounds start) (boundToFC initBounds end)) []
     populatedList : Grammar state (TokenRawToken) True (Expr ())
     populatedList = do
       start <- bounds $ symbol "["
       es <- sepBy1 (symbol ",") exprTerm
       end <- bounds $ symbol "]"
-      pure $ EList (mergeBounds (boundToFC initBounds start) (boundToFC initBounds end)) (forget es)
+      pure $ EListLit (mergeBounds (boundToFC initBounds start) (boundToFC initBounds end)) (forget es)
 
   boolOp : FC -> Grammar state (TokenRawToken) True (Expr () -> Expr () -> Expr ())
   boolOp fc =

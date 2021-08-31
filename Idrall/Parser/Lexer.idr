@@ -18,6 +18,7 @@ data RawToken
   = Ident String
   | Symbol String
   | Keyword String
+  | Builtin String
   | TDouble Double
   | InterpBegin
   | InterpEnd
@@ -35,6 +36,7 @@ Eq RawToken where
   (==) (Ident x) (Ident y) = x == y
   (==) (Symbol x) (Symbol y) = x == y
   (==) (Keyword x) (Keyword y) = x == y
+  (==) (Builtin x) (Builtin y) = x == y
   (==) (TDouble x) (TDouble y) = x == y
   (==) InterpBegin InterpBegin = True
   (==) InterpEnd InterpEnd = True
@@ -53,6 +55,7 @@ Show RawToken where
   show (Ident x) = "Ident \{show x}"
   show (Symbol x) = "Symbol \{show x}"
   show (Keyword x) = "Keyword \{show x}"
+  show (Builtin x) = "Builtin \{show x}"
   show (TDouble x) = "TDouble \{show x}"
   show InterpBegin = "InterpBegin"
   show InterpEnd = "InterpEnd"
@@ -71,7 +74,17 @@ TokenRawToken = RawToken
 
 export
 builtins : List String
-builtins = ["True", "False"]
+builtins = ["True", "False",
+  "Natural/build", "Natural/fold", "Natural/isZero", "Natural/even",
+  "Natural/odd", "Natural/subtract", "Natural/toInteger", "Natural/show",
+  "Integer/show", "Integer/negate", "Integer/clamp", "Integer/toDouble",
+  "Double/show",
+  "List/build", "List/fold", "List/length", "List/head",
+  "List/last", "List/indexed", "List/reverse", "List",
+  "Text/show", "Text/replace",
+  "None",
+  "Optional",
+  "NaN"]
 
 export
 keywords : List String
@@ -95,8 +108,8 @@ parseIdent x =
   let isKeyword = elem x keywords
       isBuiltin = elem x builtins in
   case (isKeyword, isBuiltin) of
-       (True, False) => (Keyword x)
-       (False, True) => Ident x -- TODO Builtin
+       (True, False) => Keyword x
+       (False, True) => Builtin x
        (_, _) => Ident x
 
 -- double
