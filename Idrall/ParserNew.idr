@@ -67,42 +67,75 @@ mutual
 
   ||| Raw AST representation generated directly from the parser
   data Expr a
-    = EVar FC String
-    | EApp FC (Expr a) (Expr a)
-    | EPi FC String (Expr a) (Expr a)
-    | EDoubleLit FC Double
-    | EBoolLit FC Bool
-    | EBoolAnd FC (Expr a) (Expr a)
-    | ELet FC String (Expr a) (Expr a)
-    | EListLit FC (List (Expr a))
-    | EWith FC (Expr a) (List1 String) (Expr a)
-    | ETextLit FC (Chunks a)
-    | ENaturalBuild FC
-    | ENaturalFold FC
-    | ENaturalIsZero FC
-    | ENaturalEven FC
-    | ENaturalOdd FC
-    | ENaturalSubtract FC
-    | ENaturalToInteger FC
-    | ENaturalShow FC
-    | EIntegerShow FC
-    | EIntegerNegate FC
-    | EIntegerClamp FC
-    | EIntegerToDouble FC
-    | EDoubleShow FC
-    | EListBuild FC
-    | EListFold FC
-    | EListLength FC
-    | EListHead FC
-    | EListLast FC
-    | EListIndexed FC
-    | EListReverse FC
-    | EList FC
-    | ETextShow FC
-    | ETextReplace FC
-    | ENone FC
-    | EOptional FC
-    | EEmbed FC String
+    -- = EConst U
+    = EVar FC String -- | EVar Name Int
+    -- | ELam Name (Expr a) (Expr a)
+    | EPi FC String (Expr a) (Expr a) -- | EPi Name (Expr a) (Expr a)
+    | EApp FC (Expr a) (Expr a) -- | EApp (Expr a) (Expr a)
+    | ELet FC String (Expr a) (Expr a) -- | ELet Name (Maybe (Expr a)) (Expr a) (Expr a)
+    -- | EAnnot (Expr a) (Expr a)
+    -- | EBool
+    | EBoolLit FC Bool -- | EBoolLit Bool
+    | EBoolAnd FC (Expr a) (Expr a) -- | EBoolAnd (Expr a) (Expr a)
+    -- | EBoolOr  (Expr a) (Expr a)
+    -- | EBoolEQ  (Expr a) (Expr a)
+    -- | EBoolNE  (Expr a) (Expr a)
+    -- | EBoolIf (Expr a) (Expr a) (Expr a)
+    -- | ENatural
+    -- | ENaturalLit Nat
+    | ENaturalFold FC -- | ENaturalFold
+    | ENaturalBuild FC -- | ENaturalBuild
+    | ENaturalIsZero FC -- | ENaturalIsZero
+    | ENaturalEven FC -- | ENaturalEven
+    | ENaturalOdd FC -- | ENaturalOdd
+    | ENaturalToInteger FC -- | ENaturalToInteger
+    | ENaturalSubtract FC -- | ENaturalSubtract
+    | ENaturalShow FC -- | ENaturalShow
+    -- | ENaturalPlus (Expr a) (Expr a)
+    -- | ENaturalTimes (Expr a) (Expr a)
+    -- | EInteger
+    -- | EIntegerLit Integer
+    | EIntegerShow FC -- | EIntegerShow
+    | EIntegerClamp FC -- | EIntegerClamp
+    | EIntegerNegate FC -- | EIntegerNegate
+    | EIntegerToDouble FC -- | EIntegerToDouble
+    -- | EDouble
+    | EDoubleLit FC Double -- | EDoubleLit Double
+    | EDoubleShow FC -- | EDoubleShow
+    -- | EText
+    | ETextLit FC (Chunks a) -- | ETextLit (Chunks a)
+    -- | ETextAppend (Expr a) (Expr a)
+    | ETextShow FC -- | ETextShow
+    | ETextReplace FC -- | ETextReplace
+    | EList FC -- | EList
+    | EListLit FC (List (Expr a)) -- | EListLit (Maybe (Expr a)) (List (Expr a))
+    -- | EListAppend (Expr a) (Expr a)
+    | EListBuild FC -- | EListBuild
+    | EListFold FC -- | EListFold
+    | EListLength FC -- | EListLength
+    | EListHead FC -- | EListHead
+    | EListLast FC -- | EListLast
+    | EListIndexed FC -- | EListIndexed
+    | EListReverse FC -- | EListReverse
+    | EOptional FC -- | EOptional
+    | ENone FC -- | ENone
+    -- | ESome (Expr a)
+    -- | EEquivalent (Expr a) (Expr a)
+    -- | EAssert (Expr a)
+    -- | ERecord (SortedMap FieldName (Expr a))
+    -- | ERecordLit (SortedMap FieldName (Expr a))
+    -- | EUnion (SortedMap FieldName (Maybe (Expr a)))
+    -- | ECombine (Expr a) (Expr a)
+    -- | ECombineTypes (Expr a) (Expr a)
+    -- | EPrefer (Expr a) (Expr a)
+    -- | ERecordCompletion (Expr a) (Expr a)
+    -- | EMerge (Expr a) (Expr a) (Maybe (Expr a))
+    -- | EToMap (Expr a) (Maybe (Expr a))
+    -- | EField (Expr a) FieldName
+    -- | EProject (Expr a) (Either (List FieldName) (Expr a))
+    | EWith FC (Expr a) (List1 String) (Expr a) -- | EWith (Expr a) (List1 FieldName) (Expr a)
+    -- | EImportAlt (Expr a) (Expr a)
+    | EEmbed FC String -- | EEmbed (Import a)
 
 mkExprFC : OriginDesc -> WithBounds x -> (FC -> x -> Expr a) -> Expr a
 mkExprFC od e mkE = mkE (boundToFC od e) (val e)
