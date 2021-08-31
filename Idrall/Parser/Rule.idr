@@ -93,6 +93,14 @@ embedPath =
       _ => Nothing
 
 export
+doubleLit : Rule Double
+doubleLit =
+  terminal "expected double" $
+    \case
+      TDouble x => Just x
+      _ => Nothing
+
+export
 dottedList : Rule (List1 String)
 dottedList = do
   -- x <- sepBy1 (match $ Symbol ".") (identPart)

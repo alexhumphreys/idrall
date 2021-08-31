@@ -70,6 +70,7 @@ mutual
     = EVar FC String
     | EApp FC (Expr a) (Expr a)
     | EPi FC String (Expr a) (Expr a)
+    | EDoubleLit FC Double
     | EBoolLit FC Bool
     | EBoolAnd FC (Expr a) (Expr a)
     | ELet FC String (Expr a) (Expr a)
@@ -85,6 +86,7 @@ getBounds : Expr a -> FC
 getBounds (EVar x _) = x
 getBounds (EApp x _ _) = x
 getBounds (EPi x _ _ _) = x
+getBounds (EDoubleLit x _) = x
 getBounds (EBoolLit x _) = x
 getBounds (EBoolAnd x _ _) = x
 getBounds (ELet x _ _ _) = x
@@ -97,6 +99,7 @@ updateBounds : FC -> Expr a -> Expr a
 updateBounds x (EVar _ z) = EVar x z
 updateBounds x (EApp _ z w) = EApp x z w
 updateBounds x (EPi _ n z w) = EPi x n z w
+updateBounds x (EDoubleLit _ z) = EDoubleLit x z
 updateBounds x (EBoolLit _ z) = EBoolLit x z
 updateBounds x (EBoolAnd _ z w) = EBoolAnd x z w
 updateBounds x (ELet _ z w v) = ELet x z w v
@@ -104,6 +107,7 @@ updateBounds x (EList _ z) = EList x z
 updateBounds x (EWith _ z s y) = EWith x z s y
 updateBounds x (ETextLit _ z) = ETextLit x z
 updateBounds x (EEmbed _ z) = EEmbed x z
+
 public export
 Semigroup (Chunks a) where
   (<+>) (MkChunks xysL zL) (MkChunks [] zR) = MkChunks xysL (zL <+> zR)
@@ -122,6 +126,7 @@ mutual
     show (EVar fc x) = "(\{show fc}:EVar \{show x})"
     show (EApp fc x y) = "(\{show fc}:EApp \{show x} \{show y})"
     show (EPi fc n x y) = "(\{show fc}:EPi \{show n} \{show x} \{show y})"
+    show (EDoubleLit fc x) = "\{show fc}:EDoubleLit \{show x}"
     show (EBoolLit fc x) = "\{show fc}:EBoolLit \{show x}"
     show (EBoolAnd fc x y) = "(\{show fc}:EBoolAnd \{show x} \{show y})"
     show (ELet fc x y z) = "(\{show fc}:ELet \{show fc} \{show x} \{show y} \{show z})"
@@ -141,12 +146,13 @@ mutual
 
   Pretty (Expr ()) where
     pretty (EVar fc x) = pretty x
-    pretty (EBoolLit fc x) = pretty $ show x
     pretty (EApp fc x y) = pretty x <++> pretty y
     pretty (EPi fc "_" x y) = pretty x <++> pretty "->" <++> pretty y
     pretty (EPi fc n x y) =
       pretty "forall(" <+> pretty n <++> pretty ":" <++> pretty x <+> pretty ")"
         <++> pretty "->" <++> pretty y
+    pretty (EDoubleLit fc x) = pretty $ show x
+    pretty (EBoolLit fc x) = pretty $ show x
     pretty (EBoolAnd fc x y) = pretty x <++> pretty "&&" <++> pretty y
     pretty (ELet fc x y z) = pretty "let" <+> pretty x <+> pretty y <+> pretty z
     pretty (EList fc xs) = pretty xs
@@ -219,6 +225,11 @@ mutual
     s <- bounds $ embedPath
     pure $ mkExprFC initBounds s EEmbed
 
+  doubleLit : Grammar state (TokenRawToken) True (Expr ())
+  doubleLit = do
+    s <- bounds $ Rule.doubleLit
+    pure $ mkExprFC initBounds s EDoubleLit
+
   textLit : Grammar state (TokenRawToken) True (Expr ())
   textLit = do
     start <- bounds $ textBoundary
@@ -270,6 +281,7 @@ mutual
   atom : Grammar state (TokenRawToken) True (Expr ())
   atom = do
     a <- varTerm <|> textLit
+      <|> doubleLit
       <|> embed
       <|> listExpr <|> (between (symbol "(") (symbol ")") exprTerm)
     pure a

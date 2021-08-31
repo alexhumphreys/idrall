@@ -18,6 +18,7 @@ data RawToken
   = Ident String
   | Symbol String
   | Keyword String
+  | TDouble Double
   | InterpBegin
   | InterpEnd
   | StringBegin IsMultiline
@@ -34,6 +35,7 @@ Eq RawToken where
   (==) (Ident x) (Ident y) = x == y
   (==) (Symbol x) (Symbol y) = x == y
   (==) (Keyword x) (Keyword y) = x == y
+  (==) (TDouble x) (TDouble y) = x == y
   (==) InterpBegin InterpBegin = True
   (==) InterpEnd InterpEnd = True
   (==) (StringBegin x) (StringBegin y) = x == y
@@ -51,6 +53,7 @@ Show RawToken where
   show (Ident x) = "Ident \{show x}"
   show (Symbol x) = "Symbol \{show x}"
   show (Keyword x) = "Keyword \{show x}"
+  show (TDouble x) = "TDouble \{show x}"
   show InterpBegin = "InterpBegin"
   show InterpEnd = "InterpEnd"
   show (StringBegin x) = "StringBegin"
@@ -95,6 +98,19 @@ parseIdent x =
        (True, False) => (Keyword x)
        (False, True) => Ident x -- TODO Builtin
        (_, _) => Ident x
+
+-- double
+sign : Lexer
+sign = is '-' <|> is '+'
+
+exponent : Lexer
+exponent = is 'e' <+> opt sign <+> digits
+
+doubleLit : Lexer
+doubleLit
+    = (opt sign)
+      <+> ((digits <+> is '.' <+> digits <+> opt exponent)
+           <|> (digits <+> opt exponent))
 
 -- comments
 mutual
@@ -196,6 +212,7 @@ mutual
     <|> match (exact ",") Symbol
     <|> match (exact ".") Symbol
     <|> match space (const White)
+    <|> match doubleLit (TDouble . cast)
     <|> match ident parseIdent
     <|> compose stringBegin
                 (const $ StringBegin Single)
