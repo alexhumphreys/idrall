@@ -285,7 +285,7 @@ mutual
     pretty (EApp fc x y) = pretty x <++> pretty y
     pretty (EPi fc "_" x y) = pretty x <++> pretty "->" <++> pretty y
     pretty (EPi fc n x y) =
-      pretty "forall(" <+> pretty n <++> pretty ":" <++> pretty x <+> pretty ")"
+      pretty "forall" <+> parens (pretty n <++> colon <++> pretty x)
         <++> pretty "->" <++> pretty y
     pretty (EDoubleLit fc x) = pretty $ show x
     pretty (EBoolLit fc x) = pretty $ show x
@@ -294,7 +294,7 @@ mutual
     pretty (EListLit fc xs) = pretty xs
     pretty (EWith fc x xs y) =
       pretty x <++> pretty "with" <++>
-      prettyDottedList (forget xs) <++> pretty "=" <++> pretty y
+      prettyDottedList (forget xs) <++> equals <++> pretty y
     pretty (ETextLit fc cs) = pretty cs
     pretty (ENaturalBuild fc) = pretty "Natural/build"
     pretty (ENaturalFold fc) = pretty "Natural/fold"
@@ -406,6 +406,8 @@ builtinTerm str =
      "None" => pure $ cons ENone
      "Optional" => pure $ cons EOptional
      "NaN" => pure $ EDoubleLit (boundToFC initBounds str) (0.0/0.0)
+     "True" => pure $ EBoolLit (boundToFC initBounds str) True
+     "False" => pure $ EBoolLit (boundToFC initBounds str) False
      x => fail "Expected builtin name"
   where
     cons : (FC -> Expr ()) -> Expr ()
@@ -439,11 +441,6 @@ mutual
       str <- Parser.Rule.textLit
       pure (MkChunks [] str)
 
-  boolLit : WithBounds String -> Grammar state (TokenRawToken) False (Expr ())
-  boolLit b@(MkBounded "True" isIrrelevant bounds) = pure $ EBoolLit (boundToFC initBounds b) True
-  boolLit b@(MkBounded "False" isIrrelevant bounds) = pure $ EBoolLit (boundToFC initBounds b) False
-  boolLit (MkBounded _ isIrrelevant bounds) = fail "unrecognised const"
-
   builtin : Grammar state (TokenRawToken) True (Expr ())
   builtin = do
       name <- bounds $ Rule.builtin
@@ -452,7 +449,7 @@ mutual
   varTerm : Grammar state (TokenRawToken) True (Expr ())
   varTerm = do
       name <- bounds $ identPart
-      boolLit name <|> toVar (isKeyword name)
+      toVar (isKeyword name)
   where
     isKeyword : WithBounds String -> Maybe $ Expr ()
     isKeyword b@(MkBounded val isIrrelevant bounds) =
