@@ -88,7 +88,10 @@ builtins = ["True", "False",
 
 export
 keywords : List String
-keywords = ["let", "in", "with"]
+keywords = ["let", "in", "with",
+  "if", "then", "else",
+  "merge", "toMap", "missing",
+  "using", "assert"]
 
 -- variables
 ident : Lexer
@@ -212,10 +215,25 @@ mutual
   rawTokens : Tokenizer RawToken
   rawTokens =
     match blockComment Comment
+    <|> match (exact "//\\\\") Symbol
+    <|> match (exact "//") Symbol
+    <|> match (exact "/\\") Symbol
+    <|> match (exact "\\") Symbol
     <|> embed
-    <|> match (exact "=") Symbol
+    <|> match (exact "||") Symbol
     <|> match (exact "&&") Symbol
+    <|> match (exact "==") Symbol
+    <|> match (exact "!=") Symbol
+    <|> match (exact "=") Symbol
     <|> match (exact "->") Symbol
+    <|> match (exact "++") Symbol
+    <|> match (exact "+") Symbol
+    <|> match (exact "*") Symbol
+    <|> match (exact "#") Symbol
+    <|> match (exact "::") Symbol
+    <|> match (exact ":") Symbol
+    <|> match (exact "?") Symbol
+    <|> match (exact "`") Symbol
     <|> match (exact "(") Symbol
     <|> match (exact ")") Symbol
     <|> match (exact "{") Symbol
@@ -224,6 +242,7 @@ mutual
     <|> match (exact "]") Symbol
     <|> match (exact ",") Symbol
     <|> match (exact ".") Symbol
+    <|> match (exact "as Text") Keyword
     <|> match space (const White)
     <|> match doubleLit (TDouble . cast)
     <|> match ident parseIdent
