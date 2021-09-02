@@ -144,7 +144,7 @@ mutual
     | ENone FC -- | ENone
     -- | ESome (Expr a)
     -- | EEquivalent (Expr a) (Expr a)
-    -- | EAssert (Expr a)
+    | EAssert FC (Expr a) -- | EAssert (Expr a)
     -- | ERecord (SortedMap FieldName (Expr a))
     -- | ERecordLit (SortedMap FieldName (Expr a))
     -- | EUnion (SortedMap FieldName (Maybe (Expr a)))
@@ -179,7 +179,6 @@ getBounds (EBoolEQ fc _ _) = fc
 getBounds (EBoolNE fc _ _) = fc
 getBounds (ELet fc _ _ _) = fc
 getBounds (EListLit fc _) = fc
-getBounds (EWith fc _ _ _) = fc
 getBounds (ENatural fc) = fc
 getBounds (ENaturalBuild fc) = fc
 getBounds (ENaturalFold fc) = fc
@@ -211,8 +210,10 @@ getBounds (EText fc) = fc
 getBounds (ETextLit fc _) = fc
 getBounds (ETextShow fc) = fc
 getBounds (ETextReplace fc) = fc
-getBounds (ENone fc) = fc
 getBounds (EOptional fc) = fc
+getBounds (ENone fc) = fc
+getBounds (EAssert fc _) = fc
+getBounds (EWith fc _ _ _) = fc
 getBounds (EEmbed fc _) = fc
 
 updateBounds : FC -> Expr a -> Expr a
@@ -262,6 +263,7 @@ updateBounds fc (ETextReplace _) = ETextReplace fc
 updateBounds fc (ENone _) = ENone fc
 updateBounds fc (EOptional _) = EOptional fc
 updateBounds fc (EWith _ z s y) = EWith fc z s y
+updateBounds fc (EAssert _ z) = EAssert fc z
 updateBounds fc (EEmbed _ z) = EEmbed fc z
 
 public export
@@ -325,6 +327,7 @@ mutual
     show (ENone fc) = "(\{show fc}:ENone)"
     show (EOptional fc) = "(\{show fc}:EOptional)"
     show (EWith fc x s y) = "(\{show fc}:EWith \{show x} \{show s} \{show y})"
+    show (EAssert fc x) = "(\{show fc}:EAssert \{show x}"
     show (EEmbed fc x) = "(\{show fc}:EEmbed \{show fc} \{show x})"
 
 prettyDottedList : List String -> Doc ann
@@ -344,13 +347,15 @@ mutual
     pretty (EPi fc n x y) =
       pretty "forall" <+> parens (pretty n <++> colon <++> pretty x)
         <++> pretty "->" <++> pretty y
+    pretty (ELet fc x y z) =
+      pretty "let" <++> pretty x <++> equals <++> pretty y
+        <++> pretty "in" <++> pretty z
     pretty (EBool fc) = pretty "Bool"
     pretty (EBoolLit fc x) = pretty $ show x
     pretty (EBoolAnd fc x y) = pretty x <++> pretty "&&" <++> pretty y
     pretty (EBoolOr fc x y) = pretty x <++> pretty "||" <++> pretty y
     pretty (EBoolEQ fc x y) = pretty x <++> pretty "==" <++> pretty y
     pretty (EBoolNE fc x y) = pretty x <++> pretty "!=" <++> pretty y
-    pretty (ELet fc x y z) = pretty "let" <+> pretty x <+> pretty y <+> pretty z
     pretty (EListLit fc xs) = pretty xs
     pretty (ENatural fc) = pretty "Natural"
     pretty (ENaturalBuild fc) = pretty "Natural/build"
@@ -388,6 +393,7 @@ mutual
     pretty (EWith fc x xs y) =
       pretty x <++> pretty "with" <++>
       prettyDottedList (forget xs) <++> equals <++> pretty y
+    pretty (EAssert fc x) = pretty "assert" <++> colon <++> pretty x
     pretty (EEmbed fc x) = pretty x
 
 public export
@@ -540,12 +546,20 @@ mutual
   letBinding = do
     start <- bounds $ tokenW $ keyword "let"
     name <- tokenW $ identPart
-    xxx <- tokenW $ symbol "="
+    _ <- tokenW $ symbol "="
     e <- exprTerm
-    xxx <- whitespace
+    _ <- whitespace
     end <- bounds $ tokenW $ keyword "in" -- TODO is this a good end position?
     e' <- exprTerm
     pure $ ELet (mergeBounds (boundToFC initBounds start) (boundToFC initBounds end)) name e e'
+
+  assertTerm : Grammar state (TokenRawToken) True (Expr ())
+  assertTerm = do
+    start <- bounds $ tokenW $ keyword "assert"
+    _ <- symbol ":"
+    _ <- whitespace
+    e <- bounds $ exprTerm
+    pure $ EAssert (mergeBounds (boundToFC initBounds start) (boundToFC initBounds e)) (val e)
 
   atom : Grammar state (TokenRawToken) True (Expr ())
   atom = do
@@ -634,6 +648,7 @@ mutual
   exprTerm : Grammar state (TokenRawToken) True (Expr ())
   exprTerm = do
     letBinding <|>
+    assertTerm <|>
     chainl1 appTerm (withOp EmptyFC)
 
 finalParser : Grammar state (TokenRawToken) True (Expr ())
