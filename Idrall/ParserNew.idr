@@ -2,6 +2,7 @@ module Idrall.ParserNew
 
 import Data.List
 import Data.List1
+import Data.String -- needed for pretty?
 
 import Text.Parser
 import Text.Quantity
@@ -61,27 +62,49 @@ mergeBounds EmptyFC f@(MkFC x start end) = f
 mergeBounds EmptyFC f@(MkVirtualFC x start end) = f
 mergeBounds EmptyFC EmptyFC = EmptyFC
 
+public export
+data U = CType | Sort | Kind
+
+export
+Eq U where
+  (==) CType CType = True
+  (==) Sort Sort = True
+  (==) Kind Kind = True
+  (==) _ _ = False
+
+export
+Show U where
+  show CType = "CType"
+  show Sort = "Sort"
+  show Kind = "Kind"
+
+export
+Pretty U where
+  pretty CType = "Type"
+  pretty Sort = "Sort"
+  pretty Kind = "Kind"
+
 mutual
   public export
   data Chunks a = MkChunks (List (String, Expr a)) String
 
   ||| Raw AST representation generated directly from the parser
   data Expr a
-    -- = EConst U
-    = EVar FC String -- | EVar Name Int
+    = EConst FC U -- = EConst U
+    | EVar FC String -- | EVar Name Int
     -- | ELam Name (Expr a) (Expr a)
     | EPi FC String (Expr a) (Expr a) -- | EPi Name (Expr a) (Expr a)
     | EApp FC (Expr a) (Expr a) -- | EApp (Expr a) (Expr a)
     | ELet FC String (Expr a) (Expr a) -- | ELet Name (Maybe (Expr a)) (Expr a) (Expr a)
     -- | EAnnot (Expr a) (Expr a)
-    -- | EBool
+    | EBool FC -- | EBool
     | EBoolLit FC Bool -- | EBoolLit Bool
     | EBoolAnd FC (Expr a) (Expr a) -- | EBoolAnd (Expr a) (Expr a)
     | EBoolOr FC (Expr a) (Expr a) -- | EBoolOr  (Expr a) (Expr a)
     | EBoolEQ FC (Expr a) (Expr a) -- | EBoolEQ  (Expr a) (Expr a)
     | EBoolNE FC (Expr a) (Expr a) -- | EBoolNE  (Expr a) (Expr a)
     -- | EBoolIf (Expr a) (Expr a) (Expr a)
-    -- | ENatural
+    | ENatural FC -- | ENatural
     -- | ENaturalLit Nat
     | ENaturalFold FC -- | ENaturalFold
     | ENaturalBuild FC -- | ENaturalBuild
@@ -93,16 +116,16 @@ mutual
     | ENaturalShow FC -- | ENaturalShow
     | ENaturalPlus FC (Expr a) (Expr a) -- | ENaturalPlus (Expr a) (Expr a)
     | ENaturalTimes FC (Expr a) (Expr a) -- | ENaturalTimes (Expr a) (Expr a)
-    -- | EInteger
+    | EInteger FC -- | EInteger
     -- | EIntegerLit Integer
     | EIntegerShow FC -- | EIntegerShow
     | EIntegerClamp FC -- | EIntegerClamp
     | EIntegerNegate FC -- | EIntegerNegate
     | EIntegerToDouble FC -- | EIntegerToDouble
-    -- | EDouble
+    | EDouble FC -- | EDouble
     | EDoubleLit FC Double -- | EDoubleLit Double
     | EDoubleShow FC -- | EDoubleShow
-    -- | EText
+    | EText FC -- | EText
     | ETextLit FC (Chunks a) -- | ETextLit (Chunks a)
     -- | ETextAppend (Expr a) (Expr a)
     | ETextShow FC -- | ETextShow
@@ -144,10 +167,11 @@ mkExprFC0 : OriginDesc -> WithBounds x -> (FC -> Expr a) -> Expr a
 mkExprFC0 od e mkE = mkE (boundToFC od e)
 
 getBounds : Expr a -> FC
+getBounds (EConst fc _) = fc
 getBounds (EVar fc _) = fc
 getBounds (EApp fc _ _) = fc
 getBounds (EPi fc _ _ _) = fc
-getBounds (EDoubleLit fc _) = fc
+getBounds (EBool fc) = fc
 getBounds (EBoolLit fc _) = fc
 getBounds (EBoolAnd fc _ _) = fc
 getBounds (EBoolOr fc _ _) = fc
@@ -156,7 +180,7 @@ getBounds (EBoolNE fc _ _) = fc
 getBounds (ELet fc _ _ _) = fc
 getBounds (EListLit fc _) = fc
 getBounds (EWith fc _ _ _) = fc
-getBounds (ETextLit fc _) = fc
+getBounds (ENatural fc) = fc
 getBounds (ENaturalBuild fc) = fc
 getBounds (ENaturalFold fc) = fc
 getBounds (ENaturalIsZero fc) = fc
@@ -167,10 +191,13 @@ getBounds (ENaturalToInteger fc) = fc
 getBounds (ENaturalShow fc) = fc
 getBounds (ENaturalPlus fc _ _) = fc
 getBounds (ENaturalTimes fc _ _) = fc
+getBounds (EInteger fc) = fc
 getBounds (EIntegerShow fc) = fc
 getBounds (EIntegerNegate fc) = fc
 getBounds (EIntegerClamp fc) = fc
 getBounds (EIntegerToDouble fc) = fc
+getBounds (EDouble fc) = fc
+getBounds (EDoubleLit fc _) = fc
 getBounds (EDoubleShow fc) = fc
 getBounds (EListBuild fc) = fc
 getBounds (EListFold fc) = fc
@@ -180,6 +207,8 @@ getBounds (EListLast fc) = fc
 getBounds (EListIndexed fc) = fc
 getBounds (EListReverse fc) = fc
 getBounds (EList fc) = fc
+getBounds (EText fc) = fc
+getBounds (ETextLit fc _) = fc
 getBounds (ETextShow fc) = fc
 getBounds (ETextReplace fc) = fc
 getBounds (ENone fc) = fc
@@ -187,10 +216,11 @@ getBounds (EOptional fc) = fc
 getBounds (EEmbed fc _) = fc
 
 updateBounds : FC -> Expr a -> Expr a
+updateBounds fc (EConst _ z) = EConst fc z
 updateBounds fc (EVar _ z) = EVar fc z
 updateBounds fc (EApp _ z w) = EApp fc z w
 updateBounds fc (EPi _ n z w) = EPi fc n z w
-updateBounds fc (EDoubleLit _ z) = EDoubleLit fc z
+updateBounds fc (EBool _) = EBool fc
 updateBounds fc (EBoolLit _ z) = EBoolLit fc z
 updateBounds fc (EBoolAnd _ z w) = EBoolAnd fc z w
 updateBounds fc (EBoolOr _ z w) = EBoolOr fc z w
@@ -198,8 +228,7 @@ updateBounds fc (EBoolEQ _ z w) = EBoolEQ fc z w
 updateBounds fc (EBoolNE _ z w) = EBoolNE fc z w
 updateBounds fc (ELet _ z w v) = ELet fc z w v
 updateBounds fc (EListLit _ z) = EListLit fc z
-updateBounds fc (EWith _ z s y) = EWith fc z s y
-updateBounds fc (ETextLit _ z) = ETextLit fc z
+updateBounds fc (ENatural _) = ENatural fc
 updateBounds fc (ENaturalBuild _) = ENaturalBuild fc
 updateBounds fc (ENaturalFold _) = ENaturalFold fc
 updateBounds fc (ENaturalIsZero _) = ENaturalIsZero fc
@@ -210,11 +239,14 @@ updateBounds fc (ENaturalToInteger _) = ENaturalToInteger fc
 updateBounds fc (ENaturalShow _) = ENaturalShow fc
 updateBounds fc (ENaturalPlus _ z w) = ENaturalPlus fc z w
 updateBounds fc (ENaturalTimes _ z w) = ENaturalTimes fc z w
+updateBounds fc (EInteger _) = EInteger fc
 updateBounds fc (EIntegerShow _) = EIntegerShow fc
 updateBounds fc (EIntegerNegate _) = EIntegerNegate fc
 updateBounds fc (EIntegerClamp _) = EIntegerClamp fc
 updateBounds fc (EIntegerToDouble _) = EIntegerToDouble fc
+updateBounds fc (EDouble _) = EDouble fc
 updateBounds fc (EDoubleShow _) = EDoubleShow fc
+updateBounds fc (EDoubleLit _ z) = EDoubleLit fc z
 updateBounds fc (EListBuild _) = EListBuild fc
 updateBounds fc (EListFold _) = EListFold fc
 updateBounds fc (EListLength _) = EListLength fc
@@ -223,10 +255,13 @@ updateBounds fc (EListLast _) = EListLast fc
 updateBounds fc (EListIndexed _) = EListIndexed fc
 updateBounds fc (EListReverse _) = EListReverse fc
 updateBounds fc (EList _) = EList fc
+updateBounds fc (EText _) = EText fc
+updateBounds fc (ETextLit _ z) = ETextLit fc z
 updateBounds fc (ETextShow _) = ETextShow fc
 updateBounds fc (ETextReplace _) = ETextReplace fc
 updateBounds fc (ENone _) = ENone fc
 updateBounds fc (EOptional _) = EOptional fc
+updateBounds fc (EWith _ z s y) = EWith fc z s y
 updateBounds fc (EEmbed _ z) = EEmbed fc z
 
 public export
@@ -244,19 +279,18 @@ mutual
     show (MkChunks xs x) = "MkChunks \{show xs} \{show x}"
 
   Show (Expr a) where
+    show (EConst fc x) = "(\{show fc}:EConst \{show x})"
     show (EVar fc x) = "(\{show fc}:EVar \{show x})"
     show (EApp fc x y) = "(\{show fc}:EApp \{show x} \{show y})"
     show (EPi fc n x y) = "(\{show fc}:EPi \{show n} \{show x} \{show y})"
-    show (EDoubleLit fc x) = "\{show fc}:EDoubleLit \{show x}"
+    show (EBool fc) = "\{show fc}:EBool"
     show (EBoolLit fc x) = "\{show fc}:EBoolLit \{show x}"
     show (EBoolAnd fc x y) = "(\{show fc}:EBoolAnd \{show x} \{show y})"
     show (EBoolOr fc x y) = "\{show fc}:EBoolOr \{show x} \{show y})"
     show (EBoolEQ fc x y) = "\{show fc}:EBoolEQ \{show x} \{show y})"
     show (EBoolNE fc x y) = "\{show fc}:EBoolNE \{show x} \{show y})"
-    show (ELet fc x y z) = "(\{show fc}:ELet \{show fc} \{show x} \{show y} \{show z})"
-    show (EListLit fc x) = "(\{show fc}:EListLit \{show fc} \{show x})"
-    show (EWith fc x s y) = "(\{show fc}:EWith \{show fc} \{show x} \{show s} \{show y})"
-    show (ETextLit fc cs) = "(\{show fc}:ETextLit \{show fc} \{show cs}"
+    show (ELet fc x y z) = "(\{show fc}:ELet \{show x} \{show y} \{show z})"
+    show (ENatural fc) = "\{show fc}:ENatural"
     show (ENaturalBuild fc) = "(\{show fc}:ENaturalBuild)"
     show (ENaturalFold fc) = "(\{show fc}:ENaturalFold)"
     show (ENaturalIsZero fc) = "(\{show fc}:ENaturalZero)"
@@ -267,10 +301,13 @@ mutual
     show (ENaturalShow fc) = "(\{show fc}:ENaturalShow)"
     show (ENaturalPlus fc x y) = "\{show fc}:ENaturalPlus \{show x} \{show y})"
     show (ENaturalTimes fc x y) = "\{show fc}:ENaturalTimes \{show x} \{show y})"
+    show (EInteger fc) = "\{show fc}:EInteger"
     show (EIntegerShow fc) = "(\{show fc}:EIntegerShow)"
     show (EIntegerNegate fc) = "(\{show fc}:EIntegerNegate)"
     show (EIntegerClamp fc) = "(\{show fc}:EIntegerClamp)"
     show (EIntegerToDouble fc) = "(\{show fc}:EIntegerToDouble)"
+    show (EDouble fc) = "\{show fc}:EDouble"
+    show (EDoubleLit fc x) = "(\{show fc}:EDoubleLit \{show x})"
     show (EDoubleShow fc) = "(\{show fc}:EDoubleShow)"
     show (EListBuild fc) = "(\{show fc}:EListBuild)"
     show (EListFold fc) = "(\{show fc}:EListFold)"
@@ -280,10 +317,14 @@ mutual
     show (EListIndexed fc) = "(\{show fc}:EListIndexed)"
     show (EListReverse fc) = "(\{show fc}:EListReverse)"
     show (EList fc) = "(\{show fc}:EList)"
+    show (EListLit fc x) = "(\{show fc}:EListLit \{show x})"
+    show (EText fc) = "(\{show fc}:ETextLit"
+    show (ETextLit fc cs) = "(\{show fc}:ETextLit \{show cs}"
     show (ETextShow fc) = "(\{show fc}:ETextShow)"
     show (ETextReplace fc) = "(\{show fc}:ETextReplace)"
     show (ENone fc) = "(\{show fc}:ENone)"
     show (EOptional fc) = "(\{show fc}:EOptional)"
+    show (EWith fc x s y) = "(\{show fc}:EWith \{show x} \{show s} \{show y})"
     show (EEmbed fc x) = "(\{show fc}:EEmbed \{show fc} \{show x})"
 
 prettyDottedList : List String -> Doc ann
@@ -296,13 +337,14 @@ mutual
     pretty (MkChunks xs x) = pretty xs <+> pretty x
 
   Pretty (Expr ()) where
+    pretty (EConst fc x) = pretty x
     pretty (EVar fc x) = pretty x
     pretty (EApp fc x y) = pretty x <++> pretty y
     pretty (EPi fc "_" x y) = pretty x <++> pretty "->" <++> pretty y
     pretty (EPi fc n x y) =
       pretty "forall" <+> parens (pretty n <++> colon <++> pretty x)
         <++> pretty "->" <++> pretty y
-    pretty (EDoubleLit fc x) = pretty $ show x
+    pretty (EBool fc) = pretty "Bool"
     pretty (EBoolLit fc x) = pretty $ show x
     pretty (EBoolAnd fc x y) = pretty x <++> pretty "&&" <++> pretty y
     pretty (EBoolOr fc x y) = pretty x <++> pretty "||" <++> pretty y
@@ -310,10 +352,7 @@ mutual
     pretty (EBoolNE fc x y) = pretty x <++> pretty "!=" <++> pretty y
     pretty (ELet fc x y z) = pretty "let" <+> pretty x <+> pretty y <+> pretty z
     pretty (EListLit fc xs) = pretty xs
-    pretty (EWith fc x xs y) =
-      pretty x <++> pretty "with" <++>
-      prettyDottedList (forget xs) <++> equals <++> pretty y
-    pretty (ETextLit fc cs) = pretty cs
+    pretty (ENatural fc) = pretty "Natural"
     pretty (ENaturalBuild fc) = pretty "Natural/build"
     pretty (ENaturalFold fc) = pretty "Natural/fold"
     pretty (ENaturalIsZero fc) = pretty "Natural/isZero"
@@ -324,10 +363,13 @@ mutual
     pretty (ENaturalShow fc) = pretty "Natural/show"
     pretty (ENaturalPlus fc x y) = pretty x <++> pretty "+" <++> pretty y
     pretty (ENaturalTimes fc x y) = pretty x <++> pretty "*" <++> pretty y
+    pretty (EInteger fc) = pretty "Integer"
     pretty (EIntegerShow fc) = pretty "Integer/show"
     pretty (EIntegerNegate fc) = pretty "Integer/negate"
     pretty (EIntegerClamp fc) = pretty "Integer/clamp"
     pretty (EIntegerToDouble fc) = pretty "Integer/toDouble"
+    pretty (EDouble fc) = pretty "Double"
+    pretty (EDoubleLit fc x) = pretty $ show x
     pretty (EDoubleShow fc) = pretty "Double/show"
     pretty (EListBuild fc) = pretty "List/build"
     pretty (EListFold fc) = pretty "List/fold"
@@ -337,10 +379,15 @@ mutual
     pretty (EListIndexed fc) = pretty "List/indexed"
     pretty (EListReverse fc) = pretty "List/indexed"
     pretty (EList fc) = pretty "List"
+    pretty (EText fc) = pretty "Text"
+    pretty (ETextLit fc cs) = pretty cs
     pretty (ETextShow fc) = pretty "Text/show"
     pretty (ETextReplace fc) = pretty "Text/replace"
     pretty (ENone fc) = pretty "None"
     pretty (EOptional fc) = pretty "Optional"
+    pretty (EWith fc x xs y) =
+      pretty x <++> pretty "with" <++>
+      prettyDottedList (forget xs) <++> equals <++> pretty y
     pretty (EEmbed fc x) = pretty x
 
 public export
@@ -428,6 +475,14 @@ builtinTerm str =
      "NaN" => pure $ EDoubleLit (boundToFC initBounds str) (0.0/0.0)
      "True" => pure $ EBoolLit (boundToFC initBounds str) True
      "False" => pure $ EBoolLit (boundToFC initBounds str) False
+     "Bool" => pure $ EBool (boundToFC initBounds str)
+     "Text" => pure $ EText (boundToFC initBounds str)
+     "Natural" => pure $ ENatural (boundToFC initBounds str)
+     "Integer" => pure $ EInteger (boundToFC initBounds str)
+     "Double" => pure $ EDouble (boundToFC initBounds str)
+     "Type" => pure $ EConst (boundToFC initBounds str) CType
+     "Kind" => pure $ EConst (boundToFC initBounds str) Kind
+     "Sort" => pure $ EConst (boundToFC initBounds str) Sort
      x => fail "Expected builtin name"
   where
     cons : (FC -> Expr ()) -> Expr ()
@@ -494,9 +549,9 @@ mutual
 
   atom : Grammar state (TokenRawToken) True (Expr ())
   atom = do
-    a <- varTerm <|> textLit
+    a <- builtin <|> varTerm <|> textLit
       <|> doubleLit
-      <|> builtin <|> embed
+      <|> embed
       <|> listExpr <|> (between (symbol "(") (symbol ")") exprTerm)
     pure a
 

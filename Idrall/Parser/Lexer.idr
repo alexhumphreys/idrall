@@ -74,17 +74,20 @@ TokenRawToken = RawToken
 
 export
 builtins : List String
-builtins = ["True", "False",
-  "Natural/build", "Natural/fold", "Natural/isZero", "Natural/even",
-  "Natural/odd", "Natural/subtract", "Natural/toInteger", "Natural/show",
-  "Integer/show", "Integer/negate", "Integer/clamp", "Integer/toDouble",
-  "Double/show",
-  "List/build", "List/fold", "List/length", "List/head",
-  "List/last", "List/indexed", "List/reverse", "List",
-  "Text/show", "Text/replace",
-  "None",
-  "Optional",
-  "NaN"]
+builtins =
+  [ "Type", "Kind", "Sort"
+  , "Bool", "True", "False"
+  , "Natural", "Natural/build", "Natural/fold", "Natural/isZero", "Natural/even"
+  , "Natural/odd", "Natural/subtract", "Natural/toInteger", "Natural/show"
+  , "Integer", "Integer/show", "Integer/negate", "Integer/clamp", "Integer/toDouble"
+  , "Double", "Double/show"
+  , "List/build", "List/fold", "List/length", "List/head"
+  , "List/last", "List/indexed", "List/reverse", "List"
+  , "Text", "Text/show", "Text/replace"
+  , "None"
+  , "Optional"
+  , "NaN"
+  ]
 
 export
 keywords : List String
