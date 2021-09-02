@@ -91,8 +91,8 @@ mutual
     | ENaturalToInteger FC -- | ENaturalToInteger
     | ENaturalSubtract FC -- | ENaturalSubtract
     | ENaturalShow FC -- | ENaturalShow
-    -- | ENaturalPlus (Expr a) (Expr a)
-    -- | ENaturalTimes (Expr a) (Expr a)
+    | ENaturalPlus FC (Expr a) (Expr a) -- | ENaturalPlus (Expr a) (Expr a)
+    | ENaturalTimes FC (Expr a) (Expr a) -- | ENaturalTimes (Expr a) (Expr a)
     -- | EInteger
     -- | EIntegerLit Integer
     | EIntegerShow FC -- | EIntegerShow
@@ -165,6 +165,8 @@ getBounds (ENaturalOdd fc) = fc
 getBounds (ENaturalSubtract fc) = fc
 getBounds (ENaturalToInteger fc) = fc
 getBounds (ENaturalShow fc) = fc
+getBounds (ENaturalPlus fc _ _) = fc
+getBounds (ENaturalTimes fc _ _) = fc
 getBounds (EIntegerShow fc) = fc
 getBounds (EIntegerNegate fc) = fc
 getBounds (EIntegerClamp fc) = fc
@@ -206,6 +208,8 @@ updateBounds fc (ENaturalOdd _) = ENaturalOdd fc
 updateBounds fc (ENaturalSubtract _) = ENaturalSubtract fc
 updateBounds fc (ENaturalToInteger _) = ENaturalToInteger fc
 updateBounds fc (ENaturalShow _) = ENaturalShow fc
+updateBounds fc (ENaturalPlus _ z w) = ENaturalPlus fc z w
+updateBounds fc (ENaturalTimes _ z w) = ENaturalTimes fc z w
 updateBounds fc (EIntegerShow _) = EIntegerShow fc
 updateBounds fc (EIntegerNegate _) = EIntegerNegate fc
 updateBounds fc (EIntegerClamp _) = EIntegerClamp fc
@@ -253,18 +257,20 @@ mutual
     show (EListLit fc x) = "(\{show fc}:EListLit \{show fc} \{show x})"
     show (EWith fc x s y) = "(\{show fc}:EWith \{show fc} \{show x} \{show s} \{show y})"
     show (ETextLit fc cs) = "(\{show fc}:ETextLit \{show fc} \{show cs}"
-    show (ENaturalBuild fc) = "(\{show fc}:ENaturalShow)"
-    show (ENaturalFold fc) = "(\{show fc}:ENaturalShow)"
-    show (ENaturalIsZero fc) = "(\{show fc}:ENaturalShow)"
-    show (ENaturalEven fc) = "(\{show fc}:ENaturalShow)"
-    show (ENaturalOdd fc) = "(\{show fc}:ENaturalShow)"
-    show (ENaturalSubtract fc) = "(\{show fc}:ENaturalShow)"
-    show (ENaturalToInteger fc) = "(\{show fc}:ENaturalShow)"
+    show (ENaturalBuild fc) = "(\{show fc}:ENaturalBuild)"
+    show (ENaturalFold fc) = "(\{show fc}:ENaturalFold)"
+    show (ENaturalIsZero fc) = "(\{show fc}:ENaturalZero)"
+    show (ENaturalEven fc) = "(\{show fc}:ENaturalEven)"
+    show (ENaturalOdd fc) = "(\{show fc}:ENaturalOdd)"
+    show (ENaturalSubtract fc) = "(\{show fc}:ENaturalSubtract)"
+    show (ENaturalToInteger fc) = "(\{show fc}:ENaturalToInteger)"
     show (ENaturalShow fc) = "(\{show fc}:ENaturalShow)"
+    show (ENaturalPlus fc x y) = "\{show fc}:ENaturalPlus \{show x} \{show y})"
+    show (ENaturalTimes fc x y) = "\{show fc}:ENaturalTimes \{show x} \{show y})"
     show (EIntegerShow fc) = "(\{show fc}:EIntegerShow)"
-    show (EIntegerNegate fc) = "(\{show fc}:EIntegerShow)"
-    show (EIntegerClamp fc) = "(\{show fc}:EIntegerShow)"
-    show (EIntegerToDouble fc) = "(\{show fc}:EIntegerShow)"
+    show (EIntegerNegate fc) = "(\{show fc}:EIntegerNegate)"
+    show (EIntegerClamp fc) = "(\{show fc}:EIntegerClamp)"
+    show (EIntegerToDouble fc) = "(\{show fc}:EIntegerToDouble)"
     show (EDoubleShow fc) = "(\{show fc}:EDoubleShow)"
     show (EListBuild fc) = "(\{show fc}:EListBuild)"
     show (EListFold fc) = "(\{show fc}:EListFold)"
@@ -316,6 +322,8 @@ mutual
     pretty (ENaturalSubtract fc) = pretty "Natural/subtract"
     pretty (ENaturalToInteger fc) = pretty "Natural/toInteger"
     pretty (ENaturalShow fc) = pretty "Natural/show"
+    pretty (ENaturalPlus fc x y) = pretty x <++> pretty "+" <++> pretty y
+    pretty (ENaturalTimes fc x y) = pretty x <++> pretty "*" <++> pretty y
     pretty (EIntegerShow fc) = pretty "Integer/show"
     pretty (EIntegerNegate fc) = pretty "Integer/negate"
     pretty (EIntegerClamp fc) = pretty "Integer/clamp"
@@ -507,19 +515,23 @@ mutual
       end <- bounds $ symbol "]"
       pure $ EListLit (mergeBounds (boundToFC initBounds start) (boundToFC initBounds end)) (forget es)
 
+  opParser : String
+     -> (FC -> Expr () -> Expr () -> Expr ())
+     -> Grammar state (TokenRawToken) True (Expr () -> Expr () -> Expr ())
+  opParser op cons = infixOp (do
+      _ <- optional whitespace
+      tokenW $ symbol op) (boundedOp cons)
+
+  plusOp : FC -> Grammar state (TokenRawToken) True (Expr () -> Expr () -> Expr ())
+  plusOp fc = (opParser "+" ENaturalPlus)
+
+  mulOp : FC -> Grammar state (TokenRawToken) True (Expr () -> Expr () -> Expr ())
+  mulOp fc = (opParser "*" ENaturalTimes)
+
   boolOp : FC -> Grammar state (TokenRawToken) True (Expr () -> Expr () -> Expr ())
   boolOp fc =
-    (go "&&" EBoolAnd) <|> (go "||" EBoolOr)
-    <|> (go "==" EBoolEQ) <|> (go "!=" EBoolNE)
-  where
-    opParser : String -> Grammar state (TokenRawToken) True ()
-    opParser x = (do
-      _ <- optional whitespace
-      tokenW $ symbol x)
-    go : String
-       -> (FC -> Expr () -> Expr () -> Expr ())
-       -> Grammar state (TokenRawToken) True (Expr () -> Expr () -> Expr ())
-    go x cons = infixOp (opParser x) (boundedOp cons)
+    (opParser "&&" EBoolAnd) <|> (opParser "||" EBoolOr)
+    <|> (opParser "==" EBoolEQ) <|> (opParser "!=" EBoolNE)
 
   piOp : FC -> Grammar state (TokenRawToken) True (Expr () -> Expr () -> Expr ())
   piOp fc =
@@ -549,8 +561,14 @@ mutual
     with' : List1 String -> FC -> Expr a -> Expr a -> Expr a
     with' xs fc x y = EWith fc x xs y
 
+  mulTerm : Grammar state (TokenRawToken) True (Expr ())
+  mulTerm = chainl1 atom (mulOp EmptyFC)
+
+  plusTerm : Grammar state (TokenRawToken) True (Expr ())
+  plusTerm = chainl1 mulTerm (plusOp EmptyFC)
+
   boolTerm : Grammar state (TokenRawToken) True (Expr ())
-  boolTerm = chainl1 atom (boolOp EmptyFC)
+  boolTerm = chainl1 plusTerm (boolOp EmptyFC)
 
   piTerm : Grammar state (TokenRawToken) True (Expr ())
   piTerm = chainr1 boolTerm (piOp EmptyFC)

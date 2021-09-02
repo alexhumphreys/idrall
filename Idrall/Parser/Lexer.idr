@@ -126,7 +126,7 @@ doubleLit : Lexer
 doubleLit
     = (opt sign)
       <+> ((digits <+> is '.' <+> digits <+> opt exponent)
-           <|> (digits <+> opt exponent))
+           <|> (digits <+> exponent))
 
 -- comments
 mutual
