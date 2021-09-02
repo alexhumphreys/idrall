@@ -96,7 +96,7 @@ mutual
     | EPi FC String (Expr a) (Expr a) -- | EPi Name (Expr a) (Expr a)
     | EApp FC (Expr a) (Expr a) -- | EApp (Expr a) (Expr a)
     | ELet FC String (Expr a) (Expr a) -- | ELet Name (Maybe (Expr a)) (Expr a) (Expr a)
-    -- | EAnnot (Expr a) (Expr a)
+    | EAnnot FC (Expr a) (Expr a) -- | EAnnot (Expr a) (Expr a)
     | EBool FC -- | EBool
     | EBoolLit FC Bool -- | EBoolLit Bool
     | EBoolAnd FC (Expr a) (Expr a) -- | EBoolAnd (Expr a) (Expr a)
@@ -171,13 +171,14 @@ getBounds (EConst fc _) = fc
 getBounds (EVar fc _) = fc
 getBounds (EApp fc _ _) = fc
 getBounds (EPi fc _ _ _) = fc
+getBounds (ELet fc _ _ _) = fc
+getBounds (EAnnot fc _ _) = fc
 getBounds (EBool fc) = fc
 getBounds (EBoolLit fc _) = fc
 getBounds (EBoolAnd fc _ _) = fc
 getBounds (EBoolOr fc _ _) = fc
 getBounds (EBoolEQ fc _ _) = fc
 getBounds (EBoolNE fc _ _) = fc
-getBounds (ELet fc _ _ _) = fc
 getBounds (EListLit fc _) = fc
 getBounds (ENatural fc) = fc
 getBounds (ENaturalBuild fc) = fc
@@ -221,13 +222,14 @@ updateBounds fc (EConst _ z) = EConst fc z
 updateBounds fc (EVar _ z) = EVar fc z
 updateBounds fc (EApp _ z w) = EApp fc z w
 updateBounds fc (EPi _ n z w) = EPi fc n z w
+updateBounds fc (ELet _ z w v) = ELet fc z w v
+updateBounds fc (EAnnot _ z w) = EAnnot fc z w
 updateBounds fc (EBool _) = EBool fc
 updateBounds fc (EBoolLit _ z) = EBoolLit fc z
 updateBounds fc (EBoolAnd _ z w) = EBoolAnd fc z w
 updateBounds fc (EBoolOr _ z w) = EBoolOr fc z w
 updateBounds fc (EBoolEQ _ z w) = EBoolEQ fc z w
 updateBounds fc (EBoolNE _ z w) = EBoolNE fc z w
-updateBounds fc (ELet _ z w v) = ELet fc z w v
 updateBounds fc (EListLit _ z) = EListLit fc z
 updateBounds fc (ENatural _) = ENatural fc
 updateBounds fc (ENaturalBuild _) = ENaturalBuild fc
@@ -285,13 +287,14 @@ mutual
     show (EVar fc x) = "(\{show fc}:EVar \{show x})"
     show (EApp fc x y) = "(\{show fc}:EApp \{show x} \{show y})"
     show (EPi fc n x y) = "(\{show fc}:EPi \{show n} \{show x} \{show y})"
+    show (ELet fc x y z) = "(\{show fc}:ELet \{show x} \{show y} \{show z})"
+    show (EAnnot fc x y) = "(\{show fc}:EAnnot \{show x} \{show y}"
     show (EBool fc) = "\{show fc}:EBool"
     show (EBoolLit fc x) = "\{show fc}:EBoolLit \{show x}"
     show (EBoolAnd fc x y) = "(\{show fc}:EBoolAnd \{show x} \{show y})"
     show (EBoolOr fc x y) = "\{show fc}:EBoolOr \{show x} \{show y})"
     show (EBoolEQ fc x y) = "\{show fc}:EBoolEQ \{show x} \{show y})"
     show (EBoolNE fc x y) = "\{show fc}:EBoolNE \{show x} \{show y})"
-    show (ELet fc x y z) = "(\{show fc}:ELet \{show x} \{show y} \{show z})"
     show (ENatural fc) = "\{show fc}:ENatural"
     show (ENaturalBuild fc) = "(\{show fc}:ENaturalBuild)"
     show (ENaturalFold fc) = "(\{show fc}:ENaturalFold)"
@@ -350,6 +353,7 @@ mutual
     pretty (ELet fc x y z) =
       pretty "let" <++> pretty x <++> equals <++> pretty y
         <++> pretty "in" <++> pretty z
+    pretty (EAnnot fc x y) = pretty x <++> colon <++> pretty y
     pretty (EBool fc) = pretty "Bool"
     pretty (EBoolLit fc x) = pretty $ show x
     pretty (EBoolAnd fc x y) = pretty x <++> pretty "&&" <++> pretty y
@@ -603,11 +607,11 @@ mutual
     <|> (opParser "==" EBoolEQ) <|> (opParser "!=" EBoolNE)
 
   piOp : FC -> Grammar state (TokenRawToken) True (Expr () -> Expr () -> Expr ())
-  piOp fc =
-    infixOp (do
-      _ <- optional whitespace
-      tokenW $ symbol "->")
-      (boundedOp $ epi' "foo")
+  piOp fc = (opParser ":" EAnnot) <|>
+      infixOp (do
+        _ <- optional whitespace
+        tokenW $ symbol "->")
+        (boundedOp $ epi' "foo")
   where
     epi' : String -> FC -> Expr a -> Expr a -> Expr a
     epi' n fc y z = EPi fc n y z
