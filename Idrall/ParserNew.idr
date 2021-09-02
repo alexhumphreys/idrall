@@ -77,9 +77,9 @@ mutual
     -- | EBool
     | EBoolLit FC Bool -- | EBoolLit Bool
     | EBoolAnd FC (Expr a) (Expr a) -- | EBoolAnd (Expr a) (Expr a)
-    -- | EBoolOr  (Expr a) (Expr a)
-    -- | EBoolEQ  (Expr a) (Expr a)
-    -- | EBoolNE  (Expr a) (Expr a)
+    | EBoolOr FC (Expr a) (Expr a) -- | EBoolOr  (Expr a) (Expr a)
+    | EBoolEQ FC (Expr a) (Expr a) -- | EBoolEQ  (Expr a) (Expr a)
+    | EBoolNE FC (Expr a) (Expr a) -- | EBoolNE  (Expr a) (Expr a)
     -- | EBoolIf (Expr a) (Expr a) (Expr a)
     -- | ENatural
     -- | ENaturalLit Nat
@@ -150,6 +150,9 @@ getBounds (EPi fc _ _ _) = fc
 getBounds (EDoubleLit fc _) = fc
 getBounds (EBoolLit fc _) = fc
 getBounds (EBoolAnd fc _ _) = fc
+getBounds (EBoolOr fc _ _) = fc
+getBounds (EBoolEQ fc _ _) = fc
+getBounds (EBoolNE fc _ _) = fc
 getBounds (ELet fc _ _ _) = fc
 getBounds (EListLit fc _) = fc
 getBounds (EWith fc _ _ _) = fc
@@ -188,6 +191,9 @@ updateBounds fc (EPi _ n z w) = EPi fc n z w
 updateBounds fc (EDoubleLit _ z) = EDoubleLit fc z
 updateBounds fc (EBoolLit _ z) = EBoolLit fc z
 updateBounds fc (EBoolAnd _ z w) = EBoolAnd fc z w
+updateBounds fc (EBoolOr _ z w) = EBoolOr fc z w
+updateBounds fc (EBoolEQ _ z w) = EBoolEQ fc z w
+updateBounds fc (EBoolNE _ z w) = EBoolNE fc z w
 updateBounds fc (ELet _ z w v) = ELet fc z w v
 updateBounds fc (EListLit _ z) = EListLit fc z
 updateBounds fc (EWith _ z s y) = EWith fc z s y
@@ -240,6 +246,9 @@ mutual
     show (EDoubleLit fc x) = "\{show fc}:EDoubleLit \{show x}"
     show (EBoolLit fc x) = "\{show fc}:EBoolLit \{show x}"
     show (EBoolAnd fc x y) = "(\{show fc}:EBoolAnd \{show x} \{show y})"
+    show (EBoolOr fc x y) = "\{show fc}:EBoolOr \{show x} \{show y})"
+    show (EBoolEQ fc x y) = "\{show fc}:EBoolEQ \{show x} \{show y})"
+    show (EBoolNE fc x y) = "\{show fc}:EBoolNE \{show x} \{show y})"
     show (ELet fc x y z) = "(\{show fc}:ELet \{show fc} \{show x} \{show y} \{show z})"
     show (EListLit fc x) = "(\{show fc}:EListLit \{show fc} \{show x})"
     show (EWith fc x s y) = "(\{show fc}:EWith \{show fc} \{show x} \{show s} \{show y})"
@@ -290,6 +299,9 @@ mutual
     pretty (EDoubleLit fc x) = pretty $ show x
     pretty (EBoolLit fc x) = pretty $ show x
     pretty (EBoolAnd fc x y) = pretty x <++> pretty "&&" <++> pretty y
+    pretty (EBoolOr fc x y) = pretty x <++> pretty "||" <++> pretty y
+    pretty (EBoolEQ fc x y) = pretty x <++> pretty "==" <++> pretty y
+    pretty (EBoolNE fc x y) = pretty x <++> pretty "!=" <++> pretty y
     pretty (ELet fc x y z) = pretty "let" <+> pretty x <+> pretty y <+> pretty z
     pretty (EListLit fc xs) = pretty xs
     pretty (EWith fc x xs y) =
@@ -497,10 +509,17 @@ mutual
 
   boolOp : FC -> Grammar state (TokenRawToken) True (Expr () -> Expr () -> Expr ())
   boolOp fc =
-    infixOp (do
+    (go "&&" EBoolAnd) <|> (go "||" EBoolOr)
+    <|> (go "==" EBoolEQ) <|> (go "!=" EBoolNE)
+  where
+    opParser : String -> Grammar state (TokenRawToken) True ()
+    opParser x = (do
       _ <- optional whitespace
-      tokenW $ symbol "&&")
-      (boundedOp EBoolAnd)
+      tokenW $ symbol x)
+    go : String
+       -> (FC -> Expr () -> Expr () -> Expr ())
+       -> Grammar state (TokenRawToken) True (Expr () -> Expr () -> Expr ())
+    go x cons = infixOp (opParser x) (boundedOp cons)
 
   piOp : FC -> Grammar state (TokenRawToken) True (Expr () -> Expr () -> Expr ())
   piOp fc =
