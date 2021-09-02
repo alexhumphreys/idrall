@@ -534,56 +534,29 @@ mutual
   varTerm : Grammar state (TokenRawToken) True (Expr ())
   varTerm = do
       name <- bounds $ identPart
-      toVar (isKeyword name)
-  where
-    isKeyword : WithBounds String -> Maybe $ Expr ()
-    isKeyword b@(MkBounded val isIrrelevant bounds) =
-      let isKeyword = elem val keywords
-      in case (isKeyword) of
-              (True) => Nothing
-              (False) => pure $ EVar (boundToFC initBounds b) val
-    toVar : Maybe (Expr ()) -> Grammar state (TokenRawToken) False (Expr ())
-    toVar Nothing = fail "is reserved word"
-    toVar (Just x) = pure x
-
-  letBinding : Grammar state (TokenRawToken) True (Expr ())
-  letBinding = do
-    start <- bounds $ tokenW $ keyword "let"
-    name <- tokenW $ identPart
-    _ <- tokenW $ symbol "="
-    e <- exprTerm
-    _ <- whitespace
-    end <- bounds $ tokenW $ keyword "in" -- TODO is this a good end position?
-    e' <- exprTerm
-    pure $ ELet (mergeBounds (boundToFC initBounds start) (boundToFC initBounds end)) name e e'
-
-  assertTerm : Grammar state (TokenRawToken) True (Expr ())
-  assertTerm = do
-    start <- bounds $ tokenW $ keyword "assert"
-    _ <- symbol ":"
-    _ <- whitespace
-    e <- bounds $ exprTerm
-    pure $ EAssert (mergeBounds (boundToFC initBounds start) (boundToFC initBounds e)) (val e)
+      pure $ EVar (boundToFC initBounds name) $ val name
 
   atom : Grammar state (TokenRawToken) True (Expr ())
   atom = do
     a <- builtin <|> varTerm <|> textLit
       <|> doubleLit
       <|> embed
-      <|> listExpr <|> (between (symbol "(") (symbol ")") exprTerm)
+      <|> listTerm <|> (between (symbol "(") (symbol ")") exprTerm)
     pure a
 
-  listExpr : Grammar state (TokenRawToken) True (Expr ())
-  listExpr = emptyList <|> populatedList
+  listTerm : Grammar state (TokenRawToken) True (Expr ())
+  listTerm = emptyList <|> populatedList
   where
     emptyList : Grammar state (TokenRawToken) True (Expr ())
     emptyList = do
       start <- bounds $ symbol "["
+      commit
       end <- bounds $ symbol "]"
       pure $ EListLit (mergeBounds (boundToFC initBounds start) (boundToFC initBounds end)) []
     populatedList : Grammar state (TokenRawToken) True (Expr ())
     populatedList = do
       start <- bounds $ symbol "["
+      commit
       es <- sepBy1 (symbol ",") exprTerm
       end <- bounds $ symbol "]"
       pure $ EListLit (mergeBounds (boundToFC initBounds start) (boundToFC initBounds end)) (forget es)
@@ -626,6 +599,7 @@ mutual
       -- every operator
       _ <- optional $ whitespace
       tokenW $ keyword "with"
+      commit
       dl <- dottedList
       _ <- optional $ whitespace
       tokenW $ symbol "="
@@ -655,10 +629,32 @@ mutual
     assertTerm <|>
     chainl1 appTerm (withOp EmptyFC)
 
+  letBinding : Grammar state (TokenRawToken) True (Expr ())
+  letBinding = do
+    start <- bounds $ tokenW $ keyword "let"
+    commit
+    name <- tokenW $ identPart
+    _ <- tokenW $ symbol "="
+    e <- exprTerm
+    _ <- whitespace
+    end <- bounds $ tokenW $ keyword "in" -- TODO is this a good end position?
+    e' <- exprTerm
+    pure $ ELet (mergeBounds (boundToFC initBounds start) (boundToFC initBounds end)) name e e'
+
+  assertTerm : Grammar state (TokenRawToken) True (Expr ())
+  assertTerm = do
+    start <- bounds $ tokenW $ keyword "assert"
+    commit
+    _ <- symbol ":"
+    _ <- whitespace
+    e <- bounds $ exprTerm
+    pure $ EAssert (mergeBounds (boundToFC initBounds start) (boundToFC initBounds e)) (val e)
+
 finalParser : Grammar state (TokenRawToken) True (Expr ())
 finalParser = do
   e <- exprTerm
-  eof
+  _ <- optional $ many whitespace
+  endOfInput
   pure e
 
 Show (ParsingError (TokenRawToken)) where
@@ -683,7 +679,7 @@ doParse input = do
     | Left e => printLn $ show e
   putStrLn $ "tokens: " ++ show tokens
 
-  Right (expr, x) <- pure $ parse exprTerm tokens -- TODO use finalParser
+  Right (expr, x) <- pure $ parse finalParser tokens -- TODO use finalParser
     | Left e => printLn $ show e
 
   let doc = the (Doc (Expr ())) $ pretty expr

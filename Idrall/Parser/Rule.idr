@@ -114,3 +114,11 @@ builtin =
     \case
       Builtin x => Just x
       _ => Nothing
+
+export
+endOfInput : Rule ()
+endOfInput =
+  terminal "expected builtin" $
+    \case
+      EndInput => Just ()
+      _ => Nothing
