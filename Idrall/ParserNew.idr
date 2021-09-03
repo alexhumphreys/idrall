@@ -92,7 +92,7 @@ mutual
   data Expr a
     = EConst FC U -- = EConst U
     | EVar FC String -- | EVar Name Int
-    -- | ELam Name (Expr a) (Expr a)
+    | ELam FC String (Expr a) (Expr a) -- | ELam Name (Expr a) (Expr a)
     | EPi FC String (Expr a) (Expr a) -- | EPi Name (Expr a) (Expr a)
     | EApp FC (Expr a) (Expr a) -- | EApp (Expr a) (Expr a)
     | ELet FC String (Expr a) (Expr a) -- | ELet Name (Maybe (Expr a)) (Expr a) (Expr a)
@@ -169,6 +169,7 @@ mkExprFC0 od e mkE = mkE (boundToFC od e)
 getBounds : Expr a -> FC
 getBounds (EConst fc _) = fc
 getBounds (EVar fc _) = fc
+getBounds (ELam fc _ _ _) = fc
 getBounds (EApp fc _ _) = fc
 getBounds (EPi fc _ _ _) = fc
 getBounds (ELet fc _ _ _) = fc
@@ -220,6 +221,7 @@ getBounds (EEmbed fc _) = fc
 updateBounds : FC -> Expr a -> Expr a
 updateBounds fc (EConst _ z) = EConst fc z
 updateBounds fc (EVar _ z) = EVar fc z
+updateBounds fc (ELam _ z w v) = ELam fc z w v
 updateBounds fc (EApp _ z w) = EApp fc z w
 updateBounds fc (EPi _ n z w) = EPi fc n z w
 updateBounds fc (ELet _ z w v) = ELet fc z w v
@@ -286,6 +288,7 @@ mutual
     show (EConst fc x) = "(\{show fc}:EConst \{show x})"
     show (EVar fc x) = "(\{show fc}:EVar \{show x})"
     show (EApp fc x y) = "(\{show fc}:EApp \{show x} \{show y})"
+    show (ELam fc n x y) = "(\{show fc}:ELam \{show n} \{show x} \{show y})"
     show (EPi fc n x y) = "(\{show fc}:EPi \{show n} \{show x} \{show y})"
     show (ELet fc x y z) = "(\{show fc}:ELet \{show x} \{show y} \{show z})"
     show (EAnnot fc x y) = "(\{show fc}:EAnnot \{show x} \{show y}"
@@ -346,6 +349,9 @@ mutual
     pretty (EConst fc x) = pretty x
     pretty (EVar fc x) = pretty x
     pretty (EApp fc x y) = pretty x <++> pretty y
+    pretty (ELam fc n x y) =
+      pretty "\\" <+> parens (pretty n <++> colon <++> pretty x)
+        <++> pretty "->" <++> pretty y
     pretty (EPi fc "_" x y) = pretty x <++> pretty "->" <++> pretty y
     pretty (EPi fc n x y) =
       pretty "forall" <+> parens (pretty n <++> colon <++> pretty x)
@@ -626,6 +632,7 @@ mutual
   exprTerm : Grammar state (TokenRawToken) True (Expr ())
   exprTerm = do
     letBinding <|>
+    lamTerm <|>
     assertTerm <|>
     chainl1 appTerm (withOp EmptyFC)
 
@@ -640,6 +647,20 @@ mutual
     end <- bounds $ tokenW $ keyword "in" -- TODO is this a good end position?
     e' <- exprTerm
     pure $ ELet (mergeBounds (boundToFC initBounds start) (boundToFC initBounds end)) name e e'
+
+  lamTerm : Grammar state (TokenRawToken) True (Expr ())
+  lamTerm = do
+    start <- bounds $ tokenW $ (do symbol "\\" ; symbol "(")
+    commit
+    name <- tokenW $ identPart
+    _ <- symbol ":"
+    _ <- whitespace
+    t <- bounds $ exprTerm
+    _ <- tokenW $ symbol ")"
+    _ <- tokenW $ symbol "->"
+    body <- bounds $ exprTerm
+    pure $ ELam (mergeBounds (boundToFC initBounds start) (boundToFC initBounds body))
+            name (val t) (val body)
 
   assertTerm : Grammar state (TokenRawToken) True (Expr ())
   assertTerm = do
