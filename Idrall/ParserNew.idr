@@ -127,12 +127,12 @@ mutual
     | EDoubleShow FC -- | EDoubleShow
     | EText FC -- | EText
     | ETextLit FC (Chunks a) -- | ETextLit (Chunks a)
-    -- | ETextAppend (Expr a) (Expr a)
+    | ETextAppend FC (Expr a) (Expr a) -- | ETextAppend (Expr a) (Expr a)
     | ETextShow FC -- | ETextShow
     | ETextReplace FC -- | ETextReplace
     | EList FC -- | EList
     | EListLit FC (List (Expr a)) -- | EListLit (Maybe (Expr a)) (List (Expr a))
-    -- | EListAppend (Expr a) (Expr a)
+    | EListAppend FC (Expr a) (Expr a) -- | EListAppend (Expr a) (Expr a)
     | EListBuild FC -- | EListBuild
     | EListFold FC -- | EListFold
     | EListLength FC -- | EListLength
@@ -148,10 +148,10 @@ mutual
     -- | ERecord (SortedMap FieldName (Expr a))
     -- | ERecordLit (SortedMap FieldName (Expr a))
     -- | EUnion (SortedMap FieldName (Maybe (Expr a)))
-    -- | ECombine (Expr a) (Expr a)
-    -- | ECombineTypes (Expr a) (Expr a)
-    -- | EPrefer (Expr a) (Expr a)
-    -- | ERecordCompletion (Expr a) (Expr a)
+    | ECombine FC (Expr a) (Expr a) -- | ECombine (Expr a) (Expr a)
+    | ECombineTypes FC (Expr a) (Expr a) -- | ECombineTypes (Expr a) (Expr a)
+    | EPrefer FC (Expr a) (Expr a) -- | EPrefer (Expr a) (Expr a)
+    | ERecordCompletion FC (Expr a) (Expr a) -- | ERecordCompletion (Expr a) (Expr a)
     -- | EMerge (Expr a) (Expr a) (Maybe (Expr a))
     -- | EToMap (Expr a) (Maybe (Expr a))
     -- | EField (Expr a) FieldName
@@ -180,7 +180,6 @@ getBounds (EBoolAnd fc _ _) = fc
 getBounds (EBoolOr fc _ _) = fc
 getBounds (EBoolEQ fc _ _) = fc
 getBounds (EBoolNE fc _ _) = fc
-getBounds (EListLit fc _) = fc
 getBounds (ENatural fc) = fc
 getBounds (ENaturalBuild fc) = fc
 getBounds (ENaturalFold fc) = fc
@@ -200,6 +199,9 @@ getBounds (EIntegerToDouble fc) = fc
 getBounds (EDouble fc) = fc
 getBounds (EDoubleLit fc _) = fc
 getBounds (EDoubleShow fc) = fc
+getBounds (EList fc) = fc
+getBounds (EListLit fc _) = fc
+getBounds (EListAppend fc _ _) = fc
 getBounds (EListBuild fc) = fc
 getBounds (EListFold fc) = fc
 getBounds (EListLength fc) = fc
@@ -207,14 +209,18 @@ getBounds (EListHead fc) = fc
 getBounds (EListLast fc) = fc
 getBounds (EListIndexed fc) = fc
 getBounds (EListReverse fc) = fc
-getBounds (EList fc) = fc
 getBounds (EText fc) = fc
+getBounds (ETextAppend fc _ _) = fc
 getBounds (ETextLit fc _) = fc
 getBounds (ETextShow fc) = fc
 getBounds (ETextReplace fc) = fc
 getBounds (EOptional fc) = fc
 getBounds (ENone fc) = fc
 getBounds (EAssert fc _) = fc
+getBounds (ECombine fc _ _) = fc
+getBounds (ECombineTypes fc _ _) = fc
+getBounds (EPrefer fc _ _) = fc
+getBounds (ERecordCompletion fc _ _) = fc
 getBounds (EWith fc _ _ _) = fc
 getBounds (EEmbed fc _) = fc
 
@@ -232,7 +238,6 @@ updateBounds fc (EBoolAnd _ z w) = EBoolAnd fc z w
 updateBounds fc (EBoolOr _ z w) = EBoolOr fc z w
 updateBounds fc (EBoolEQ _ z w) = EBoolEQ fc z w
 updateBounds fc (EBoolNE _ z w) = EBoolNE fc z w
-updateBounds fc (EListLit _ z) = EListLit fc z
 updateBounds fc (ENatural _) = ENatural fc
 updateBounds fc (ENaturalBuild _) = ENaturalBuild fc
 updateBounds fc (ENaturalFold _) = ENaturalFold fc
@@ -252,6 +257,9 @@ updateBounds fc (EIntegerToDouble _) = EIntegerToDouble fc
 updateBounds fc (EDouble _) = EDouble fc
 updateBounds fc (EDoubleShow _) = EDoubleShow fc
 updateBounds fc (EDoubleLit _ z) = EDoubleLit fc z
+updateBounds fc (EList _) = EList fc
+updateBounds fc (EListLit _ z) = EListLit fc z
+updateBounds fc (EListAppend _ z w) = EListAppend fc z w
 updateBounds fc (EListBuild _) = EListBuild fc
 updateBounds fc (EListFold _) = EListFold fc
 updateBounds fc (EListLength _) = EListLength fc
@@ -259,15 +267,19 @@ updateBounds fc (EListHead _) = EListHead fc
 updateBounds fc (EListLast _) = EListLast fc
 updateBounds fc (EListIndexed _) = EListIndexed fc
 updateBounds fc (EListReverse _) = EListReverse fc
-updateBounds fc (EList _) = EList fc
 updateBounds fc (EText _) = EText fc
 updateBounds fc (ETextLit _ z) = ETextLit fc z
+updateBounds fc (ETextAppend _ z w) = ETextAppend fc z w
 updateBounds fc (ETextShow _) = ETextShow fc
 updateBounds fc (ETextReplace _) = ETextReplace fc
 updateBounds fc (ENone _) = ENone fc
 updateBounds fc (EOptional _) = EOptional fc
 updateBounds fc (EWith _ z s y) = EWith fc z s y
 updateBounds fc (EAssert _ z) = EAssert fc z
+updateBounds fc (ECombine _ x y) = ECombine fc x y
+updateBounds fc (ECombineTypes _ x y) = ECombineTypes fc x y
+updateBounds fc (EPrefer _ x y) = EPrefer fc x y
+updateBounds fc (ERecordCompletion _ x y) = ERecordCompletion fc x y
 updateBounds fc (EEmbed _ z) = EEmbed fc z
 
 public export
@@ -317,6 +329,9 @@ mutual
     show (EDouble fc) = "\{show fc}:EDouble"
     show (EDoubleLit fc x) = "(\{show fc}:EDoubleLit \{show x})"
     show (EDoubleShow fc) = "(\{show fc}:EDoubleShow)"
+    show (EList fc) = "(\{show fc}:EList)"
+    show (EListLit fc x) = "(\{show fc}:EListLit \{show x})"
+    show (EListAppend fc x y) = "(\{show fc}:EListAppend \{show x} \{show y})"
     show (EListBuild fc) = "(\{show fc}:EListBuild)"
     show (EListFold fc) = "(\{show fc}:EListFold)"
     show (EListLength fc) = "(\{show fc}:EListLength)"
@@ -324,16 +339,19 @@ mutual
     show (EListLast fc) = "(\{show fc}:EListLast)"
     show (EListIndexed fc) = "(\{show fc}:EListIndexed)"
     show (EListReverse fc) = "(\{show fc}:EListReverse)"
-    show (EList fc) = "(\{show fc}:EList)"
-    show (EListLit fc x) = "(\{show fc}:EListLit \{show x})"
     show (EText fc) = "(\{show fc}:ETextLit"
     show (ETextLit fc cs) = "(\{show fc}:ETextLit \{show cs}"
+    show (ETextAppend fc x y) = "(\{show fc}:ETextAppend \{show x} \{show y}"
     show (ETextShow fc) = "(\{show fc}:ETextShow)"
     show (ETextReplace fc) = "(\{show fc}:ETextReplace)"
     show (ENone fc) = "(\{show fc}:ENone)"
     show (EOptional fc) = "(\{show fc}:EOptional)"
     show (EWith fc x s y) = "(\{show fc}:EWith \{show x} \{show s} \{show y})"
     show (EAssert fc x) = "(\{show fc}:EAssert \{show x}"
+    show (ECombine fc x y) = "(\{show fc}:ECombine \{show x} \{show y}"
+    show (ECombineTypes fc x y) = "(\{show fc}:ECombineTypes \{show x} \{show y}"
+    show (EPrefer fc x y) = "(\{show fc}:EPrefer \{show x} \{show y}"
+    show (ERecordCompletion fc x y) = "(\{show fc}:ERecordCompletion \{show x} \{show y}"
     show (EEmbed fc x) = "(\{show fc}:EEmbed \{show fc} \{show x})"
 
 prettyDottedList : List String -> Doc ann
@@ -366,7 +384,6 @@ mutual
     pretty (EBoolOr fc x y) = pretty x <++> pretty "||" <++> pretty y
     pretty (EBoolEQ fc x y) = pretty x <++> pretty "==" <++> pretty y
     pretty (EBoolNE fc x y) = pretty x <++> pretty "!=" <++> pretty y
-    pretty (EListLit fc xs) = pretty xs
     pretty (ENatural fc) = pretty "Natural"
     pretty (ENaturalBuild fc) = pretty "Natural/build"
     pretty (ENaturalFold fc) = pretty "Natural/fold"
@@ -386,6 +403,9 @@ mutual
     pretty (EDouble fc) = pretty "Double"
     pretty (EDoubleLit fc x) = pretty $ show x
     pretty (EDoubleShow fc) = pretty "Double/show"
+    pretty (EList fc) = pretty "List"
+    pretty (EListLit fc xs) = pretty xs
+    pretty (EListAppend fc x y) = pretty x <++> pretty "#" <++> pretty y
     pretty (EListBuild fc) = pretty "List/build"
     pretty (EListFold fc) = pretty "List/fold"
     pretty (EListLength fc) = pretty "List/length"
@@ -393,9 +413,9 @@ mutual
     pretty (EListLast fc) = pretty "List/last"
     pretty (EListIndexed fc) = pretty "List/indexed"
     pretty (EListReverse fc) = pretty "List/indexed"
-    pretty (EList fc) = pretty "List"
     pretty (EText fc) = pretty "Text"
     pretty (ETextLit fc cs) = pretty cs
+    pretty (ETextAppend fc x y) = pretty x <++> pretty "++" <++> pretty y
     pretty (ETextShow fc) = pretty "Text/show"
     pretty (ETextReplace fc) = pretty "Text/replace"
     pretty (ENone fc) = pretty "None"
@@ -404,6 +424,10 @@ mutual
       pretty x <++> pretty "with" <++>
       prettyDottedList (forget xs) <++> equals <++> pretty y
     pretty (EAssert fc x) = pretty "assert" <++> colon <++> pretty x
+    pretty (ECombine fc x y) = pretty x <++> pretty "/\\" <++> pretty y
+    pretty (ECombineTypes fc x y) = pretty x <++> pretty "//\\\\" <++> pretty y
+    pretty (EPrefer fc x y) = pretty x <++> pretty "//" <++> pretty y
+    pretty (ERecordCompletion fc x y) = pretty x <++> pretty "::" <++> pretty y
     pretty (EEmbed fc x) = pretty x
 
 public export
@@ -574,6 +598,12 @@ mutual
       _ <- optional whitespace
       tokenW $ symbol op) (boundedOp cons)
 
+  otherOp : FC -> Grammar state (TokenRawToken) True (Expr () -> Expr () -> Expr ())
+  otherOp fc =
+    (opParser "++" ETextAppend) <|> (opParser "#" EListAppend)
+      <|> (opParser "/\\" ECombine) <|> (opParser "//\\\\" ECombineTypes)
+      <|> (opParser "//" EPrefer) <|> (opParser "::" ERecordCompletion)
+
   plusOp : FC -> Grammar state (TokenRawToken) True (Expr () -> Expr () -> Expr ())
   plusOp fc = (opParser "+" ENaturalPlus)
 
@@ -614,8 +644,11 @@ mutual
     with' : List1 String -> FC -> Expr a -> Expr a -> Expr a
     with' xs fc x y = EWith fc x xs y
 
+  otherTerm : Grammar state (TokenRawToken) True (Expr ())
+  otherTerm = chainl1 atom (otherOp EmptyFC)
+
   mulTerm : Grammar state (TokenRawToken) True (Expr ())
-  mulTerm = chainl1 atom (mulOp EmptyFC)
+  mulTerm = chainl1 otherTerm (mulOp EmptyFC)
 
   plusTerm : Grammar state (TokenRawToken) True (Expr ())
   plusTerm = chainl1 mulTerm (plusOp EmptyFC)
