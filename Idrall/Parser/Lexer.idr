@@ -224,6 +224,7 @@ mutual
     <|> embed
     <|> match (exact "||") Symbol
     <|> match (exact "&&") Symbol
+    <|> match (exact "===") Symbol
     <|> match (exact "==") Symbol
     <|> match (exact "!=") Symbol
     <|> match (exact "=") Symbol

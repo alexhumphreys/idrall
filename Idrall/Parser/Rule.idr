@@ -28,6 +28,13 @@ whitespace =
       _ => Nothing
 
 export
+tokenW : Grammar state (TokenRawToken) True a -> Grammar state (TokenRawToken) True a
+tokenW p = do
+  x <- p
+  _ <- optional whitespace
+  pure x
+
+export
 keyword : String -> Rule ()
 keyword req =
   terminal ("Expected '" ++ req ++ "'") $
@@ -103,8 +110,8 @@ doubleLit =
 export
 dottedList : Rule (List1 String)
 dottedList = do
-  -- x <- sepBy1 (match $ Symbol ".") (identPart)
-  x <- sepBy1 (symbol ".") (identPart)
+  _ <- optional whitespace
+  x <- sepBy1 (tokenW $ symbol ".") (identPart)
   pure x
 
 export

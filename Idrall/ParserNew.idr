@@ -143,7 +143,7 @@ mutual
     | EOptional FC -- | EOptional
     | ENone FC -- | ENone
     | ESome FC (Expr a) -- | ESome (Expr a)
-    -- | EEquivalent (Expr a) (Expr a)
+    | EEquivalent FC (Expr a) (Expr a) -- | EEquivalent (Expr a) (Expr a)
     | EAssert FC (Expr a) -- | EAssert (Expr a)
     -- | ERecord (SortedMap FieldName (Expr a))
     -- | ERecordLit (SortedMap FieldName (Expr a))
@@ -154,7 +154,7 @@ mutual
     | ERecordCompletion FC (Expr a) (Expr a) -- | ERecordCompletion (Expr a) (Expr a)
     -- | EMerge (Expr a) (Expr a) (Maybe (Expr a))
     -- | EToMap (Expr a) (Maybe (Expr a))
-    -- | EField (Expr a) FieldName
+    | EField FC (Expr a) String -- | EField (Expr a) FieldName
     -- | EProject (Expr a) (Either (List FieldName) (Expr a))
     | EWith FC (Expr a) (List1 String) (Expr a) -- | EWith (Expr a) (List1 FieldName) (Expr a)
     -- | EImportAlt (Expr a) (Expr a)
@@ -218,11 +218,13 @@ getBounds (ETextReplace fc) = fc
 getBounds (EOptional fc) = fc
 getBounds (ESome fc _) = fc
 getBounds (ENone fc) = fc
+getBounds (EEquivalent fc _ _) = fc
 getBounds (EAssert fc _) = fc
 getBounds (ECombine fc _ _) = fc
 getBounds (ECombineTypes fc _ _) = fc
 getBounds (EPrefer fc _ _) = fc
 getBounds (ERecordCompletion fc _ _) = fc
+getBounds (EField fc _ _) = fc
 getBounds (EWith fc _ _ _) = fc
 getBounds (EEmbed fc _) = fc
 
@@ -278,7 +280,9 @@ updateBounds fc (ETextReplace _) = ETextReplace fc
 updateBounds fc (EOptional _) = EOptional fc
 updateBounds fc (ESome _ x) = ESome fc x
 updateBounds fc (ENone _) = ENone fc
+updateBounds fc (EField _ z s) = EField fc z s
 updateBounds fc (EWith _ z s y) = EWith fc z s y
+updateBounds fc (EEquivalent _ z w) = EEquivalent fc z w
 updateBounds fc (EAssert _ z) = EAssert fc z
 updateBounds fc (ECombine _ x y) = ECombine fc x y
 updateBounds fc (ECombineTypes _ x y) = ECombineTypes fc x y
@@ -352,7 +356,9 @@ mutual
     show (EOptional fc) = "(\{show fc}:EOptional)"
     show (ESome fc x) = "(\{show fc}:ESome \{show x})"
     show (ENone fc) = "(\{show fc}:ENone)"
+    show (EField fc x s) = "(\{show fc}:EField \{show x} \{show s}"
     show (EWith fc x s y) = "(\{show fc}:EWith \{show x} \{show s} \{show y})"
+    show (EEquivalent fc x y) = "(\{show fc}:EEquivalent \{show x} \{show y}"
     show (EAssert fc x) = "(\{show fc}:EAssert \{show x}"
     show (ECombine fc x y) = "(\{show fc}:ECombine \{show x} \{show y}"
     show (ECombineTypes fc x y) = "(\{show fc}:ECombineTypes \{show x} \{show y}"
@@ -431,9 +437,12 @@ mutual
     pretty (EOptional fc) = pretty "Optional"
     pretty (ESome fc x) = pretty "Some" <++> pretty x
     pretty (ENone fc) = pretty "None"
+    pretty (EField fc x y) =
+      pretty x <+> pretty "." <+> pretty y
     pretty (EWith fc x xs y) =
       pretty x <++> pretty "with" <++>
       prettyDottedList (forget xs) <++> equals <++> pretty y
+    pretty (EEquivalent fc x y) = pretty x <++> pretty "===" <++> pretty y
     pretty (EAssert fc x) = pretty "assert" <++> colon <++> pretty x
     pretty (ECombine fc x y) = pretty x <++> pretty "/\\" <++> pretty y
     pretty (ECombineTypes fc x y) = pretty x <++> pretty "//\\\\" <++> pretty y
@@ -458,6 +467,18 @@ where
   rest a1 = (do f <- op
                 a2 <- p >>= rest
                 rest (f a1 a2)) <|> pure a1
+
+hchainl : Grammar state t True (a)
+        -> Grammar state t True (a -> b -> a)
+        -> Grammar state t True (b)
+        -> Grammar state t True (a)
+hchainl pini pop parg = pini >>= go
+  where
+  covering
+  go : a -> Grammar state t False (a)
+  go x = (do op <- pop
+             arg <- parg
+             go $ op x arg) <|> pure x
 
 chainl1 : Grammar state t True (a)
        -> Grammar state t True (a -> a -> a)
@@ -488,12 +509,6 @@ boundedOp op x y =
       yB = getBounds y
       mB = mergeBounds xB yB in
       op mB x y
-
-tokenW : Grammar state (TokenRawToken) True a -> Grammar state (TokenRawToken) True a
-tokenW p = do
-  x <- p
-  _ <- optional whitespace
-  pure x
 
 builtinTerm : WithBounds String -> Grammar state (TokenRawToken) False (Expr ())
 builtinTerm str =
@@ -621,6 +636,7 @@ mutual
     (opParser "++" ETextAppend) <|> (opParser "#" EListAppend)
       <|> (opParser "/\\" ECombine) <|> (opParser "//\\\\" ECombineTypes)
       <|> (opParser "//" EPrefer) <|> (opParser "::" ERecordCompletion)
+      <|> (opParser "===" EEquivalent)
 
   plusOp : FC -> Grammar state (TokenRawToken) True (Expr () -> Expr () -> Expr ())
   plusOp fc = (opParser "+" ENaturalPlus)
@@ -677,8 +693,23 @@ mutual
   piTerm : Grammar state (TokenRawToken) True (Expr ())
   piTerm = chainr1 boolTerm (piOp EmptyFC)
 
+  fieldTerm : Grammar state (TokenRawToken) True (Expr ())
+  fieldTerm = hchainl piTerm fieldOp (bounds identPart)
+  where
+    field' : Expr () -> WithBounds String -> Expr ()
+    field' e s =
+      let start = getBounds e
+          end = boundToFC initBounds $ s
+          fc' = mergeBounds start end
+      in EField fc' e (val s)
+    fieldOp : Grammar state (TokenRawToken) True (Expr () -> WithBounds String -> Expr ())
+    fieldOp = do
+      _ <- optional whitespace
+      _ <- tokenW $ symbol "."
+      pure $ field'
+
   appTerm : Grammar state (TokenRawToken) True (Expr ())
-  appTerm = chainl1 piTerm (appOp EmptyFC)
+  appTerm = chainl1 fieldTerm (appOp EmptyFC)
 
   exprTerm : Grammar state (TokenRawToken) True (Expr ())
   exprTerm = do
