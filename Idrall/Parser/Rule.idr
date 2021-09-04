@@ -116,6 +116,14 @@ builtin =
       _ => Nothing
 
 export
+someBuiltin : Rule ()
+someBuiltin =
+  terminal "expected builtin" $
+    \case
+      Builtin "Some" => Just ()
+      _ => Nothing
+
+export
 endOfInput : Rule ()
 endOfInput =
   terminal "expected builtin" $

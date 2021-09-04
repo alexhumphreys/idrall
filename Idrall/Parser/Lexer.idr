@@ -84,8 +84,7 @@ builtins =
   , "List/build", "List/fold", "List/length", "List/head"
   , "List/last", "List/indexed", "List/reverse", "List"
   , "Text", "Text/show", "Text/replace"
-  , "None"
-  , "Optional"
+  , "Optional", "Some", "None"
   , "NaN"
   ]
 

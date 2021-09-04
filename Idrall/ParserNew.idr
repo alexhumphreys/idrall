@@ -103,7 +103,7 @@ mutual
     | EBoolOr FC (Expr a) (Expr a) -- | EBoolOr  (Expr a) (Expr a)
     | EBoolEQ FC (Expr a) (Expr a) -- | EBoolEQ  (Expr a) (Expr a)
     | EBoolNE FC (Expr a) (Expr a) -- | EBoolNE  (Expr a) (Expr a)
-    -- | EBoolIf (Expr a) (Expr a) (Expr a)
+    | EBoolIf FC (Expr a) (Expr a) (Expr a) -- | EBoolIf (Expr a) (Expr a) (Expr a)
     | ENatural FC -- | ENatural
     -- | ENaturalLit Nat
     | ENaturalFold FC -- | ENaturalFold
@@ -142,7 +142,7 @@ mutual
     | EListReverse FC -- | EListReverse
     | EOptional FC -- | EOptional
     | ENone FC -- | ENone
-    -- | ESome (Expr a)
+    | ESome FC (Expr a) -- | ESome (Expr a)
     -- | EEquivalent (Expr a) (Expr a)
     | EAssert FC (Expr a) -- | EAssert (Expr a)
     -- | ERecord (SortedMap FieldName (Expr a))
@@ -180,6 +180,7 @@ getBounds (EBoolAnd fc _ _) = fc
 getBounds (EBoolOr fc _ _) = fc
 getBounds (EBoolEQ fc _ _) = fc
 getBounds (EBoolNE fc _ _) = fc
+getBounds (EBoolIf fc _ _ _) = fc
 getBounds (ENatural fc) = fc
 getBounds (ENaturalBuild fc) = fc
 getBounds (ENaturalFold fc) = fc
@@ -215,6 +216,7 @@ getBounds (ETextLit fc _) = fc
 getBounds (ETextShow fc) = fc
 getBounds (ETextReplace fc) = fc
 getBounds (EOptional fc) = fc
+getBounds (ESome fc _) = fc
 getBounds (ENone fc) = fc
 getBounds (EAssert fc _) = fc
 getBounds (ECombine fc _ _) = fc
@@ -238,6 +240,7 @@ updateBounds fc (EBoolAnd _ z w) = EBoolAnd fc z w
 updateBounds fc (EBoolOr _ z w) = EBoolOr fc z w
 updateBounds fc (EBoolEQ _ z w) = EBoolEQ fc z w
 updateBounds fc (EBoolNE _ z w) = EBoolNE fc z w
+updateBounds fc (EBoolIf _ z w v) = EBoolIf fc z w v
 updateBounds fc (ENatural _) = ENatural fc
 updateBounds fc (ENaturalBuild _) = ENaturalBuild fc
 updateBounds fc (ENaturalFold _) = ENaturalFold fc
@@ -272,8 +275,9 @@ updateBounds fc (ETextLit _ z) = ETextLit fc z
 updateBounds fc (ETextAppend _ z w) = ETextAppend fc z w
 updateBounds fc (ETextShow _) = ETextShow fc
 updateBounds fc (ETextReplace _) = ETextReplace fc
-updateBounds fc (ENone _) = ENone fc
 updateBounds fc (EOptional _) = EOptional fc
+updateBounds fc (ESome _ x) = ESome fc x
+updateBounds fc (ENone _) = ENone fc
 updateBounds fc (EWith _ z s y) = EWith fc z s y
 updateBounds fc (EAssert _ z) = EAssert fc z
 updateBounds fc (ECombine _ x y) = ECombine fc x y
@@ -310,6 +314,7 @@ mutual
     show (EBoolOr fc x y) = "\{show fc}:EBoolOr \{show x} \{show y})"
     show (EBoolEQ fc x y) = "\{show fc}:EBoolEQ \{show x} \{show y})"
     show (EBoolNE fc x y) = "\{show fc}:EBoolNE \{show x} \{show y})"
+    show (EBoolIf fc x y z) = "\{show fc}:EBoolIf \{show x} \{show y}) \{show z})"
     show (ENatural fc) = "\{show fc}:ENatural"
     show (ENaturalBuild fc) = "(\{show fc}:ENaturalBuild)"
     show (ENaturalFold fc) = "(\{show fc}:ENaturalFold)"
@@ -344,8 +349,9 @@ mutual
     show (ETextAppend fc x y) = "(\{show fc}:ETextAppend \{show x} \{show y}"
     show (ETextShow fc) = "(\{show fc}:ETextShow)"
     show (ETextReplace fc) = "(\{show fc}:ETextReplace)"
-    show (ENone fc) = "(\{show fc}:ENone)"
     show (EOptional fc) = "(\{show fc}:EOptional)"
+    show (ESome fc x) = "(\{show fc}:ESome \{show x})"
+    show (ENone fc) = "(\{show fc}:ENone)"
     show (EWith fc x s y) = "(\{show fc}:EWith \{show x} \{show s} \{show y})"
     show (EAssert fc x) = "(\{show fc}:EAssert \{show x}"
     show (ECombine fc x y) = "(\{show fc}:ECombine \{show x} \{show y}"
@@ -384,6 +390,10 @@ mutual
     pretty (EBoolOr fc x y) = pretty x <++> pretty "||" <++> pretty y
     pretty (EBoolEQ fc x y) = pretty x <++> pretty "==" <++> pretty y
     pretty (EBoolNE fc x y) = pretty x <++> pretty "!=" <++> pretty y
+    pretty (EBoolIf fc x y z) =
+      pretty "if" <++> pretty x
+      <++> pretty "then" <++> pretty y
+      <++> pretty "else" <++> pretty z
     pretty (ENatural fc) = pretty "Natural"
     pretty (ENaturalBuild fc) = pretty "Natural/build"
     pretty (ENaturalFold fc) = pretty "Natural/fold"
@@ -418,8 +428,9 @@ mutual
     pretty (ETextAppend fc x y) = pretty x <++> pretty "++" <++> pretty y
     pretty (ETextShow fc) = pretty "Text/show"
     pretty (ETextReplace fc) = pretty "Text/replace"
-    pretty (ENone fc) = pretty "None"
     pretty (EOptional fc) = pretty "Optional"
+    pretty (ESome fc x) = pretty "Some" <++> pretty x
+    pretty (ENone fc) = pretty "None"
     pretty (EWith fc x xs y) =
       pretty x <++> pretty "with" <++>
       prettyDottedList (forget xs) <++> equals <++> pretty y
@@ -510,8 +521,8 @@ builtinTerm str =
      "List" => pure $ cons EList
      "Text/show" => pure $ cons ETextShow
      "Text/replace" => pure $ cons ETextReplace
-     "None" => pure $ cons ENone
      "Optional" => pure $ cons EOptional
+     "None" => pure $ cons ENone
      "NaN" => pure $ EDoubleLit (boundToFC initBounds str) (0.0/0.0)
      "True" => pure $ EBoolLit (boundToFC initBounds str) True
      "False" => pure $ EBoolLit (boundToFC initBounds str) False
@@ -538,6 +549,12 @@ mutual
   doubleLit = do
     s <- bounds $ Rule.doubleLit
     pure $ mkExprFC initBounds s EDoubleLit
+
+  someLit : Grammar state (TokenRawToken) True (Expr ())
+  someLit = do
+    start <- bounds $ tokenW $ someBuiltin
+    e <- bounds $ exprTerm
+    pure $ ESome (mergeBounds (boundToFC initBounds start) (boundToFC initBounds e)) $ val e
 
   textLit : Grammar state (TokenRawToken) True (Expr ())
   textLit = do
@@ -570,6 +587,7 @@ mutual
   atom = do
     a <- builtin <|> varTerm <|> textLit
       <|> doubleLit
+      <|> someLit
       <|> embed
       <|> listTerm <|> (between (symbol "(") (symbol ")") exprTerm)
     pure a
@@ -667,6 +685,7 @@ mutual
     letBinding <|>
     lamTerm <|>
     assertTerm <|>
+    ifTerm <|>
     chainl1 appTerm (withOp EmptyFC)
 
   letBinding : Grammar state (TokenRawToken) True (Expr ())
@@ -703,6 +722,20 @@ mutual
     _ <- whitespace
     e <- bounds $ exprTerm
     pure $ EAssert (mergeBounds (boundToFC initBounds start) (boundToFC initBounds e)) (val e)
+
+  ifTerm : Grammar state (TokenRawToken) True (Expr ())
+  ifTerm = do
+    start <- bounds $ tokenW $ keyword "if"
+    commit
+    i <- bounds $ exprTerm
+    _ <- whitespace
+    _ <- bounds $ tokenW $ keyword "then"
+    t <- bounds $ exprTerm
+    _ <- whitespace
+    _ <- bounds $ tokenW $ keyword "else"
+    e <- bounds $ exprTerm
+    pure $ EBoolIf (mergeBounds (boundToFC initBounds start) (boundToFC initBounds e))
+            (val i) (val t) (val e)
 
 finalParser : Grammar state (TokenRawToken) True (Expr ())
 finalParser = do
