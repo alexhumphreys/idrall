@@ -3,6 +3,7 @@ module Idrall.ParserNew
 import Data.List
 import Data.List1
 import Data.String -- needed for pretty?
+import Data.SortedMap
 
 import Text.Parser
 import Text.Quantity
@@ -146,7 +147,7 @@ mutual
     | ESome FC (Expr a) -- | ESome (Expr a)
     | EEquivalent FC (Expr a) (Expr a) -- | EEquivalent (Expr a) (Expr a)
     | EAssert FC (Expr a) -- | EAssert (Expr a)
-    -- | ERecord (SortedMap FieldName (Expr a))
+    | ERecord FC (SortedMap String (Expr a)) -- | ERecord (SortedMap FieldName (Expr a))
     -- | ERecordLit (SortedMap FieldName (Expr a))
     -- | EUnion (SortedMap FieldName (Maybe (Expr a)))
     | ECombine FC (Expr a) (Expr a) -- | ECombine (Expr a) (Expr a)
@@ -221,6 +222,7 @@ getBounds (ESome fc _) = fc
 getBounds (ENone fc) = fc
 getBounds (EEquivalent fc _ _) = fc
 getBounds (EAssert fc _) = fc
+getBounds (ERecord fc _) = fc
 getBounds (ECombine fc _ _) = fc
 getBounds (ECombineTypes fc _ _) = fc
 getBounds (EPrefer fc _ _) = fc
@@ -286,6 +288,7 @@ updateBounds fc (EField _ z s) = EField fc z s
 updateBounds fc (EWith _ z s y) = EWith fc z s y
 updateBounds fc (EEquivalent _ z w) = EEquivalent fc z w
 updateBounds fc (EAssert _ z) = EAssert fc z
+updateBounds fc (ERecord _ z) = ERecord fc z
 updateBounds fc (ECombine _ x y) = ECombine fc x y
 updateBounds fc (ECombineTypes _ x y) = ECombineTypes fc x y
 updateBounds fc (EPrefer _ x y) = EPrefer fc x y
@@ -363,6 +366,7 @@ mutual
     show (EWith fc x s y) = "(\{show fc}:EWith \{show x} \{show s} \{show y})"
     show (EEquivalent fc x y) = "(\{show fc}:EEquivalent \{show x} \{show y}"
     show (EAssert fc x) = "(\{show fc}:EAssert \{show x}"
+    show (ERecord fc x) = "(\{show fc}:ERecord \{show x}"
     show (ECombine fc x y) = "(\{show fc}:ECombine \{show x} \{show y}"
     show (ECombineTypes fc x y) = "(\{show fc}:ECombineTypes \{show x} \{show y}"
     show (EPrefer fc x y) = "(\{show fc}:EPrefer \{show x} \{show y}"
@@ -376,6 +380,16 @@ prettyDottedList (x :: []) = pretty x
 prettyDottedList (x :: xs) = pretty x <+> pretty "." <+> prettyDottedList xs
 
 mutual
+  Pretty (SortedMap String (Expr ())) where
+    pretty x =
+      let ls = SortedMap.toList x
+          lsDoc = map go ls
+      in
+      braces $ foldl (<++>) neutral (punctuate comma lsDoc)
+    where
+      go : (String, Expr ()) -> Doc ann
+      go (s, e) = pretty s <++> colon <++> pretty e
+
   Pretty (Chunks ()) where
     pretty (MkChunks xs x) = pretty xs <+> pretty x
 
@@ -448,6 +462,7 @@ mutual
       prettyDottedList (forget xs) <++> equals <++> pretty y
     pretty (EEquivalent fc x y) = pretty x <++> pretty "===" <++> pretty y
     pretty (EAssert fc x) = pretty "assert" <++> colon <++> pretty x
+    pretty (ERecord fc x) = pretty x
     pretty (ECombine fc x y) = pretty x <++> pretty "/\\" <++> pretty y
     pretty (ECombineTypes fc x y) = pretty x <++> pretty "//\\\\" <++> pretty y
     pretty (EPrefer fc x y) = pretty x <++> pretty "//" <++> pretty y
@@ -609,26 +624,51 @@ mutual
     a <- builtin <|> varTerm <|> textLit
       <|> doubleLit
       <|> someLit
+      <|> recordType
       <|> embed
-      <|> listTerm <|> (between (symbol "(") (symbol ")") exprTerm)
+      <|> listLit <|> (between (symbol "(") (symbol ")") exprTerm)
     pure a
 
-  listTerm : Grammar state (TokenRawToken) True (Expr ())
-  listTerm = emptyList <|> populatedList
+  recordType : Grammar state (TokenRawToken) True (Expr ())
+  recordType = do
+    start <- bounds $ tokenW $ symbol "{"
+    commit
+    let fc = boundToFC initBounds start
+    emptyRecord fc <|> populatedRecord fc
   where
-    emptyList : Grammar state (TokenRawToken) True (Expr ())
-    emptyList = do
-      start <- bounds $ symbol "["
-      commit
+    emptyRecord : FC -> Grammar state (TokenRawToken) True (Expr ())
+    emptyRecord fc = do
+      end <- bounds $ symbol "}"
+      pure $ ERecord (mergeBounds fc (boundToFC initBounds end)) $ SortedMap.fromList []
+    recordField : Grammar state (TokenRawToken) True (String, Expr ())
+    recordField = do
+      i <- identPart
+      _ <- optional whitespace
+      tokenW $ symbol ":"
+      e <- exprTerm
+      pure (i, e)
+    populatedRecord : FC -> Grammar state (TokenRawToken) True (Expr ())
+    populatedRecord fc = do
+      es <- sepBy (tokenW $ symbol ",") recordField
+      end <- bounds $ symbol "}"
+      pure $ ERecord (mergeBounds fc (boundToFC initBounds end)) $ SortedMap.fromList (es)
+
+  listLit : Grammar state (TokenRawToken) True (Expr ())
+  listLit = do
+    start <- bounds $ tokenW $ symbol "["
+    commit
+    let fc = boundToFC initBounds start
+    (populatedList fc) <|> (emptyList fc)
+  where
+    emptyList : FC -> Grammar state (TokenRawToken) True (Expr ())
+    emptyList fc = do
       end <- bounds $ symbol "]"
-      pure $ EListLit (mergeBounds (boundToFC initBounds start) (boundToFC initBounds end)) []
-    populatedList : Grammar state (TokenRawToken) True (Expr ())
-    populatedList = do
-      start <- bounds $ symbol "["
-      commit
-      es <- sepBy1 (symbol ",") exprTerm
+      pure $ EListLit (mergeBounds fc (boundToFC initBounds end)) []
+    populatedList : FC -> Grammar state (TokenRawToken) True (Expr ())
+    populatedList fc = do
+      es <- sepBy1 (tokenW $ symbol ",") exprTerm
       end <- bounds $ symbol "]"
-      pure $ EListLit (mergeBounds (boundToFC initBounds start) (boundToFC initBounds end)) (forget es)
+      pure $ EListLit (mergeBounds fc (boundToFC initBounds end)) (forget es)
 
   opParser : String
      -> (FC -> Expr () -> Expr () -> Expr ())
