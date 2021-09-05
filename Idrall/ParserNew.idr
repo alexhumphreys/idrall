@@ -16,6 +16,7 @@ import Text.PrettyPrint.Prettyprinter.Doc
 
 import Idrall.Parser.Lexer
 import Idrall.Parser.Rule
+import Debug.Trace
 
 public export
 FilePos : Type
@@ -152,7 +153,7 @@ mutual
     | ECombineTypes FC (Expr a) (Expr a) -- | ECombineTypes (Expr a) (Expr a)
     | EPrefer FC (Expr a) (Expr a) -- | EPrefer (Expr a) (Expr a)
     | ERecordCompletion FC (Expr a) (Expr a) -- | ERecordCompletion (Expr a) (Expr a)
-    -- | EMerge (Expr a) (Expr a) (Maybe (Expr a))
+    | EMerge FC (Expr a) (Expr a) (Maybe (Expr a)) -- | EMerge (Expr a) (Expr a) (Maybe (Expr a))
     -- | EToMap (Expr a) (Maybe (Expr a))
     | EField FC (Expr a) String -- | EField (Expr a) FieldName
     -- | EProject (Expr a) (Either (List FieldName) (Expr a))
@@ -224,6 +225,7 @@ getBounds (ECombine fc _ _) = fc
 getBounds (ECombineTypes fc _ _) = fc
 getBounds (EPrefer fc _ _) = fc
 getBounds (ERecordCompletion fc _ _) = fc
+getBounds (EMerge fc _ _ _) = fc
 getBounds (EField fc _ _) = fc
 getBounds (EWith fc _ _ _) = fc
 getBounds (EEmbed fc _) = fc
@@ -288,6 +290,7 @@ updateBounds fc (ECombine _ x y) = ECombine fc x y
 updateBounds fc (ECombineTypes _ x y) = ECombineTypes fc x y
 updateBounds fc (EPrefer _ x y) = EPrefer fc x y
 updateBounds fc (ERecordCompletion _ x y) = ERecordCompletion fc x y
+updateBounds fc (EMerge _ x y z) = EMerge fc x y z
 updateBounds fc (EEmbed _ z) = EEmbed fc z
 
 public export
@@ -364,6 +367,7 @@ mutual
     show (ECombineTypes fc x y) = "(\{show fc}:ECombineTypes \{show x} \{show y}"
     show (EPrefer fc x y) = "(\{show fc}:EPrefer \{show x} \{show y}"
     show (ERecordCompletion fc x y) = "(\{show fc}:ERecordCompletion \{show x} \{show y}"
+    show (EMerge fc x y z) = "(\{show fc}:EMerge \{show x} \{show y} \{show z}"
     show (EEmbed fc x) = "(\{show fc}:EEmbed \{show fc} \{show x})"
 
 prettyDottedList : List String -> Doc ann
@@ -448,6 +452,8 @@ mutual
     pretty (ECombineTypes fc x y) = pretty x <++> pretty "//\\\\" <++> pretty y
     pretty (EPrefer fc x y) = pretty x <++> pretty "//" <++> pretty y
     pretty (ERecordCompletion fc x y) = pretty x <++> pretty "::" <++> pretty y
+    pretty (EMerge fc x y Nothing) = pretty "merge" <++> pretty x <++> pretty y
+    pretty (EMerge fc x y (Just z)) = pretty "merge" <++> pretty x <++> pretty y <++> pretty ":" <++> pretty z
     pretty (EEmbed fc x) = pretty x
 
 public export
@@ -650,7 +656,7 @@ mutual
     <|> (opParser "==" EBoolEQ) <|> (opParser "!=" EBoolNE)
 
   piOp : FC -> Grammar state (TokenRawToken) True (Expr () -> Expr () -> Expr ())
-  piOp fc = (opParser ":" EAnnot) <|>
+  piOp fc =
       infixOp (do
         _ <- optional whitespace
         tokenW $ symbol "->")
@@ -660,7 +666,7 @@ mutual
     epi' n fc y z = EPi fc n y z
 
   appOp : FC -> Grammar state (TokenRawToken) True (Expr () -> Expr () -> Expr ())
-  appOp fc = infixOp whitespace (boundedOp EApp)
+  appOp fc = (opParser ":" EAnnot) <|> infixOp whitespace (boundedOp EApp)
 
   withOp : FC -> Grammar state (TokenRawToken) True (Expr () -> Expr () -> Expr ())
   withOp fc =
@@ -717,6 +723,7 @@ mutual
     lamTerm <|>
     assertTerm <|>
     ifTerm <|>
+    mergeTerm <|>
     chainl1 appTerm (withOp EmptyFC)
 
   letBinding : Grammar state (TokenRawToken) True (Expr ())
@@ -753,6 +760,23 @@ mutual
     _ <- whitespace
     e <- bounds $ exprTerm
     pure $ EAssert (mergeBounds (boundToFC initBounds start) (boundToFC initBounds e)) (val e)
+
+  mergeTerm : Grammar state (TokenRawToken) True (Expr ())
+  mergeTerm = Text.Parser.Core.do
+    start <- bounds $ tokenW $ keyword "merge"
+    commit
+    e1 <- bounds exprTerm
+    the (Grammar state TokenRawToken _ (Expr ())) $
+      case go (boundToFC initBounds start) (val e1) of
+           (Right x) => pure x
+           (Left _) => fail "TODO implement better merge parse"
+  where
+    go : FC -> Expr () -> Either () (Expr ())
+    go start (EApp fc x y) =
+      pure $ EMerge (mergeBounds start fc) x y Nothing
+    go start (EAnnot fc (EApp _ x y) t) =
+      pure $ EMerge (mergeBounds start fc) x y (Just t)
+    go _ _ = Left ()
 
   ifTerm : Grammar state (TokenRawToken) True (Expr ())
   ifTerm = do
