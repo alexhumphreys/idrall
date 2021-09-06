@@ -149,7 +149,7 @@ mutual
     | EAssert FC (Expr a) -- | EAssert (Expr a)
     | ERecord FC (SortedMap String (Expr a)) -- | ERecord (SortedMap FieldName (Expr a))
     | ERecordLit FC (SortedMap String (Expr a)) -- | ERecordLit (SortedMap FieldName (Expr a))
-    -- | EUnion (SortedMap FieldName (Maybe (Expr a)))
+    | EUnion FC (SortedMap String (Maybe (Expr a))) -- | EUnion (SortedMap FieldName (Maybe (Expr a)))
     | ECombine FC (Expr a) (Expr a) -- | ECombine (Expr a) (Expr a)
     | ECombineTypes FC (Expr a) (Expr a) -- | ECombineTypes (Expr a) (Expr a)
     | EPrefer FC (Expr a) (Expr a) -- | EPrefer (Expr a) (Expr a)
@@ -224,6 +224,7 @@ getBounds (EEquivalent fc _ _) = fc
 getBounds (EAssert fc _) = fc
 getBounds (ERecord fc _) = fc
 getBounds (ERecordLit fc _) = fc
+getBounds (EUnion fc _) = fc
 getBounds (ECombine fc _ _) = fc
 getBounds (ECombineTypes fc _ _) = fc
 getBounds (EPrefer fc _ _) = fc
@@ -291,6 +292,7 @@ updateBounds fc (EEquivalent _ z w) = EEquivalent fc z w
 updateBounds fc (EAssert _ z) = EAssert fc z
 updateBounds fc (ERecord _ z) = ERecord fc z
 updateBounds fc (ERecordLit _ z) = ERecordLit fc z
+updateBounds fc (EUnion _ z) = EUnion fc z
 updateBounds fc (ECombine _ x y) = ECombine fc x y
 updateBounds fc (ECombineTypes _ x y) = ECombineTypes fc x y
 updateBounds fc (EPrefer _ x y) = EPrefer fc x y
@@ -370,6 +372,7 @@ mutual
     show (EAssert fc x) = "(\{show fc}:EAssert \{show x}"
     show (ERecord fc x) = "(\{show fc}:ERecord \{show x}"
     show (ERecordLit fc x) = "(\{show fc}:ERecordLit \{show x}"
+    show (EUnion fc x) = "(\{show fc}:EUnion \{show x}"
     show (ECombine fc x y) = "(\{show fc}:ECombine \{show x} \{show y}"
     show (ECombineTypes fc x y) = "(\{show fc}:ECombineTypes \{show x} \{show y}"
     show (EPrefer fc x y) = "(\{show fc}:EPrefer \{show x} \{show y}"
@@ -383,15 +386,32 @@ prettyDottedList (x :: []) = pretty x
 prettyDottedList (x :: xs) = pretty x <+> pretty "." <+> prettyDottedList xs
 
 mutual
-  prettyRecord : Doc ann -> (SortedMap String (Expr ())) -> Doc ann
-  prettyRecord sign e =
+  prettySortedMap : Pretty x
+                  => (Doc ann -> Doc ann)
+                  -> Doc ann
+                  -> (SortedMap String x)
+                  -> Doc ann
+  prettySortedMap wrapping sign e =
     let ls = SortedMap.toList e
         lsDoc = map (go sign) ls
     in
-    braces $ foldl (<++>) neutral (punctuate comma lsDoc)
+    wrapping $ foldl (<++>) neutral (punctuate comma lsDoc)
   where
-    go : Doc ann -> (String, Expr ()) -> Doc ann
+    go : Doc ann -> (String, x) -> Doc ann
     go x (s, e) = pretty s <++> x <++> pretty e
+
+  prettyUnion : Pretty x
+              => (SortedMap String (Maybe x))
+              -> Doc ann
+  prettyUnion e =
+    let ls = SortedMap.toList e
+        lsDoc = map go ls
+    in
+    enclose langle (space <+> rangle) $ foldl (<++>) neutral (punctuate (space <+> pipe) lsDoc)
+  where
+    go : (String, Maybe x) -> Doc ann
+    go (s, Nothing) = pretty s
+    go (s, Just e) = pretty s <++> colon <++> pretty e
 
   Pretty (Chunks ()) where
     pretty (MkChunks xs x) = pretty xs <+> pretty x
@@ -465,8 +485,9 @@ mutual
       prettyDottedList (forget xs) <++> equals <++> pretty y
     pretty (EEquivalent fc x y) = pretty x <++> pretty "===" <++> pretty y
     pretty (EAssert fc x) = pretty "assert" <++> colon <++> pretty x
-    pretty (ERecord fc x) = prettyRecord colon x
-    pretty (ERecordLit fc x) = prettyRecord equals x
+    pretty (ERecord fc x) = prettySortedMap braces colon x
+    pretty (ERecordLit fc x) = prettySortedMap braces equals x
+    pretty (EUnion fc x) = prettyUnion x
     pretty (ECombine fc x y) = pretty x <++> pretty "/\\" <++> pretty y
     pretty (ECombineTypes fc x y) = pretty x <++> pretty "//\\\\" <++> pretty y
     pretty (EPrefer fc x y) = pretty x <++> pretty "//" <++> pretty y
@@ -629,6 +650,7 @@ mutual
       <|> doubleLit
       <|> someLit
       <|> recordType <|> recordLit
+      <|> union
       <|> embed
       <|> listLit <|> (between (symbol "(") (symbol ")") exprTerm)
     pure a
@@ -664,6 +686,26 @@ mutual
 
   recordLit : Grammar state (TokenRawToken) True (Expr ())
   recordLit = recordParser (symbol "=") ERecordLit
+
+  union : Grammar state (TokenRawToken) True (Expr ())
+  union = do
+    start <- bounds $ tokenW $ symbol "<"
+    commit
+    es <- sepBy (tokenW $ symbol "|") (unionComplex <|> unionSimple)
+    end <- bounds $ tokenW $ symbol ">"
+    pure $ EUnion (mergeBounds (boundToFC initBounds start) (boundToFC initBounds end)) $ SortedMap.fromList es
+  where
+    unionSimple : Grammar state (TokenRawToken) True (String, Maybe (Expr ()))
+    unionSimple = do
+      name <- tokenW $ identPart
+      pure (name, Nothing)
+    unionComplex : Grammar state (TokenRawToken) True (String, Maybe (Expr ()))
+    unionComplex = do
+      name <- tokenW $ identPart
+      start <- bounds $ tokenW $ symbol ":"
+      e <- exprTerm
+      _ <- optional whitespace
+      pure (name, Just e)
 
   listLit : Grammar state (TokenRawToken) True (Expr ())
   listLit = do
