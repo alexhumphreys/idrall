@@ -159,7 +159,7 @@ mutual
     | EField FC (Expr a) String -- | EField (Expr a) FieldName
     -- | EProject (Expr a) (Either (List FieldName) (Expr a))
     | EWith FC (Expr a) (List1 String) (Expr a) -- | EWith (Expr a) (List1 FieldName) (Expr a)
-    -- | EImportAlt (Expr a) (Expr a)
+    | EImportAlt FC (Expr a) (Expr a) -- | EImportAlt (Expr a) (Expr a)
     | EEmbed FC String -- | EEmbed (Import a)
 
 mkExprFC : OriginDesc -> WithBounds x -> (FC -> x -> Expr a) -> Expr a
@@ -233,6 +233,7 @@ getBounds (EMerge fc _ _ _) = fc
 getBounds (EToMap fc _ _) = fc
 getBounds (EField fc _ _) = fc
 getBounds (EWith fc _ _ _) = fc
+getBounds (EImportAlt fc _ _) = fc
 getBounds (EEmbed fc _) = fc
 
 updateBounds : FC -> Expr a -> Expr a
@@ -300,6 +301,7 @@ updateBounds fc (EPrefer _ x y) = EPrefer fc x y
 updateBounds fc (ERecordCompletion _ x y) = ERecordCompletion fc x y
 updateBounds fc (EMerge _ x y z) = EMerge fc x y z
 updateBounds fc (EToMap _ x y) = EToMap fc x y
+updateBounds fc (EImportAlt _ x y) = EImportAlt fc x y
 updateBounds fc (EEmbed _ z) = EEmbed fc z
 
 public export
@@ -381,6 +383,7 @@ mutual
     show (ERecordCompletion fc x y) = "(\{show fc}:ERecordCompletion \{show x} \{show y}"
     show (EMerge fc x y z) = "(\{show fc}:EMerge \{show x} \{show y} \{show z}"
     show (EToMap fc x y) = "(\{show fc}:EToMap \{show x} \{show y}"
+    show (EImportAlt fc x y) = "(\{show fc}:EImportAlt \{show fc} \{show x} \{show y})"
     show (EEmbed fc x) = "(\{show fc}:EEmbed \{show fc} \{show x})"
 
 prettyDottedList : List String -> Doc ann
@@ -501,6 +504,7 @@ mutual
     pretty (EToMap fc x (Just y)) =
       pretty "merge" <++> pretty x
       <++> pretty ":" <++> pretty y
+    pretty (EImportAlt fc x y) = pretty x <++> pretty "?" <++> pretty y
     pretty (EEmbed fc x) = pretty x
 
 public export
@@ -743,7 +747,7 @@ mutual
     (opParser "++" ETextAppend) <|> (opParser "#" EListAppend)
       <|> (opParser "/\\" ECombine) <|> (opParser "//\\\\" ECombineTypes)
       <|> (opParser "//" EPrefer) <|> (opParser "::" ERecordCompletion)
-      <|> (opParser "===" EEquivalent)
+      <|> (opParser "===" EEquivalent) <|> (opParser "?" EImportAlt)
 
   plusOp : FC -> Grammar state (TokenRawToken) True (Expr () -> Expr () -> Expr ())
   plusOp fc = (opParser "+" ENaturalPlus)
