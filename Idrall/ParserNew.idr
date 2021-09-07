@@ -107,7 +107,7 @@ mutual
     | EBoolNE FC (Expr a) (Expr a) -- | EBoolNE  (Expr a) (Expr a)
     | EBoolIf FC (Expr a) (Expr a) (Expr a) -- | EBoolIf (Expr a) (Expr a) (Expr a)
     | ENatural FC -- | ENatural
-    -- | ENaturalLit Nat
+    | ENaturalLit FC Nat -- | ENaturalLit Nat
     | ENaturalFold FC -- | ENaturalFold
     | ENaturalBuild FC -- | ENaturalBuild
     | ENaturalIsZero FC -- | ENaturalIsZero
@@ -119,7 +119,7 @@ mutual
     | ENaturalPlus FC (Expr a) (Expr a) -- | ENaturalPlus (Expr a) (Expr a)
     | ENaturalTimes FC (Expr a) (Expr a) -- | ENaturalTimes (Expr a) (Expr a)
     | EInteger FC -- | EInteger
-    -- | EIntegerLit Integer
+    | EIntegerLit FC Integer -- | EIntegerLit Integer
     | EIntegerShow FC -- | EIntegerShow
     | EIntegerClamp FC -- | EIntegerClamp
     | EIntegerNegate FC -- | EIntegerNegate
@@ -184,6 +184,7 @@ getBounds (EBoolEQ fc _ _) = fc
 getBounds (EBoolNE fc _ _) = fc
 getBounds (EBoolIf fc _ _ _) = fc
 getBounds (ENatural fc) = fc
+getBounds (ENaturalLit fc _) = fc
 getBounds (ENaturalBuild fc) = fc
 getBounds (ENaturalFold fc) = fc
 getBounds (ENaturalIsZero fc) = fc
@@ -195,6 +196,7 @@ getBounds (ENaturalShow fc) = fc
 getBounds (ENaturalPlus fc _ _) = fc
 getBounds (ENaturalTimes fc _ _) = fc
 getBounds (EInteger fc) = fc
+getBounds (EIntegerLit fc _) = fc
 getBounds (EIntegerShow fc) = fc
 getBounds (EIntegerNegate fc) = fc
 getBounds (EIntegerClamp fc) = fc
@@ -252,6 +254,7 @@ updateBounds fc (EBoolEQ _ z w) = EBoolEQ fc z w
 updateBounds fc (EBoolNE _ z w) = EBoolNE fc z w
 updateBounds fc (EBoolIf _ z w v) = EBoolIf fc z w v
 updateBounds fc (ENatural _) = ENatural fc
+updateBounds fc (ENaturalLit _ x) = ENaturalLit fc x
 updateBounds fc (ENaturalBuild _) = ENaturalBuild fc
 updateBounds fc (ENaturalFold _) = ENaturalFold fc
 updateBounds fc (ENaturalIsZero _) = ENaturalIsZero fc
@@ -263,6 +266,7 @@ updateBounds fc (ENaturalShow _) = ENaturalShow fc
 updateBounds fc (ENaturalPlus _ z w) = ENaturalPlus fc z w
 updateBounds fc (ENaturalTimes _ z w) = ENaturalTimes fc z w
 updateBounds fc (EInteger _) = EInteger fc
+updateBounds fc (EIntegerLit _ x) = EIntegerLit fc x
 updateBounds fc (EIntegerShow _) = EIntegerShow fc
 updateBounds fc (EIntegerNegate _) = EIntegerNegate fc
 updateBounds fc (EIntegerClamp _) = EIntegerClamp fc
@@ -334,6 +338,7 @@ mutual
     show (EBoolNE fc x y) = "\{show fc}:EBoolNE \{show x} \{show y})"
     show (EBoolIf fc x y z) = "\{show fc}:EBoolIf \{show x} \{show y}) \{show z})"
     show (ENatural fc) = "\{show fc}:ENatural"
+    show (ENaturalLit fc x) = "\{show fc}:ENatural \{show x}"
     show (ENaturalBuild fc) = "(\{show fc}:ENaturalBuild)"
     show (ENaturalFold fc) = "(\{show fc}:ENaturalFold)"
     show (ENaturalIsZero fc) = "(\{show fc}:ENaturalZero)"
@@ -345,6 +350,7 @@ mutual
     show (ENaturalPlus fc x y) = "\{show fc}:ENaturalPlus \{show x} \{show y})"
     show (ENaturalTimes fc x y) = "\{show fc}:ENaturalTimes \{show x} \{show y})"
     show (EInteger fc) = "\{show fc}:EInteger"
+    show (EIntegerLit fc x) = "\{show fc}:EIntegerLit \{show x}"
     show (EIntegerShow fc) = "(\{show fc}:EIntegerShow)"
     show (EIntegerNegate fc) = "(\{show fc}:EIntegerNegate)"
     show (EIntegerClamp fc) = "(\{show fc}:EIntegerClamp)"
@@ -448,6 +454,7 @@ mutual
       <++> pretty "then" <++> pretty y
       <++> pretty "else" <++> pretty z
     pretty (ENatural fc) = pretty "Natural"
+    pretty (ENaturalLit fc x) = pretty x
     pretty (ENaturalBuild fc) = pretty "Natural/build"
     pretty (ENaturalFold fc) = pretty "Natural/fold"
     pretty (ENaturalIsZero fc) = pretty "Natural/isZero"
@@ -459,6 +466,7 @@ mutual
     pretty (ENaturalPlus fc x y) = pretty x <++> pretty "+" <++> pretty y
     pretty (ENaturalTimes fc x y) = pretty x <++> pretty "*" <++> pretty y
     pretty (EInteger fc) = pretty "Integer"
+    pretty (EIntegerLit fc x) = pretty x
     pretty (EIntegerShow fc) = pretty "Integer/show"
     pretty (EIntegerNegate fc) = pretty "Integer/negate"
     pretty (EIntegerClamp fc) = pretty "Integer/clamp"
@@ -617,6 +625,16 @@ mutual
     s <- bounds $ embedPath
     pure $ mkExprFC initBounds s EEmbed
 
+  naturalLit : Grammar state (TokenRawToken) True (Expr ())
+  naturalLit = do
+    s <- bounds $ Rule.naturalLit
+    pure $ mkExprFC initBounds s ENaturalLit
+
+  integerLit : Grammar state (TokenRawToken) True (Expr ())
+  integerLit = do
+    s <- bounds $ Rule.integerLit
+    pure $ mkExprFC initBounds s EIntegerLit
+
   doubleLit : Grammar state (TokenRawToken) True (Expr ())
   doubleLit = do
     s <- bounds $ Rule.doubleLit
@@ -658,7 +676,7 @@ mutual
   atom : Grammar state (TokenRawToken) True (Expr ())
   atom = do
     a <- builtin <|> varTerm <|> textLit
-      <|> doubleLit
+      <|> naturalLit <|> integerLit <|> doubleLit
       <|> someLit
       <|> recordType <|> recordLit
       <|> union

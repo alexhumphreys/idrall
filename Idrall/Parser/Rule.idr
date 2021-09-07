@@ -100,6 +100,22 @@ embedPath =
       _ => Nothing
 
 export
+naturalLit : Rule Nat
+naturalLit =
+  terminal "expected natural" $
+    \case
+      TNatural x => Just x
+      _ => Nothing
+
+export
+integerLit : Rule Integer
+integerLit =
+  terminal "expected integer" $
+    \case
+      TInteger x => Just x
+      _ => Nothing
+
+export
 doubleLit : Rule Double
 doubleLit =
   terminal "expected double" $

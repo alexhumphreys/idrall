@@ -19,6 +19,8 @@ data RawToken
   | Symbol String
   | Keyword String
   | Builtin String
+  | TNatural Nat
+  | TInteger Integer
   | TDouble Double
   | InterpBegin
   | InterpEnd
@@ -37,6 +39,8 @@ Eq RawToken where
   (==) (Symbol x) (Symbol y) = x == y
   (==) (Keyword x) (Keyword y) = x == y
   (==) (Builtin x) (Builtin y) = x == y
+  (==) (TNatural x) (TNatural y) = x == y
+  (==) (TInteger x) (TInteger y) = x == y
   (==) (TDouble x) (TDouble y) = x == y
   (==) InterpBegin InterpBegin = True
   (==) InterpEnd InterpEnd = True
@@ -56,6 +60,8 @@ Show RawToken where
   show (Symbol x) = "Symbol \{show x}"
   show (Keyword x) = "Keyword \{show x}"
   show (Builtin x) = "Builtin \{show x}"
+  show (TNatural x) = "TNatural \{show x}"
+  show (TInteger x) = "TInteger \{show x}"
   show (TDouble x) = "TDouble \{show x}"
   show InterpBegin = "InterpBegin"
   show InterpEnd = "InterpEnd"
@@ -123,6 +129,13 @@ sign = is '-' <|> is '+'
 
 exponent : Lexer
 exponent = is 'e' <+> opt sign <+> digits
+
+naturalLit : Lexer
+naturalLit = digits
+
+integerLit : Lexer
+integerLit
+    = sign <+> digits
 
 doubleLit : Lexer
 doubleLit
@@ -217,6 +230,7 @@ mutual
   rawTokens : Tokenizer RawToken
   rawTokens =
     match blockComment Comment
+    <|> match integerLit (TInteger . cast)
     <|> match (exact "//\\\\") Symbol
     <|> match (exact "//") Symbol
     <|> match (exact "/\\") Symbol
@@ -231,6 +245,7 @@ mutual
     <|> match (exact "->") Symbol
     <|> match (exact "++") Symbol
     <|> match (exact "+") Symbol
+    <|> match (exact "-") Symbol
     <|> match (exact "*") Symbol
     <|> match (exact "#") Symbol
     <|> match (exact "::") Symbol
@@ -251,6 +266,7 @@ mutual
     <|> match (exact "as Text") Keyword
     <|> match space (const White)
     <|> match doubleLit (TDouble . cast)
+    <|> match naturalLit (TNatural . cast)
     <|> match ident parseIdent
     <|> compose stringBegin
                 (const $ StringBegin Single)
