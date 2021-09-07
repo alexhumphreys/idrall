@@ -155,7 +155,7 @@ mutual
     | EPrefer FC (Expr a) (Expr a) -- | EPrefer (Expr a) (Expr a)
     | ERecordCompletion FC (Expr a) (Expr a) -- | ERecordCompletion (Expr a) (Expr a)
     | EMerge FC (Expr a) (Expr a) (Maybe (Expr a)) -- | EMerge (Expr a) (Expr a) (Maybe (Expr a))
-    -- | EToMap (Expr a) (Maybe (Expr a))
+    | EToMap FC (Expr a) (Maybe (Expr a)) -- | EToMap (Expr a) (Maybe (Expr a))
     | EField FC (Expr a) String -- | EField (Expr a) FieldName
     -- | EProject (Expr a) (Either (List FieldName) (Expr a))
     | EWith FC (Expr a) (List1 String) (Expr a) -- | EWith (Expr a) (List1 FieldName) (Expr a)
@@ -230,6 +230,7 @@ getBounds (ECombineTypes fc _ _) = fc
 getBounds (EPrefer fc _ _) = fc
 getBounds (ERecordCompletion fc _ _) = fc
 getBounds (EMerge fc _ _ _) = fc
+getBounds (EToMap fc _ _) = fc
 getBounds (EField fc _ _) = fc
 getBounds (EWith fc _ _ _) = fc
 getBounds (EEmbed fc _) = fc
@@ -298,6 +299,7 @@ updateBounds fc (ECombineTypes _ x y) = ECombineTypes fc x y
 updateBounds fc (EPrefer _ x y) = EPrefer fc x y
 updateBounds fc (ERecordCompletion _ x y) = ERecordCompletion fc x y
 updateBounds fc (EMerge _ x y z) = EMerge fc x y z
+updateBounds fc (EToMap _ x y) = EToMap fc x y
 updateBounds fc (EEmbed _ z) = EEmbed fc z
 
 public export
@@ -378,6 +380,7 @@ mutual
     show (EPrefer fc x y) = "(\{show fc}:EPrefer \{show x} \{show y}"
     show (ERecordCompletion fc x y) = "(\{show fc}:ERecordCompletion \{show x} \{show y}"
     show (EMerge fc x y z) = "(\{show fc}:EMerge \{show x} \{show y} \{show z}"
+    show (EToMap fc x y) = "(\{show fc}:EToMap \{show x} \{show y}"
     show (EEmbed fc x) = "(\{show fc}:EEmbed \{show fc} \{show x})"
 
 prettyDottedList : List String -> Doc ann
@@ -494,6 +497,10 @@ mutual
     pretty (ERecordCompletion fc x y) = pretty x <++> pretty "::" <++> pretty y
     pretty (EMerge fc x y Nothing) = pretty "merge" <++> pretty x <++> pretty y
     pretty (EMerge fc x y (Just z)) = pretty "merge" <++> pretty x <++> pretty y <++> pretty ":" <++> pretty z
+    pretty (EToMap fc x Nothing) = pretty "toMap" <++> pretty x
+    pretty (EToMap fc x (Just y)) =
+      pretty "merge" <++> pretty x
+      <++> pretty ":" <++> pretty y
     pretty (EEmbed fc x) = pretty x
 
 public export
@@ -818,6 +825,7 @@ mutual
     assertTerm <|>
     ifTerm <|>
     mergeTerm <|>
+    toMapTerm <|>
     chainl1 appTerm (withOp EmptyFC)
 
   letBinding : Grammar state (TokenRawToken) True (Expr ())
@@ -871,6 +879,17 @@ mutual
     go start (EAnnot fc (EApp _ x y) t) =
       pure $ EMerge (mergeBounds start fc) x y (Just t)
     go _ _ = Left ()
+
+  toMapTerm : Grammar state (TokenRawToken) True (Expr ())
+  toMapTerm = Text.Parser.Core.do
+    start <- bounds $ tokenW $ keyword "toMap"
+    commit
+    e <- bounds exprTerm
+    pure $ case val e of -- TODO find out why pure must be here?
+         (EAnnot fc x y) =>
+            EToMap (mergeBounds (boundToFC initBounds start) (boundToFC initBounds e)) x (Just y)
+         x =>
+            EToMap (mergeBounds (boundToFC initBounds start) (boundToFC initBounds e)) x Nothing
 
   ifTerm : Grammar state (TokenRawToken) True (Expr ())
   ifTerm = do
