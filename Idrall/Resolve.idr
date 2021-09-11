@@ -69,195 +69,195 @@ mutual
   export
   covering
   resolve : (history : List FilePath) -> Maybe FilePath -> Expr ImportStatement -> IOEither Error (Expr Void)
-  resolve h p (EVar x i) = pure (EVar x i)
-  resolve h p (EConst x) = pure (EConst x)
-  resolve h p (EPi x y z) = do
+  resolve h p (EVar fc x i) = pure (EVar fc x i)
+  resolve h p (EConst fc x) = pure (EConst fc x)
+  resolve h p (EPi fc x y z) = do
     y' <- resolve h p y
     z' <- resolve h p z
-    pure (EPi x y' z')
-  resolve h p (ELam x y z) = do
+    pure (EPi fc x y' z')
+  resolve h p (ELam fc x y z) = do
     y' <- resolve h p y
     z' <- resolve h p z
-    pure (ELam x y' z')
-  resolve h p (EApp x y) = do
+    pure (ELam fc x y' z')
+  resolve h p (EApp fc x y) = do
     x' <- resolve h p x
     y' <- resolve h p y
-    pure (EApp x' y')
-  resolve h p (ELet x Nothing z w) = do
-    z' <- resolve h p z
-    w' <- resolve h p w
-    pure (ELet x Nothing z' w')
-  resolve h p (ELet x (Just y) z w) = do
-    y' <- resolve h p y
+    pure (EApp fc x' y')
+  resolve h p (ELet fc x Nothing z w) = do
     z' <- resolve h p z
     w' <- resolve h p w
-    pure (ELet x (Just y') z' w')
-  resolve h p (EAnnot x y) = do
+    pure (ELet fc x Nothing z' w')
+  resolve h p (ELet fc x (Just y) z w) = do
+    y' <- resolve h p y
+    z' <- resolve h p z
+    w' <- resolve h p w
+    pure (ELet fc x (Just y') z' w')
+  resolve h p (EAnnot fc x y) = do
     x' <- resolve h p x
     y' <- resolve h p y
-    pure (EAnnot x' y')
-  resolve h p (EEquivalent x y) = do
+    pure (EAnnot fc x' y')
+  resolve h p (EEquivalent fc x y) = do
     x' <- resolve h p x
     y' <- resolve h p y
-    pure (EEquivalent x' y')
-  resolve h p (EAssert x) = do
+    pure (EEquivalent fc x' y')
+  resolve h p (EAssert fc x) = do
     x' <- resolve h p x
-    pure (EAssert x')
-  resolve h p EBool = pure EBool
-  resolve h p (EBoolLit x) = pure (EBoolLit x)
-  resolve h p (EBoolAnd x y) = do
-    x' <- resolve h p x
-    y' <- resolve h p y
-    pure (EBoolAnd x' y')
-  resolve h p (EBoolOr x y) = do
+    pure (EAssert fc x')
+  resolve h p EBool fc = pure EBool fc
+  resolve h p (EBoolLit fc x) = pure (EBoolLit fc x)
+  resolve h p (EBoolAnd fc x y) = do
     x' <- resolve h p x
     y' <- resolve h p y
-    pure (EBoolOr x' y')
-  resolve h p (EBoolEQ x y) = do
+    pure (EBoolAnd fc x' y')
+  resolve h p (EBoolOr fc x y) = do
     x' <- resolve h p x
     y' <- resolve h p y
-    pure (EBoolEQ x' y')
-  resolve h p (EBoolNE x y) = do
+    pure (EBoolOr fc x' y')
+  resolve h p (EBoolEQ fc x y) = do
     x' <- resolve h p x
     y' <- resolve h p y
-    pure (EBoolNE x' y')
-  resolve h p (EBoolIf x y z) = do
+    pure (EBoolEQ fc x' y')
+  resolve h p (EBoolNE fc x y) = do
+    x' <- resolve h p x
+    y' <- resolve h p y
+    pure (EBoolNE fc x' y')
+  resolve h p (EBoolIf fc x y z) = do
     x' <- resolve h p x
     y' <- resolve h p y
     z' <- resolve h p z
-    pure (EBoolIf x' y' z')
-  resolve h p ENatural = pure ENatural
-  resolve h p (ENaturalLit k) = pure (ENaturalLit k)
-  resolve h p ENaturalBuild = pure ENaturalBuild
-  resolve h p ENaturalFold = pure ENaturalFold
-  resolve h p ENaturalIsZero = pure ENaturalIsZero
-  resolve h p ENaturalEven = pure ENaturalEven
-  resolve h p ENaturalOdd = pure ENaturalOdd
-  resolve h p ENaturalSubtract = pure ENaturalSubtract
-  resolve h p ENaturalToInteger = pure ENaturalToInteger
-  resolve h p ENaturalShow = pure ENaturalShow
-  resolve h p (ENaturalPlus x y) = do
+    pure (EBoolIf fc x' y' z')
+  resolve h p (ENatural fc) = pure $ ENatural fc
+  resolve h p (ENaturalLit fc k) = pure $ ENaturalLit fc k
+  resolve h p (ENaturalBuild fc) = pure $ ENaturalBuild fc
+  resolve h p (ENaturalFold fc) = pure $ ENaturalFold fc
+  resolve h p (ENaturalIsZero fc) = pure $ ENaturalIsZero fc
+  resolve h p (ENaturalEven fc) = pure $ ENaturalEven fc
+  resolve h p (ENaturalOdd fc) = pure $ ENaturalOdd fc
+  resolve h p (ENaturalSubtract fc) = pure $ ENaturalSubtract fc
+  resolve h p (ENaturalToInteger fc) = pure $ ENaturalToInteger fc
+  resolve h p (ENaturalShow fc) = pure $ ENaturalShow fc
+  resolve h p (ENaturalPlus fc x y) = do
     x' <- resolve h p x
     y' <- resolve h p y
-    pure (ENaturalPlus x' y')
-  resolve h p (ENaturalTimes x y) = do
+    pure (ENaturalPlus fc x' y')
+  resolve h p (ENaturalTimes fc x y) = do
     x' <- resolve h p x
     y' <- resolve h p y
-    pure (ENaturalTimes x' y')
-  resolve h p EInteger = pure EInteger
-  resolve h p (EIntegerLit k) = pure (EIntegerLit k)
-  resolve h p EIntegerShow = pure EIntegerShow
-  resolve h p EIntegerClamp = pure EIntegerClamp
-  resolve h p EIntegerNegate = pure EIntegerNegate
-  resolve h p EIntegerToDouble = pure EIntegerToDouble
-  resolve h p EDouble = pure EDouble
-  resolve h p (EDoubleLit k) = pure (EDoubleLit k)
-  resolve h p EDoubleShow = pure EDoubleShow
-  resolve h p EList = pure EList
-  resolve h p (EListLit Nothing xs) = do
+    pure (ENaturalTimes fc x' y')
+  resolve h p (EInteger fc) = pure $ EInteger fc
+  resolve h p (EIntegerLit k) = pure $ EIntegerLit k
+  resolve h p (EIntegerShow fc) = pure $ EIntegerShow fc
+  resolve h p (EIntegerClamp fc) = pure $ EIntegerClamp fc
+  resolve h p (EIntegerNegate fc) = pure $ EIntegerNegate fc
+  resolve h p (EIntegerToDouble fc) = pure $ EIntegerToDouble fc
+  resolve h p (EDouble fc) = pure $ EDouble fc
+  resolve h p (EDoubleLit fc k) = pure $ EDoubleLit k
+  resolve h p (EDoubleShow fc) = pure $ EDoubleShow fc
+  resolve h p (EList fc) = pure $ EList fc
+  resolve h p (EListLit fc Nothing xs) = do
     xs' <- resolveList h p xs
-    pure (EListLit Nothing xs')
-  resolve h p (EListLit (Just x) xs) = do
+    pure (EListLit fc Nothing xs')
+  resolve h p (EListLit fc (Just x) xs) = do
     x' <- resolve h p x
     xs' <- resolveList h p xs
-    pure (EListLit (Just x') xs')
-  resolve h p (EListAppend x y) = do
+    pure (EListLit fc (Just x') xs')
+  resolve h p (EListAppend fc x y) = do
     x' <- resolve h p x
     y' <- resolve h p y
-    pure (EListAppend x' y')
-  resolve h p EListBuild = pure EListBuild
-  resolve h p EListFold = pure EListFold
-  resolve h p EListLength = pure EListLength
-  resolve h p EListHead = pure EListHead
-  resolve h p EListLast = pure EListLast
-  resolve h p EListIndexed = pure EListIndexed
-  resolve h p EListReverse = pure EListReverse
-  resolve h p EText = pure EText
-  resolve h p (ETextLit (MkChunks xs x)) = do
+    pure (EListAppend fc x' y')
+  resolve h p (EListBuild fc) = pure $ EListBuild fc
+  resolve h p (EListFold fc) = pure $ EListFold fc
+  resolve h p (EListLength fc) = pure $ EListLength fc
+  resolve h p (EListHead fc) = pure $ EListHead fc
+  resolve h p (EListLast fc) = pure $ EListLast fc
+  resolve h p (EListIndexed fc) = pure $ EListIndexed fc
+  resolve h p (EListReverse fc) = pure $ EListReverse fc
+  resolve h p (EText fc) = pure $ EText fc
+  resolve h p (ETextLit fc (MkChunks xs x)) = do
     xs' <- resolveChunks h p xs
-    pure (ETextLit (MkChunks xs' x))
-  resolve h p (ETextAppend x y) = do
+    pure (ETextLit fc (MkChunks xs' x))
+  resolve h p (ETextAppend fc x y) = do
     x' <- resolve h p x
     y' <- resolve h p y
-    pure (ETextAppend x' y')
-  resolve h p ETextShow = pure ETextShow
-  resolve h p ETextReplace = pure ETextReplace
-  resolve h p EOptional = pure EOptional
-  resolve h p ENone = pure ENone
-  resolve h p (ESome x) = do
+    pure (ETextAppend fc x' y')
+  resolve h p (ETextShow fc) = pure $ ETextShow fc
+  resolve h p (ETextReplace fc) = pure $ ETextReplace fc
+  resolve h p (EOptional fc) = pure $ EOptional fc
+  resolve h p (ENone fc) = pure $ ENone fc
+  resolve h p (ESome fc x) = do
     x' <- resolve h p x
-    pure (ESome x')
-  resolve h p (ERecord x) =
+    pure (ESome fc x')
+  resolve h p (ERecord fc x) =
     let kv = toList x in do
       kv' <- resolveRecord h p kv
-      pure (ERecord (fromList kv'))
-  resolve h p (ERecordLit x) =
+      pure (ERecord fc (fromList kv'))
+  resolve h p (ERecordLit fc x) =
     let kv = toList x in do
       kv' <- resolveRecord h p kv
-      pure (ERecordLit (fromList kv'))
-  resolve h p (ECombine x y) = do
+      pure (ERecordLit fc (fromList kv'))
+  resolve h p (ECombine fc x y) = do
     x' <- resolve h p x
     y' <- resolve h p y
-    pure (ECombine x' y')
-  resolve h p (ECombineTypes x y) = do
+    pure (ECombine fc x' y')
+  resolve h p (ECombineTypes fc x y) = do
     x' <- resolve h p x
     y' <- resolve h p y
-    pure (ECombineTypes x' y')
-  resolve h p (EPrefer x y) = do
+    pure (ECombineTypes fc x' y')
+  resolve h p (EPrefer fc x y) = do
     x' <- resolve h p x
     y' <- resolve h p y
-    pure (EPrefer x' y')
-  resolve h p (ERecordCompletion x y) = do
+    pure (EPrefer fc x' y')
+  resolve h p (ERecordCompletion fc x y) = do
     x' <- resolve h p x
     y' <- resolve h p y
-    pure (ERecordCompletion x' y')
-  resolve h p (EMerge x y Nothing) = do
+    pure (ERecordCompletion fc x' y')
+  resolve h p (EMerge fc x y Nothing) = do
     x' <- resolve h p x
     y' <- resolve h p y
-    pure (EMerge x' y' Nothing)
-  resolve h p (EMerge x y (Just z)) = do
+    pure (EMerge fc x' y' Nothing)
+  resolve h p (EMerge fc x y (Just z)) = do
     x' <- resolve h p x
     y' <- resolve h p y
     z' <- resolve h p z
-    pure (EMerge x' y' (Just z'))
-  resolve h p (EUnion x) =
+    pure (EMerge fc x' y' (Just z'))
+  resolve h p (EUnion fc x) =
     let kv = toList x in do
       kv' <- resolveUnion h p kv
-      pure (EUnion (fromList kv'))
-  resolve h p (EToMap x Nothing) = do
+      pure (EUnion fc (fromList kv'))
+  resolve h p (EToMap fc x Nothing) = do
     x' <- resolve h p x
-    pure (EToMap x' Nothing)
-  resolve h p (EToMap x (Just y)) = do
-    x' <- resolve h p x
-    y' <- resolve h p y
-    pure (EToMap x' (Just y'))
-  resolve h p (EField x y) = do
-    pure (EField !(resolve h p x) y)
-  resolve h p (EProject x (Left y)) = do
-    x' <- resolve h p x
-    pure (EProject x' (Left y))
-  resolve h p (EProject x (Right y)) = do
+    pure (EToMap fc x' Nothing)
+  resolve h p (EToMap fc x (Just y)) = do
     x' <- resolve h p x
     y' <- resolve h p y
-    pure (EProject x' (Right y'))
-  resolve h p (EWith x ks y) = do
+    pure (EToMap fc x' (Just y'))
+  resolve h p (EField fc x y) = do
+    pure (EField fc !(resolve h p x) y)
+  resolve h p (EProject fc x (Left y)) = do
+    x' <- resolve h p x
+    pure (EProject fc x' (Left y))
+  resolve h p (EProject fc x (Right y)) = do
     x' <- resolve h p x
     y' <- resolve h p y
-    pure (EWith x' ks y')
-  resolve h p (EImportAlt x y) =
+    pure (EProject fc x' (Right y'))
+  resolve h p (EWith fc x ks y) = do
+    x' <- resolve h p x
+    y' <- resolve h p y
+    pure (EWith fc x' ks y')
+  resolve h p (EImportAlt fc x y) =
     case resolve h p x of
          (MkIOEither x') => MkIOEither $ do
            case !x' of
                 (Right x'') => pure $ Right x''
                 (Left w) => case resolve h p y of
                                  (MkIOEither y'') => y''
-  resolve h p (EEmbed (Raw (LocalFile x))) = resolveLocalFile h p x
-  resolve h p (EEmbed (Raw (EnvVar x))) = resolveEnvVar h p x
-  resolve h p (EEmbed (Raw (Http x))) = MkIOEither (pure (Left (ErrorMessage "TODO http imports not implemented")))
-  resolve h p (EEmbed (Raw Missing)) = MkIOEither (pure (Left (ErrorMessage "No valid imports")))
-  resolve h p (EEmbed (Text a)) = MkIOEither (pure (Left (ErrorMessage "TODO as Text not implemented")))
-  resolve h p (EEmbed (Location a)) = MkIOEither (pure (Left (ErrorMessage "TODO as Location not implemented")))
-  resolve h p (EEmbed (Resolved x)) = MkIOEither (pure (Left (ErrorMessage "Already resolved")))
+  resolve h p (EEmbed fc (Raw (LocalFile x))) = resolveLocalFile h p x
+  resolve h p (EEmbed fc (Raw (EnvVar x))) = resolveEnvVar h p x
+  resolve h p (EEmbed fc (Raw (Http x))) = MkIOEither (pure (Left (ErrorMessage "TODO http imports not implemented")))
+  resolve h p (EEmbed fc (Raw Missing)) = MkIOEither (pure (Left (ErrorMessage "No valid imports")))
+  resolve h p (EEmbed fc (Text a)) = MkIOEither (pure (Left (ErrorMessage "TODO as Text not implemented")))
+  resolve h p (EEmbed fc (Location a)) = MkIOEither (pure (Left (ErrorMessage "TODO as Location not implemented")))
+  resolve h p (EEmbed fc (Resolved x)) = MkIOEither (pure (Left (ErrorMessage "Already resolved")))
 
   resolveRecord :  (history : List FilePath)
                -> Maybe FilePath

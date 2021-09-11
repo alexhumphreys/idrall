@@ -26,6 +26,29 @@ Ord FieldName where
   compare (MkFieldName x) (MkFieldName y) = compare x y
 
 public export
+FilePos : Type
+FilePos = (Nat, Nat)
+
+-- does fancy stuff for idris, for now it can just be a Maybe filename
+
+public export
+OriginDesc : Type
+OriginDesc = Maybe String
+
+public export
+data FC = MkFC        OriginDesc FilePos FilePos
+        | ||| Virtual FCs are FC attached to desugared/generated code.
+          MkVirtualFC OriginDesc FilePos FilePos
+        | EmptyFC
+%name FC fc
+
+Show FC where
+  show (MkFC Nothing x y) = "\{show x}-\{show y}"
+  show (MkFC (Just s) x y) = "\{s}:\{show x}-\{show y}"
+  show (MkVirtualFC x y z) = "MkVirtualFCTODO"
+  show EmptyFC = "(,)"
+
+public export
 Namespace : Type
 Namespace = List (Name, Integer)
 %name Namespace ns1, ns2, ns3
@@ -68,146 +91,146 @@ mutual
   public export
   data Expr a
     -- x
-    = EConst U
-    | EVar Name Int
+    = EConst FC U
+    | EVar FC Name Int
     -- | ELam x A b ~ λ(x : A) -> b
-    | ELam Name (Expr a) (Expr a)
+    | ELam FC Name (Expr a) (Expr a)
     -- | EPi x A b ~ forall(x : A) -> b
-    | EPi Name (Expr a) (Expr a)
+    | EPi FC Name (Expr a) (Expr a)
     -- | > EApp f a ~ f a
-    | EApp (Expr a) (Expr a)
+    | EApp FC (Expr a) (Expr a)
     -- | > ELet x Nothing r e ~ let x = r in e
     --   > ELet x (Just t) r e ~ let x : t = r in e
-    | ELet Name (Maybe (Expr a)) (Expr a) (Expr a)
+    | ELet FC Name (Maybe (Expr a)) (Expr a) (Expr a)
     -- | > EAnnot x t ~ x : t
-    | EAnnot (Expr a) (Expr a)
+    | EAnnot FC (Expr a) (Expr a)
     -- | > EBool ~ Bool
-    | EBool
+    | EBool FC
     -- | > EBoolLit b ~ b
-    | EBoolLit Bool
+    | EBoolLit FC Bool
     -- | > EBoolAnd x y ~ x && y
-    | EBoolAnd (Expr a) (Expr a)
+    | EBoolAnd FC (Expr a) (Expr a)
     -- | > EBoolOr  x y ~  x || y
-    | EBoolOr  (Expr a) (Expr a)
+    | EBoolOr FC (Expr a) (Expr a)
     -- | > EBoolEQ  x y ~  x == y
-    | EBoolEQ  (Expr a) (Expr a)
+    | EBoolEQ FC (Expr a) (Expr a)
     -- | > EBoolNE  x y ~  x != y
-    | EBoolNE  (Expr a) (Expr a)
+    | EBoolNE FC (Expr a) (Expr a)
     -- | > EBoolIf x y z ~ if x then y else z
-    | EBoolIf (Expr a) (Expr a) (Expr a)
+    | EBoolIf FC (Expr a) (Expr a) (Expr a)
     -- | > ENatural ~ Natural
-    | ENatural
+    | ENatural FC
     -- | > ENaturalLit n ~ n
-    | ENaturalLit Nat
+    | ENaturalLit FC Nat
     -- | > ENaturalFold ~ Natural/fold
-    | ENaturalFold
+    | ENaturalFold FC
     -- | > ENaturalBuild ~ Natural/build
-    | ENaturalBuild
+    | ENaturalBuild FC
     -- | > ENaturalIsZero ~ Natural/isZero
-    | ENaturalIsZero
+    | ENaturalIsZero FC
     -- | > ENaturalEven ~  Natural/even
-    | ENaturalEven
+    | ENaturalEven FC
     -- | > ENaturalOdd ~  Natural/odd
-    | ENaturalOdd
+    | ENaturalOdd FC
     -- | > ENaturalToInteger ~  Natural/toInteger
-    | ENaturalToInteger
+    | ENaturalToInteger FC
     -- | > ENaturalSubtract ~  Natural/subtract
-    | ENaturalSubtract
+    | ENaturalSubtract FC
     -- | > ENaturalShow ~  Natural/show
-    | ENaturalShow
+    | ENaturalShow FC
      -- | > ENaturalPlus x y ~  x + y
-    | ENaturalPlus (Expr a) (Expr a)
+    | ENaturalPlus FC (Expr a) (Expr a)
     -- | > ENaturalTimes x y ~  x * y
-    | ENaturalTimes (Expr a) (Expr a)
+    | ENaturalTimes FC (Expr a) (Expr a)
     -- | > EInteger ~ Integer
-    | EInteger
+    | EInteger FC
     -- | > EIntegerLit i ~ i
-    | EIntegerLit Integer
+    | EIntegerLit FC Integer
     -- | > EIntegerShow ~  Integer/show
-    | EIntegerShow
+    | EIntegerShow FC
     -- | > EIntegerClamp ~ Integer/clamp
-    | EIntegerClamp
+    | EIntegerClamp FC
     -- | > EIntegerNegate ~ EIntegerNegate
-    | EIntegerNegate
+    | EIntegerNegate FC
     -- | > EIntegerToDouble ~ EIntegerToDouble
-    | EIntegerToDouble
+    | EIntegerToDouble FC
     -- | > EDouble ~ Double
-    | EDouble
+    | EDouble FC
     -- | > EDoubleLit n ~ n
-    | EDoubleLit Double
+    | EDoubleLit FC Double
     -- | > EDoubleShow ~  Double/show
-    | EDoubleShow
+    | EDoubleShow FC
     -- | > EText ~ Text
-    | EText
+    | EText FC
     -- | > ETextLit (Chunks [(t1, e1), (t2, e2)] t3) ~  "t1${e1}t2${e2}t3"
-    | ETextLit (Chunks a)
+    | ETextLit FC (Chunks a)
     -- | > ETextAppend x y ~ x ++ y
-    | ETextAppend (Expr a) (Expr a)
+    | ETextAppend FC (Expr a) (Expr a)
     -- | > ETextShow ~ Text/show
-    | ETextShow
+    | ETextShow FC
     -- | > ETextReplace ~ Text/replace
-    | ETextReplace
+    | ETextReplace FC
     -- | > EList a ~ List a
-    | EList
+    | EList FC
     -- | > EList (Some e) [e', ...] ~ [] : List a
-    | EListLit (Maybe (Expr a)) (List (Expr a))
+    | EListLit FC (Maybe (Expr a)) (List (Expr a))
     -- | > EListAppend x y ~ x # y
-    | EListAppend (Expr a) (Expr a)
+    | EListAppend FC (Expr a) (Expr a)
     -- | > EListBuild ~ List/build
-    | EListBuild
+    | EListBuild FC
     -- | > EListFold ~ List/fold
-    | EListFold
+    | EListFold FC
     -- | > EListLength ~ List/length
-    | EListLength
+    | EListLength FC
     -- | > EListHead ~ List/head
-    | EListHead
+    | EListHead FC
     -- | > EListLast ~ List/last
-    | EListLast
+    | EListLast FC
     -- | > EListIndexed ~ List/indexed
-    | EListIndexed
+    | EListIndexed FC
     -- | > EListReverse ~ List/reverse
-    | EListReverse
+    | EListReverse FC
     -- | > EOptional ~ Optional
-    | EOptional
+    | EOptional FC
     -- | > ESome x ~ Some a
-    | ESome (Expr a)
+    | ESome FC (Expr a)
     -- | > ENone ~ None
-    | ENone
+    | ENone FC
     -- | > EEquivalent x y ~ x === y
-    | EEquivalent (Expr a) (Expr a)
+    | EEquivalent FC (Expr a) (Expr a)
     -- | > EAssert x ~ assert : e
-    | EAssert (Expr a)
+    | EAssert FC (Expr a)
     -- | > ERecord (fromList ((MkFieldName "Foo"), EBool)) ~ { Foo : Bool }
-    | ERecord (SortedMap FieldName (Expr a))
+    | ERecord FC (SortedMap FieldName (Expr a))
     -- | > ERecordLit (fromList ((MkFieldName "Foo"), EBool)) ~ { Foo = Bool }
-    | ERecordLit (SortedMap FieldName (Expr a))
+    | ERecordLit FC (SortedMap FieldName (Expr a))
     -- | > EUnion (fromList ((MkFieldName "Foo"), Nothing)) ~ < Foo >
     -- | > EUnion (fromList ((MkFieldName "Foo"), Just EBool)) ~ < Foo : Bool >
-    | EUnion (SortedMap FieldName (Maybe (Expr a)))
+    | EUnion FC (SortedMap FieldName (Maybe (Expr a)))
     -- | > ECombine x y ~ x /\ y
-    | ECombine (Expr a) (Expr a)
+    | ECombine FC (Expr a) (Expr a)
     -- | > ECombineTypes x y ~ x //\\ y
-    | ECombineTypes (Expr a) (Expr a)
+    | ECombineTypes FC (Expr a) (Expr a)
     -- | > EPrefer x y ~  x ⫽ y
-    | EPrefer (Expr a) (Expr a)
+    | EPrefer FC (Expr a) (Expr a)
     -- | > ERecordCompletion x y ~  x::y
-    | ERecordCompletion (Expr a) (Expr a)
+    | ERecordCompletion FC (Expr a) (Expr a)
     -- | > EMerge x y (Just t ) ~  merge x y : t
     --   > EMerge x y  Nothing  ~  merge x y
-    | EMerge (Expr a) (Expr a) (Maybe (Expr a))
+    | EMerge FC (Expr a) (Expr a) (Maybe (Expr a))
     -- | > EToMap x (Just t) ~  toMap x : t
     --   > EToMap x Nothing ~  toMap x
-    | EToMap (Expr a) (Maybe (Expr a))
+    | EToMap FC (Expr a) (Maybe (Expr a))
     -- | > EField (EVar "x" 0) (MkFieldName "Foo") ~ x.Foo
-    | EField (Expr a) FieldName
+    | EField FC (Expr a) FieldName
     -- | > EProject e (Left xs) ~ e.{ xs }
     --   > EProject e (Right t) ~ e.(t)
-    | EProject (Expr a) (Either (List FieldName) (Expr a))
+    | EProject FC (Expr a) (Either (List FieldName) (Expr a))
     -- | > EWith x y e ~  x with y = e
-    | EWith (Expr a) (List1 FieldName) (Expr a)
+    | EWith FC (Expr a) (List1 FieldName) (Expr a)
     -- | > EImportAlt x y ~ x ? y
-    | EImportAlt (Expr a) (Expr a)
-    | EEmbed (Import a)
+    | EImportAlt FC (Expr a) (Expr a)
+    | EEmbed FC (Import a)
 
 export
 Show ImportStatement where
@@ -226,77 +249,77 @@ mutual
 
   export
   Show (Expr a) where
-    show (EConst x) = "(EConst " ++ show x ++ ")"
-    show (EVar x i) = "(EVar " ++ show x ++ " " ++ show i ++ ")"
-    show (ELam x y z) = "(ELam " ++ x ++ " " ++ show y ++ " " ++ show z ++ ")"
-    show (EPi x y z) = "(EPi " ++ x ++ " " ++ show y ++ " " ++ show z ++ ")"
-    show (EApp x y) = "(EApp " ++ show x ++ " " ++ show y ++ ")"
-    show (ELet x y z w) = "(ELet " ++ show x ++ " " ++ show y ++ " " ++ show z ++ " " ++ show w ++ ")"
-    show (EAnnot x y) = "(EAnnot " ++ show x ++ " " ++ show y ++ ")"
-    show EBool = "EBool"
-    show (EBoolLit False) = "(EBoolLit False)"
-    show (EBoolLit True) = "(EBoolLit True)"
-    show (EBoolAnd x y) = "(EBoolAnd " ++ show x ++ " " ++ show y ++ ")"
-    show (EBoolOr x y) = "(EBoolOr " ++ show x ++ " " ++ show y ++ ")"
-    show (EBoolEQ x y) = "(EBoolEQ " ++ show x ++ " " ++ show y ++ ")"
-    show (EBoolNE x y) = "(EBoolNE " ++ show x ++ " " ++ show y ++ ")"
-    show (EBoolIf x y z) = "(EBoolIf " ++ show x ++ " " ++ show y ++ " " ++ show z ++ ")"
-    show ENatural = "ENatural"
-    show (ENaturalLit k) = "(ENaturalLit " ++ show k ++ ")"
-    show ENaturalFold = "ENaturalFold"
-    show ENaturalBuild = "ENaturalBuild"
-    show ENaturalIsZero = "ENaturalIsZero"
-    show ENaturalEven = "ENaturalEven"
-    show ENaturalOdd = "ENaturalOdd"
-    show ENaturalToInteger = "ENaturalToInteger"
-    show ENaturalSubtract = "ENaturalSubtract"
-    show ENaturalShow = "NaturalShow"
-    show (ENaturalPlus x y) = "(ENaturalPlus " ++ show x ++ " " ++ show y ++ ")"
-    show (ENaturalTimes x y) = "(ENaturalTimes " ++ show x ++ " " ++ show y ++ ")"
-    show EInteger = "EInteger"
-    show (EIntegerLit x) = "(EIntegerLit " ++ show x ++ ")"
-    show EIntegerClamp = "EIntegerClamp"
-    show EIntegerShow = "EIntegerShow"
-    show EIntegerNegate = "EIntegerNegate"
-    show EIntegerToDouble = "EIntegerToDouble"
-    show EDouble = "EDouble"
-    show (EDoubleLit k) = "(EDoubleLit " ++ show k ++ ")"
-    show EDoubleShow = "EDoubleShow"
-    show EText = "EText"
-    show (ETextLit x) = "(ETextLit " ++ show x ++ ")"
-    show (ETextAppend x y) = "(ETextAppend " ++ show x ++ " " ++ show y ++ ")"
-    show ETextShow = "ETextShow"
-    show ETextReplace = "ETextReplace"
-    show EList = "EList"
-    show (EListLit Nothing xs) = "(EListLit Nothing " ++ show xs ++ ")"
-    show (EListLit (Just x) xs) = "(EListLit (Just " ++ show x ++ ") " ++ show xs ++ ")"
-    show (EListAppend x y) = "(EListAppend " ++ show x ++ " " ++ show y ++ ")"
-    show EListBuild = "EListBuild"
-    show EListFold = "EListFold"
-    show EListHead = "EListHead"
-    show EListLength = "EListLength"
-    show EListLast = "EListLast"
-    show EListIndexed = "EListIndexed"
-    show EListReverse = "EListReverse"
-    show EOptional = "EOptional"
-    show ENone = "ENone"
-    show (ESome x) = "(ESome " ++ show x ++ ")"
-    show (EEquivalent x y) = "(EEquivalent " ++ show x ++ " " ++ show y ++ ")"
-    show (EAssert x) = "(EAssert " ++ show x ++ ")"
-    show (ERecord x) = "(ERecord " ++ show x ++ ")"
-    show (ERecordLit x) = "(ERecordLit " ++ show x ++ ")"
-    show (EUnion x) = "(EUnion $ " ++ show x ++ ")"
-    show (ECombine x y) = "(ECombine " ++ show x ++ " " ++ show y ++ ")"
-    show (ECombineTypes x y) = "(ECombineTypes " ++ show x ++ " " ++ show y ++ ")"
-    show (EPrefer x y) = "(EPrefer " ++ show x ++ " " ++ show y ++ ")"
-    show (ERecordCompletion x y) = "(ERecordCompletion " ++ show x ++ " " ++ show y ++ ")"
-    show (EMerge x y z) = "(EMerge " ++ show x ++ " " ++ show y ++ " " ++ show z ++ ")"
-    show (EToMap x y) = "(EToMap " ++ show x ++ " " ++ show y ++ ")"
-    show (EField x y) = "(EField " ++ show x ++ " " ++ show y ++ ")"
-    show (EProject x y) = "(EProject " ++ show x ++ " " ++ show y ++ ")"
-    show (EWith x ks y) = "(EWith " ++ show x ++ " " ++ show ks ++ " " ++ show y ++ ")"
-    show (EImportAlt x y) = "(EImportAlt " ++ show x ++ " " ++ show y ++ ")"
-    show (EEmbed x) = "(EEmbed " ++ show x ++ ")"
+    show (EConst fc x) = "(EConst " ++ show x ++ ")"
+    show (EVar fc x i) = "(EVar " ++ show x ++ " " ++ show i ++ ")"
+    show (ELam fc x y z) = "(ELam " ++ x ++ " " ++ show y ++ " " ++ show z ++ ")"
+    show (EPi fc x y z) = "(EPi " ++ x ++ " " ++ show y ++ " " ++ show z ++ ")"
+    show (EApp fc x y) = "(EApp " ++ show x ++ " " ++ show y ++ ")"
+    show (ELet fc x y z w) = "(ELet " ++ show x ++ " " ++ show y ++ " " ++ show z ++ " " ++ show w ++ ")"
+    show (EAnnot fc x y) = "(EAnnot " ++ show x ++ " " ++ show y ++ ")"
+    show (EBool fc) = "EBool"
+    show (EBoolLit fc False) = "(EBoolLit False)"
+    show (EBoolLit fc True) = "(EBoolLit True)"
+    show (EBoolAnd fc x y) = "(EBoolAnd " ++ show x ++ " " ++ show y ++ ")"
+    show (EBoolOr fc x y) = "(EBoolOr " ++ show x ++ " " ++ show y ++ ")"
+    show (EBoolEQ fc x y) = "(EBoolEQ " ++ show x ++ " " ++ show y ++ ")"
+    show (EBoolNE fc x y) = "(EBoolNE " ++ show x ++ " " ++ show y ++ ")"
+    show (EBoolIf fc x y z) = "(EBoolIf " ++ show x ++ " " ++ show y ++ " " ++ show z ++ ")"
+    show (ENatural fc) = "ENatural"
+    show (ENaturalLit fc k) = "(ENaturalLit " ++ show k ++ ")"
+    show (ENaturalFold fc) = "ENaturalFold"
+    show (ENaturalBuild fc) = "ENaturalBuild"
+    show (ENaturalIsZero fc) = "ENaturalIsZero"
+    show (ENaturalEven fc) = "ENaturalEven"
+    show (ENaturalOdd fc) = "ENaturalOdd"
+    show (ENaturalToInteger fc) = "ENaturalToInteger"
+    show (ENaturalSubtract fc) = "ENaturalSubtract"
+    show (ENaturalShow fc) = "NaturalShow"
+    show (ENaturalPlus fc x y) = "(ENaturalPlus " ++ show x ++ " " ++ show y ++ ")"
+    show (ENaturalTimes fc x y) = "(ENaturalTimes " ++ show x ++ " " ++ show y ++ ")"
+    show (EInteger fc) = "EInteger"
+    show (EIntegerLit fc x) = "(EIntegerLit " ++ show x ++ ")"
+    show (EIntegerClamp fc) = "EIntegerClamp"
+    show (EIntegerShow fc) = "EIntegerShow"
+    show (EIntegerNegate fc) = "EIntegerNegate"
+    show (EIntegerToDouble fc) = "EIntegerToDouble"
+    show (EDouble fc) = "EDouble"
+    show (EDoubleLit fc k) = "(EDoubleLit " ++ show k ++ ")"
+    show (EDoubleShow fc) = "EDoubleShow"
+    show (EText fc) = "EText"
+    show (ETextLit fc x) = "(ETextLit " ++ show x ++ ")"
+    show (ETextAppend fc x y) = "(ETextAppend " ++ show x ++ " " ++ show y ++ ")"
+    show (ETextShow fc) = "ETextShow"
+    show (ETextReplace fc) = "ETextReplace"
+    show (EList fc) = "EList"
+    show (EListLit fc Nothing xs) = "(EListLit Nothing " ++ show xs ++ ")"
+    show (EListLit fc (Just x) xs) = "(EListLit (Just " ++ show x ++ ") " ++ show xs ++ ")"
+    show (EListAppend fc x y) = "(EListAppend " ++ show x ++ " " ++ show y ++ ")"
+    show (EListBuild fc) = "EListBuild"
+    show (EListFold fc) = "EListFold"
+    show (EListHead fc) = "EListHead"
+    show (EListLength fc) = "EListLength"
+    show (EListLast fc) = "EListLast"
+    show (EListIndexed fc) = "EListIndexed"
+    show (EListReverse fc) = "EListReverse"
+    show (EOptional fc) = "EOptional"
+    show (ENone fc) = "ENone"
+    show (ESome fc x) = "(ESome " ++ show x ++ ")"
+    show (EEquivalent fc x y) = "(EEquivalent " ++ show x ++ " " ++ show y ++ ")"
+    show (EAssert fc x) = "(EAssert " ++ show x ++ ")"
+    show (ERecord fc x) = "(ERecord " ++ show x ++ ")"
+    show (ERecordLit fc x) = "(ERecordLit " ++ show x ++ ")"
+    show (EUnion fc x) = "(EUnion $ " ++ show x ++ ")"
+    show (ECombine fc x y) = "(ECombine " ++ show x ++ " " ++ show y ++ ")"
+    show (ECombineTypes fc x y) = "(ECombineTypes " ++ show x ++ " " ++ show y ++ ")"
+    show (EPrefer fc x y) = "(EPrefer " ++ show x ++ " " ++ show y ++ ")"
+    show (ERecordCompletion fc x y) = "(ERecordCompletion " ++ show x ++ " " ++ show y ++ ")"
+    show (EMerge fc x y z) = "(EMerge " ++ show x ++ " " ++ show y ++ " " ++ show z ++ ")"
+    show (EToMap fc x y) = "(EToMap " ++ show x ++ " " ++ show y ++ ")"
+    show (EField fc x y) = "(EField " ++ show x ++ " " ++ show y ++ ")"
+    show (EProject fc x y) = "(EProject " ++ show x ++ " " ++ show y ++ ")"
+    show (EWith fc x ks y) = "(EWith " ++ show x ++ " " ++ show ks ++ " " ++ show y ++ ")"
+    show (EImportAlt fc x y) = "(EImportAlt " ++ show x ++ " " ++ show y ++ ")"
+    show (EEmbed fc x) = "(EEmbed " ++ show x ++ ")"
 
   public export
   Show (Chunks a) where
