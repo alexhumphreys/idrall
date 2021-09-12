@@ -96,10 +96,10 @@ mutual
   quote env (VList fc x) = qApp fc env (EList fc) x
   quote env (VListLit fc Nothing ys) =
     let ys' = traverse (quote env) ys in
-    Right $ EListLit initFC Nothing !ys'
+    Right $ EListLit fc Nothing !ys'
   quote env (VListLit fc (Just x) ys) =
     let ys' = traverse (quote env) ys in
-    Right $ EListLit initFC (Just !(quote env x)) !ys'
+    Right $ EListLit fc (Just !(quote env x)) !ys'
   quote env (VListAppend fc x y) = Right $ EListAppend fc !(quote env x) !(quote env y)
   quote env (VListBuild fc t u) = qAppM fc env (EListBuild fc) [t, u]
   quote env (VListFold fc a l t u v) = qAppM fc env (EListFold fc) [a, l, t, u, v]

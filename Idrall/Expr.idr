@@ -30,10 +30,12 @@ FilePos : Type
 FilePos = (Nat, Nat)
 
 -- does fancy stuff for idris, for now it can just be a Maybe filename
-
 public export
 OriginDesc : Type
 OriginDesc = Maybe String
+
+-- TODO use this as a Maybe for MkVirtualFC
+data FCDetails = MkFCDetails OriginDesc FilePos FilePos
 
 public export
 data FC = MkFC        OriginDesc FilePos FilePos
