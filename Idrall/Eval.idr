@@ -19,17 +19,17 @@ nestError x e =
 ||| returns `VConst CType`
 export
 vType : Value
-vType = VConst CType
+vType = VConst initFC CType
 
 ||| returns `VConst Kind`
 export
 vKind : Value
-vKind = VConst Kind
+vKind = VConst initFC Kind
 
 ||| returns `VConst Sort`
 export
 vSort : Value
-vSort = VConst Sort
+vSort = VConst initFC Sort
 
 -- evaluator
 mutual
@@ -43,405 +43,408 @@ mutual
   evalClosure (MkClosure x env e) v
     = do eval (Extend env x v) e
 
-  evalVar : Env -> Name -> Int -> Either Error Value
-  evalVar Empty x i = pure $ VVar x (0 - i - 1)
-  evalVar (Skip env x') x i =
+  evalVar : FC -> Env -> Name -> Int -> Either Error Value
+  evalVar fc Empty x i = pure $ VVar fc x (0 - i - 1)
+  evalVar fc (Skip env x') x i =
     case x == x' of
-         True => if i == 0 then pure $ VVar x (countName x env) else evalVar env x (i - 1)
-         False => evalVar env x i
-  evalVar (Extend env x' v) x i =
+         True => if i == 0 then pure $ VVar fc x (countName x env) else evalVar fc env x (i - 1)
+         False => evalVar fc env x i
+  evalVar fc (Extend env x' v) x i =
     case x == x' of
-         True => if i == 0 then pure v else evalVar env x (i - 1)
-         False => evalVar env x i
+         True => if i == 0 then pure v else evalVar fc env x (i - 1)
+         False => evalVar fc env x i
 
-  vVar : Env -> Name -> Int -> Either Error Value
+{-
+  vVar : FC -> Env -> Name -> Int -> Either Error Value
   vVar = evalVar
+  -}
 
   export
   covering
   eval : Env -> Expr Void -> Either Error Value
-  eval env (EConst x) = Right (VConst x)
-  eval env (EVar x i)
-    = evalVar env x i
-  eval env (ELam x ty body)
+  eval env (EConst fc x) = Right (VConst fc x)
+  eval env (EVar fc x i)
+    = evalVar fc env x i
+  eval env (ELam fc x ty body)
     = do vTy <- eval env ty
-         Right (VLambda vTy (MkClosure x env body))
-  eval env (EPi x dom ran)
+         Right (VLambda fc vTy (MkClosure x env body))
+  eval env (EPi fc x dom ran)
     = do ty <- eval env dom
-         Right (VPi ty (MkClosure x env ran))
-  eval env (EApp rator rand)
+         Right (VPi fc ty (MkClosure x env ran))
+  eval env (EApp fc rator rand)
     = do rator' <- eval env rator
          rand' <- eval env rand
          doApply rator' rand'
-  eval env (ELet x _ r e) =
+  eval env (ELet fc x _ r e) =
     do vr <- eval env r
        eval (Extend env x vr) e
-  eval env (EAnnot x _) = eval env x
-  eval env EBool = Right VBool
-  eval env (EBoolLit b) = Right (VBoolLit b)
-  eval env (EBoolAnd t u) =
+  eval env (EAnnot fc x _) = eval env x
+  eval env (EBool fc) = Right $ VBool fc
+  eval env (EBoolLit fc b) = Right $ VBoolLit fc b
+  eval env (EBoolAnd fc t u) =
     case (!(eval env t), !(eval env u)) of
-         (VBoolLit True, u) => pure u
-         (VBoolLit False, u) => pure $ VBoolLit False
-         (t, VBoolLit True) => pure t
-         (t, VBoolLit False) => pure $ VBoolLit False
+         (VBoolLit _ True, u) => pure u
+         (VBoolLit _ False, u) => pure $ VBoolLit fc False
+         (t, VBoolLit _ True) => pure t
+         (t, VBoolLit _ False) => pure $ VBoolLit fc False
          (t, u) => case conv env t u of
                         Right _ => Right t
-                        Left _ => Right $ VBoolAnd t u
-  eval env (EBoolOr t u) =
+                        Left _ => Right $ VBoolAnd fc t u
+  eval env (EBoolOr fc t u) =
     case (!(eval env t), !(eval env u)) of
-         (VBoolLit False, u) => pure u
-         (VBoolLit True, u) => pure $ VBoolLit True
-         (t, VBoolLit False) => pure t
-         (t, VBoolLit True) => pure $ VBoolLit True
+         (VBoolLit _ False, u) => pure u
+         (VBoolLit _ True, u) => pure $ VBoolLit fc True
+         (t, VBoolLit _ False) => pure t
+         (t, VBoolLit _ True) => pure $ VBoolLit fc True
          (t, u) => case conv env t u of
                         Right _ => pure t
-                        Left _ => pure $ VBoolOr t u
-  eval env (EBoolEQ t u) =
+                        Left _ => pure $ VBoolOr fc t u
+  eval env (EBoolEQ fc t u) =
     case (!(eval env t), !(eval env u)) of
-         (VBoolLit True, u) => pure u
-         (t, VBoolLit True) => pure t
+         (VBoolLit _ True, u) => pure u
+         (t, VBoolLit _ True) => pure t
          (t, u) => case conv env t u of
-                        Right _ => pure $ VBoolLit True
-                        Left _ => pure $ VBoolEQ t u
-  eval env (EBoolNE t u) =
+                        Right _ => pure $ VBoolLit fc True
+                        Left _ => pure $ VBoolEQ fc t u
+  eval env (EBoolNE fc t u) =
     case (!(eval env t), !(eval env u)) of
-         (VBoolLit False, u) => pure u
-         (t, VBoolLit False) => pure t
+         (VBoolLit _ False, u) => pure u
+         (t, VBoolLit _ False) => pure t
          (t, u) => case conv env t u of
-                        Right _ => pure $ VBoolLit False
-                        Left _ => pure $ VBoolNE t u
-  eval env ENatural = Right VNatural
-  eval env (ENaturalLit k) = Right (VNaturalLit k)
-  eval env ENaturalBuild =
+                        Right _ => pure $ VBoolLit fc False
+                        Left _ => pure $ VBoolNE fc t u
+  eval env (ENatural fc) = Right $ VNatural fc
+  eval env (ENaturalLit fc k) = Right $ VNaturalLit fc k
+  eval env (ENaturalBuild fc) =
     pure $ VPrim $
       \c => case c of
-                 VPrimVar => pure $ VNaturalBuild VPrimVar
-                 t => vAppM t [ VNatural
-                              , VHLam (Typed "n" VNatural) $ \n =>
-                                    pure $ vNaturalPlus n (VNaturalLit 1)
-                              , VNaturalLit 0
+                 VPrimVar fc => pure $ VNaturalBuild fc $ VPrimVar fc
+                 t => vAppM t [ VNatural fc
+                              , VHLam fc (Typed "n" $ VNatural fc) $ \n =>
+                                    pure $ vNaturalPlus fc n (VNaturalLit fc 1)
+                              , VNaturalLit fc 0
                               ]
-  eval env ENaturalFold =
+  eval env (ENaturalFold fc) =
     pure $ VPrim $ \n =>
     pure $ VPrim $ \natural =>
     pure $ VPrim $ \succ =>
     pure $ VPrim $ \zero =>
-    let inert = VNaturalFold n natural succ zero
+    let inert = VNaturalFold initFC n natural succ zero
     in case zero of
-            VPrimVar => pure inert
+            VPrimVar fc => pure inert
             _ => case succ of
-                      VPrimVar => pure inert
+                      VPrimVar fc => pure inert
                       _ => case natural of
-                                VPrimVar => pure inert
+                                VPrimVar fc => pure inert
                                 _ => case n of
-                                          VNaturalLit n' =>
+                                          VNaturalLit fc' n' =>
                                               go succ zero n'
                                           _ => pure inert
   where
     go : Value -> Value -> Nat -> Either Error Value
     go succ acc 0 = pure acc
     go succ acc (S k) = go succ !(vApp succ acc) k
-  eval env ENaturalIsZero = Right $ VPrim $
-                              \c => case c of
-                                      VNaturalLit n => Right $ VBoolLit (n == 0)
-                                      n             => Right $ VNaturalIsZero n
-  eval env (EBoolIf b t f) =
+  eval env (ENaturalIsZero fc) =
+     Right $ VPrim $
+       \c => case c of
+                  VNaturalLit fc' n => Right $ VBoolLit fc' (n == 0)
+                  n             => Right $ VNaturalIsZero fc n
+  eval env (EBoolIf fc b t f) =
     case (!(eval env b), !(eval env t), !(eval env f)) of
-         (VBoolLit True, t, f) => pure t
-         (VBoolLit False, t, f) => pure f
-         (b, VBoolLit True, VBoolLit False) => pure b
+         (VBoolLit _ True, t, f) => pure t
+         (VBoolLit _ False, t, f) => pure f
+         (b, VBoolLit _ True, VBoolLit _ False) => pure b
          (b, t, f) => case conv env t f of
                            (Right _) => pure t
-                           (Left _) => pure $ VBoolIf b t f
-  eval env ENaturalEven =
+                           (Left _) => pure $ VBoolIf fc b t f
+  eval env (ENaturalEven fc) =
     Right $ VPrim $
       \c => case c of
-                 VNaturalLit n => pure $ VBoolLit (isEven n)
-                 n             => pure $ VNaturalEven n
-  eval env ENaturalOdd =
+                 VNaturalLit fc n => pure $ VBoolLit fc (isEven n)
+                 n             => pure $ VNaturalEven fc n
+  eval env (ENaturalOdd fc) =
     Right $ VPrim $
       \c => case c of
-                 VNaturalLit n => pure $ VBoolLit (isOdd n)
-                 n             => pure $ VNaturalOdd n
-  eval env ENaturalSubtract = do
+                 VNaturalLit fc n => pure $ VBoolLit fc (isOdd n)
+                 n             => pure $ VNaturalOdd fc n
+  eval env (ENaturalSubtract fc) = do
     pure $ VPrim $
       \x => case x of
-                 VNaturalLit 0 => pure $ VHLam NaturalSubtractZero (\y => pure y)
-                 x'@(VNaturalLit m) => pure $ VPrim $
+                 VNaturalLit fc 0 => pure $ VHLam fc NaturalSubtractZero (\y => pure y)
+                 x'@(VNaturalLit fc m) => pure $ VPrim $
                       \y => case y of
                                  -- unintuitive order for `minus`, but this is correct
-                                 (VNaturalLit n) => pure $ VNaturalLit (minus n m)
-                                 y' => pure $ VNaturalSubtract x' y'
+                                 (VNaturalLit fc n) => pure $ VNaturalLit fc (minus n m)
+                                 y' => pure $ VNaturalSubtract fc x' y'
                  x' => pure $ VPrim $
                       \y => case y of
-                                 (VNaturalLit 0) => pure $ VNaturalLit 0
+                                 (VNaturalLit fc 0) => pure $ VNaturalLit fc 0
                                  y' => case conv env x' y' of
-                                            (Right _) => pure $ VNaturalLit 0
-                                            (Left _) => pure $ VNaturalSubtract x' y'
-  eval env ENaturalShow =
+                                            (Right _) => pure $ VNaturalLit fc 0
+                                            (Left _) => pure $ VNaturalSubtract fc x' y'
+  eval env (ENaturalShow fc) =
     Right $ VPrim $
       \c => case c of
-                 VNaturalLit n => pure $ VTextLit (MkVChunks [] (show n))
-                 n             => pure $ VNaturalShow n
-  eval env ENaturalToInteger =
+                 VNaturalLit fc n => pure $ VTextLit fc (MkVChunks [] (show n))
+                 n             => pure $ VNaturalShow fc n
+  eval env (ENaturalToInteger fc) =
     Right $ VPrim $
       \c => case c of
-                 VNaturalLit n => pure $ VIntegerLit (cast n)
-                 n             => pure $ VNaturalToInteger n
-  eval env (ENaturalPlus t u) = pure $ vNaturalPlus !(eval env t) !(eval env u)
-  eval env (ENaturalTimes t u) =
+                 VNaturalLit fc n => pure $ VIntegerLit fc (cast n)
+                 n             => pure $ VNaturalToInteger fc n
+  eval env (ENaturalPlus fc t u) = pure $ vNaturalPlus fc !(eval env t) !(eval env u)
+  eval env (ENaturalTimes fc t u) =
     case (!(eval env t), !(eval env u)) of
-         (VNaturalLit 0, u) => pure $ VNaturalLit 0
-         (VNaturalLit 1, u) => pure u
-         (t, VNaturalLit 1) => pure t
-         (t, VNaturalLit 0) => pure $ VNaturalLit 0
-         (VNaturalLit t, VNaturalLit u) => pure (VNaturalLit $ t * u)
-         (t, u) => pure $ VNaturalTimes t u
-  eval env EInteger = Right VInteger
-  eval env (EIntegerLit k) = Right (VIntegerLit k)
-  eval env EIntegerShow =
+         (VNaturalLit _ 0, u) => pure $ VNaturalLit fc 0
+         (VNaturalLit _ 1, u) => pure u
+         (t, VNaturalLit _ 1) => pure t
+         (t, VNaturalLit _ 0) => pure $ VNaturalLit fc 0
+         (VNaturalLit _ t, VNaturalLit _ u) => pure (VNaturalLit fc $ t * u)
+         (t, u) => pure $ VNaturalTimes fc t u
+  eval env (EInteger fc) = Right $ VInteger fc
+  eval env (EIntegerLit fc k) = Right (VIntegerLit fc k)
+  eval env (EIntegerShow fc) =
     Right $ VPrim $
       \c => case c of
-                 VIntegerLit n => case n >= 0 of
-                                       True => pure $ VTextLit (MkVChunks [] ("+" ++ (show n)))
-                                       False => pure $ VTextLit (MkVChunks [] (show n))
-                 n             => pure $ VIntegerShow n
-  eval env EIntegerNegate = Right $ VPrim $
+                 VIntegerLit fc n => case n >= 0 of
+                                       True => pure $ VTextLit fc (MkVChunks [] ("+" ++ (show n)))
+                                       False => pure $ VTextLit fc (MkVChunks [] (show n))
+                 n             => pure $ VIntegerShow fc n
+  eval env (EIntegerNegate fc) = Right $ VPrim $
                             \c => case c of
-                                       VIntegerLit n => Right $ VIntegerLit (negate n)
-                                       n             => Right $ VIntegerNegate n
-  eval env EIntegerClamp =
+                                       VIntegerLit fc n => Right $ VIntegerLit fc (negate n)
+                                       n             => Right $ VIntegerNegate fc n
+  eval env (EIntegerClamp fc) =
     Right $ VPrim $
       \c => case c of
-                 VIntegerLit n => pure $ VNaturalLit (integerToNat n)
-                 n             => pure $ VIntegerClamp n
-  eval env EIntegerToDouble =
+                 VIntegerLit fc n => pure $ VNaturalLit fc (integerToNat n)
+                 n             => pure $ VIntegerClamp fc n
+  eval env (EIntegerToDouble fc) =
     Right $ VPrim $
       \c => case c of
-                 VIntegerLit n => pure $ VDoubleLit (cast n)
-                 n             => pure $ VIntegerToDouble n
-  eval env EDouble = Right VDouble
-  eval env (EDoubleLit k) = Right (VDoubleLit k)
-  eval env EDoubleShow =
+                 VIntegerLit fc n => pure $ VDoubleLit fc (cast n)
+                 n             => pure $ VIntegerToDouble fc n
+  eval env (EDouble fc) = Right $ VDouble fc
+  eval env (EDoubleLit fc k) = Right (VDoubleLit fc k)
+  eval env (EDoubleShow fc) =
     Right $ VPrim $
       \c => case c of
-                 VDoubleLit n => pure $ VTextLit (MkVChunks [] (show n))
-                 n             => pure $ VDoubleShow n
-  eval env EText = Right VText
-  eval env (ETextLit (MkChunks xs x)) = do
+                 VDoubleLit fc n => pure $ VTextLit fc (MkVChunks [] (show n))
+                 n             => pure $ VDoubleShow fc n
+  eval env (EText fc) = Right $ VText fc
+  eval env (ETextLit fc (MkChunks xs x)) = do
     xs' <- traverse (mapChunks (eval env)) xs
-    Right (VTextLit (MkVChunks xs' x))
-  eval env (ETextAppend x y) =
+    Right (VTextLit fc (MkVChunks xs' x))
+  eval env (ETextAppend fc x y) =
     case (!(eval env x), !(eval env y)) of
-         (VTextLit (MkVChunks [] ""), u) => pure u
-         (t, VTextLit (MkVChunks [] "")) => pure t
-         (VTextLit x, VTextLit y) => pure $ VTextLit (x <+> y)
-         (t, u) => pure $ VTextAppend t u
-  eval env ETextShow =
+         (VTextLit fc (MkVChunks [] ""), u) => pure u
+         (t, VTextLit fc (MkVChunks [] "")) => pure t
+         (VTextLit fc x, VTextLit fc' y) => pure $ VTextLit fc (x <+> y)
+         (t, u) => pure $ VTextAppend fc t u
+  eval env (ETextShow fc) =
     pure $ VPrim $ \c =>
       case c of
-           VTextLit (MkVChunks [] x) => pure $ VTextLit (MkVChunks [] (vTextShow x))
-           t => pure $ VTextShow t
-  eval env ETextReplace = -- Probably not right
+           VTextLit fc (MkVChunks [] x) => pure $ VTextLit fc (MkVChunks [] (vTextShow x))
+           t => pure $ VTextShow fc t
+  eval env (ETextReplace fc) = -- Probably not right
     pure $ VPrim $
       \needle => pure $ VPrim $
         \replacement => pure $ VPrim $
           \haystack =>
             case needle of
-                 VTextLit (MkVChunks [] "") => pure haystack
-                 VTextLit (MkVChunks [] needleText) =>
+                 VTextLit fc (MkVChunks [] "") => pure haystack
+                 VTextLit fc (MkVChunks [] needleText) =>
                    case haystack of
-                        (VTextLit (MkVChunks [] haystackText)) =>
+                        (VTextLit fc (MkVChunks [] haystackText)) =>
                           case replacement of
-                               (VTextLit (MkVChunks [] replacementText)) =>
-                                 pure $ VTextLit $
+                               (VTextLit fc (MkVChunks [] replacementText)) =>
+                                 pure $ VTextLit fc $
                                         MkVChunks [] $ textReplace needleText replacementText haystackText
-                               (VTextLit (MkVChunks chx replacementText)) =>
+                               (VTextLit fc (MkVChunks chx replacementText)) =>
                                  case strFromChunks chx  of
                                       Nothing => Left $ ErrorMessage "could not make string for replacement"
                                       (Just str) =>
-                                         pure $ VTextLit $
+                                         pure $ VTextLit fc $
                                          MkVChunks [] $ textReplace
                                                           needleText
                                                           replacementText
                                                           haystackText
-                               _ => pure $ VTextReplace needle replacement haystack
-                        _ => pure $ VTextReplace needle replacement haystack
-                 k => pure $ VTextReplace needle replacement haystack
-  eval env EList = do
-    Right $ VPrim $ \a => Right $ VList a
-  eval env (EListLit Nothing es) = do
+                               _ => pure $ VTextReplace fc needle replacement haystack
+                        _ => pure $ VTextReplace fc needle replacement haystack
+                 k => pure $ VTextReplace fc needle replacement haystack
+  eval env (EList fc) = do
+    Right $ VPrim $ \a => Right $ VList fc a
+  eval env (EListLit fc Nothing es) = do
     vs <- mapListEither es (eval env)
-    Right (VListLit Nothing vs)
-  eval env (EListLit (Just ty) es) = do
+    Right (VListLit fc Nothing vs)
+  eval env (EListLit fc (Just ty) es) = do
     ty' <- eval env ty
     vs <- mapListEither es (eval env)
-    Right (VListLit (Just ty') vs)
-  eval env (EListAppend x y) = do
+    Right (VListLit fc (Just ty') vs)
+  eval env (EListAppend fc x y) = do
     x' <- eval env x
     y' <- eval env y
-    vListAppend x' y'
-  eval env EListBuild =
+    vListAppend fc x' y'
+  eval env (EListBuild fc) =
     Right $ VPrim $
       \a => Right $ VPrim $
         \c => case c of
-                   VPrimVar => pure $ VListBuild a VPrimVar
-                   t => vAppM t [ VList a
-                                , VHLam (Typed "a" a) $ \x =>
-                                    pure $ VHLam (Typed "as" (VList a)) $ \as =>
-                                      vListAppend (VListLit Nothing [x]) as
-                                , VListLit (Just a) []
+                   VPrimVar fc => pure $ VListBuild fc a $ VPrimVar fc
+                   t => vAppM t [ VList fc a
+                                , VHLam fc (Typed "a" a) $ \x =>
+                                    pure $ VHLam fc (Typed "as" (VList fc a)) $ \as =>
+                                      vListAppend fc (VListLit fc Nothing [x]) as
+                                , VListLit fc (Just a) []
                                 ]
-  eval env EListFold =
+  eval env (EListFold fc) =
     pure $ VPrim $ \a =>
     pure $ VPrim $ \as =>
     pure $ VPrim $ \list =>
     pure $ VPrim $ \cons =>
     pure $ VPrim $ \nil =>
-      let inert = pure $ VListFold a as list cons nil in
+      let inert = pure $ VListFold fc a as list cons nil in
         case nil of
-        VPrimVar => inert
+        VPrimVar fc => inert
         _ => case cons of
-            VPrimVar => inert
+            VPrimVar fc => inert
             _ => case list of
-                VPrimVar => inert
+                VPrimVar fc => inert
                 _ => case a of
-                    VPrimVar => inert
+                    VPrimVar fc => inert
                     _ => case as of
-                        VListLit _ as' =>
+                        VListLit fc _ as' =>
                            foldrM (\x,b => vAppM cons [x, b]) nil as'
                         _ => inert
     where
       foldrM : (Foldable t, Monad m) => (funcM: b -> a -> m a) -> (init: a) -> (input: t b) -> m a
       foldrM fm a0 = foldr (\b,ma => ma >>= fm b) (pure a0)
-  eval env EListLength =
+  eval env (EListLength fc) =
     Right $ VPrim $
       \a => Right $ VPrim $
         \c => case c of
-                   (VListLit _ as) => pure $ VNaturalLit (length as)
-                   as => pure $ VListLength a as
-  eval env EListHead =
+                   (VListLit fc _ as) => pure $ VNaturalLit fc (length as)
+                   as => pure $ VListLength fc a as
+  eval env (EListHead fc) =
     Right $ VPrim $ \a =>
       Right $ VPrim $
              \c => case c of
-                        VListLit _ [] => pure $ VNone a
-                        VListLit _ (h :: _) => pure $ VSome h
-                        as => pure $ VListHead a as
-  eval env EListLast =
+                        VListLit fc _ [] => pure $ VNone fc a
+                        VListLit fc _ (h :: _) => pure $ VSome fc h
+                        as => pure $ VListHead fc a as
+  eval env (EListLast fc) =
     Right $ VPrim $
       \a => Right $ VPrim $
         \c => case c of
-                   VListLit _ as =>
+                   VListLit fc _ as =>
                      case last' as of
-                          Nothing => pure $ VNone a
-                          (Just t) => pure $ VSome t
-                   as => pure $ VListLast a as
-  eval env EListIndexed =
+                          Nothing => pure $ VNone fc a
+                          (Just t) => pure $ VSome fc t
+                   as => pure $ VListLast fc a as
+  eval env (EListIndexed fc) =
     pure $ VPrim $
       \a => Right $ VPrim $
         \c => case c of
-                   VListLit t as => pure $ vListIndexed t as
-                   as => pure $ VListLast a as
-  eval env EListReverse =
+                   VListLit fc t as => pure $ vListIndexed fc t as
+                   as => pure $ VListLast fc a as
+  eval env (EListReverse fc) =
     pure $ VPrim $
       \a => Right $ VPrim $
         \c => case c of
-                   VListLit t as => pure $ VListLit t (reverse as)
-                   as => pure $ VListReverse a as
-  eval env EOptional = Right $ VPrim $ \a => Right $ VOptional a
-  eval env (ESome a) = Right (VSome !(eval env a))
-  eval env ENone = Right $ VPrim $ \a => Right $ VNone a
-  eval env (EEquivalent x y) =
+                   VListLit fc t as => pure $ VListLit fc t (reverse as)
+                   as => pure $ VListReverse fc a as
+  eval env (EOptional fc) = Right $ VPrim $ \a => Right $ VOptional fc a
+  eval env (ESome fc a) = Right (VSome fc !(eval env a))
+  eval env (ENone fc) = Right $ VPrim $ \a => Right $ VNone fc a
+  eval env (EEquivalent fc x y) =
     do xV <- eval env x
        yV <- eval env y
-       Right (VEquivalent xV yV)
-  eval env (EAssert x) = do
+       Right (VEquivalent fc xV yV)
+  eval env (EAssert fc x) = do
     xV <- eval env x
     doAssert env xV
-  eval env (ERecord x) =
+  eval env (ERecord fc x) =
     let xs = toList x in
     do xs' <- traverse (mapRecord (eval env)) xs
-       Right (VRecord (fromList xs'))
-  eval env (ERecordLit x) =
+       Right (VRecord fc (fromList xs'))
+  eval env (ERecordLit fc x) =
     let xs = toList x in
     do xs' <- traverse (mapRecord (eval env)) xs
-       Right (VRecordLit (fromList xs'))
-  eval env (ECombine x y) = do
+       Right (VRecordLit fc (fromList xs'))
+  eval env (ECombine fc x y) = do
     x' <- eval env x
     y' <- eval env y
-    doCombine x' y'
-  eval env (ECombineTypes x y) = do
+    doCombine fc x' y'
+  eval env (ECombineTypes fc x y) = do
     x' <- eval env x
     y' <- eval env y
-    doCombine x' y'
-  eval env (EPrefer x y) = do
+    doCombine fc x' y'
+  eval env (EPrefer fc x y) = do
     x' <- eval env x
     y' <- eval env y
-    doPrefer x' y'
-  eval env (EMerge x y ma) = -- TODO Double check this
+    doPrefer fc x' y'
+  eval env (EMerge fc x y ma) = -- TODO Double check this
     case (!(eval env x), !(eval env y), !(mapMaybe (eval env) ma)) of
-         (VRecordLit m, VInject _ k (Just t), _) =>
+         (VRecordLit fc m, VInject fc' _ k (Just t), _) =>
            case lookup k m of
                 Just f => vApp f t
                 Nothing => Left $ MergeUnhandledCase $ show k -- TODO DRY these error conditions
-         (VRecordLit m, VInject _ k _, _) =>
+         (VRecordLit fc m, VInject fc' _ k _, _) =>
            case lookup k m of
                 Just t => pure t
                 Nothing => Left $ MergeUnhandledCase $ show k
-         (VRecordLit m, VSome t, _) =>
+         (VRecordLit fc m, VSome fc' t, _) =>
            case lookup (MkFieldName "Some") m of
                 Just f => vApp f t
                 Nothing => Left $ MergeUnhandledCase $ "Some"
-         (VRecordLit m, VNone _, _) =>
+         (VRecordLit fc m, VNone fc' _, _) =>
            case lookup (MkFieldName "None") m of
                 Just t => pure t
                 Nothing => Left $ MergeUnhandledCase $ "None"
-         (t, u, ma) => pure $ VMerge t u ma
-  eval env (EUnion x) =
+         (t, u, ma) => pure $ VMerge fc t u ma
+  eval env (EUnion fc x) =
     let xs = toList x in
     do xs' <- traverse (mapUnion (eval env)) xs
-       Right (VUnion (fromList xs'))
-  eval env (EField x k) =
+       Right (VUnion fc (fromList xs'))
+  eval env (EField fc x k) =
     case !(eval env x) of
-         VRecordLit m =>
+         VRecordLit fc m =>
             case lookup k m of
                  (Just v) => pure v
                  Nothing => Left (FieldNotFoundError $ show k)
-         VUnion m =>
+         VUnion fc m =>
             case lookup k m of
-                 (Just (Just y)) => pure $ VPrim $ \u => pure $ VInject m k (Just u)
-                 (Just Nothing) => pure $ VInject m k Nothing
+                 (Just (Just y)) => pure $ VPrim $ \u => pure $ VInject fc m k (Just u)
+                 (Just Nothing) => pure $ VInject fc m k Nothing
                  Nothing => Left (FieldNotFoundError $ show k)
-         t => pure $ VField t k
-  eval env (ERecordCompletion t u) =
-    eval env (EAnnot (EPrefer (EField t (MkFieldName "default")) u) (EField t (MkFieldName "Type")))
-  eval env (EToMap x Nothing) =
+         t => pure $ VField fc t k
+  eval env (ERecordCompletion fc t u) =
+    eval env (EAnnot fc (EPrefer fc (EField fc t (MkFieldName "default")) u) (EField fc t (MkFieldName "Type")))
+  eval env (EToMap fc x Nothing) =
     case !(eval env x) of
-         VRecordLit ms =>
+         VRecordLit fc ms =>
            let xs = SortedMap.toList ms in
                case xs of
                     [] => Left $ ToMapEmpty "Needs an annotation"
-                    (y :: ys) => pure $ VListLit Nothing $ map vToMap (y :: ys)
-         other => pure $ VToMap other Nothing
-  eval env (EToMap x (Just y)) = do
+                    (y :: ys) => pure $ VListLit fc Nothing $ map vToMap (y :: ys)
+         other => pure $ VToMap fc other Nothing
+  eval env (EToMap fc x (Just y)) = do
     y' <- eval env y
     case !(eval env x) of
-         VRecordLit ms => pure $ VListLit (Just y') $ map vToMap (SortedMap.toList ms)
-         other => pure $ VToMap other Nothing
-  eval env (EProject x (Left ks)) =
+         VRecordLit fc ms => pure $ VListLit fc (Just y') $ map vToMap (SortedMap.toList ms)
+         other => pure $ VToMap fc other Nothing
+  eval env (EProject fc x (Left ks)) =
     case !(eval env x) of
-         VRecordLit ms => pure $ VRecordLit $ fromList !(vProjectByFields ms ks)
+         VRecordLit fc ms => pure $ VRecordLit fc $ fromList !(vProjectByFields ms ks)
          other => Left (Unexpected $ "Not a RecordLit. Value: " ++ show other)
-  eval env (EProject x (Right y)) =
+  eval env (EProject fc x (Right y)) =
     case (!(eval env x), !(eval env y)) of
-         (VRecordLit ms, VRecordLit ms') => pure $ VRecordLit $ fromList !(vProjectByFields ms (keys ms'))
-         (other, VRecord _) => Left (Unexpected $ "Not a RecordLit. Value: " ++ show other)
+         (VRecordLit fc ms, VRecordLit fc' ms') => pure $ VRecordLit fc $ fromList !(vProjectByFields ms (keys ms'))
+         (other, VRecord fc _) => Left (Unexpected $ "Not a RecordLit. Value: " ++ show other)
          (_, other) => Left (Unexpected $ "Not a Record. Value: " ++ show other)
-  eval env (EWith x ks y) = vWith !(eval env x) ks !(eval env y)
-  eval env (EImportAlt x y) = eval env x
-  eval env (EEmbed (Raw x)) = absurd x
-  eval env (EEmbed (Resolved x)) = eval Empty x
+  eval env (EWith fc x ks y) = vWith fc !(eval env x) ks !(eval env y)
+  eval env (EImportAlt fc x y) = eval env x
+  eval env (EEmbed fc (Raw x)) = absurd x
+  eval env (EEmbed fc (Resolved x)) = eval Empty x
 
   vTextShow : String -> String
   vTextShow x = "\"" <+> (foldl (<+>) "" (map f (unpack x))) <+> "\""
@@ -462,24 +465,24 @@ mutual
                False => singleton c
 
   vToMap : (FieldName, Value) -> Value
-  vToMap (MkFieldName k, v) = VRecordLit $ fromList
-    [ (MkFieldName "mapKey", VTextLit $ MkVChunks [] k)
+  vToMap (MkFieldName k, v) = VRecordLit initFC $ fromList
+    [ (MkFieldName "mapKey", VTextLit initFC $ MkVChunks [] k)
     , (MkFieldName "mapValue", v)
     ]
 
-  vWith : Value -> List1 FieldName -> Value -> Either Error Value
-  vWith (VRecordLit ms) (head ::: []) u = pure $ VRecordLit $ insert head u ms
-  vWith (VRecordLit ms) (head ::: (k :: ks)) u =
+  vWith : FC -> Value -> List1 FieldName -> Value -> Either Error Value
+  vWith _ (VRecordLit fc ms) (head ::: []) u = pure $ VRecordLit fc $ insert head u ms
+  vWith _ (VRecordLit fc ms) (head ::: (k :: ks)) u =
     case lookup head ms of
          Nothing =>
-           let new = VRecordLit (fromList [])
-               rest = vWith new (k ::: ks) u
+           let new = VRecordLit fc (fromList [])
+               rest = vWith fc new (k ::: ks) u
            in
-           pure $ VRecordLit $ insert head !rest ms
+           pure $ VRecordLit fc $ insert head !rest ms
          (Just u') =>
-           let rest = vWith u' (k ::: ks) u in
-           pure $ VRecordLit $ insert head !rest ms
-  vWith t ks u = pure $ VWith t ks u
+           let rest = vWith fc u' (k ::: ks) u in
+           pure $ VRecordLit fc $ insert head !rest ms
+  vWith fc t ks u = pure $ VWith fc t ks u
 
   export
   vProjectByFields : SortedMap FieldName Value -> List FieldName -> Either Error (List (FieldName, Value))
@@ -493,37 +496,37 @@ mutual
   listIndexedType : Maybe Value -> Maybe Value
   listIndexedType Nothing = Nothing
   listIndexedType (Just a) =
-    Just $ VRecord (fromList [(MkFieldName "index", VNatural), (MkFieldName "value", a)])
+    Just $ VRecord initFC (fromList [(MkFieldName "index", VNatural initFC), (MkFieldName "value", a)])
 
-  vNaturalPlus : Value -> Value -> Value
-  vNaturalPlus (VNaturalLit 0) u = u
-  vNaturalPlus t (VNaturalLit 0) = t
-  vNaturalPlus (VNaturalLit t) (VNaturalLit u) = VNaturalLit $ t + u
-  vNaturalPlus t u = VNaturalPlus t u
+  vNaturalPlus : FC -> Value -> Value -> Value
+  vNaturalPlus fc (VNaturalLit _ 0) u = u
+  vNaturalPlus fc t (VNaturalLit _ 0) = t
+  vNaturalPlus fc (VNaturalLit _ t) (VNaturalLit _ u) = VNaturalLit fc $ t + u
+  vNaturalPlus fc t u = VNaturalPlus fc t u
 
   -- TODO lots of traversals here
-  vListIndexed : Maybe Value -> List Value -> Value
-  vListIndexed a xs =
+  vListIndexed : FC -> Maybe Value -> List Value -> Value
+  vListIndexed fc a xs =
     let prep = foldl go [] xs
         lists = map toRecordList prep
         recordsAsLists = map toRecordList prep
         final = map toRecord recordsAsLists
-        in VListLit (listIndexedType a) (reverse final) -- TODO hacky reverse
+        in VListLit fc (listIndexedType a) (reverse final) -- TODO hacky reverse
   where
     go : List (Nat, Value) -> Value -> List (Nat, Value)
     go [] t = [(0, t)]
     go acc@((i, _) :: _) u = (i+1, u) :: acc
     toRecordList : (Nat, Value) -> List (FieldName, Value)
-    toRecordList (i, v) = [(MkFieldName "index", VNaturalLit i), (MkFieldName "value", v)]
+    toRecordList (i, v) = [(MkFieldName "index", VNaturalLit initFC i), (MkFieldName "value", v)]
     toRecord : List (FieldName, Value) -> Value
-    toRecord xs = VRecordLit $ fromList xs
+    toRecord xs = VRecordLit initFC $ fromList xs
 
   covering
   doApply : Value -> Value -> Either Error Value
-  doApply (VLambda ty closure) arg =
+  doApply (VLambda fc ty closure) arg =
     evalClosure closure arg
-  doApply (VHLam i f) arg = (f arg)
-  doApply f arg = Right $ VApp f arg
+  doApply (VHLam fc i f) arg = (f arg)
+  doApply f arg = Right $ VApp initFC f arg
 
   vApp : Value -> Value -> Either Error Value
   vApp = doApply
@@ -533,30 +536,30 @@ mutual
 
   covering
   doAssert : Env -> Value -> Either Error Value
-  doAssert env v@(VEquivalent t u) = do
+  doAssert env v@(VEquivalent fc t u) = do
     conv env t u
-    pure $ VAssert v
+    pure $ VAssert fc v
   doAssert env x = Left (AssertError ("not an equivalence type: " ++ show x))
 
-  vListAppend : Value -> Value -> Either Error Value
-  vListAppend (VListLit _ []) u = Right u
-  vListAppend t (VListLit _ []) = Right t
-  vListAppend (VListLit t xs) (VListLit _ ys) =
-    Right (VListLit t (xs ++ ys))
-  vListAppend x y = Right $ VListAppend x y
+  vListAppend : FC -> Value -> Value -> Either Error Value
+  vListAppend fc (VListLit fc' _ []) u = Right u
+  vListAppend fc t (VListLit fc' _ []) = Right t
+  vListAppend fc (VListLit fc' t xs) (VListLit fc'' _ ys) =
+    Right (VListLit fc t (xs ++ ys))
+  vListAppend fc x y = Right $ VListAppend fc x y
 
   export
-  doCombine : Value -> Value -> Either Error Value
-  doCombine (VRecordLit x) (VRecordLit y) =
-    Right (VRecordLit $ !(mergeWithApp doCombine x y))
-  doCombine (VRecord x) (VRecord y) =
-    Right (VRecord $ !(mergeWithApp doCombine x y))
-  doCombine x y = Right $ VCombineTypes x y
+  doCombine : FC -> Value -> Value -> Either Error Value
+  doCombine _ (VRecordLit fc x) (VRecordLit fc' y) =
+    Right (VRecordLit fc $ !(mergeWithApp (doCombine fc) x y))
+  doCombine _ (VRecord fc x) (VRecord fc' y) =
+    Right (VRecord fc $ !(mergeWithApp (doCombine fc) x y))
+  doCombine fc x y = Right $ VCombineTypes fc x y
 
-  doPrefer : Value -> Value -> Either Error Value
-  doPrefer (VRecordLit x) (VRecordLit y) =
-    Right (VRecordLit $ !(mergeWithApp' doPrefer x y))
-  doPrefer x y = Right $ VPrefer x y
+  doPrefer : FC -> Value -> Value -> Either Error Value
+  doPrefer _ (VRecordLit fc x) (VRecordLit fc' y) =
+    Right (VRecordLit fc $ !(mergeWithApp' (doPrefer fc) x y))
+  doPrefer fc x y = Right $ VPrefer fc x y
 
   -- conversion checking
   -- Needs to be in mutual block with eval because it's used by Bool builtins
@@ -570,7 +573,7 @@ mutual
     go acc (Extend env x' _) = go (if x == x' then acc + 1 else acc) env
 
   convFresh : Name -> Env -> (Name, Value)
-  convFresh x env = (x, VVar x (countName x env))
+  convFresh x env = (x, VVar initFC x (countName x env))
 
   convFreshCl : Closure -> Env -> (Name, Value, Closure)
   convFreshCl cl@(MkClosure x _ _) env = (x, snd (convFresh x env), cl)
@@ -580,8 +583,8 @@ mutual
 
   export
   strFromExpr : Expr Void -> Maybe String
-  strFromExpr (ETextLit (MkChunks [] x)) = pure x
-  strFromExpr (ETextLit (MkChunks (start :: xs) end)) =
+  strFromExpr (ETextLit fc (MkChunks [] x)) = pure x
+  strFromExpr (ETextLit fc (MkChunks (start :: xs) end)) =
     let mid = traverse go xs in
     pure $ !(go start) ++ (foldl (<+>) "" !mid) ++ end
   where
@@ -592,7 +595,7 @@ mutual
   export
   strFromChunks : List (String, Value) -> Maybe String
   strFromChunks [] = Just neutral
-  strFromChunks ((str, (VTextLit (MkVChunks xys' y))) :: xs') = do
+  strFromChunks ((str, (VTextLit initFC (MkVChunks xys' y))) :: xs') = do
     rest <- strFromChunks xs'
     mid <- strFromChunks xys'
     Just (str ++ mid ++ y ++ rest)
@@ -635,192 +638,192 @@ mutual
 
   export
   conv : Env -> Value -> Value -> Either Error ()
-  conv env (VLambda _ t) (VLambda _ t') =
+  conv env (VLambda fc _ t) (VLambda fc' _ t') =
     let (x, v, t) = convFreshCl t env in do
     convSkip env x !(inst t v) !(inst t' v)
-  conv env (VLambda _ t) (VHLam _ t') =
+  conv env (VLambda fc _ t) (VHLam fc' _ t') =
     let (x, v, t) = convFreshCl t env in do
     convSkip env x !(inst t v) !(t' v)
-  conv env (VLambda _ t) t' =
+  conv env (VLambda fc _ t) t' =
     let (x, v, t) = convFreshCl t env in do
     convSkip env x !(inst t v) !(vApp t' v)
-  conv env (VHLam _ t) (VLambda _ t') =
+  conv env (VHLam fc _ t) (VLambda fc' _ t') =
     let (x, v, t') = convFreshCl t' env in do
     convSkip env x !(t v) !(inst t' v)
-  conv env (VHLam _ t) (VHLam _ t') =
+  conv env (VHLam fc _ t) (VHLam fc' _ t') =
     let (x, v) = convFresh "x" env in do
     convSkip env x !(t v) !(t' v)
-  conv env (VHLam _ t) t' =
+  conv env (VHLam fc _ t) t' =
     let (x, v) = convFresh "x" env in do
     convSkip env x !(t v) !(vApp t' v)
-  conv env t (VLambda _ t') =
+  conv env t (VLambda fc _ t') =
     let (x, v, t') = convFreshCl t' env in do
     convSkip env x !(vApp t v) !(inst t' v)
-  conv env t (VHLam _ t') =
+  conv env t (VHLam fc _ t') =
     let (x, v) = convFresh "x" env in do
     convSkip env x !(vApp t v) !(t' v)
 
-  conv env (VPi a b) (VPi a' b') =
+  conv env (VPi fc a b) (VPi fc' a' b') =
     let (x, v, b') = convFreshCl b' env in do
     conv env a a'
     convSkip env x !(inst b v) !(inst b' v)
-  conv env (VPi a b) (VHPi x a' b') =
+  conv env (VPi fc a b) (VHPi fc' x a' b') =
     let (x, v) = convFresh "x" env in do
     conv env a a'
     convSkip env x !(inst b v) !(b' v)
-  conv env (VHPi _ a b) (VPi a' b') =
+  conv env (VHPi fc _ a b) (VPi fc' a' b') =
     let (x, v, b') = convFreshCl b' env in do
     conv env a a'
     convSkip env x !(b v) !(inst b' v)
-  conv env (VHPi _ a b) (VHPi x a' b') =
+  conv env (VHPi fc _ a b) (VHPi fc' x a' b') =
     let (x, v) = convFresh "x" env in do
     conv env a a'
     convSkip env x !(b v) !(b' v)
 
-  conv env (VConst k) (VConst k') = convEq k k'
-  conv env (VVar x i) (VVar x' i') = do
+  conv env (VConst fc k) (VConst fc' k') = convEq k k'
+  conv env (VVar fc x i) (VVar fc' x' i') = do
     convEq x x'
     convEq i i'
 
-  conv env (VApp t u) (VApp t' u') = do
+  conv env (VApp fc t u) (VApp fc' t' u') = do
     conv env t t'
     conv env u u'
-  conv env VBool VBool = pure ()
-  conv env (VBoolLit b) (VBoolLit b') = convEq b b'
-  conv env (VBoolAnd t u) (VBoolAnd t' u') = do
+  conv env (VBool fc) (VBool fc') = pure ()
+  conv env (VBoolLit fc b) (VBoolLit fc' b') = convEq b b'
+  conv env (VBoolAnd fc t u) (VBoolAnd fc' t' u') = do
     conv env t t'
     conv env u u'
-  conv env (VBoolOr t u) (VBoolOr t' u') = do
+  conv env (VBoolOr fc t u) (VBoolOr fc' t' u') = do
     conv env t t'
     conv env u u'
-  conv env (VBoolEQ t u) (VBoolEQ t' u') = do
+  conv env (VBoolEQ fc t u) (VBoolEQ fc' t' u') = do
     conv env t t'
     conv env u u'
-  conv env (VBoolNE t u) (VBoolNE t' u') = do
+  conv env (VBoolNE fc t u) (VBoolNE fc' t' u') = do
     conv env t t'
     conv env u u'
-  conv env (VBoolIf b t f) (VBoolIf b' t' f') = do
+  conv env (VBoolIf fc b t f) (VBoolIf fc' b' t' f') = do
     conv env b b'
     conv env t t'
     conv env f f'
-  conv env VNatural VNatural = pure ()
-  conv env (VNaturalLit k) (VNaturalLit k') = convEq k k'
-  conv env (VNaturalBuild t) (VNaturalBuild t') = conv env t t'
-  conv env (VNaturalFold t u v w) (VNaturalFold t' u' v' w') = do
+  conv env (VNatural fc) (VNatural fc') = pure ()
+  conv env (VNaturalLit fc k) (VNaturalLit fc' k') = convEq k k'
+  conv env (VNaturalBuild fc t) (VNaturalBuild fc' t') = conv env t t'
+  conv env (VNaturalFold fc t u v w) (VNaturalFold fc' t' u' v' w') = do
     conv env t t'
     conv env u u'
     conv env v v'
     conv env w w'
-  conv env (VNaturalIsZero t) (VNaturalIsZero t') = conv env t t'
-  conv env (VNaturalEven t) (VNaturalEven t') = conv env t t'
-  conv env (VNaturalOdd t) (VNaturalOdd t') = conv env t t'
-  conv env (VNaturalShow t) (VNaturalShow t') = conv env t t'
-  conv env (VNaturalSubtract t u) (VNaturalSubtract t' u') = do
+  conv env (VNaturalIsZero fc t) (VNaturalIsZero fc' t') = conv env t t'
+  conv env (VNaturalEven fc t) (VNaturalEven fc' t') = conv env t t'
+  conv env (VNaturalOdd fc t) (VNaturalOdd fc' t') = conv env t t'
+  conv env (VNaturalShow fc t) (VNaturalShow fc' t') = conv env t t'
+  conv env (VNaturalSubtract fc t u) (VNaturalSubtract fc' t' u') = do
     conv env t t'
     conv env u u'
-  conv env (VNaturalToInteger t) (VNaturalToInteger t') = conv env t t'
-  conv env (VNaturalPlus t u) (VNaturalPlus t' u') = do
+  conv env (VNaturalToInteger fc t) (VNaturalToInteger fc' t') = conv env t t'
+  conv env (VNaturalPlus fc t u) (VNaturalPlus fc' t' u') = do
     conv env t t'
     conv env u u'
-  conv env (VNaturalTimes t u) (VNaturalTimes t' u') = do
+  conv env (VNaturalTimes fc t u) (VNaturalTimes fc' t' u') = do
     conv env t t'
     conv env u u'
-  conv env VInteger VInteger = pure ()
-  conv env (VIntegerLit t) (VIntegerLit t') = convEq t t'
-  conv env (VIntegerShow t) (VIntegerShow t') = conv env t t'
-  conv env (VIntegerNegate t) (VIntegerNegate t') = conv env t t'
-  conv env (VIntegerClamp t) (VIntegerClamp t') = conv env t t'
-  conv env (VIntegerToDouble t) (VIntegerToDouble t') = conv env t t'
-  conv env VDouble VDouble = pure ()
-  conv env (VDoubleLit t) (VDoubleLit t') = convEq t t' -- TODO use binary encode
-  conv env (VDoubleShow t) (VDoubleShow t') = conv env t t'
-  conv env VText VText = pure ()
-  conv env (VTextLit t@(MkVChunks xys z)) (VTextLit u@(MkVChunks xys' z')) =
+  conv env (VInteger fc) (VInteger fc') = pure ()
+  conv env (VIntegerLit fc t) (VIntegerLit fc' t') = convEq t t'
+  conv env (VIntegerShow fc t) (VIntegerShow fc' t') = conv env t t'
+  conv env (VIntegerNegate fc t) (VIntegerNegate fc' t') = conv env t t'
+  conv env (VIntegerClamp fc t) (VIntegerClamp fc' t') = conv env t t'
+  conv env (VIntegerToDouble fc t) (VIntegerToDouble fc' t') = conv env t t'
+  conv env (VDouble fc) (VDouble fc') = pure ()
+  conv env (VDoubleLit fc t) (VDoubleLit fc' t') = convEq t t' -- TODO use binary encode
+  conv env (VDoubleShow fc t) (VDoubleShow fc' t') = conv env t t'
+  conv env (VText fc) (VText fc') = pure ()
+  conv env (VTextLit fc t@(MkVChunks xys z)) (VTextLit fc' u@(MkVChunks xys' z')) =
     let l = strFromChunks xys
         r = strFromChunks xys' in
     case (l, r) of
          ((Just l'), (Just r')) => do
            convEq (l' ++ z) (r' ++ z')
          _ => convChunks env t u
-  conv env (VTextAppend t u) (VTextAppend t' u') = do
+  conv env (VTextAppend fc t u) (VTextAppend fc' t' u') = do
     conv env t t'
     conv env u u'
-  conv env (VTextShow t) (VTextShow t') = do
+  conv env (VTextShow fc t) (VTextShow fc' t') = do
     conv env t t'
-  conv env (VTextReplace t u v) (VTextReplace t' u' v') = do
+  conv env (VTextReplace fc t u v) (VTextReplace fc' t' u' v') = do
     conv env t t'
     conv env u u'
     conv env v v'
-  conv env (VList a) (VList a') = conv env a a'
-  conv env (VListLit _ xs) (VListLit _ xs') = convList env xs xs'
-  conv env (VListAppend t u) (VListAppend t' u') = do
+  conv env (VList fc a) (VList fc' a') = conv env a a'
+  conv env (VListLit fc _ xs) (VListLit fc' _ xs') = convList env xs xs'
+  conv env (VListAppend fc t u) (VListAppend fc' t' u') = do
     conv env t t'
     conv env u u'
-  conv env (VListBuild _ t) (VListBuild _ t') = conv env t t'
-  conv env (VListFold a l _ t u) (VListFold a' l' _ t' u') = do
+  conv env (VListBuild fc _ t) (VListBuild fc' _ t') = conv env t t'
+  conv env (VListFold fc a l _ t u) (VListFold fc' a' l' _ t' u') = do
     conv env a a'
     conv env l l'
     conv env t t'
     conv env u u'
-  conv env (VListLength _ t) (VListLength _ t') = conv env t t'
-  conv env (VListHead _ t) (VListHead _ t') = conv env t t'
-  conv env (VListLast _ t) (VListLast _ t') = conv env t t'
-  conv env (VListIndexed _ t) (VListIndexed _ t') = conv env t t'
-  conv env (VListReverse _ t) (VListReverse _ t') = conv env t t'
-  conv env (VOptional a) (VOptional a') = conv env a a'
-  conv env (VNone _) (VNone _) = pure ()
-  conv env (VSome t) (VSome t') = conv env t t'
-  conv env (VEquivalent t u) (VEquivalent t' u') = do
+  conv env (VListLength fc _ t) (VListLength fc' _ t') = conv env t t'
+  conv env (VListHead fc _ t) (VListHead fc' _ t') = conv env t t'
+  conv env (VListLast fc _ t) (VListLast fc' _ t') = conv env t t'
+  conv env (VListIndexed fc _ t) (VListIndexed fc' _ t') = conv env t t'
+  conv env (VListReverse fc _ t) (VListReverse fc' _ t') = conv env t t'
+  conv env (VOptional fc a) (VOptional fc' a') = conv env a a'
+  conv env (VNone fc _) (VNone fc' _) = pure ()
+  conv env (VSome fc t) (VSome fc' t') = conv env t t'
+  conv env (VEquivalent fc t u) (VEquivalent fc' t' u') = do
     conv env t t'
     conv env u u'
-  conv env (VAssert t) (VAssert t') = conv env t t'
-  conv env (VRecord m) (VRecord m') = do
+  conv env (VAssert fc t) (VAssert fc' t') = conv env t t'
+  conv env (VRecord fc m) (VRecord fc' m') = do
     case (keys m) == (keys m') of
          True => convList env (values m) (values m')
          False => convErr m m'
-  conv env (VRecordLit m) (VRecordLit m') = do
+  conv env (VRecordLit fc m) (VRecordLit fc' m') = do
     case (keys m) == (keys m') of
          True => convList env (values m) (values m')
          False => convErr m m'
-  conv env (VUnion m) (VUnion m') = do
+  conv env (VUnion fc m) (VUnion fc' m') = do
     convUnion env (toList m) (toList m')
-  conv env (VCombine t u) (VCombine t' u') = do
+  conv env (VCombine fc t u) (VCombine fc' t' u') = do
     conv env t t'
     conv env u u'
-  conv env (VCombineTypes t u) (VCombineTypes t' u') = do
+  conv env (VCombineTypes fc t u) (VCombineTypes fc' t' u') = do
     conv env t t'
     conv env u u'
-  conv env (VPrefer t u) (VPrefer t' u') = do
+  conv env (VPrefer fc t u) (VPrefer fc' t' u') = do
     conv env t t'
     conv env u u'
-  conv env (VMerge t u Nothing) (VMerge t' u' Nothing) = do
+  conv env (VMerge fc t u Nothing) (VMerge fc' t' u' Nothing) = do
     conv env t t'
     conv env u u'
-  conv env (VMerge t u (Just a)) (VMerge t' u' (Just a')) = do
+  conv env (VMerge fc t u (Just a)) (VMerge fc' t' u' (Just a')) = do
     conv env t t'
     conv env u u'
     conv env a a'
-  conv env (VToMap t Nothing) (VToMap t' Nothing) = do
+  conv env (VToMap fc t Nothing) (VToMap fc' t' Nothing) = do
     conv env t t'
-  conv env (VToMap t (Just a)) (VToMap t' (Just a')) = do
+  conv env (VToMap fc t (Just a)) (VToMap fc' t' (Just a')) = do
     conv env t t'
     conv env a a'
-  conv env (VInject m k (Just mt)) (VInject m' k' (Just mt')) = do
+  conv env (VInject fc m k (Just mt)) (VInject fc' m' k' (Just mt')) = do
     convUnion env (toList m) (toList m')
     convEq k k'
     conv env mt mt'
-  conv env (VInject m k Nothing) (VInject m' k' Nothing) = do
+  conv env (VInject fc m k Nothing) (VInject fc' m' k' Nothing) = do
     convUnion env (toList m) (toList m')
     convEq k k'
-  conv env (VProject t (Left ks)) (VProject t' (Left ks')) = do
+  conv env (VProject fc t (Left ks)) (VProject fc' t' (Left ks')) = do
     conv env t t'
     convEq ks ks'
-  conv env (VProject t (Right u)) (VProject t' (Right u')) = do
+  conv env (VProject fc t (Right u)) (VProject fc' t' (Right u')) = do
     conv env t t'
     conv env u u'
-  conv env (VWith t ks u) (VWith t' ks' u') = do
+  conv env (VWith fc t ks u) (VWith fc' t' ks' u') = do
     conv env t t'
     convEq ks ks'
     conv env u u'
-  conv env VPrimVar VPrimVar = pure () -- TODO not in conv, maybe covered by `_ | ptrEq t t' -> True` case?
+  conv env (VPrimVar fc) (VPrimVar fc') = pure () -- TODO not in conv, maybe covered by `_ | ptrEq t t' -> True` case?
   conv env t u = convErr t u

@@ -28,6 +28,13 @@ whitespace =
       _ => Nothing
 
 export
+tokenW : Grammar state (TokenRawToken) True a -> Grammar state (TokenRawToken) True a
+tokenW p = do
+  x <- p
+  _ <- optional whitespace
+  pure x
+
+export
 keyword : String -> Rule ()
 keyword req =
   terminal ("Expected '" ++ req ++ "'") $
@@ -93,6 +100,22 @@ embedPath =
       _ => Nothing
 
 export
+naturalLit : Rule Nat
+naturalLit =
+  terminal "expected natural" $
+    \case
+      TNatural x => Just x
+      _ => Nothing
+
+export
+integerLit : Rule Integer
+integerLit =
+  terminal "expected integer" $
+    \case
+      TInteger x => Just x
+      _ => Nothing
+
+export
 doubleLit : Rule Double
 doubleLit =
   terminal "expected double" $
@@ -103,8 +126,8 @@ doubleLit =
 export
 dottedList : Rule (List1 String)
 dottedList = do
-  -- x <- sepBy1 (match $ Symbol ".") (identPart)
-  x <- sepBy1 (symbol ".") (identPart)
+  _ <- optional whitespace
+  x <- sepBy1 (tokenW $ symbol ".") (identPart)
   pure x
 
 export
@@ -113,4 +136,20 @@ builtin =
   terminal "expected builtin" $
     \case
       Builtin x => Just x
+      _ => Nothing
+
+export
+someBuiltin : Rule ()
+someBuiltin =
+  terminal "expected builtin" $
+    \case
+      Builtin "Some" => Just ()
+      _ => Nothing
+
+export
+endOfInput : Rule ()
+endOfInput =
+  terminal "expected builtin" $
+    \case
+      EndInput => Just ()
       _ => Nothing

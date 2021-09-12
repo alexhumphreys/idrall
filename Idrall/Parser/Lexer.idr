@@ -19,6 +19,8 @@ data RawToken
   | Symbol String
   | Keyword String
   | Builtin String
+  | TNatural Nat
+  | TInteger Integer
   | TDouble Double
   | InterpBegin
   | InterpEnd
@@ -37,6 +39,8 @@ Eq RawToken where
   (==) (Symbol x) (Symbol y) = x == y
   (==) (Keyword x) (Keyword y) = x == y
   (==) (Builtin x) (Builtin y) = x == y
+  (==) (TNatural x) (TNatural y) = x == y
+  (==) (TInteger x) (TInteger y) = x == y
   (==) (TDouble x) (TDouble y) = x == y
   (==) InterpBegin InterpBegin = True
   (==) InterpEnd InterpEnd = True
@@ -56,6 +60,8 @@ Show RawToken where
   show (Symbol x) = "Symbol \{show x}"
   show (Keyword x) = "Keyword \{show x}"
   show (Builtin x) = "Builtin \{show x}"
+  show (TNatural x) = "TNatural \{show x}"
+  show (TInteger x) = "TInteger \{show x}"
   show (TDouble x) = "TDouble \{show x}"
   show InterpBegin = "InterpBegin"
   show InterpEnd = "InterpEnd"
@@ -74,21 +80,26 @@ TokenRawToken = RawToken
 
 export
 builtins : List String
-builtins = ["True", "False",
-  "Natural/build", "Natural/fold", "Natural/isZero", "Natural/even",
-  "Natural/odd", "Natural/subtract", "Natural/toInteger", "Natural/show",
-  "Integer/show", "Integer/negate", "Integer/clamp", "Integer/toDouble",
-  "Double/show",
-  "List/build", "List/fold", "List/length", "List/head",
-  "List/last", "List/indexed", "List/reverse", "List",
-  "Text/show", "Text/replace",
-  "None",
-  "Optional",
-  "NaN"]
+builtins =
+  [ "Type", "Kind", "Sort"
+  , "Bool", "True", "False"
+  , "Natural", "Natural/build", "Natural/fold", "Natural/isZero", "Natural/even"
+  , "Natural/odd", "Natural/subtract", "Natural/toInteger", "Natural/show"
+  , "Integer", "Integer/show", "Integer/negate", "Integer/clamp", "Integer/toDouble"
+  , "Double", "Double/show"
+  , "List/build", "List/fold", "List/length", "List/head"
+  , "List/last", "List/indexed", "List/reverse", "List"
+  , "Text", "Text/show", "Text/replace"
+  , "Optional", "Some", "None"
+  , "NaN"
+  ]
 
 export
 keywords : List String
-keywords = ["let", "in", "with"]
+keywords = ["let", "in", "with",
+  "if", "then", "else",
+  "merge", "toMap", "missing",
+  "using", "assert"]
 
 -- variables
 ident : Lexer
@@ -119,11 +130,18 @@ sign = is '-' <|> is '+'
 exponent : Lexer
 exponent = is 'e' <+> opt sign <+> digits
 
+naturalLit : Lexer
+naturalLit = digits
+
+integerLit : Lexer
+integerLit
+    = sign <+> digits
+
 doubleLit : Lexer
 doubleLit
     = (opt sign)
       <+> ((digits <+> is '.' <+> digits <+> opt exponent)
-           <|> (digits <+> opt exponent))
+           <|> (digits <+> exponent))
 
 -- comments
 mutual
@@ -212,20 +230,43 @@ mutual
   rawTokens : Tokenizer RawToken
   rawTokens =
     match blockComment Comment
+    <|> match integerLit (TInteger . cast)
+    <|> match (exact "//\\\\") Symbol
+    <|> match (exact "//") Symbol
+    <|> match (exact "/\\") Symbol
+    <|> match (exact "\\") Symbol
     <|> embed
-    <|> match (exact "=") Symbol
+    <|> match (exact "||") Symbol
     <|> match (exact "&&") Symbol
+    <|> match (exact "===") Symbol
+    <|> match (exact "==") Symbol
+    <|> match (exact "!=") Symbol
+    <|> match (exact "=") Symbol
     <|> match (exact "->") Symbol
+    <|> match (exact "++") Symbol
+    <|> match (exact "+") Symbol
+    <|> match (exact "-") Symbol
+    <|> match (exact "*") Symbol
+    <|> match (exact "#") Symbol
+    <|> match (exact "::") Symbol
+    <|> match (exact ":") Symbol
+    <|> match (exact "?") Symbol
+    <|> match (exact "`") Symbol
     <|> match (exact "(") Symbol
     <|> match (exact ")") Symbol
     <|> match (exact "{") Symbol
     <|> match (exact "}") Symbol
     <|> match (exact "[") Symbol
     <|> match (exact "]") Symbol
+    <|> match (exact "<") Symbol
+    <|> match (exact ">") Symbol
+    <|> match (exact "|") Symbol
     <|> match (exact ",") Symbol
     <|> match (exact ".") Symbol
+    <|> match (exact "as Text") Keyword
     <|> match space (const White)
     <|> match doubleLit (TDouble . cast)
+    <|> match naturalLit (TNatural . cast)
     <|> match ident parseIdent
     <|> compose stringBegin
                 (const $ StringBegin Single)
