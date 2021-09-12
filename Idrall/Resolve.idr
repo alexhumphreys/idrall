@@ -103,7 +103,7 @@ mutual
   resolve h p (EAssert fc x) = do
     x' <- resolve h p x
     pure (EAssert fc x')
-  resolve h p EBool fc = pure EBool fc
+  resolve h p (EBool fc) = pure $ EBool fc
   resolve h p (EBoolLit fc x) = pure (EBoolLit fc x)
   resolve h p (EBoolAnd fc x y) = do
     x' <- resolve h p x
@@ -145,13 +145,13 @@ mutual
     y' <- resolve h p y
     pure (ENaturalTimes fc x' y')
   resolve h p (EInteger fc) = pure $ EInteger fc
-  resolve h p (EIntegerLit k) = pure $ EIntegerLit k
+  resolve h p (EIntegerLit fc k) = pure $ EIntegerLit fc k
   resolve h p (EIntegerShow fc) = pure $ EIntegerShow fc
   resolve h p (EIntegerClamp fc) = pure $ EIntegerClamp fc
   resolve h p (EIntegerNegate fc) = pure $ EIntegerNegate fc
   resolve h p (EIntegerToDouble fc) = pure $ EIntegerToDouble fc
   resolve h p (EDouble fc) = pure $ EDouble fc
-  resolve h p (EDoubleLit fc k) = pure $ EDoubleLit k
+  resolve h p (EDoubleLit fc k) = pure $ EDoubleLit fc k
   resolve h p (EDoubleShow fc) = pure $ EDoubleShow fc
   resolve h p (EList fc) = pure $ EList fc
   resolve h p (EListLit fc Nothing xs) = do

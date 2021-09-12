@@ -34,16 +34,16 @@ Show ExRec1 where
 
 exRec1 : Maybe ExRec1
 exRec1 = fromDhall
-  (ERecordLit $
-    fromList [ (MkFieldName "mn", ESome $ ENaturalLit 3)
-             , (MkFieldName "n", ENaturalLit 4)
-             , (MkFieldName "i", EIntegerLit 5)
-             , (MkFieldName "b", EBoolLit True)
-             , (MkFieldName "d", EDoubleLit 2.0)
-             , (MkFieldName "lb", EListLit (Just EBool) [EBoolLit True, EBoolLit False])
-             , (MkFieldName "st", (ETextLit (MkChunks [] "hello")))
-             , (MkFieldName "mst", ESome $ (ETextLit (MkChunks [] "hello")))
-             , (MkFieldName "mst2", (EApp ENone EText))
+  (ERecordLit initFC $
+    fromList [ (MkFieldName "mn", ESome initFC $ ENaturalLit initFC 3)
+             , (MkFieldName "n", ENaturalLit initFC 4)
+             , (MkFieldName "i", EIntegerLit initFC 5)
+             , (MkFieldName "b", EBoolLit initFC True)
+             , (MkFieldName "d", EDoubleLit initFC 2.0)
+             , (MkFieldName "lb", EListLit initFC (Just $ EBool initFC) [EBoolLit initFC True, EBoolLit initFC False])
+             , (MkFieldName "st", (ETextLit initFC (MkChunks [] "hello")))
+             , (MkFieldName "mst", ESome initFC $ (ETextLit initFC (MkChunks [] "hello")))
+             , (MkFieldName "mst2", (EApp initFC (ENone initFC) (EText initFC)))
              ])
 
 data ExADT1
@@ -60,22 +60,22 @@ Show ExADT1 where
 
 exADT1 : Maybe ExADT1
 exADT1 = fromDhall
-  (EApp (EField (EUnion $ fromList []) (MkFieldName "Foo")) $ ENaturalLit 3)
+  (EApp initFC (EField initFC (EUnion initFC $ fromList []) (MkFieldName "Foo")) $ ENaturalLit initFC 3)
 exADT2 : Maybe ExADT1
 exADT2 = fromDhall
-  (EApp (EField (EUnion $ fromList []) (MkFieldName "Bar")) $ EBoolLit True)
+  (EApp initFC (EField initFC (EUnion initFC $ fromList []) (MkFieldName "Bar")) $ EBoolLit initFC True)
 exADT3 : Maybe ExADT1
 exADT3 = fromDhall
-  (EApp (EField (EUnion $ fromList []) (MkFieldName "Baz")) $ ESome $ EBoolLit True)
+  (EApp initFC (EField initFC (EUnion initFC $ fromList []) (MkFieldName "Baz")) $ ESome initFC $ EBoolLit initFC True)
 
 exADT4 : Maybe ExADT1
 exADT4 = fromDhall
-        (EApp (EField
-          ( EUnion $ fromList
-            [ ((MkFieldName "Bar"), Just EBool)
-            , ((MkFieldName "Foo"), Just ENatural)
+        (EApp initFC (EField initFC
+          ( EUnion initFC $ fromList
+            [ ((MkFieldName "Bar"), Just $ EBool initFC)
+            , ((MkFieldName "Foo"), Just $ ENatural initFC)
             ]
-          ) (MkFieldName "Foo")) (ENaturalLit 3))
+          ) (MkFieldName "Foo")) (ENaturalLit initFC 3))
 
 putLines : Show a => List a -> IO ()
 putLines = putStrLn . fastAppend . (intersperse "\n") . map show

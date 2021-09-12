@@ -113,22 +113,22 @@ interface FromDhall a where
 
 export
 FromDhall Nat where
-  fromDhall (ENaturalLit x) = pure x
+  fromDhall (ENaturalLit fc x) = pure x
   fromDhall _ = neutral
 
 export
 FromDhall Bool where
-  fromDhall (EBoolLit x) = pure x
+  fromDhall (EBoolLit fc x) = pure x
   fromDhall _ = neutral
 
 export
 FromDhall Integer where
-  fromDhall (EIntegerLit x) = pure x
+  fromDhall (EIntegerLit fc x) = pure x
   fromDhall _ = neutral
 
 export
 FromDhall Double where
-  fromDhall (EDoubleLit x) = pure x
+  fromDhall (EDoubleLit fc x) = pure x
   fromDhall _ = neutral
 
 export
@@ -137,14 +137,14 @@ FromDhall String where
 
 export
 FromDhall a => FromDhall (List a) where
-  fromDhall (EListLit _ xs) = pure $ !(traverse fromDhall xs)
+  fromDhall (EListLit fc _ xs) = pure $ !(traverse fromDhall xs)
   fromDhall _ = neutral
 
 export
 FromDhall a => FromDhall (Maybe a) where
-  fromDhall (ESome x) =
+  fromDhall (ESome fc x) =
     pure $ fromDhall x
-  fromDhall (EApp ENone _) = pure $ neutral
+  fromDhall (EApp fc (ENone fc') _) = pure $ neutral
   fromDhall _ = neutral
 
 ||| Used with FromDhall interface, to dervice implementations
@@ -210,7 +210,7 @@ deriveFromDhall it n =
       let cn = primStr (show $ stripNs constructor')
           debug = show $ constructor'
           debug2 = show $ map fst xs
-          lhs = `(~(var funName) (EApp (EField (EUnion xs) (MkFieldName ~cn)) ~(bindvar $ show arg)))
+          lhs = `(~(var funName) (EApp _ (EField _ (EUnion _ xs) (MkFieldName ~cn)) ~(bindvar $ show arg)))
           in do
           case xs of
                [] => pure $ (lhs, `(pure ~(var constructor')))
@@ -225,5 +225,5 @@ deriveFromDhall it n =
       -- given constructors, lookup names in dhall records for those constructors
       clausesRecord <- traverse (\(cn, as) => genClauseRecord cn arg (reverse as)) cons
       -- create clause from dhall to `Maybe a` using the above clauses as the rhs
-      pure $ pure $ patClause `(~(var funName) (ERecordLit ~(bindvar $ show arg)))
+      pure $ pure $ patClause `(~(var funName) (ERecordLit _ ~(bindvar $ show arg)))
                               (foldl (\acc, x => `(~x <|> ~acc)) `(Nothing) (clausesRecord))
