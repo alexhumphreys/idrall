@@ -16,9 +16,6 @@ import Idrall.Path
 
 %hide Prelude.pow
 
-initFC : FC
-initFC = EmptyFC
-
 builtin : Parser (Expr ImportStatement)
 builtin =
   (string "Natural/build" *> pure (ENaturalBuild initFC)) <|>

@@ -48,6 +48,11 @@ Show FC where
   show (MkVirtualFC x y z) = "MkVirtualFCTODO"
   show EmptyFC = "(,)"
 
+
+public export
+initFC : FC
+initFC = EmptyFC
+
 public export
 Namespace : Type
 Namespace = List (Name, Integer)

@@ -25,7 +25,7 @@ freshCl cl@(MkClosure x _ _) env = (x, snd (fresh x env), cl)
 
 mutual
   qVar : Name -> Int -> List Name -> Expr Void
-  qVar x i env = EVar x ((countName' x env) - i - 1)
+  qVar x i env = EVar initFC x ((countName' x env) - i - 1)
 
   quoteBind : Name -> List Name -> Value -> Either Error (Expr Void)
   quoteBind x env = quote (x :: env)
@@ -40,106 +40,106 @@ mutual
 
   export
   quote : List Name -> Value -> Either Error (Expr Void)
-  quote env (VConst k) = Right $ EConst k
-  quote env (VVar x i) = Right $ qVar x i env
-  quote env (VApp t u) = qApp env !(quote env t) u
-  quote env (VLambda a b) =
+  quote env (VConst fc k) = Right $ EConst k
+  quote env (VVar fc x i) = Right $ qVar x i env
+  quote env (VApp fc t u) = qApp env !(quote env t) u
+  quote env (VLambda fc a b) =
     let (x, v, t) = freshCl b env in
         Right $ ELam x !(quote env a) !(quoteBind x env !(inst t v))
-  quote env (VHLam (Typed x a) t) =
+  quote env (VHLam fc (Typed x a) t) =
     let (x', v) = fresh x env in
     Right $ ELam x' !(quote env a) !(quoteBind x env !(t v))
-  quote env (VHLam NaturalSubtractZero _) =
+  quote env (VHLam fc NaturalSubtractZero _) =
     pure $ EApp ENaturalSubtract (ENaturalLit 0)
-  quote env (VHLam _ t) = quote env !(t VPrimVar)
-  quote env (VPi a b) =
+  quote env (VHLam fc _ t) = quote env !(t VPrimVar)
+  quote env (VPi fc a b) =
     let (x, v, b') = freshCl b env in
         Right $ EPi x !(quote env a) !(quoteBind x env !(inst b' v))
-  quote env (VHPi x a b) =
+  quote env (VHPi fc x a b) =
     let (x', v) = fresh x env in
         Right $ EPi x !(quote env a) !(quoteBind x env !(b v))
-  quote env VBool = pure $ EBool
-  quote env (VBoolLit b) = pure $ EBoolLit b
-  quote env (VBoolAnd t u) = pure $ EBoolAnd !(quote env t) !(quote env u)
-  quote env (VBoolOr t u) = pure $ EBoolOr !(quote env t) !(quote env u)
-  quote env (VBoolEQ t u) = pure $ EBoolEQ !(quote env t) !(quote env u)
-  quote env (VBoolNE t u) = pure $ EBoolNE !(quote env t) !(quote env u)
-  quote env (VBoolIf b t f) = pure $ EBoolIf !(quote env b) !(quote env t) !(quote env f)
-  quote env VNatural = Right $ ENatural
-  quote env (VNaturalLit k) = Right $ ENaturalLit k
-  quote env (VNaturalBuild x) = qApp env ENaturalBuild x
-  quote env (VNaturalFold w x y z) = qAppM env ENaturalFold [w, x, y, z]
-  quote env (VNaturalIsZero x) = qApp env ENaturalIsZero x
-  quote env (VNaturalEven x) = qApp env ENaturalEven x
-  quote env (VNaturalOdd x) = qApp env ENaturalOdd x
-  quote env (VNaturalToInteger x) = qApp env ENaturalToInteger x
-  quote env (VNaturalSubtract x y) = qAppM env ENaturalSubtract [x, y]
-  quote env (VNaturalShow x) = qApp env ENaturalShow x
-  quote env (VNaturalPlus t u) = Right $ ENaturalPlus !(quote env t) !(quote env u)
-  quote env (VNaturalTimes t u) = Right $ ENaturalTimes !(quote env t) !(quote env u)
-  quote env VInteger = Right $ EInteger
-  quote env (VIntegerLit x) = Right $ EIntegerLit x
-  quote env (VIntegerShow x) = qApp env EIntegerShow x
-  quote env (VIntegerNegate x) = qApp env EIntegerNegate x
-  quote env (VIntegerClamp x) = qApp env EIntegerClamp x
-  quote env (VIntegerToDouble x) = qApp env EIntegerToDouble x
-  quote env VDouble = Right $ EDouble
-  quote env (VDoubleLit x) = Right $ EDoubleLit x
-  quote env (VDoubleShow x) = qApp env EDoubleShow x
-  quote env VText = Right $ EText
-  quote env (VTextLit (MkVChunks xs x)) =
+  quote env (VBool fc) = pure $ EBool initFC
+  quote env (VBoolLit fc b) = pure $ EBoolLit initFC b
+  quote env (VBoolAnd fc t u) = pure $ EBoolAnd initFC !(quote env t) !(quote env u)
+  quote env (VBoolOr fc t u) = pure $ EBoolOr initFC !(quote env t) !(quote env u)
+  quote env (VBoolEQ fc t u) = pure $ EBoolEQ initFC !(quote env t) !(quote env u)
+  quote env (VBoolNE fc t u) = pure $ EBoolNE initFC !(quote env t) !(quote env u)
+  quote env (VBoolIf fc b t f) = pure $ EBoolIf initFC !(quote env b) !(quote env t) !(quote env f)
+  quote env (VNatural fc) = Right $ ENatural initFC
+  quote env (VNaturalLit fc k) = Right $ ENaturalLit initFC k
+  quote env (VNaturalBuild fc x) = qApp env ENaturalBuild initFC x
+  quote env (VNaturalFold fc w x y z) = qAppM env ENaturalFold initFC [w, x, y, z]
+  quote env (VNaturalIsZero fc x) = qApp env ENaturalIsZero initFC x
+  quote env (VNaturalEven fc x) = qApp env ENaturalEven initFC x
+  quote env (VNaturalOdd fc x) = qApp env ENaturalOdd initFC x
+  quote env (VNaturalToInteger fc x) = qApp env ENaturalToInteger initFC x
+  quote env (VNaturalSubtract x y) = qAppM env ENaturalSubtract initFC [x, y]
+  quote env (VNaturalShow fc x) = qApp env ENaturalShow initFC x
+  quote env (VNaturalPlus fc t u) = Right $ ENaturalPlus initFC !(quote env t) !(quote env u)
+  quote env (VNaturalTimes fc t u) = Right $ ENaturalTimes initFC !(quote env t) !(quote env u)
+  quote env (VInteger fc) = Right $ EInteger initFC
+  quote env (VIntegerLit fc x) = Right $ EIntegerLit initFC x
+  quote env (VIntegerShow fc x) = qApp env EIntegerShow initFC x
+  quote env (VIntegerNegate fc x) = qApp env EIntegerNegate initFC x
+  quote env (VIntegerClamp fc x) = qApp env EIntegerClamp initFC x
+  quote env (VIntegerToDouble fc x) = qApp env EIntegerToDouble initFC x
+  quote env (VDouble fc) = Right $ EDouble initFC
+  quote env (VDoubleLit fc x) = Right $ EDoubleLit initFC x
+  quote env (VDoubleShow fc x) = qApp env EDoubleShow initFC x
+  quote env (VText fc) = Right $ EText initFC
+  quote env (VTextLit fc (MkVChunks xs x)) =
     let chx = traverse (mapChunks (quote env)) xs in
-    Right $ ETextLit (MkChunks !chx x)
-  quote env (VTextAppend t u) = pure $ ETextAppend !(quote env t) !(quote env u)
-  quote env (VTextShow t) = qApp env ETextShow t
-  quote env (VTextReplace t u v) = qAppM env ETextReplace [t, u, v]
-  quote env (VList x) = qApp env EList x
-  quote env (VListLit Nothing ys) =
+    Right $ ETextLit initFC (MkChunks !chx x)
+  quote env (VTextAppend fc t u) = pure $ ETextAppend initFC !(quote env t) !(quote env u)
+  quote env (VTextShow fc t) = qApp env ETextShow initFC t
+  quote env (VTextReplace fc t u v) = qAppM env ETextReplace initFC [t, u, v]
+  quote env (VList fc x) = qApp env EList initFC x
+  quote env (VListLit fc Nothing ys) =
     let ys' = traverse (quote env) ys in
-    Right $ EListLit Nothing !ys'
-  quote env (VListLit (Just x) ys) =
+    Right $ EListLit initFC Nothing !ys'
+  quote env (VListLit fc (Just x) ys) =
     let ys' = traverse (quote env) ys in
-    Right $ EListLit (Just !(quote env x)) !ys'
-  quote env (VListAppend x y) = Right $ EListAppend !(quote env x) !(quote env y)
-  quote env (VListBuild t u) = qAppM env EListBuild [t, u]
-  quote env (VListFold a l t u v) = qAppM env EListFold [a, l, t, u, v]
-  quote env (VListLength t u) = qAppM env EListLength [t, u]
-  quote env (VListHead t u) = qAppM env EListHead [t, u]
-  quote env (VListLast t u) = qAppM env EListLast [t, u]
-  quote env (VListIndexed t u) = qAppM env EListIndexed [t, u]
-  quote env (VListReverse t u) = qAppM env EListReverse [t, u]
-  quote env (VOptional x) = qApp env EOptional x
-  quote env (VNone x) = qApp env ENone x
-  quote env (VSome x) = Right $ ESome !(quote env x)
-  quote env (VEquivalent x y) = Right $ EEquivalent !(quote env x) !(quote env y)
-  quote env (VAssert x) = Right $ EAssert !(quote env x)
-  quote env (VRecord x) =
+    Right $ EListLit initFC (Just !(quote env x)) !ys'
+  quote env (VListAppend fc x y) = Right $ EListAppend initFC !(quote env x) !(quote env y)
+  quote env (VListBuild fc t u) = qAppM env EListBuild initFC [t, u]
+  quote env (VListFold fc a l t u v) = qAppM env EListFold initFC [a, l, t, u, v]
+  quote env (VListLength fc t u) = qAppM env EListLength initFC [t, u]
+  quote env (VListHead fc t u) = qAppM env EListHead initFC [t, u]
+  quote env (VListLast fc t u) = qAppM env EListLast initFC [t, u]
+  quote env (VListIndexed fc t u) = qAppM env EListIndexed initFC [t, u]
+  quote env (VListReverse fc t u) = qAppM env EListReverse initFC [t, u]
+  quote env (VOptional fc x) = qApp env EOptional initFC x
+  quote env (VNone fc x) = qApp env ENone initFC x
+  quote env (VSome fc x) = Right $ ESome initFC !(quote env x)
+  quote env (VEquivalent fc x y) = Right $ EEquivalent initFC !(quote env x) !(quote env y)
+  quote env (VAssert fc x) = Right $ EAssert initFC !(quote env x)
+  quote env (VRecord fc x) =
     let x' = traverse (quote env) x in
-    Right $ ERecord !x'
-  quote env (VRecordLit x) =
+    Right $ ERecord initFC !x'
+  quote env (VRecordLit fc x) =
     let x' = traverse (quote env) x in
-    Right $ ERecordLit !x'
-  quote env (VUnion x) =
+    Right $ ERecordLit initFC !x'
+  quote env (VUnion fc x) =
     let x' = traverse (mapMaybe (quote env)) x in
-    Right $ EUnion !x'
-  quote env (VField x y) = Right $ EField !(quote env x) y
-  quote env (VCombine x y) = Right $ ECombine !(quote env x) !(quote env y)
-  quote env (VCombineTypes x y) = Right $ ECombineTypes !(quote env x) !(quote env y)
-  quote env (VPrefer x y) = Right $ EPrefer !(quote env x) !(quote env y)
-  quote env (VMerge x y Nothing) = pure $ EMerge !(quote env x) !(quote env y) Nothing
-  quote env (VMerge x y (Just z)) = pure $ EMerge !(quote env x) !(quote env y) (Just !(quote env z))
-  quote env (VToMap x Nothing) = pure $ EToMap !(quote env x) Nothing
-  quote env (VToMap x (Just y)) = pure $ EToMap !(quote env x) (Just !(quote env y))
-  quote env (VInject m k Nothing) =
+    Right $ EUnion initFC !x'
+  quote env (VField fc x y) = Right $ EField initFC !(quote env x) y
+  quote env (VCombine fc x y) = Right $ ECombine initFC !(quote env x) !(quote env y)
+  quote env (VCombineTypes fc x y) = Right $ ECombineTypes initFC !(quote env x) !(quote env y)
+  quote env (VPrefer fc x y) = Right $ EPrefer !(quote env x) !(quote env y)
+  quote env (VMerge fc x y Nothing) = pure $ EMerge !(quote env x) !(quote env y) Nothing
+  quote env (VMerge fc x y (Just z)) = pure $ EMerge !(quote env x) !(quote env y) (Just !(quote env z))
+  quote env (VToMap fc x Nothing) = pure $ EToMap !(quote env x) Nothing
+  quote env (VToMap fc x (Just y)) = pure $ EToMap !(quote env x) (Just !(quote env y))
+  quote env (VInject fc m k Nothing) =
     let m' = traverse (mapMaybe (quote env)) m in
     Right $ EField (EUnion !m') k
-  quote env (VInject m k (Just t)) =
+  quote env (VInject fc m k (Just t)) =
     let m' = traverse (mapMaybe (quote env)) m in
     qApp env (EField (EUnion !m') k) t
-  quote env (VProject t (Left ks)) = pure $ EProject !(quote env t) (Left ks)
-  quote env (VProject t (Right u)) = pure $ EProject !(quote env t) (Right $ !(quote env u))
-  quote env (VWith t ks u) = pure $ EWith !(quote env t) ks !(quote env u)
-  quote env VPrimVar = Left $ ReadBackError "Can't quote VPrimVar"
+  quote env (VProject fc t (Left ks)) = pure $ EProject !(quote env t) (Left ks)
+  quote env (VProject fc t (Right u)) = pure $ EProject !(quote env t) (Right $ !(quote env u))
+  quote env (VWith fc t ks u) = pure $ EWith !(quote env t) ks !(quote env u)
+  quote env (VPrimVar fc) = Left $ ReadBackError "Can't quote VPrimVar"
 
 ||| destruct VPi and VHPi
 vAnyPi : Value -> Either Error (Name, Ty, (Value -> Either Error Value))
