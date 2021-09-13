@@ -3,6 +3,7 @@ module Idrall.Expr
 import Data.List1
 
 import Idrall.Path
+import public Idrall.FC
 
 import public Data.SortedMap
 
@@ -24,36 +25,6 @@ Eq FieldName where
 public export
 Ord FieldName where
   compare (MkFieldName x) (MkFieldName y) = compare x y
-
-public export
-FilePos : Type
-FilePos = (Nat, Nat)
-
--- does fancy stuff for idris, for now it can just be a Maybe filename
-public export
-OriginDesc : Type
-OriginDesc = Maybe String
-
--- TODO use this as a Maybe for MkVirtualFC
-data FCDetails = MkFCDetails OriginDesc FilePos FilePos
-
-public export
-data FC = MkFC        OriginDesc FilePos FilePos
-        | ||| Virtual FCs are FC attached to desugared/generated code.
-          MkVirtualFC OriginDesc FilePos FilePos
-        | EmptyFC
-%name FC fc
-
-Show FC where
-  show (MkFC Nothing x y) = "\{show x}-\{show y}"
-  show (MkFC (Just s) x y) = "\{s}:\{show x}-\{show y}"
-  show (MkVirtualFC x y z) = "MkVirtualFCTODO"
-  show EmptyFC = "(,)"
-
-
-public export
-initFC : FC
-initFC = EmptyFC
 
 public export
 Namespace : Type
@@ -238,6 +209,78 @@ mutual
     -- | > EImportAlt x y ~ x ? y
     | EImportAlt FC (Expr a) (Expr a)
     | EEmbed FC (Import a)
+
+export
+getBounds : Expr a -> FC
+getBounds (EConst fc x) = fc
+getBounds (EVar fc x y) = fc
+getBounds (ELam fc x y z) = fc
+getBounds (EPi fc x y z) = fc
+getBounds (EApp fc x y) = fc
+getBounds (ELet fc x y z w) = fc
+getBounds (EAnnot fc x y) = fc
+getBounds (EBool fc) = fc
+getBounds (EBoolLit fc x) = fc
+getBounds (EBoolAnd fc x y) = fc
+getBounds (EBoolOr fc x y) = fc
+getBounds (EBoolEQ fc x y) = fc
+getBounds (EBoolNE fc x y) = fc
+getBounds (EBoolIf fc x y z) = fc
+getBounds (ENatural fc) = fc
+getBounds (ENaturalLit fc k) = fc
+getBounds (ENaturalFold fc) = fc
+getBounds (ENaturalBuild fc) = fc
+getBounds (ENaturalIsZero fc) = fc
+getBounds (ENaturalEven fc) = fc
+getBounds (ENaturalOdd fc) = fc
+getBounds (ENaturalToInteger fc) = fc
+getBounds (ENaturalSubtract fc) = fc
+getBounds (ENaturalShow fc) = fc
+getBounds (ENaturalPlus fc x y) = fc
+getBounds (ENaturalTimes fc x y) = fc
+getBounds (EInteger fc) = fc
+getBounds (EIntegerLit fc x) = fc
+getBounds (EIntegerShow fc) = fc
+getBounds (EIntegerClamp fc) = fc
+getBounds (EIntegerNegate fc) = fc
+getBounds (EIntegerToDouble fc) = fc
+getBounds (EDouble fc) = fc
+getBounds (EDoubleLit fc x) = fc
+getBounds (EDoubleShow fc) = fc
+getBounds (EText fc) = fc
+getBounds (ETextLit fc x) = fc
+getBounds (ETextAppend fc x y) = fc
+getBounds (ETextShow fc) = fc
+getBounds (ETextReplace fc) = fc
+getBounds (EList fc) = fc
+getBounds (EListLit fc x xs) = fc
+getBounds (EListAppend fc x y) = fc
+getBounds (EListBuild fc) = fc
+getBounds (EListFold fc) = fc
+getBounds (EListLength fc) = fc
+getBounds (EListHead fc) = fc
+getBounds (EListLast fc) = fc
+getBounds (EListIndexed fc) = fc
+getBounds (EListReverse fc) = fc
+getBounds (EOptional fc) = fc
+getBounds (ESome fc x) = fc
+getBounds (ENone fc) = fc
+getBounds (EEquivalent fc x y) = fc
+getBounds (EAssert fc x) = fc
+getBounds (ERecord fc x) = fc
+getBounds (ERecordLit fc x) = fc
+getBounds (EUnion fc x) = fc
+getBounds (ECombine fc x y) = fc
+getBounds (ECombineTypes fc x y) = fc
+getBounds (EPrefer fc x y) = fc
+getBounds (ERecordCompletion fc x y) = fc
+getBounds (EMerge fc x y z) = fc
+getBounds (EToMap fc x y) = fc
+getBounds (EField fc x y) = fc
+getBounds (EProject fc x y) = fc
+getBounds (EWith fc x xs y) = fc
+getBounds (EImportAlt fc x y) = fc
+getBounds (EEmbed fc x) = fc
 
 export
 Show ImportStatement where
