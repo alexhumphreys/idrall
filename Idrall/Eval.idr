@@ -14,7 +14,7 @@ nestError : Either Error b -> Error -> Either Error b
 nestError x e =
   case x of
        (Left e') => Left $ NestedError e e'
-       (Right x') => Right x'
+       (Right x') => pure x'
 
 ||| returns `VConst CType`
 export
@@ -62,15 +62,15 @@ mutual
   export
   covering
   eval : Env -> Expr Void -> Either Error Value
-  eval env (EConst fc x) = Right (VConst fc x)
+  eval env (EConst fc x) = pure (VConst fc x)
   eval env (EVar fc x i)
     = evalVar fc env x i
   eval env (ELam fc x ty body)
     = do vTy <- eval env ty
-         Right (VLambda fc vTy (MkClosure x env body))
+         pure (VLambda fc vTy (MkClosure x env body))
   eval env (EPi fc x dom ran)
     = do ty <- eval env dom
-         Right (VPi fc ty (MkClosure x env ran))
+         pure (VPi fc ty (MkClosure x env ran))
   eval env (EApp fc rator rand)
     = do rator' <- eval env rator
          rand' <- eval env rand
@@ -79,8 +79,8 @@ mutual
     do vr <- eval env r
        eval (Extend env x vr) e
   eval env (EAnnot fc x _) = eval env x
-  eval env (EBool fc) = Right $ VBool fc
-  eval env (EBoolLit fc b) = Right $ VBoolLit fc b
+  eval env (EBool fc) = pure $ VBool fc
+  eval env (EBoolLit fc b) = pure $ VBoolLit fc b
   eval env (EBoolAnd fc t u) =
     case (!(eval env t), !(eval env u)) of
          (VBoolLit _ True, u) => pure u
@@ -88,8 +88,8 @@ mutual
          (t, VBoolLit _ True) => pure t
          (t, VBoolLit _ False) => pure $ VBoolLit fc False
          (t, u) => case conv env t u of
-                        Right _ => Right t
-                        Left _ => Right $ VBoolAnd fc t u
+                        Right _ => pure t
+                        Left _ => pure $ VBoolAnd fc t u
   eval env (EBoolOr fc t u) =
     case (!(eval env t), !(eval env u)) of
          (VBoolLit _ False, u) => pure u
@@ -113,8 +113,8 @@ mutual
          (t, u) => case conv env t u of
                         Right _ => pure $ VBoolLit fc False
                         Left _ => pure $ VBoolNE fc t u
-  eval env (ENatural fc) = Right $ VNatural fc
-  eval env (ENaturalLit fc k) = Right $ VNaturalLit fc k
+  eval env (ENatural fc) = pure $ VNatural fc
+  eval env (ENaturalLit fc k) = pure $ VNaturalLit fc k
   eval env (ENaturalBuild fc) =
     pure $ VPrim $
       \c => case c of
@@ -145,10 +145,10 @@ mutual
     go succ acc 0 = pure acc
     go succ acc (S k) = go succ !(vApp succ acc) k
   eval env (ENaturalIsZero fc) =
-     Right $ VPrim $
+     pure $ VPrim $
        \c => case c of
-                  VNaturalLit fc' n => Right $ VBoolLit fc' (n == 0)
-                  n             => Right $ VNaturalIsZero fc n
+                  VNaturalLit fc' n => pure $ VBoolLit fc' (n == 0)
+                  n             => pure $ VNaturalIsZero fc n
   eval env (EBoolIf fc b t f) =
     case (!(eval env b), !(eval env t), !(eval env f)) of
          (VBoolLit _ True, t, f) => pure t
@@ -158,12 +158,12 @@ mutual
                            (Right _) => pure t
                            (Left _) => pure $ VBoolIf fc b t f
   eval env (ENaturalEven fc) =
-    Right $ VPrim $
+    pure $ VPrim $
       \c => case c of
                  VNaturalLit fc n => pure $ VBoolLit fc (isEven n)
                  n             => pure $ VNaturalEven fc n
   eval env (ENaturalOdd fc) =
-    Right $ VPrim $
+    pure $ VPrim $
       \c => case c of
                  VNaturalLit fc n => pure $ VBoolLit fc (isOdd n)
                  n             => pure $ VNaturalOdd fc n
@@ -183,12 +183,12 @@ mutual
                                             (Right _) => pure $ VNaturalLit fc 0
                                             (Left _) => pure $ VNaturalSubtract fc x' y'
   eval env (ENaturalShow fc) =
-    Right $ VPrim $
+    pure $ VPrim $
       \c => case c of
                  VNaturalLit fc n => pure $ VTextLit fc (MkVChunks [] (show n))
                  n             => pure $ VNaturalShow fc n
   eval env (ENaturalToInteger fc) =
-    Right $ VPrim $
+    pure $ VPrim $
       \c => case c of
                  VNaturalLit fc n => pure $ VIntegerLit fc (cast n)
                  n             => pure $ VNaturalToInteger fc n
@@ -201,40 +201,40 @@ mutual
          (t, VNaturalLit _ 0) => pure $ VNaturalLit fc 0
          (VNaturalLit _ t, VNaturalLit _ u) => pure (VNaturalLit fc $ t * u)
          (t, u) => pure $ VNaturalTimes fc t u
-  eval env (EInteger fc) = Right $ VInteger fc
-  eval env (EIntegerLit fc k) = Right (VIntegerLit fc k)
+  eval env (EInteger fc) = pure $ VInteger fc
+  eval env (EIntegerLit fc k) = pure (VIntegerLit fc k)
   eval env (EIntegerShow fc) =
-    Right $ VPrim $
+    pure $ VPrim $
       \c => case c of
                  VIntegerLit fc n => case n >= 0 of
                                        True => pure $ VTextLit fc (MkVChunks [] ("+" ++ (show n)))
                                        False => pure $ VTextLit fc (MkVChunks [] (show n))
                  n             => pure $ VIntegerShow fc n
-  eval env (EIntegerNegate fc) = Right $ VPrim $
+  eval env (EIntegerNegate fc) = pure $ VPrim $
                             \c => case c of
-                                       VIntegerLit fc n => Right $ VIntegerLit fc (negate n)
-                                       n             => Right $ VIntegerNegate fc n
+                                       VIntegerLit fc n => pure $ VIntegerLit fc (negate n)
+                                       n             => pure $ VIntegerNegate fc n
   eval env (EIntegerClamp fc) =
-    Right $ VPrim $
+    pure $ VPrim $
       \c => case c of
                  VIntegerLit fc n => pure $ VNaturalLit fc (integerToNat n)
                  n             => pure $ VIntegerClamp fc n
   eval env (EIntegerToDouble fc) =
-    Right $ VPrim $
+    pure $ VPrim $
       \c => case c of
                  VIntegerLit fc n => pure $ VDoubleLit fc (cast n)
                  n             => pure $ VIntegerToDouble fc n
-  eval env (EDouble fc) = Right $ VDouble fc
-  eval env (EDoubleLit fc k) = Right (VDoubleLit fc k)
+  eval env (EDouble fc) = pure $ VDouble fc
+  eval env (EDoubleLit fc k) = pure (VDoubleLit fc k)
   eval env (EDoubleShow fc) =
-    Right $ VPrim $
+    pure $ VPrim $
       \c => case c of
                  VDoubleLit fc n => pure $ VTextLit fc (MkVChunks [] (show n))
                  n             => pure $ VDoubleShow fc n
-  eval env (EText fc) = Right $ VText fc
+  eval env (EText fc) = pure $ VText fc
   eval env (ETextLit fc (MkChunks xs x)) = do
     xs' <- traverse (mapChunks (eval env)) xs
-    Right (VTextLit fc (MkVChunks xs' x))
+    pure (VTextLit fc (MkVChunks xs' x))
   eval env (ETextAppend fc x y) =
     case (!(eval env x), !(eval env y)) of
          (VTextLit fc (MkVChunks [] ""), u) => pure u
@@ -273,21 +273,21 @@ mutual
                         _ => pure $ VTextReplace fc needle replacement haystack
                  k => pure $ VTextReplace fc needle replacement haystack
   eval env (EList fc) = do
-    Right $ VPrim $ \a => Right $ VList fc a
+    pure $ VPrim $ \a => pure $ VList fc a
   eval env (EListLit fc Nothing es) = do
     vs <- mapListEither es (eval env)
-    Right (VListLit fc Nothing vs)
+    pure (VListLit fc Nothing vs)
   eval env (EListLit fc (Just ty) es) = do
     ty' <- eval env ty
     vs <- mapListEither es (eval env)
-    Right (VListLit fc (Just ty') vs)
+    pure (VListLit fc (Just ty') vs)
   eval env (EListAppend fc x y) = do
     x' <- eval env x
     y' <- eval env y
     vListAppend fc x' y'
   eval env (EListBuild fc) =
-    Right $ VPrim $
-      \a => Right $ VPrim $
+    pure $ VPrim $
+      \a => pure $ VPrim $
         \c => case c of
                    VPrimVar fc => pure $ VListBuild fc a $ VPrimVar fc
                    t => vAppM t [ VList fc a
@@ -319,21 +319,21 @@ mutual
       foldrM : (Foldable t, Monad m) => (funcM: b -> a -> m a) -> (init: a) -> (input: t b) -> m a
       foldrM fm a0 = foldr (\b,ma => ma >>= fm b) (pure a0)
   eval env (EListLength fc) =
-    Right $ VPrim $
-      \a => Right $ VPrim $
+    pure $ VPrim $
+      \a => pure $ VPrim $
         \c => case c of
                    (VListLit fc _ as) => pure $ VNaturalLit fc (length as)
                    as => pure $ VListLength fc a as
   eval env (EListHead fc) =
-    Right $ VPrim $ \a =>
-      Right $ VPrim $
+    pure $ VPrim $ \a =>
+      pure $ VPrim $
              \c => case c of
                         VListLit fc _ [] => pure $ VNone fc a
                         VListLit fc _ (h :: _) => pure $ VSome fc h
                         as => pure $ VListHead fc a as
   eval env (EListLast fc) =
-    Right $ VPrim $
-      \a => Right $ VPrim $
+    pure $ VPrim $
+      \a => pure $ VPrim $
         \c => case c of
                    VListLit fc _ as =>
                      case last' as of
@@ -342,34 +342,34 @@ mutual
                    as => pure $ VListLast fc a as
   eval env (EListIndexed fc) =
     pure $ VPrim $
-      \a => Right $ VPrim $
+      \a => pure $ VPrim $
         \c => case c of
                    VListLit fc t as => pure $ vListIndexed fc t as
                    as => pure $ VListLast fc a as
   eval env (EListReverse fc) =
     pure $ VPrim $
-      \a => Right $ VPrim $
+      \a => pure $ VPrim $
         \c => case c of
                    VListLit fc t as => pure $ VListLit fc t (reverse as)
                    as => pure $ VListReverse fc a as
-  eval env (EOptional fc) = Right $ VPrim $ \a => Right $ VOptional fc a
-  eval env (ESome fc a) = Right (VSome fc !(eval env a))
-  eval env (ENone fc) = Right $ VPrim $ \a => Right $ VNone fc a
+  eval env (EOptional fc) = pure $ VPrim $ \a => pure $ VOptional fc a
+  eval env (ESome fc a) = pure (VSome fc !(eval env a))
+  eval env (ENone fc) = pure $ VPrim $ \a => pure $ VNone fc a
   eval env (EEquivalent fc x y) =
     do xV <- eval env x
        yV <- eval env y
-       Right (VEquivalent fc xV yV)
+       pure (VEquivalent fc xV yV)
   eval env (EAssert fc x) = do
     xV <- eval env x
     doAssert env xV
   eval env (ERecord fc x) =
     let xs = toList x in
     do xs' <- traverse (mapRecord (eval env)) xs
-       Right (VRecord fc (fromList xs'))
+       pure (VRecord fc (fromList xs'))
   eval env (ERecordLit fc x) =
     let xs = toList x in
     do xs' <- traverse (mapRecord (eval env)) xs
-       Right (VRecordLit fc (fromList xs'))
+       pure (VRecordLit fc (fromList xs'))
   eval env (ECombine fc x y) = do
     x' <- eval env x
     y' <- eval env y
@@ -404,7 +404,7 @@ mutual
   eval env (EUnion fc x) =
     let xs = toList x in
     do xs' <- traverse (mapUnion (eval env)) xs
-       Right (VUnion fc (fromList xs'))
+       pure (VUnion fc (fromList xs'))
   eval env (EField fc x k) =
     case !(eval env x) of
          VRecordLit fc m =>
@@ -526,7 +526,7 @@ mutual
   doApply (VLambda fc ty closure) arg =
     evalClosure closure arg
   doApply (VHLam fc i f) arg = (f arg)
-  doApply f arg = Right $ VApp initFC f arg
+  doApply f arg = pure $ VApp initFC f arg
 
   vApp : Value -> Value -> Either Error Value
   vApp = doApply
@@ -542,24 +542,24 @@ mutual
   doAssert env x = Left (AssertError ("not an equivalence type: " ++ show x))
 
   vListAppend : FC -> Value -> Value -> Either Error Value
-  vListAppend fc (VListLit fc' _ []) u = Right u
-  vListAppend fc t (VListLit fc' _ []) = Right t
+  vListAppend fc (VListLit fc' _ []) u = pure u
+  vListAppend fc t (VListLit fc' _ []) = pure t
   vListAppend fc (VListLit fc' t xs) (VListLit fc'' _ ys) =
-    Right (VListLit fc t (xs ++ ys))
-  vListAppend fc x y = Right $ VListAppend fc x y
+    pure (VListLit fc t (xs ++ ys))
+  vListAppend fc x y = pure $ VListAppend fc x y
 
   export
   doCombine : FC -> Value -> Value -> Either Error Value
   doCombine _ (VRecordLit fc x) (VRecordLit fc' y) =
-    Right (VRecordLit fc $ !(mergeWithApp (doCombine fc) x y))
+    pure (VRecordLit fc $ !(mergeWithApp (doCombine fc) x y))
   doCombine _ (VRecord fc x) (VRecord fc' y) =
-    Right (VRecord fc $ !(mergeWithApp (doCombine fc) x y))
-  doCombine fc x y = Right $ VCombineTypes fc x y
+    pure (VRecord fc $ !(mergeWithApp (doCombine fc) x y))
+  doCombine fc x y = pure $ VCombineTypes fc x y
 
   doPrefer : FC -> Value -> Value -> Either Error Value
   doPrefer _ (VRecordLit fc x) (VRecordLit fc' y) =
-    Right (VRecordLit fc $ !(mergeWithApp' (doPrefer fc) x y))
-  doPrefer fc x y = Right $ VPrefer fc x y
+    pure (VRecordLit fc $ !(mergeWithApp' (doPrefer fc) x y))
+  doPrefer fc x y = pure $ VPrefer fc x y
 
   -- conversion checking
   -- Needs to be in mutual block with eval because it's used by Bool builtins
@@ -630,7 +630,7 @@ mutual
   convEq : (Eq x, Show x) => x -> x -> Either Error ()
   convEq a b =
     case a == b of
-         True => Right ()
+         True => pure ()
          False => convErr a b
 
   convSkip : Env -> Name -> Value -> Value -> Either Error ()

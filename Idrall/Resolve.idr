@@ -44,7 +44,7 @@ canonicalFilePath x = filePathForIO x
 
 alreadyImported : List FilePath -> FilePath -> Either Error () -- TODO check is correct
 alreadyImported xs x = case elem x xs of
-                            False => Right ()
+                            False => pure ()
                             True => Left (CyclicImportError ((show x) ++ " in " ++ (show xs)))
 
 mutual
