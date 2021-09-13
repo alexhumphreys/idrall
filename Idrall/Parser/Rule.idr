@@ -10,6 +10,7 @@ import Text.Lexer
 import Text.Bounded
 
 import Idrall.Parser.Lexer
+import Idrall.Expr
 
 public export
 Rule : {state : Type} -> Type -> Type
@@ -124,11 +125,11 @@ doubleLit =
       _ => Nothing
 
 export
-dottedList : Rule (List1 String)
+dottedList : Rule (List1 FieldName)
 dottedList = do
   _ <- optional whitespace
   x <- sepBy1 (tokenW $ symbol ".") (identPart)
-  pure x
+  pure $ map MkFieldName x
 
 export
 builtin : Rule String
