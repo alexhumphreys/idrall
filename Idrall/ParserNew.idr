@@ -954,13 +954,23 @@ where
          Comment _ => False
          _ => True
 
+combineWhite : List (WithBounds TokenRawToken) -> List (WithBounds TokenRawToken)
+combineWhite [] = []
+combineWhite [x] = [x]
+combineWhite (x :: y :: xs) =
+  case (val x, val y) of
+       (White, White) => combineWhite (y :: xs)
+       (t, u) => x :: combineWhite (y :: xs)
+
 doParse : String -> IO ()
 doParse input = do
   Right tokens <- pure $ Idrall.Parser.Lexer.lex input
     | Left e => printLn $ show e
   putStrLn $ "tokens: " ++ show tokens
 
-  Right (expr, x) <- pure $ parse finalParser tokens -- TODO use finalParser
+  let processedTokens = (combineWhite . removeComments) tokens
+  putStrLn $ "processedTokens: " ++ show processedTokens
+  Right (expr, x) <- pure $ parse finalParser $ processedTokens -- TODO use finalParser
     | Left e => printLn $ show e
 
   let doc = the (Doc (Expr ())) $ pretty expr
