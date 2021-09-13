@@ -22,13 +22,18 @@ data FC = MkFC        OriginDesc FilePos FilePos
 %name FC fc
 
 public export
+interface HasFC a where
+  constructor MkHasFC
+  getFC : a -> FC
+
+public export
 Show FC where
   show (MkFC Nothing x y) = "\{show x}-\{show y}"
   show (MkFC (Just s) x y) = "\{s}:\{show x}-\{show y}"
   show (MkVirtualFC x y z) = "MkVirtualFCTODO"
   show EmptyFC = ""
 
-
 public export
 initFC : FC
 initFC = EmptyFC
+

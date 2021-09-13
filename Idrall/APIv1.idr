@@ -17,7 +17,7 @@ import Data.String
 -- Test Stuff
 
 handleError : String -> Error
-handleError x = ErrorMessage x
+handleError x = ErrorMessage initFC x
 
 public export
 exprFromString : String -> IOEither Error (Expr Void)
@@ -115,10 +115,6 @@ showIOEither (MkIOEither x) =
      case x' of
           (Left l) => pure $ "Error: " ++ show l
           (Right r) => pure $ "Success: " ++ show r
-
-public export
-fileErrorHandler : String -> FileError -> Error
-fileErrorHandler x y = ErrorMessage x -- ?fileErrorHandler_rhs
 
 public export
 doStuff : Show a => Show b => (String -> IOEither a b) -> String -> IO ()

@@ -5,6 +5,7 @@ depends = base, contrib
 
 modules = Idrall.Expr
         , Idrall.Value
+        , Idrall.FC
         , Idrall.Resolve
         , Idrall.Parser
         , Idrall.ParserNew

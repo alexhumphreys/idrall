@@ -13,7 +13,7 @@ import Data.String
 nestError : Either Error b -> Error -> Either Error b
 nestError x e =
   case x of
-       (Left e') => Left $ NestedError e e'
+       (Left e') => Left $ NestedError initFC e e'
        (Right x') => pure x'
 
 ||| returns `VConst CType`
@@ -262,7 +262,7 @@ mutual
                                         MkVChunks [] $ textReplace needleText replacementText haystackText
                                (VTextLit fc (MkVChunks chx replacementText)) =>
                                  case strFromChunks chx  of
-                                      Nothing => Left $ ErrorMessage "could not make string for replacement"
+                                      Nothing => Left $ ErrorMessage fc "could not make string for replacement"
                                       (Just str) =>
                                          pure $ VTextLit fc $
                                          MkVChunks [] $ textReplace
@@ -387,19 +387,19 @@ mutual
          (VRecordLit fc m, VInject fc' _ k (Just t), _) =>
            case lookup k m of
                 Just f => vApp f t
-                Nothing => Left $ MergeUnhandledCase $ show k -- TODO DRY these error conditions
+                Nothing => Left $ MergeUnhandledCase fc $ show k -- TODO DRY these error conditions
          (VRecordLit fc m, VInject fc' _ k _, _) =>
            case lookup k m of
                 Just t => pure t
-                Nothing => Left $ MergeUnhandledCase $ show k
+                Nothing => Left $ MergeUnhandledCase fc $ show k
          (VRecordLit fc m, VSome fc' t, _) =>
            case lookup (MkFieldName "Some") m of
                 Just f => vApp f t
-                Nothing => Left $ MergeUnhandledCase $ "Some"
+                Nothing => Left $ MergeUnhandledCase fc $ "Some"
          (VRecordLit fc m, VNone fc' _, _) =>
            case lookup (MkFieldName "None") m of
                 Just t => pure t
-                Nothing => Left $ MergeUnhandledCase $ "None"
+                Nothing => Left $ MergeUnhandledCase fc $ "None"
          (t, u, ma) => pure $ VMerge fc t u ma
   eval env (EUnion fc x) =
     let xs = toList x in
@@ -410,12 +410,12 @@ mutual
          VRecordLit fc m =>
             case lookup k m of
                  (Just v) => pure v
-                 Nothing => Left (FieldNotFoundError $ show k)
+                 Nothing => Left (FieldNotFoundError fc $ show k)
          VUnion fc m =>
             case lookup k m of
                  (Just (Just y)) => pure $ VPrim $ \u => pure $ VInject fc m k (Just u)
                  (Just Nothing) => pure $ VInject fc m k Nothing
-                 Nothing => Left (FieldNotFoundError $ show k)
+                 Nothing => Left (FieldNotFoundError fc $ show k)
          t => pure $ VField fc t k
   eval env (ERecordCompletion fc t u) =
     eval env (EAnnot fc (EPrefer fc (EField fc t (MkFieldName "default")) u) (EField fc t (MkFieldName "Type")))
@@ -424,7 +424,7 @@ mutual
          VRecordLit fc ms =>
            let xs = SortedMap.toList ms in
                case xs of
-                    [] => Left $ ToMapEmpty "Needs an annotation"
+                    [] => Left $ ToMapEmpty fc "Needs an annotation"
                     (y :: ys) => pure $ VListLit fc Nothing $ map vToMap (y :: ys)
          other => pure $ VToMap fc other Nothing
   eval env (EToMap fc x (Just y)) = do
@@ -434,13 +434,13 @@ mutual
          other => pure $ VToMap fc other Nothing
   eval env (EProject fc x (Left ks)) =
     case !(eval env x) of
-         VRecordLit fc ms => pure $ VRecordLit fc $ fromList !(vProjectByFields ms ks)
-         other => Left (Unexpected $ "Not a RecordLit. Value: " ++ show other)
+         VRecordLit fc ms => pure $ VRecordLit fc $ fromList !(vProjectByFields fc ms ks)
+         other => Left (Unexpected fc $ "Not a RecordLit. Value: " ++ show other)
   eval env (EProject fc x (Right y)) =
     case (!(eval env x), !(eval env y)) of
-         (VRecordLit fc ms, VRecordLit fc' ms') => pure $ VRecordLit fc $ fromList !(vProjectByFields ms (keys ms'))
-         (other, VRecord fc _) => Left (Unexpected $ "Not a RecordLit. Value: " ++ show other)
-         (_, other) => Left (Unexpected $ "Not a Record. Value: " ++ show other)
+         (VRecordLit fc ms, VRecordLit fc' ms') => pure $ VRecordLit fc $ fromList !(vProjectByFields fc ms (keys ms'))
+         (other, VRecord fc _) => Left (Unexpected fc $ "Not a RecordLit. Value: " ++ show other)
+         (_, other) => Left (Unexpected fc $ "Not a Record. Value: " ++ show other)
   eval env (EWith fc x ks y) = vWith fc !(eval env x) ks !(eval env y)
   eval env (EImportAlt fc x y) = eval env x
   eval env (EEmbed fc (Raw x)) = absurd x
@@ -485,12 +485,12 @@ mutual
   vWith fc t ks u = pure $ VWith fc t ks u
 
   export
-  vProjectByFields : SortedMap FieldName Value -> List FieldName -> Either Error (List (FieldName, Value))
-  vProjectByFields ms ks = traverse (lookupRecord ms) ks
+  vProjectByFields : FC -> SortedMap FieldName Value -> List FieldName -> Either Error (List (FieldName, Value))
+  vProjectByFields fc ms ks = traverse (lookupRecord ms) ks
   where
     lookupRecord : SortedMap FieldName Value -> FieldName -> Either Error (FieldName, Value)
     lookupRecord ms k = case lookup k ms of
-                             Nothing => Left $ FieldNotFoundError $ show k
+                             Nothing => Left $ FieldNotFoundError fc $ show k
                              (Just v) => pure (k, v)
 
   listIndexedType : Maybe Value -> Maybe Value
@@ -539,7 +539,7 @@ mutual
   doAssert env v@(VEquivalent fc t u) = do
     conv env t u
     pure $ VAssert fc v
-  doAssert env x = Left (AssertError ("not an equivalence type: " ++ show x))
+  doAssert env x = Left (AssertError (getFC x) ("not an equivalence type: " ++ show x))
 
   vListAppend : FC -> Value -> Value -> Either Error Value
   vListAppend fc (VListLit fc' _ []) u = pure u
@@ -578,8 +578,8 @@ mutual
   convFreshCl : Closure -> Env -> (Name, Value, Closure)
   convFreshCl cl@(MkClosure x _ _) env = (x, snd (convFresh x env), cl)
 
-  convErr : (Show x) => x -> x -> Either Error a
-  convErr x y = Left $ AlphaEquivError $ show x ++ "\n not alpha equivalent to:\n" ++ show y
+  convErr : (Show x) => FC -> x -> x -> Either Error a
+  convErr fc x y = Left $ AlphaEquivError fc $ show x ++ "\n not alpha equivalent to:\n" ++ show y
 
   export
   strFromExpr : Expr Void -> Maybe String
@@ -601,37 +601,37 @@ mutual
     Just (str ++ mid ++ y ++ rest)
   strFromChunks ((str, _) :: xs') = Nothing
 
-  convChunks : Env -> VChunks -> VChunks -> Either Error ()
-  convChunks env (MkVChunks [] z) (MkVChunks [] z') = convEq z z'
-  convChunks env (MkVChunks ((s, t) :: xys) z) (MkVChunks ((s', t') :: xys') z') = do
-    convEq s s'
+  convChunks : FC -> Env -> VChunks -> VChunks -> Either Error ()
+  convChunks fc env (MkVChunks [] z) (MkVChunks [] z') = convEq fc z z'
+  convChunks fc env (MkVChunks ((s, t) :: xys) z) (MkVChunks ((s', t') :: xys') z') = do
+    convEq fc s s'
     conv env t t'
-    convChunks env (MkVChunks xys z) (MkVChunks xys' z')
-  convChunks env t u = convErr t u
+    convChunks fc env (MkVChunks xys z) (MkVChunks xys' z')
+  convChunks fc env t u = convErr fc t u
 
-  convList : Env -> List Value -> List Value -> Either Error ()
-  convList env [] [] = pure ()
-  convList env (t :: xs) (t' :: xs') = do
+  convList : FC -> Env -> List Value -> List Value -> Either Error ()
+  convList fc env [] [] = pure ()
+  convList fc env (t :: xs) (t' :: xs') = do
     conv env t t'
-    convList env xs xs'
-  convList env t u = convErr t u
+    convList fc env xs xs'
+  convList fc env t u = convErr fc t u
 
-  convUnion : Env -> List (FieldName, Maybe Value) -> List (FieldName, Maybe Value) -> Either Error ()
-  convUnion env [] [] = pure ()
-  convUnion env ((x, Just t) :: xs) ((x', Just t') :: ys) = do
-    convEq x x'
+  convUnion : FC -> Env -> List (FieldName, Maybe Value) -> List (FieldName, Maybe Value) -> Either Error ()
+  convUnion fc env [] [] = pure ()
+  convUnion fc env ((x, Just t) :: xs) ((x', Just t') :: ys) = do
+    convEq fc x x'
     conv env t t'
-    convUnion env xs ys
-  convUnion env ((x, Nothing) :: xs) ((x', Nothing) :: ys) = do
-    convEq x x'
-    convUnion env xs ys
-  convUnion env t u = convErr t u
+    convUnion fc env xs ys
+  convUnion fc env ((x, Nothing) :: xs) ((x', Nothing) :: ys) = do
+    convEq fc x x'
+    convUnion fc env xs ys
+  convUnion fc env t u = convErr fc t u
 
-  convEq : (Eq x, Show x) => x -> x -> Either Error ()
-  convEq a b =
+  convEq : (Eq x, Show x) => FC -> x -> x -> Either Error ()
+  convEq fc a b =
     case a == b of
          True => pure ()
-         False => convErr a b
+         False => convErr fc a b
 
   convSkip : Env -> Name -> Value -> Value -> Either Error ()
   convSkip env x = conv (Skip env x)
@@ -680,16 +680,16 @@ mutual
     conv env a a'
     convSkip env x !(b v) !(b' v)
 
-  conv env (VConst fc k) (VConst fc' k') = convEq k k'
+  conv env (VConst fc k) (VConst fc' k') = convEq fc k k'
   conv env (VVar fc x i) (VVar fc' x' i') = do
-    convEq x x'
-    convEq i i'
+    convEq fc x x'
+    convEq fc i i'
 
   conv env (VApp fc t u) (VApp fc' t' u') = do
     conv env t t'
     conv env u u'
   conv env (VBool fc) (VBool fc') = pure ()
-  conv env (VBoolLit fc b) (VBoolLit fc' b') = convEq b b'
+  conv env (VBoolLit fc b) (VBoolLit fc' b') = convEq fc b b'
   conv env (VBoolAnd fc t u) (VBoolAnd fc' t' u') = do
     conv env t t'
     conv env u u'
@@ -707,7 +707,7 @@ mutual
     conv env t t'
     conv env f f'
   conv env (VNatural fc) (VNatural fc') = pure ()
-  conv env (VNaturalLit fc k) (VNaturalLit fc' k') = convEq k k'
+  conv env (VNaturalLit fc k) (VNaturalLit fc' k') = convEq fc k k'
   conv env (VNaturalBuild fc t) (VNaturalBuild fc' t') = conv env t t'
   conv env (VNaturalFold fc t u v w) (VNaturalFold fc' t' u' v' w') = do
     conv env t t'
@@ -729,13 +729,13 @@ mutual
     conv env t t'
     conv env u u'
   conv env (VInteger fc) (VInteger fc') = pure ()
-  conv env (VIntegerLit fc t) (VIntegerLit fc' t') = convEq t t'
+  conv env (VIntegerLit fc t) (VIntegerLit fc' t') = convEq fc t t'
   conv env (VIntegerShow fc t) (VIntegerShow fc' t') = conv env t t'
   conv env (VIntegerNegate fc t) (VIntegerNegate fc' t') = conv env t t'
   conv env (VIntegerClamp fc t) (VIntegerClamp fc' t') = conv env t t'
   conv env (VIntegerToDouble fc t) (VIntegerToDouble fc' t') = conv env t t'
   conv env (VDouble fc) (VDouble fc') = pure ()
-  conv env (VDoubleLit fc t) (VDoubleLit fc' t') = convEq t t' -- TODO use binary encode
+  conv env (VDoubleLit fc t) (VDoubleLit fc' t') = convEq fc t t' -- TODO use binary encode
   conv env (VDoubleShow fc t) (VDoubleShow fc' t') = conv env t t'
   conv env (VText fc) (VText fc') = pure ()
   conv env (VTextLit fc t@(MkVChunks xys z)) (VTextLit fc' u@(MkVChunks xys' z')) =
@@ -743,8 +743,8 @@ mutual
         r = strFromChunks xys' in
     case (l, r) of
          ((Just l'), (Just r')) => do
-           convEq (l' ++ z) (r' ++ z')
-         _ => convChunks env t u
+           convEq fc (l' ++ z) (r' ++ z')
+         _ => convChunks fc env t u
   conv env (VTextAppend fc t u) (VTextAppend fc' t' u') = do
     conv env t t'
     conv env u u'
@@ -755,7 +755,7 @@ mutual
     conv env u u'
     conv env v v'
   conv env (VList fc a) (VList fc' a') = conv env a a'
-  conv env (VListLit fc _ xs) (VListLit fc' _ xs') = convList env xs xs'
+  conv env (VListLit fc _ xs) (VListLit fc' _ xs') = convList fc env xs xs'
   conv env (VListAppend fc t u) (VListAppend fc' t' u') = do
     conv env t t'
     conv env u u'
@@ -779,14 +779,14 @@ mutual
   conv env (VAssert fc t) (VAssert fc' t') = conv env t t'
   conv env (VRecord fc m) (VRecord fc' m') = do
     case (keys m) == (keys m') of
-         True => convList env (values m) (values m')
-         False => convErr m m'
+         True => convList fc env (values m) (values m')
+         False => convErr fc m m'
   conv env (VRecordLit fc m) (VRecordLit fc' m') = do
     case (keys m) == (keys m') of
-         True => convList env (values m) (values m')
-         False => convErr m m'
+         True => convList fc env (values m) (values m')
+         False => convErr fc m m'
   conv env (VUnion fc m) (VUnion fc' m') = do
-    convUnion env (toList m) (toList m')
+    convUnion fc env (toList m) (toList m')
   conv env (VCombine fc t u) (VCombine fc' t' u') = do
     conv env t t'
     conv env u u'
@@ -809,21 +809,21 @@ mutual
     conv env t t'
     conv env a a'
   conv env (VInject fc m k (Just mt)) (VInject fc' m' k' (Just mt')) = do
-    convUnion env (toList m) (toList m')
-    convEq k k'
+    convUnion fc env (toList m) (toList m')
+    convEq fc k k'
     conv env mt mt'
   conv env (VInject fc m k Nothing) (VInject fc' m' k' Nothing) = do
-    convUnion env (toList m) (toList m')
-    convEq k k'
+    convUnion fc env (toList m) (toList m')
+    convEq fc k k'
   conv env (VProject fc t (Left ks)) (VProject fc' t' (Left ks')) = do
     conv env t t'
-    convEq ks ks'
+    convEq fc ks ks'
   conv env (VProject fc t (Right u)) (VProject fc' t' (Right u')) = do
     conv env t t'
     conv env u u'
   conv env (VWith fc t ks u) (VWith fc' t' ks' u') = do
     conv env t t'
-    convEq ks ks'
+    convEq fc ks ks'
     conv env u u'
   conv env (VPrimVar fc) (VPrimVar fc') = pure () -- TODO not in conv, maybe covered by `_ | ptrEq t t' -> True` case?
-  conv env t u = convErr t u
+  conv env t u = convErr (getFC t) t u
