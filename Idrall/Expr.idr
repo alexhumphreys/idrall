@@ -3,6 +3,7 @@ module Idrall.Expr
 import Data.List1
 
 import Idrall.Path
+import public Idrall.FC
 
 import public Data.SortedMap
 
@@ -24,36 +25,6 @@ Eq FieldName where
 public export
 Ord FieldName where
   compare (MkFieldName x) (MkFieldName y) = compare x y
-
-public export
-FilePos : Type
-FilePos = (Nat, Nat)
-
--- does fancy stuff for idris, for now it can just be a Maybe filename
-public export
-OriginDesc : Type
-OriginDesc = Maybe String
-
--- TODO use this as a Maybe for MkVirtualFC
-data FCDetails = MkFCDetails OriginDesc FilePos FilePos
-
-public export
-data FC = MkFC        OriginDesc FilePos FilePos
-        | ||| Virtual FCs are FC attached to desugared/generated code.
-          MkVirtualFC OriginDesc FilePos FilePos
-        | EmptyFC
-%name FC fc
-
-Show FC where
-  show (MkFC Nothing x y) = "\{show x}-\{show y}"
-  show (MkFC (Just s) x y) = "\{s}:\{show x}-\{show y}"
-  show (MkVirtualFC x y z) = "MkVirtualFCTODO"
-  show EmptyFC = "(,)"
-
-
-public export
-initFC : FC
-initFC = EmptyFC
 
 public export
 Namespace : Type
@@ -238,6 +209,78 @@ mutual
     -- | > EImportAlt x y ~ x ? y
     | EImportAlt FC (Expr a) (Expr a)
     | EEmbed FC (Import a)
+
+public export
+HasFC (Expr a) where
+  getFC (EConst fc x) = fc
+  getFC (EVar fc x y) = fc
+  getFC (ELam fc x y z) = fc
+  getFC (EPi fc x y z) = fc
+  getFC (EApp fc x y) = fc
+  getFC (ELet fc x y z w) = fc
+  getFC (EAnnot fc x y) = fc
+  getFC (EBool fc) = fc
+  getFC (EBoolLit fc x) = fc
+  getFC (EBoolAnd fc x y) = fc
+  getFC (EBoolOr fc x y) = fc
+  getFC (EBoolEQ fc x y) = fc
+  getFC (EBoolNE fc x y) = fc
+  getFC (EBoolIf fc x y z) = fc
+  getFC (ENatural fc) = fc
+  getFC (ENaturalLit fc k) = fc
+  getFC (ENaturalFold fc) = fc
+  getFC (ENaturalBuild fc) = fc
+  getFC (ENaturalIsZero fc) = fc
+  getFC (ENaturalEven fc) = fc
+  getFC (ENaturalOdd fc) = fc
+  getFC (ENaturalToInteger fc) = fc
+  getFC (ENaturalSubtract fc) = fc
+  getFC (ENaturalShow fc) = fc
+  getFC (ENaturalPlus fc x y) = fc
+  getFC (ENaturalTimes fc x y) = fc
+  getFC (EInteger fc) = fc
+  getFC (EIntegerLit fc x) = fc
+  getFC (EIntegerShow fc) = fc
+  getFC (EIntegerClamp fc) = fc
+  getFC (EIntegerNegate fc) = fc
+  getFC (EIntegerToDouble fc) = fc
+  getFC (EDouble fc) = fc
+  getFC (EDoubleLit fc x) = fc
+  getFC (EDoubleShow fc) = fc
+  getFC (EText fc) = fc
+  getFC (ETextLit fc x) = fc
+  getFC (ETextAppend fc x y) = fc
+  getFC (ETextShow fc) = fc
+  getFC (ETextReplace fc) = fc
+  getFC (EList fc) = fc
+  getFC (EListLit fc x xs) = fc
+  getFC (EListAppend fc x y) = fc
+  getFC (EListBuild fc) = fc
+  getFC (EListFold fc) = fc
+  getFC (EListLength fc) = fc
+  getFC (EListHead fc) = fc
+  getFC (EListLast fc) = fc
+  getFC (EListIndexed fc) = fc
+  getFC (EListReverse fc) = fc
+  getFC (EOptional fc) = fc
+  getFC (ESome fc x) = fc
+  getFC (ENone fc) = fc
+  getFC (EEquivalent fc x y) = fc
+  getFC (EAssert fc x) = fc
+  getFC (ERecord fc x) = fc
+  getFC (ERecordLit fc x) = fc
+  getFC (EUnion fc x) = fc
+  getFC (ECombine fc x y) = fc
+  getFC (ECombineTypes fc x y) = fc
+  getFC (EPrefer fc x y) = fc
+  getFC (ERecordCompletion fc x y) = fc
+  getFC (EMerge fc x y z) = fc
+  getFC (EToMap fc x y) = fc
+  getFC (EField fc x y) = fc
+  getFC (EProject fc x y) = fc
+  getFC (EWith fc x xs y) = fc
+  getFC (EImportAlt fc x y) = fc
+  getFC (EEmbed fc x) = fc
 
 export
 Show ImportStatement where

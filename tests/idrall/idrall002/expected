@@ -166,7 +166,7 @@ Testing: ../../../dhall-lang/tests/type-inference/success/simple/access/0A.dhall
 Testing: ../../../dhall-lang/tests/type-inference/success/simple/access/1A.dhall
 Testing: ../../../dhall-lang/tests/type-inference/success/unit/AssertAlphaA.dhall
 Testing: ../../../dhall-lang/tests/type-inference/success/unit/AssertNaNA.dhall
-AlphaEquivError:+nan.0
+AlphaEquivError: +nan.0
  not alpha equivalent to:
 +nan.0
 Testing: ../../../dhall-lang/tests/type-inference/success/unit/AssertSimpleA.dhall

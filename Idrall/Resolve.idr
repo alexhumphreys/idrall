@@ -9,22 +9,17 @@ import Idrall.Path
 import System
 import System.File
 
-parseErrorHandler : String -> Error
-parseErrorHandler x = ErrorMessage (x)
+parseErrorHandler : FC -> String -> Error
+parseErrorHandler fc x = ErrorMessage fc x
 
-fileErrorHandler : String -> FileError -> Error
-fileErrorHandler x y = ReadFileError (show y ++ " " ++ x)
+fileErrorHandler : FC -> String -> FileError -> Error
+fileErrorHandler fc x y = ReadFileError fc (show y ++ " " ++ x)
 
-readEnvVar : String -> IOEither Error String
-readEnvVar x =
+readEnvVar : FC -> String -> IOEither Error String
+readEnvVar fc x =
   MkIOEither $ do
-    Just x' <- getEnv x | Nothing => pure $ Left $ EnvVarError $ "Env var \{x} not found"
+    Just x' <- getEnv x | Nothing => pure $ Left $ EnvVarError fc $ "Env var \{x} not found"
     pure $ pure x'
-
-readFile' : String -> IOEither Error String
-readFile' x =
-  let contents = MkIOEither (readFile x) in
-      mapErr (fileErrorHandler x) contents
 
 nextCurrentPath : (current : Maybe Path) -> (next : Path) -> Path
 nextCurrentPath (Just (Home xs)) (Relative ys) = Home (xs ++ ys)
@@ -42,28 +37,32 @@ combinePaths (Just (MkFilePath pathX fileNameX)) (MkFilePath pathY fileNameY) =
 canonicalFilePath : FilePath -> String -- TODO finish properly
 canonicalFilePath x = filePathForIO x
 
-alreadyImported : List FilePath -> FilePath -> Either Error () -- TODO check is correct
-alreadyImported xs x = case elem x xs of
+alreadyImported : FC -> List FilePath -> FilePath -> Either Error () -- TODO check is correct
+alreadyImported fc xs x = case elem x xs of
                             False => pure ()
-                            True => Left (CyclicImportError ((show x) ++ " in " ++ (show xs)))
+                            True => Left (CyclicImportError fc ((show x) ++ " in " ++ (show xs)))
 
 mutual
-  resolveEnvVar : (history : List FilePath) -> Maybe FilePath -> String -> IOEither Error (Expr Void)
-  resolveEnvVar h p x = do
-    str <- readEnvVar x
-    expr <- mapErr parseErrorHandler (liftEither (parseExpr str))
+  resolveEnvVar : FC -> (history : List FilePath) -> Maybe FilePath -> String -> IOEither Error (Expr Void)
+  resolveEnvVar fc h p x = do
+    str <- readEnvVar fc x
+    expr <- mapErr (parseErrorHandler fc) (liftEither (parseExpr str))
     resolve h p (fst expr)
 
-  resolveLocalFile : (history : List FilePath) -> (current : Maybe FilePath) -> (next : FilePath) -> IOEither Error (Expr Void)
-  resolveLocalFile h current next =
+  resolveLocalFile : FC -> (history : List FilePath) -> (current : Maybe FilePath) -> (next : FilePath) -> IOEither Error (Expr Void)
+  resolveLocalFile fc h current next =
     let combinedFilePaths = combinePaths current next in
         go combinedFilePaths
     where
+    readFile' : String -> IOEither Error String
+    readFile' x =
+      let contents = MkIOEither (readFile x) in
+          mapErr (fileErrorHandler fc x) contents
     go : FilePath -> IOEither Error (Expr Void)
     go p = do
-      liftEither (alreadyImported h (normaliseFilePath p))
+      liftEither (alreadyImported fc h (normaliseFilePath p))
       str <- readFile' (canonicalFilePath p)
-      expr <- mapErr parseErrorHandler (liftEither (parseExpr str))
+      expr <- mapErr (parseErrorHandler fc) (liftEither (parseExpr str))
       resolve (normaliseFilePath p :: h) (Just p) (fst expr)
 
   export
@@ -251,13 +250,13 @@ mutual
                 (Right x'') => pure $ Right x''
                 (Left w) => case resolve h p y of
                                  (MkIOEither y'') => y''
-  resolve h p (EEmbed fc (Raw (LocalFile x))) = resolveLocalFile h p x
-  resolve h p (EEmbed fc (Raw (EnvVar x))) = resolveEnvVar h p x
-  resolve h p (EEmbed fc (Raw (Http x))) = MkIOEither (pure (Left (ErrorMessage "TODO http imports not implemented")))
-  resolve h p (EEmbed fc (Raw Missing)) = MkIOEither (pure (Left (ErrorMessage "No valid imports")))
-  resolve h p (EEmbed fc (Text a)) = MkIOEither (pure (Left (ErrorMessage "TODO as Text not implemented")))
-  resolve h p (EEmbed fc (Location a)) = MkIOEither (pure (Left (ErrorMessage "TODO as Location not implemented")))
-  resolve h p (EEmbed fc (Resolved x)) = MkIOEither (pure (Left (ErrorMessage "Already resolved")))
+  resolve h p (EEmbed fc (Raw (LocalFile x))) = resolveLocalFile fc h p x
+  resolve h p (EEmbed fc (Raw (EnvVar x))) = resolveEnvVar fc h p x
+  resolve h p (EEmbed fc (Raw (Http x))) = MkIOEither (pure (Left (ErrorMessage fc "TODO http imports not implemented")))
+  resolve h p (EEmbed fc (Raw Missing)) = MkIOEither (pure (Left (ErrorMessage fc "No valid imports")))
+  resolve h p (EEmbed fc (Text a)) = MkIOEither (pure (Left (ErrorMessage fc "TODO as Text not implemented")))
+  resolve h p (EEmbed fc (Location a)) = MkIOEither (pure (Left (ErrorMessage fc "TODO as Location not implemented")))
+  resolve h p (EEmbed fc (Resolved x)) = MkIOEither (pure (Left (ErrorMessage fc "Already resolved")))
 
   resolveRecord :  (history : List FilePath)
                -> Maybe FilePath

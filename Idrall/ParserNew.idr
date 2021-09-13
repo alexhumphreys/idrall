@@ -168,6 +168,10 @@ mkExprFC od e mkE = mkE (boundToFC od e) (val e)
 mkExprFC0 : OriginDesc -> WithBounds x -> (FC -> Expr a) -> Expr a
 mkExprFC0 od e mkE = mkE (boundToFC od e)
 
+interface HasFC a where
+  constructor MkHasFC
+  getFC : a -> FC
+
 getBounds : Expr a -> FC
 getBounds (EConst fc _) = fc
 getBounds (EVar fc _) = fc

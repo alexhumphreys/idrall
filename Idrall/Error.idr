@@ -1,66 +1,67 @@
 module Idrall.Error
 
+import public Idrall.FC
+
 public export
 data Error
-  = MissingVar String
-  | AlphaEquivError String
-  | EvalIntegerNegateErr String
-  | EvalNaturalIsZeroErr String
-  | EvalBoolAndErr
-  | EvalApplyErr
-  | Unexpected String
-  | ErrorMessage String
-  | ReadBackError String
-  | SortError
-  | AssertError String
-  | ListAppendError String
-  | ListHeadError String
-  | FieldNotFoundError String
-  | FieldArgMismatchError String
-  | InvalidFieldType String
-  | CombineError String
-  | RecordFieldCollision String
-  | ReadFileError String
-  | MergeUnusedHandler String
-  | MergeUnhandledCase String
-  | ToMapError String
-  | ToMapEmpty String
-  | EmptyMerge String
-  | InvalidRecordCompletion String
-  | CyclicImportError String
-  | EnvVarError String
-  | FromDhallError String
-  | NestedError Error Error
+  = MissingVar FC String
+  | AlphaEquivError FC String
+  | EvalIntegerNegateErr FC String
+  | EvalNaturalIsZeroErr FC String
+  | EvalBoolAndErr FC
+  | EvalApplyErr FC
+  | Unexpected FC String
+  | ErrorMessage FC String
+  | ReadBackError FC String
+  | SortError FC
+  | AssertError FC String
+  | ListAppendError FC String
+  | ListHeadError FC String
+  | FieldNotFoundError FC String
+  | FieldArgMismatchError FC String
+  | InvalidFieldType FC String
+  | CombineError FC String
+  | RecordFieldCollision FC String
+  | ReadFileError FC String
+  | MergeUnusedHandler FC String
+  | MergeUnhandledCase FC String
+  | ToMapError FC String
+  | ToMapEmpty FC String
+  | EmptyMerge FC String
+  | InvalidRecordCompletion FC String
+  | CyclicImportError FC String
+  | EnvVarError FC String
+  | FromDhallError FC String
+  | NestedError FC Error Error
 
 public export
 Show Error where
-  show (MissingVar x) = "MissingVar: " ++ show x
-  show (AlphaEquivError x) = "AlphaEquivError:" ++ x
-  show (EvalIntegerNegateErr x) = "EvalIntegerNegateErr:" ++ x
-  show (EvalNaturalIsZeroErr x) = "EvalNaturalIsZeroErr:" ++ x
-  show EvalBoolAndErr = "EvalBoolAndErr"
-  show EvalApplyErr = "EvalApplyErr"
-  show (Unexpected str) = "Unexpected: " ++ str
-  show (ErrorMessage x) = "ErrorMessage: " ++ show x
-  show (ReadBackError x) = "ReadBackError: " ++ x
-  show SortError = "SortError"
-  show (AssertError str) = "AssertError: " ++ str
-  show (ListAppendError str) = "ListAppendError: " ++ str
-  show (ListHeadError str) = "ListHeadError: " ++ str
-  show (FieldNotFoundError str) = "FieldNotFoundError: " ++ str
-  show (FieldArgMismatchError str) = "FieldArgMismatchError: " ++ str
-  show (InvalidFieldType str) = "InvalidFieldType: " ++ str
-  show (CombineError str) = "CombineError: " ++ str
-  show (RecordFieldCollision str) = "RecordFieldCollision: " ++ str
-  show (ReadFileError str) = "ReadFileError: " ++ str
-  show (MergeUnusedHandler str) = "MergeUnusedHandler: " ++ str
-  show (MergeUnhandledCase str) = "MergeUnhandledCase: " ++ str
-  show (EmptyMerge str) = "EmptyMerge: " ++ str
-  show (ToMapError str) = "ToMapError: " ++ str
-  show (ToMapEmpty str) = "ToMapEmpty: " ++ str
-  show (InvalidRecordCompletion str) = "InvalidRecordCompletion: " ++ str
-  show (CyclicImportError str) = "CyclicImportError: " ++ str
-  show (EnvVarError str) = "EnvVarError " ++ show str
-  show (FromDhallError str) = "FromDhallError " ++ show str
-  show (NestedError e e') =
-    show e ++ "\n" ++ show e'
+  show (MissingVar fc x) = "\{show fc}MissingVar: \{show x}"
+  show (AlphaEquivError fc x) = "\{show fc}AlphaEquivError: \{x}"
+  show (EvalIntegerNegateErr fc x) = "\{show fc}EvalIntegerNegateErr: \{x}"
+  show (EvalNaturalIsZeroErr fc x) = "\{show fc}EvalNaturalIsZeroErr: \{x}"
+  show (EvalBoolAndErr fc) = "\{show fc}EvalBoolAndErr"
+  show (EvalApplyErr fc) = "\{show fc}EvalApplyErr"
+  show (Unexpected fc str) = "\{show fc}Unexpected: \{str}"
+  show (ErrorMessage fc x) = "\{show fc}ErrorMessage: \{show x}"
+  show (ReadBackError fc x) = "\{show fc}ReadBackError: \{x}"
+  show (SortError fc) = "\{show fc}SortError"
+  show (AssertError fc str) = "\{show fc}AssertError: \{str}"
+  show (ListAppendError fc str) = "\{show fc}ListAppendError: \{str}"
+  show (ListHeadError fc str) = "\{show fc}ListHeadError: \{str}"
+  show (FieldNotFoundError fc str) = "\{show fc}FieldNotFoundError: \{str}"
+  show (FieldArgMismatchError fc str) = "\{show fc}FieldArgMismatchError: \{str}"
+  show (InvalidFieldType fc str) = "\{show fc}InvalidFieldType: \{str}"
+  show (CombineError fc str) = "\{show fc}CombineError: \{str}"
+  show (RecordFieldCollision fc str) = "\{show fc}RecordFieldCollision: \{str}"
+  show (ReadFileError fc str) = "\{show fc}ReadFileError: \{str}"
+  show (MergeUnusedHandler fc str) = "\{show fc}MergeUnusedHandler: \{str}"
+  show (MergeUnhandledCase fc str) = "\{show fc}MergeUnhandledCase: \{str}"
+  show (EmptyMerge fc str) = "\{show fc}EmptyMerge: \{str}"
+  show (ToMapError fc str) = "\{show fc}ToMapError: \{str}"
+  show (ToMapEmpty fc str) = "\{show fc}ToMapEmpty: \{str}"
+  show (InvalidRecordCompletion fc str) = "\{show fc}InvalidRecordCompletion: \{str}"
+  show (CyclicImportError fc str) = "\{show fc}CyclicImportError: \{str}"
+  show (EnvVarError fc str) = "\{show fc}EnvVarError \{show str}"
+  show (FromDhallError fc str) = "\{show fc}FromDhallError \{show str}"
+  show (NestedError fc e e') = "\{show fc}\{show e}\n\{show e'}"

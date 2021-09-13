@@ -139,13 +139,13 @@ mutual
   quote env (VProject fc t (Left ks)) = pure $ EProject fc !(quote env t) (Left ks)
   quote env (VProject fc t (Right u)) = pure $ EProject fc !(quote env t) (pure $ !(quote env u))
   quote env (VWith fc t ks u) = pure $ EWith fc !(quote env t) ks !(quote env u)
-  quote env (VPrimVar fc) = Left $ ReadBackError "Can't quote VPrimVar"
+  quote env (VPrimVar fc) = Left $ ReadBackError fc "Can't quote VPrimVar"
 
 ||| destruct VPi and VHPi
 vAnyPi : Value -> Either Error (Name, Ty, (Value -> Either Error Value))
 vAnyPi (VHPi fc x a b) = pure (x, a, b)
 vAnyPi (VPi fc a b@(MkClosure x _ _)) = pure (x, a, inst b)
-vAnyPi t = Left $ Unexpected $ show t ++ " is not a VPi or VHPi"
+vAnyPi t = Left $ Unexpected (getFC t) $ show t ++ " is not a VPi or VHPi"
 
 data Types = TEmpty
            | TBind Types Name Value
@@ -154,10 +154,10 @@ Show Types where
   show TEmpty = "TEmpty"
   show (TBind x y z) = "(TBind " ++ show x ++ " " ++ show y ++ " " ++ show z ++ ")"
 
-axiom : U -> Either Error U
-axiom CType = pure Kind
-axiom Kind = pure Sort
-axiom Sort = Left SortError
+axiom : FC -> U -> Either Error U
+axiom fc CType = pure Kind
+axiom fc Kind = pure Sort
+axiom fc Sort = Left $ SortError fc
 
 rule : U -> U -> U
 rule CType CType = CType
@@ -205,14 +205,14 @@ mutual
     (t, a) <- infer cxt t
     case a of
       VConst fc c => pure (t, c)
-      other        => Left $ ErrorMessage $ show other ++ " is not a Type/Kind/Sort"
+      other        => Left $ ErrorMessage (getFC other) $ show other ++ " is not a Type/Kind/Sort"
 
   ||| returns the original `Expr Void` on success
   export
   check : Cxt -> Expr Void -> Value -> Either Error (Expr Void)
   check cxt (EConst fc CType) vKype = pure $ EConst fc CType
   check cxt (EConst fc Kind) vSort = pure $ EConst fc Kind
-  check cxt (EConst fc Sort) z = Left $ SortError
+  check cxt (EConst fc Sort) z = Left $ SortError fc
   check cxt (ELam fc x a t) pi =
     let (x', v) = fresh x (envNames (values cxt)) in do -- TODO not sure about fresh...
     (_, a', b) <- vAnyPi pi
@@ -233,7 +233,7 @@ mutual
     pure t
 
   unexpected : String -> Value -> Either Error a
-  unexpected str v = Left (Unexpected $ str ++ " Value: " ++ show v)
+  unexpected str v = Left (Unexpected (getFC v) $ str ++ " Value: " ++ show v)
 
   natFoldTy : FC -> Value
   natFoldTy fc =
@@ -252,11 +252,11 @@ mutual
   ||| returns a pair (Expr, Value), which is original Expr, and it's type as a Value
   export
   infer : Cxt -> Expr Void -> Either Error (Expr Void, Value)
-  infer cxt (EConst fc k) = (\k' => (EConst fc k, VConst fc k')) <$> axiom k
+  infer cxt (EConst fc k) = (\k' => (EConst fc k, VConst fc k')) <$> axiom fc k
   infer cxt (EVar fc x i) = go (types cxt) i
   where
     go : Types -> Int -> Either Error (Expr Void, Value)
-    go TEmpty n = Left $ MissingVar $ x ++ "@" ++ show i ++ "\n in Cxt: " ++ show cxt
+    go TEmpty n = Left $ MissingVar fc $ x ++ "@" ++ show i ++ "\n in Cxt: " ++ show cxt
     go (TBind ts x' a) n =
       case x == x' of
            True => if n == 0 then pure (EVar fc x i, a) else go ts (n - 1)
@@ -361,7 +361,7 @@ mutual
   infer cxt (EList fc) = do
     pure $ (EList fc, VHPi fc "a" vType $ \a => pure $ vType)
   infer cxt (EListLit fc Nothing []) = do
-    Left $ ErrorMessage "Not type for list" -- TODO better error message
+    Left $ ErrorMessage fc "Not type for list" -- TODO better error message
   infer cxt (EListLit fc Nothing (x :: xs)) = do
     (x', ty) <- infer cxt x
     _ <- traverse (\e => check cxt e ty) xs
@@ -372,7 +372,7 @@ mutual
            ea' <- quote (envNames $ values cxt) a'
            _ <- check cxt ea' (VConst initFC CType)
            pure $ (EListLit fc (Just a) [], VList fc a')
-         other => Left $ ErrorMessage $ "Not a list annotation: " ++ show other
+         other => Left $ ErrorMessage fc $ "Not a list annotation: " ++ show other
   infer cxt (EListLit fc (Just a) (x :: xs)) = do
     ty <- eval (values cxt) a
     (a', av) <- infer cxt x
@@ -385,7 +385,7 @@ mutual
          (VList _ x) => do
            _ <- check cxt u tt
            pure $ (EListAppend fc t u, tt)
-         _ => Left $ ListAppendError "not a list" -- TODO better error message
+         _ => Left $ ListAppendError fc "not a list" -- TODO better error message
   infer cxt (EListBuild fc) =
     pure (EListBuild fc, VHPi fc "a" vType $ \a => pure $ vFun (listFoldTy fc a) (VList fc a))
   infer cxt (EListFold fc) =
@@ -422,7 +422,7 @@ mutual
     bv <- eval (values cxt) b
     conv (values cxt) av bv
     pure (EAssert fc (EEquivalent fc' a b), VEquivalent fc' av bv)
-  infer cxt (EAssert fc _) = Left $ AssertError "not an EEquivalent type" -- TODO better error message
+  infer cxt (EAssert fc _) = Left $ AssertError fc "not an EEquivalent type" -- TODO better error message
   infer cxt (ERecord fc x) = do
     xs' <- traverse (inferSkip cxt) x
     pure $ (ERecord fc x, VConst fc (getHighestType xs'))
@@ -465,16 +465,16 @@ mutual
          (VUnion _ ts, VRecord _ us) => do
            case a of
                 Nothing => do
-                  pure (EMerge fc t u a, !(inferMerge cxt ts us Nothing))
+                  pure (EMerge fc t u a, !(inferMerge fc cxt ts us Nothing))
                 (Just a') => do
                   av <- eval (values cxt) a'
-                  ty <- inferMerge cxt ts us (Just av)
+                  ty <- inferMerge fc cxt ts us (Just av)
                   conv (values cxt) av ty
                   pure (EMerge fc t u a, av)
          (VOptional _ a', VRecord _ us) =>
            let newUnion = SortedMap.fromList $
                             [(MkFieldName "None", Nothing), (MkFieldName "Some", Just a')]
-           in pure (EMerge fc t u a, !(inferMerge cxt newUnion us Nothing))
+           in pure (EMerge fc t u a, !(inferMerge fc cxt newUnion us Nothing))
          (other, VRecord _ _) => unexpected "Not a RecordLit or Optional" other
          (_, other) => unexpected "Not a RecordLit" other
   infer cxt (EToMap fc t a) = do
@@ -492,7 +492,7 @@ mutual
                   pure (EToMap fc t a, toMapTy v)
                 ([], Just x) => do v <- checkToMapAnnot cxt !(eval (values cxt) x)
                                    pure (EToMap fc t a, v)
-                ([], Nothing) => Left $ ToMapEmpty "Needs an annotation"
+                ([], Nothing) => Left $ ToMapEmpty fc "Needs an annotation"
          other => unexpected "Not a RecordLit" other
   where
     unifyAllValues : Cxt -> Value -> List (FieldName, Value) -> Either Error Value
@@ -506,8 +506,8 @@ mutual
            (((MkFieldName "mapKey"), VText initFC) :: ((MkFieldName "mapValue"), a) :: []) => do
              _ <- checkTy cxt !(quote (envNames $ values cxt) a)
              pure v
-           other => Left $ ToMapError $ "wrong annotation type" ++ show other
-    checkToMapAnnot cxt other = Left $ ToMapError $ "wrong annotation type: " ++ show other
+           other => Left $ ToMapError fc $ "wrong annotation type" ++ show other
+    checkToMapAnnot cxt other = Left $ ToMapError (getFC other) $ "wrong annotation type: " ++ show other
   infer cxt (EField fc t k) = do
     (t, tt) <- infer cxt t
     case tt of
@@ -517,13 +517,13 @@ mutual
                     case lookup k ts of
                          (Just Nothing) => pure $ (EField fc t k, VUnion fc ts)
                          (Just (Just a)) => pure $ (EField fc t k, vFun a (VUnion fc ts))
-                         Nothing => Left $ FieldNotFoundError $ show k
-                 x => Left (InvalidFieldType (show t))
+                         Nothing => Left $ FieldNotFoundError fc $ show k
+                 x => Left (InvalidFieldType fc (show t))
          (VRecord _ ts) =>
             case lookup k ts of
                  (Just a) => pure $ (EField fc t k, a)
-                 Nothing => Left $ FieldNotFoundError $ show k
-         _ => Left (InvalidFieldType (show t))
+                 Nothing => Left $ FieldNotFoundError fc $ show k
+         _ => Left (InvalidFieldType fc (show t))
   infer cxt (ERecordCompletion fc t u) = do
     (t, tt) <- infer cxt t
     case tt of
@@ -533,21 +533,21 @@ mutual
            case (lookup (MkFieldName "Type") ms, lookup (MkFieldName "default") ms) of
                 (Just x, Just y) =>
                   infer cxt (EAnnot fc (EPrefer fc (EField fc t (MkFieldName "default")) u) (EField fc t (MkFieldName "Type")))
-                (other, (Just _)) => Left $ InvalidRecordCompletion "Type"
-                (_, other) => Left $ InvalidRecordCompletion "default"
+                (other, (Just _)) => Left $ InvalidRecordCompletion fc "Type"
+                (_, other) => Left $ InvalidRecordCompletion fc "default"
          other => unexpected "Not a RecordLit" other
   infer cxt (EProject fc t (Left ks)) = do
     (t, tt) <- infer cxt t
     case tt of
          (VRecord _ ms) =>
-           pure (EProject fc t (Left ks), VRecord fc $ fromList !(vProjectByFields ms ks))
+           pure (EProject fc t (Left ks), VRecord fc $ fromList !(vProjectByFields fc ms ks))
          (other) => unexpected "Not a RecordLit" other
   infer cxt (EProject fc t (Right a)) = do
     (t, tt) <- infer cxt t
     av <- eval (values cxt) a
     case (tt, av) of
          (VRecord _ ms, VRecord _ ms') => do
-           pure (EProject fc t (Right a), VRecord fc $ fromList !(vProjectByFields ms (keys ms')))
+           pure (EProject fc t (Right a), VRecord fc $ fromList !(vProjectByFields fc ms (keys ms')))
          (other, VRecord _ _) => unexpected "Not a RecordLit" other
          (_, other) => unexpected "Not a Record" other
   infer cxt (EWith fc t ks u) = do -- TODO understand this
@@ -574,47 +574,49 @@ mutual
   toMapTy : Value -> Value
   toMapTy v = VList initFC $ VRecord initFC $ fromList [(MkFieldName "mapKey", VText initFC), (MkFieldName "mapValue", v)]
 
-  checkEmptyMerge : Maybe Value -> Either Error Value
-  checkEmptyMerge Nothing = Left $ EmptyMerge "Needs a type annotation"
-  checkEmptyMerge (Just v) = pure v
+  checkEmptyMerge : FC -> Maybe Value -> Either Error Value
+  checkEmptyMerge fc Nothing = Left $ EmptyMerge fc "Needs a type annotation"
+  checkEmptyMerge fc (Just v) = pure v
 
-  inferMerge : Cxt
+  inferMerge : FC
+             -> Cxt
              -> SortedMap FieldName (Maybe Value)
              -> SortedMap FieldName Value
              -> Maybe Value
              -> Either Error Value
-  inferMerge cxt us rs mv = do
-    xs <- inferUnionHandlers (toList us) (toList rs)
+  inferMerge fc cxt us rs mv = do
+    xs <- inferUnionHandlers fc (toList us) (toList rs)
     case toList1' xs of
-         Nothing => checkEmptyMerge mv
+         Nothing => checkEmptyMerge fc mv
          (Just (head ::: tail)) =>
            foldlM (\acc,v => unify cxt acc v *> pure acc) head tail
   where
     checkKeys : FieldName -> FieldName -> Either Error ()
     checkKeys k k' = case k == k' of
                           True => pure ()
-                          False => Left $ MergeUnhandledCase $ show k
+                          False => Left $ MergeUnhandledCase fc $ show k
 
     -- Check there's a 1 to 1 relation between union and handlers.  Relying on
     -- calling this with lists create by `SortedMap.toList` Returns a list of
     -- the types when each handler is applied to the corresponding union
     -- alternative.
-    inferUnionHandlers : List (FieldName, (Maybe Value))
-                        -> List (FieldName, Value)
-                        -> Either Error (List (Value))
-    inferUnionHandlers [] [] = pure []
-    inferUnionHandlers [] ((k, v) :: xs) = Left $ MergeUnusedHandler $ show k
-    inferUnionHandlers ((k, v) :: xs) [] = Left $ MergeUnhandledCase $ show k
-    inferUnionHandlers ((k, Just v) :: xs) ((k', v') :: ys) = do
+    inferUnionHandlers : FC
+                      -> List (FieldName, (Maybe Value))
+                      -> List (FieldName, Value)
+                      -> Either Error (List (Value))
+    inferUnionHandlers fc [] [] = pure []
+    inferUnionHandlers fc [] ((k, v) :: xs) = Left $ MergeUnusedHandler (getFC v) $ show k
+    inferUnionHandlers fc ((k, v) :: xs) [] = Left $ MergeUnhandledCase fc $ show k
+    inferUnionHandlers fc ((k, Just v) :: xs) ((k', v') :: ys) = do
       -- if it's an Union field with a value, apply the Record function
       checkKeys k k'
       (_, a', b) <- vAnyPi v'
       unify cxt v a'
-      pure $ !(b v) :: !(inferUnionHandlers xs ys)
-    inferUnionHandlers ((k, Nothing) :: xs) ((k', v') :: ys) = do
+      pure $ !(b v) :: !(inferUnionHandlers fc xs ys)
+    inferUnionHandlers fc ((k, Nothing) :: xs) ((k', v') :: ys) = do
       -- if it's an Union field without value, return the Record value
       checkKeys k k'
-      pure $ v' :: !(inferUnionHandlers xs ys)
+      pure $ v' :: !(inferUnionHandlers fc xs ys)
 
   ||| infer but only return `Value`, not `(Expr Void, Value)`
   inferSkip : Cxt -> Expr Void -> Either Error Value
