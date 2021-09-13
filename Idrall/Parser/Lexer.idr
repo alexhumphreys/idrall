@@ -191,6 +191,9 @@ mutual
 blockComment : Lexer
 blockComment = is '{' <+> is '-' <+> toEndComment 1
 
+lineComment : Lexer
+lineComment = exact "--" <+> (someUntil (is '\n') (any))
+
 -- imports
 embed : Tokenizer RawToken
 embed = match (embedStart <+> (someUntil (space) (escapeLexer <|> charLexer))) FilePath
@@ -229,7 +232,7 @@ mutual
 
   rawTokens : Tokenizer RawToken
   rawTokens =
-    match blockComment Comment
+    match (blockComment <|> lineComment) Comment
     <|> match integerLit (TInteger . cast)
     <|> match (exact "//\\\\") Symbol
     <|> match (exact "//") Symbol
@@ -264,7 +267,7 @@ mutual
     <|> match (exact ",") Symbol
     <|> match (exact ".") Symbol
     <|> match (exact "as Text") Keyword
-    <|> match space (const White)
+    <|> match spaces (const White)
     <|> match doubleLit (TDouble . cast)
     <|> match naturalLit (TNatural . cast)
     <|> match ident parseIdent
