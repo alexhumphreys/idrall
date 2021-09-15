@@ -19,6 +19,7 @@ import Idrall.Parser.Lexer
 import Idrall.Parser.Rule
 import Idrall.FC
 import Idrall.Expr
+import Idrall.Path
 import Debug.Trace
 
 RawExpr : Type
@@ -165,13 +166,27 @@ mutual
   Pretty FieldName where
     pretty (MkFieldName x) = pretty x
 
-  Pretty (Import a) where
-    pretty x = ?prettyimport
+  Pretty FilePath where
+    pretty (MkFilePath path Nothing) = pretty $ prettyPrintPath path
+    pretty (MkFilePath path (Just x)) =
+      (pretty $ prettyPrintPath path) <+> pretty "/" <+> pretty x
 
-  Pretty (Chunks a) where
+  Pretty ImportStatement where
+    pretty (LocalFile x) = pretty x
+    pretty (EnvVar x) = pretty "env:" <+> pretty x
+    pretty (Http x) = pretty x
+    pretty Missing = pretty "Missing"
+
+  Pretty a => Pretty (Import a) where
+    pretty (Raw x) = pretty x
+    pretty (Text x) = pretty x <++> pretty "as Text"
+    pretty (Location x) = pretty x <++> pretty "as Location"
+    pretty (Resolved x) = pretty "ERROR: SHOULD NOT BE"
+
+  Pretty a => Pretty (Chunks a) where
     pretty (MkChunks xs x) = pretty xs <+> pretty x
 
-  Pretty (Expr a) where
+  Pretty a => Pretty (Expr a) where
     pretty (EConst fc x) = pretty x
     pretty (EVar fc x n) = pretty x <+> pretty "@" <+> pretty n
     pretty (EApp fc x y) = pretty x <++> pretty y
@@ -252,7 +267,8 @@ mutual
     pretty (EMerge fc x y Nothing) = pretty "merge" <++> pretty x <++> pretty y
     pretty (EMerge fc x y (Just z)) = pretty "merge" <++> pretty x <++> pretty y <++> pretty ":" <++> pretty z
     pretty (EToMap fc x Nothing) = pretty "toMap" <++> pretty x
-    pretty (EProject fc x y) = ?prettyproject
+    pretty (EProject fc x (Left y)) = pretty x <++> dot <++> braces (pretty y)
+    pretty (EProject fc x (Right y)) = pretty x <++> dot <++> parens (pretty y)
     pretty (EToMap fc x (Just y)) =
       pretty "merge" <++> pretty x
       <++> pretty ":" <++> pretty y
@@ -364,10 +380,53 @@ builtinTerm str =
     cons = mkExprFC0 initBounds str
 
 mutual
+  dhallImport : Grammar state (TokenRawToken) True (ImportStatement)
+  dhallImport = httpImport <|> envImport <|> pathImport <|> missingImport
+  where
+    httpImport : Grammar state (TokenRawToken) True (ImportStatement)
+    httpImport = do
+      h <- Rule.httpImport
+      pure $ Http h
+    envImport : Grammar state (TokenRawToken) True (ImportStatement)
+    envImport = do
+      e <- Rule.envImport
+      pure $ EnvVar e
+    pathImport : Grammar state (TokenRawToken) True (ImportStatement)
+    pathImport = do
+      p <- Rule.filePath
+      pure $ LocalFile $ filePathFromPath p
+    missingImport : Grammar state (TokenRawToken) True (ImportStatement)
+    missingImport = Rule.missingImport *> pure Missing
+
   embed : Grammar state (TokenRawToken) True (RawExpr)
   embed = do
-    s <- bounds $ embedPath
-    pure $ ?parseEmbed
+    i <- bounds (shaAndAsImport <|> asImport <|> shaImport <|> bareImport)
+    pure $ EEmbed (boundToFC initBounds i) (val i)
+  where
+    asType : Grammar state (TokenRawToken) True (a -> Import a)
+    asType = do
+      (tokenW $ keyword "as Text" *> pure Text)
+        <|> (tokenW $ keyword "as Location" *> pure Location)
+    asImport : Grammar state (TokenRawToken) True (Import ImportStatement)
+    asImport = do
+      i <- dhallImport
+      con <- asType
+      pure $ con i
+    shaImport : Grammar state (TokenRawToken) True (Import ImportStatement)
+    shaImport = do
+      i <- dhallImport
+      _ <- tokenW $ Rule.shaImport
+      pure $ Raw i
+    shaAndAsImport : Grammar state (TokenRawToken) True (Import ImportStatement)
+    shaAndAsImport = do
+      i <- dhallImport
+      _ <- tokenW $ Rule.shaImport
+      con <- asType
+      pure $ con i
+    bareImport : Grammar state (TokenRawToken) True (Import ImportStatement)
+    bareImport = do
+      i <- dhallImport
+      pure $ Raw i
 
   naturalLit : Grammar state (TokenRawToken) True (RawExpr)
   naturalLit = do
@@ -487,15 +546,25 @@ mutual
     let fc = boundToFC initBounds start
     (populatedList fc) <|> (emptyList fc)
   where
+    listType : Grammar state (TokenRawToken) True (WithBounds RawExpr)
+    listType = do
+      tokenW $ symbol ":"
+      bounds $ exprTerm
     emptyList : FC -> Grammar state (TokenRawToken) True (RawExpr)
     emptyList fc = do
-      end <- bounds $ symbol "]"
-      pure $ EListLit (mergeBounds fc (boundToFC initBounds end)) ?listtyp1 []
+      tokenW $ symbol "]"
+      ty <- listType
+      pure $ EListLit (mergeBounds fc (boundToFC initBounds ty)) (Just (val ty)) []
     populatedList : FC -> Grammar state (TokenRawToken) True (RawExpr)
     populatedList fc = do
       es <- sepBy1 (tokenW $ symbol ",") exprTerm
       end <- bounds $ symbol "]"
-      pure $ EListLit (mergeBounds fc (boundToFC initBounds end)) ?listtyp2 (forget es)
+      ty <- optional listType
+      pure $ case ty of
+                  Nothing =>
+                    EListLit (mergeBounds fc (boundToFC initBounds end)) Nothing (forget es)
+                  (Just ty') =>
+                    EListLit (mergeBounds fc (boundToFC initBounds ty')) (Just $ val ty') (forget es)
 
   opParser : String
      -> (FC -> RawExpr -> RawExpr -> RawExpr)
@@ -599,12 +668,13 @@ mutual
     start <- bounds $ tokenW $ keyword "let"
     commit
     name <- tokenW $ identPart
+    ty <- optional (tokenW $ symbol ":" *> exprTerm)
     _ <- tokenW $ symbol "="
     e <- exprTerm
     _ <- whitespace
     end <- bounds $ tokenW $ keyword "in" -- TODO is this a good end position?
     e' <- exprTerm
-    pure $ ELet (mergeBounds (boundToFC initBounds start) (boundToFC initBounds end)) name ?lettype e e'
+    pure $ ELet (mergeBounds (boundToFC initBounds start) (boundToFC initBounds end)) name ty e e'
 
   lamTerm : Grammar state (TokenRawToken) True (RawExpr)
   lamTerm = do

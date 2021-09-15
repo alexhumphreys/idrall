@@ -31,7 +31,13 @@ data RawToken
   | Comment String
   | Unrecognised
   | EndInput
-  | FilePath String
+  | RelImport String
+  | AbsImport String
+  | HomeDirImport String
+  | EnvImport String
+  | HttpImport String
+  | Sha String
+  | MissingImport
 
 export
 Eq RawToken where
@@ -51,7 +57,13 @@ Eq RawToken where
   (==) (Comment x) (Comment y) =  x == y
   (==) Unrecognised Unrecognised = True
   (==) EndInput EndInput = True
-  (==) (FilePath x) (FilePath y) = x == y
+  (==) (RelImport x) (RelImport y) = x == y
+  (==) (AbsImport x) (AbsImport y) = x == y
+  (==) (HomeDirImport x) (HomeDirImport y) = x == y
+  (==) (EnvImport x) (EnvImport y) = x == y
+  (==) (HttpImport x) (HttpImport y) = x == y
+  (==) (Sha x) (Sha y) =  x == y
+  (==) MissingImport MissingImport = True
   (==) _ _ = False
 
 export
@@ -72,7 +84,13 @@ Show RawToken where
   show (Comment x) = "Comment \{show x}"
   show Unrecognised = "Unrecognised"
   show EndInput = "EndInput"
-  show (FilePath x) = "FilePath \{show x}"
+  show (RelImport x) = "RelImport \{show x}"
+  show (AbsImport x) = "AbsImport \{show x}"
+  show (HomeDirImport x) = "HomeDirImport \{show x}"
+  show (EnvImport x) = "EnvImport \{show x}"
+  show (HttpImport x) = "HttpImport \{show x}"
+  show (Sha x) = "Sha \{show x}"
+  show MissingImport = "MissingImport"
 
 public export
 TokenRawToken : Type
@@ -195,15 +213,48 @@ lineComment : Lexer
 lineComment = exact "--" <+> (someUntil (is '\n') (any))
 
 -- imports
-embed : Tokenizer RawToken
-embed = match (embedStart <+> (someUntil (space) (escapeLexer <|> charLexer))) FilePath
+httpImport : Tokenizer RawToken
+httpImport = match (httpStart <+> (someUntil (space) charLexer)) HttpImport
 where
-  embedStart : Lexer
-  embedStart = exact "./" <|> exact "~/" <|> exact "/"
+  httpStart : Lexer
+  httpStart = exact "http://" <|> exact "https://"
+  charLexer : Lexer
+  charLexer = any
+
+-- imports
+envImport : Tokenizer RawToken
+envImport = match (envStart <+> (someUntil (space) charLexer)) EnvImport
+where
+  envStart : Lexer
+  envStart = exact "env:"
+  charLexer : Lexer
+  charLexer = any
+
+-- imports
+pathImport : (String -> RawToken) -> Lexer -> Tokenizer RawToken
+pathImport f pathStart = match (pathStart <+> (someUntil (space) (escapeLexer <|> charLexer))) f
+where
+  -- pathStart : Lexer
+  -- pathStart = exact "../" <|> exact "./" <|> exact "~/" <|> exact "/"
   escapeLexer : Lexer
   escapeLexer = escape (exact "\\") any
   charLexer : Lexer
   charLexer = any
+
+relImport : Tokenizer RawToken
+relImport = pathImport RelImport (exact "../" <|> exact "./")
+
+absImport : Tokenizer RawToken
+absImport = pathImport AbsImport (exact "/")
+
+homeDirImport : Tokenizer RawToken
+homeDirImport = pathImport HomeDirImport (exact "~/")
+
+shaImport : Lexer
+shaImport = (exact "sha:" <+> (someUntil (space) (pred $ isAlphaNum)))
+
+embed : Tokenizer RawToken
+embed = httpImport <|> envImport <|> relImport <|> absImport <|> homeDirImport
 
 -- strings
 stringBegin : Lexer
@@ -239,6 +290,8 @@ mutual
     <|> match (exact "/\\") Symbol
     <|> match (exact "\\") Symbol
     <|> embed
+    <|> match (exact "missing") (const MissingImport)
+    <|> match shaImport Sha
     <|> match (exact "||") Symbol
     <|> match (exact "&&") Symbol
     <|> match (exact "===") Symbol
@@ -267,6 +320,7 @@ mutual
     <|> match (exact ",") Symbol
     <|> match (exact ".") Symbol
     <|> match (exact "as Text") Keyword
+    <|> match (exact "as Location") Keyword
     <|> match spaces (const White)
     <|> match doubleLit (TDouble . cast)
     <|> match naturalLit (TNatural . cast)

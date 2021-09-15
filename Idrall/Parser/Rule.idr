@@ -2,6 +2,7 @@ module Idrall.Parser.Rule
 
 import Data.List
 import Data.List1
+import Data.String
 
 import Text.Parser
 import Text.Quantity
@@ -11,6 +12,7 @@ import Text.Bounded
 
 import Idrall.Parser.Lexer
 import Idrall.Expr
+import Idrall.Path
 
 public export
 Rule : {state : Type} -> Type -> Type
@@ -93,11 +95,45 @@ identPart =
       _ => Nothing
 
 export
-embedPath : Rule String
-embedPath =
+missingImport : Rule ()
+missingImport =
+  terminal "expected missing" $
+    \case
+      MissingImport => Just ()
+      _ => Nothing
+
+export
+httpImport : Rule String
+httpImport =
+  terminal "expected http import" $
+    \case
+      HttpImport x => Just x
+      _ => Nothing
+
+export
+envImport : Rule String
+envImport =
+  terminal "expected env import" $
+    \case
+      EnvImport x => Just x
+      _ => Nothing
+
+export
+shaImport : Rule String
+shaImport =
+  terminal "expected sha import" $
+    \case
+      Sha x => Just x -- TODO remove `sha:` prefix
+      _ => Nothing
+
+export
+filePath : Rule Path
+filePath =
   terminal "expected import path" $
     \case
-      FilePath x => Just x
+      RelImport x => Just $ Relative $ forget $ split (== '/') x
+      AbsImport x => Just $ Absolute $ forget $ split (== '/') x
+      HomeDirImport x => Just $ Home $ forget $ split (== '/') x
       _ => Nothing
 
 export
