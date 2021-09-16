@@ -37,3 +37,8 @@ public export
 initFC : FC
 initFC = EmptyFC
 
+public export
+originFromFC : FC -> OriginDesc
+originFromFC (MkFC x y z) = x
+originFromFC (MkVirtualFC x y z) = x
+originFromFC EmptyFC = Nothing

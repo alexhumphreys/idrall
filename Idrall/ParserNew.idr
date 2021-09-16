@@ -334,8 +334,8 @@ boundedOp op x y =
       mB = mergeBounds xB yB in
       op mB x y
 
-builtinTerm : WithBounds String -> Grammar state (TokenRawToken) False (RawExpr)
-builtinTerm str =
+builtinTerm : FC -> WithBounds String -> Grammar state (TokenRawToken) False (RawExpr)
+builtinTerm fc str =
   case val str of
      "Natural/build" => pure $ cons ENaturalBuild
      "Natural/fold" => pure $ cons ENaturalFold
@@ -362,21 +362,21 @@ builtinTerm str =
      "Text/replace" => pure $ cons ETextReplace
      "Optional" => pure $ cons EOptional
      "None" => pure $ cons ENone
-     "NaN" => pure $ EDoubleLit (boundToFC initBounds str) (0.0/0.0)
-     "True" => pure $ EBoolLit (boundToFC initBounds str) True
-     "False" => pure $ EBoolLit (boundToFC initBounds str) False
-     "Bool" => pure $ EBool (boundToFC initBounds str)
-     "Text" => pure $ EText (boundToFC initBounds str)
-     "Natural" => pure $ ENatural (boundToFC initBounds str)
-     "Integer" => pure $ EInteger (boundToFC initBounds str)
-     "Double" => pure $ EDouble (boundToFC initBounds str)
-     "Type" => pure $ EConst (boundToFC initBounds str) CType
-     "Kind" => pure $ EConst (boundToFC initBounds str) Kind
-     "Sort" => pure $ EConst (boundToFC initBounds str) Sort
+     "NaN" => pure $ EDoubleLit (boundToFC (originFromFC fc) str) (0.0/0.0)
+     "True" => pure $ EBoolLit (boundToFC (originFromFC fc) str) True
+     "False" => pure $ EBoolLit (boundToFC (originFromFC fc) str) False
+     "Bool" => pure $ EBool (boundToFC (originFromFC fc) str)
+     "Text" => pure $ EText (boundToFC (originFromFC fc) str)
+     "Natural" => pure $ ENatural (boundToFC (originFromFC fc) str)
+     "Integer" => pure $ EInteger (boundToFC (originFromFC fc) str)
+     "Double" => pure $ EDouble (boundToFC (originFromFC fc) str)
+     "Type" => pure $ EConst (boundToFC (originFromFC fc) str) CType
+     "Kind" => pure $ EConst (boundToFC (originFromFC fc) str) Kind
+     "Sort" => pure $ EConst (boundToFC (originFromFC fc) str) Sort
      x => fail "Expected builtin name"
   where
     cons : (FC -> RawExpr) -> RawExpr
-    cons = mkExprFC0 initBounds str
+    cons = mkExprFC0 (originFromFC fc) str
 
 mutual
   dhallImport : Grammar state (TokenRawToken) True (ImportStatement)
@@ -397,10 +397,10 @@ mutual
     missingImport : Grammar state (TokenRawToken) True (ImportStatement)
     missingImport = Rule.missingImport *> pure Missing
 
-  embed : Grammar state (TokenRawToken) True (RawExpr)
-  embed = do
+  embed : FC -> Grammar state (TokenRawToken) True (RawExpr)
+  embed fc = do
     i <- bounds (shaAndAsImport <|> asImport <|> shaImport <|> bareImport)
-    pure $ EEmbed (boundToFC initBounds i) (val i)
+    pure $ EEmbed (boundToFC (originFromFC fc) i) (val i)
   where
     asType : Grammar state (TokenRawToken) True (a -> Import a)
     asType = do
@@ -427,37 +427,37 @@ mutual
       i <- dhallImport
       pure $ Raw i
 
-  naturalLit : Grammar state (TokenRawToken) True (RawExpr)
-  naturalLit = do
+  naturalLit : FC -> Grammar state (TokenRawToken) True (RawExpr)
+  naturalLit fc = do
     s <- bounds $ Rule.naturalLit
-    pure $ mkExprFC initBounds s ENaturalLit
+    pure $ mkExprFC (originFromFC fc) s ENaturalLit
 
-  integerLit : Grammar state (TokenRawToken) True (RawExpr)
-  integerLit = do
+  integerLit : FC -> Grammar state (TokenRawToken) True (RawExpr)
+  integerLit fc = do
     s <- bounds $ Rule.integerLit
-    pure $ mkExprFC initBounds s EIntegerLit
+    pure $ mkExprFC (originFromFC fc) s EIntegerLit
 
-  doubleLit : Grammar state (TokenRawToken) True (RawExpr)
-  doubleLit = do
+  doubleLit : FC -> Grammar state (TokenRawToken) True (RawExpr)
+  doubleLit fc = do
     s <- bounds $ Rule.doubleLit
-    pure $ mkExprFC initBounds s EDoubleLit
+    pure $ mkExprFC (originFromFC fc) s EDoubleLit
 
-  someLit : Grammar state (TokenRawToken) True (RawExpr)
-  someLit = do
+  someLit : FC -> Grammar state (TokenRawToken) True (RawExpr)
+  someLit fc = do
     start <- bounds $ tokenW $ someBuiltin
-    e <- bounds $ exprTerm
-    pure $ ESome (mergeBounds (boundToFC initBounds start) (boundToFC initBounds e)) $ val e
+    e <- bounds $ exprTerm fc
+    pure $ ESome (mergeBounds (boundToFC (originFromFC fc) start) (boundToFC (originFromFC fc) e)) $ val e
 
-  textLit : Grammar state (TokenRawToken) True (RawExpr)
-  textLit = do
+  textLit : FC -> Grammar state (TokenRawToken) True (RawExpr)
+  textLit fc = do
     start <- bounds $ textBoundary
     chunks <- some (interpLit <|> chunkLit)
     end <- bounds $ textBoundary
-    pure $ ETextLit (boundToFC2 initBounds start end) (foldl (<+>) neutral chunks)
+    pure $ ETextLit (boundToFC2 (originFromFC fc) start end) (foldl (<+>) neutral chunks)
   where
     interpLit : Rule (Chunks ImportStatement)
     interpLit = do
-      e <- between interpBegin interpEnd exprTerm
+      e <- between interpBegin interpEnd $ exprTerm fc
       pure $ MkChunks [("", e)] ""
 
     chunkLit : Rule (Chunks ImportStatement)
@@ -465,53 +465,53 @@ mutual
       str <- Parser.Rule.textLit
       pure (MkChunks [] str)
 
-  builtin : Grammar state (TokenRawToken) True (RawExpr)
-  builtin = do
+  builtin : FC -> Grammar state (TokenRawToken) True (RawExpr)
+  builtin fc = do
       name <- bounds $ Rule.builtin
-      builtinTerm name
+      builtinTerm fc name
 
-  varTerm : Grammar state (TokenRawToken) True (RawExpr)
-  varTerm = do
+  varTerm : FC -> Grammar state (TokenRawToken) True (RawExpr)
+  varTerm fc = do
       name <- bounds $ identPart
-      pure $ EVar (boundToFC initBounds name) (val name) 0
+      pure $ EVar (boundToFC (originFromFC fc) name) (val name) 0
 
-  postFix : WithBounds RawExpr -> Grammar state (TokenRawToken) True (RawExpr)
-  postFix x = do
+  postFix : FC -> WithBounds RawExpr -> Grammar state (TokenRawToken) True (RawExpr)
+  postFix fc x = do
     tokenW $ symbol "."
     commit
     rightProject <|> leftProject
   where
     rightProject : Grammar state (TokenRawToken) True (RawExpr)
     rightProject = do
-      e <- bounds $ (between (symbol "(") (symbol ")") exprTerm)
-      pure $ EProject (mergeBounds (boundToFC initBounds x) (boundToFC initBounds e)) (val x) (Right $ val e)
+      e <- bounds $ (between (symbol "(") (symbol ")") $ exprTerm fc)
+      pure $ EProject (mergeBounds (boundToFC (originFromFC fc) x) (boundToFC (originFromFC fc) e)) (val x) (Right $ val e)
     leftProject : Grammar state (TokenRawToken) True (RawExpr)
     leftProject = do
       l <- bounds $ (between (symbol "{") (symbol "}") dottedList)
-      pure $ EProject (mergeBounds (boundToFC initBounds x) (boundToFC initBounds l)) (val x) (Left $ forget $ val l)
+      pure $ EProject (mergeBounds (boundToFC (originFromFC fc) x) (boundToFC (originFromFC fc) l)) (val x) (Left $ forget $ val l)
 
-  atom : Grammar state (TokenRawToken) True (RawExpr)
-  atom = do
-    a <- bounds $ builtin <|> varTerm <|> textLit
-      <|> naturalLit <|> integerLit <|> doubleLit
-      <|> someLit
-      <|> recordType <|> recordLit
-      <|> union
-      <|> embed
-      <|> listLit <|> (between (symbol "(") (symbol ")") exprTerm)
-    p <- optional $ postFix a
+  atom : FC -> Grammar state (TokenRawToken) True (RawExpr)
+  atom fc = do
+    a <- bounds $ builtin fc <|> varTerm fc <|> (textLit fc)
+      <|> naturalLit fc <|> integerLit fc <|> doubleLit fc
+      <|> someLit fc
+      <|> recordType fc <|> recordLit fc
+      <|> union fc
+      <|> embed fc
+      <|> listLit fc <|> (between (symbol "(") (symbol ")") $ exprTerm fc)
+    p <- optional $ postFix fc a
     pure (case p of
                Nothing => val a
                (Just x) => x)
 
-  recordParser : Grammar state (TokenRawToken) True ()
+  recordParser : FC -> Grammar state (TokenRawToken) True ()
                -> (FC -> (SortedMap FieldName (RawExpr)) -> RawExpr)
                -> Grammar state (TokenRawToken) True (RawExpr)
-  recordParser sep cons = do
+  recordParser fc sep cons = do
     start <- bounds $ tokenW $ symbol "{"
     commit
-    let fc = boundToFC initBounds start
-    emptyRecord fc <|> populatedRecord fc
+    let fc' = boundToFC (originFromFC fc) start
+    emptyRecord fc' <|> populatedRecord fc'
   where
     emptyRecord : FC -> Grammar state (TokenRawToken) True (RawExpr)
     emptyRecord fc = do
@@ -522,7 +522,7 @@ mutual
       i <- identPart
       _ <- optional whitespace
       tokenW $ sep
-      e <- exprTerm
+      e <- exprTerm fc
       pure (MkFieldName i, e)
     populatedRecord : FC -> Grammar state (TokenRawToken) True (RawExpr)
     populatedRecord fc = do
@@ -530,19 +530,19 @@ mutual
       end <- bounds $ symbol "}"
       pure $ cons (mergeBounds fc (boundToFC initBounds end)) $ SortedMap.fromList (es)
 
-  recordType : Grammar state (TokenRawToken) True (RawExpr)
-  recordType = recordParser (symbol ":") ERecord
+  recordType : FC -> Grammar state (TokenRawToken) True (RawExpr)
+  recordType fc = recordParser fc (symbol ":") ERecord
 
-  recordLit : Grammar state (TokenRawToken) True (RawExpr)
-  recordLit = recordParser (symbol "=") ERecordLit
+  recordLit : FC -> Grammar state (TokenRawToken) True (RawExpr)
+  recordLit fc = recordParser fc (symbol "=") ERecordLit
 
-  union : Grammar state (TokenRawToken) True (RawExpr)
-  union = do
+  union : FC -> Grammar state (TokenRawToken) True (RawExpr)
+  union fc = do
     start <- bounds $ tokenW $ symbol "<"
     commit
     es <- sepBy (tokenW $ symbol "|") (unionComplex <|> unionSimple)
     end <- bounds $ tokenW $ symbol ">"
-    pure $ EUnion (mergeBounds (boundToFC initBounds start) (boundToFC initBounds end)) $ SortedMap.fromList es
+    pure $ EUnion (mergeBounds (boundToFC (originFromFC fc) start) (boundToFC (originFromFC fc) end)) $ SortedMap.fromList es
   where
     unionSimple : Grammar state (TokenRawToken) True (FieldName, Maybe (RawExpr))
     unionSimple = do
@@ -552,21 +552,21 @@ mutual
     unionComplex = do
       name <- tokenW $ identPart
       start <- bounds $ tokenW $ symbol ":"
-      e <- exprTerm
+      e <- exprTerm fc
       _ <- optional whitespace
       pure (MkFieldName name, Just e)
 
-  listLit : Grammar state (TokenRawToken) True (RawExpr)
-  listLit = do
+  listLit : FC -> Grammar state (TokenRawToken) True (RawExpr)
+  listLit fc = do
     start <- bounds $ tokenW $ symbol "["
     commit
-    let fc = boundToFC initBounds start
-    (populatedList fc) <|> (emptyList fc)
+    let fc' = boundToFC (originFromFC fc) start
+    (populatedList fc') <|> (emptyList fc')
   where
     listType : Grammar state (TokenRawToken) True (WithBounds RawExpr)
     listType = do
       tokenW $ symbol ":"
-      bounds $ exprTerm
+      bounds $ exprTerm fc
     emptyList : FC -> Grammar state (TokenRawToken) True (RawExpr)
     emptyList fc = do
       tokenW $ symbol "]"
@@ -574,7 +574,7 @@ mutual
       pure $ EListLit (mergeBounds fc (boundToFC initBounds ty)) (Just (val ty)) []
     populatedList : FC -> Grammar state (TokenRawToken) True (RawExpr)
     populatedList fc = do
-      es <- sepBy1 (tokenW $ symbol ",") exprTerm
+      es <- sepBy1 (tokenW $ symbol ",") $ exprTerm fc
       end <- bounds $ symbol "]"
       ty <- optional listType
       pure $ case ty of
@@ -639,28 +639,28 @@ mutual
     with' : List1 FieldName -> FC -> Expr a -> Expr a -> Expr a
     with' xs fc x y = EWith fc x xs y
 
-  otherTerm : Grammar state (TokenRawToken) True (RawExpr)
-  otherTerm = chainl1 atom (otherOp EmptyFC)
+  otherTerm : FC -> Grammar state (TokenRawToken) True (RawExpr)
+  otherTerm fc = chainl1 (atom fc) (otherOp fc)
 
-  mulTerm : Grammar state (TokenRawToken) True (RawExpr)
-  mulTerm = chainl1 otherTerm (mulOp EmptyFC)
+  mulTerm : FC -> Grammar state (TokenRawToken) True (RawExpr)
+  mulTerm fc = chainl1 (otherTerm fc) (mulOp fc)
 
-  plusTerm : Grammar state (TokenRawToken) True (RawExpr)
-  plusTerm = chainl1 mulTerm (plusOp EmptyFC)
+  plusTerm : FC -> Grammar state (TokenRawToken) True (RawExpr)
+  plusTerm fc = chainl1 (mulTerm fc) (plusOp fc)
 
-  boolTerm : Grammar state (TokenRawToken) True (RawExpr)
-  boolTerm = chainl1 plusTerm (boolOp EmptyFC)
+  boolTerm : FC -> Grammar state (TokenRawToken) True (RawExpr)
+  boolTerm fc = chainl1 (plusTerm fc) (boolOp fc)
 
-  piTerm : Grammar state (TokenRawToken) True (RawExpr)
-  piTerm = chainr1 boolTerm (piOp EmptyFC)
+  piTerm : FC -> Grammar state (TokenRawToken) True (RawExpr)
+  piTerm fc = chainr1 (boolTerm fc) (piOp fc)
 
-  fieldTerm : Grammar state (TokenRawToken) True (RawExpr)
-  fieldTerm = hchainl piTerm fieldOp (bounds identPart)
+  fieldTerm : FC -> Grammar state (TokenRawToken) True (RawExpr)
+  fieldTerm fc = hchainl (piTerm fc) fieldOp (bounds identPart)
   where
     field' : RawExpr -> WithBounds String -> RawExpr
     field' e s =
       let start = getFC e
-          end = boundToFC initBounds $ s
+          end = boundToFC (originFromFC fc) $ s
           fc' = mergeBounds start end
       in EField fc' e (MkFieldName (val s))
     fieldOp : Grammar state (TokenRawToken) True (RawExpr -> WithBounds String -> RawExpr)
@@ -669,62 +669,62 @@ mutual
       _ <- tokenW $ symbol "."
       pure $ field'
 
-  appTerm : Grammar state (TokenRawToken) True (RawExpr)
-  appTerm = chainl1 fieldTerm (appOp EmptyFC)
+  appTerm : FC -> Grammar state (TokenRawToken) True (RawExpr)
+  appTerm fc = chainl1 (fieldTerm fc) (appOp fc)
 
-  exprTerm : Grammar state (TokenRawToken) True (RawExpr)
-  exprTerm = do
-    letBinding <|>
-    lamTerm <|>
-    assertTerm <|>
-    ifTerm <|>
-    mergeTerm <|>
-    toMapTerm <|>
-    chainl1 appTerm (withOp EmptyFC)
+  exprTerm : FC -> Grammar state (TokenRawToken) True (RawExpr)
+  exprTerm fc = do
+    letBinding fc <|>
+    lamTerm fc <|>
+    assertTerm fc <|>
+    ifTerm fc <|>
+    mergeTerm fc <|>
+    toMapTerm fc <|>
+    chainl1 (appTerm fc) (withOp fc)
 
-  letBinding : Grammar state (TokenRawToken) True (RawExpr)
-  letBinding = do
+  letBinding : FC -> Grammar state (TokenRawToken) True (RawExpr)
+  letBinding fc = do
     start <- bounds $ tokenW $ keyword "let"
     commit
     name <- tokenW $ identPart
-    ty <- optional (tokenW $ symbol ":" *> exprTerm)
+    ty <- optional (tokenW $ symbol ":" *> exprTerm fc)
     _ <- tokenW $ symbol "="
-    e <- exprTerm
+    e <- exprTerm fc
     _ <- whitespace
     end <- bounds $ tokenW $ keyword "in" -- TODO is this a good end position?
-    e' <- exprTerm
-    pure $ ELet (mergeBounds (boundToFC initBounds start) (boundToFC initBounds end)) name ty e e'
+    e' <- exprTerm fc
+    pure $ ELet (mergeBounds (boundToFC (originFromFC fc) start) (boundToFC (originFromFC fc) end)) name ty e e'
 
-  lamTerm : Grammar state (TokenRawToken) True (RawExpr)
-  lamTerm = do
+  lamTerm : FC -> Grammar state (TokenRawToken) True (RawExpr)
+  lamTerm fc = do
     start <- bounds $ tokenW $ (do symbol "\\" ; symbol "(")
     commit
     name <- tokenW $ identPart
     _ <- symbol ":"
     _ <- whitespace
-    t <- bounds $ exprTerm
+    t <- bounds $ exprTerm fc
     _ <- tokenW $ symbol ")"
     _ <- tokenW $ symbol "->"
-    body <- bounds $ exprTerm
-    pure $ ELam (mergeBounds (boundToFC initBounds start) (boundToFC initBounds body))
+    body <- bounds $ exprTerm fc
+    pure $ ELam (mergeBounds (boundToFC (originFromFC fc) start) (boundToFC (originFromFC fc) body))
             name (val t) (val body)
 
-  assertTerm : Grammar state (TokenRawToken) True (RawExpr)
-  assertTerm = do
+  assertTerm : FC -> Grammar state (TokenRawToken) True (RawExpr)
+  assertTerm fc = do
     start <- bounds $ tokenW $ keyword "assert"
     commit
     _ <- symbol ":"
     _ <- whitespace
-    e <- bounds $ exprTerm
-    pure $ EAssert (mergeBounds (boundToFC initBounds start) (boundToFC initBounds e)) (val e)
+    e <- bounds $ exprTerm fc
+    pure $ EAssert (mergeBounds (boundToFC (originFromFC fc) start) (boundToFC (originFromFC fc) e)) (val e)
 
-  mergeTerm : Grammar state (TokenRawToken) True (RawExpr)
-  mergeTerm = Text.Parser.Core.do
+  mergeTerm : FC -> Grammar state (TokenRawToken) True (RawExpr)
+  mergeTerm fc = Text.Parser.Core.do
     start <- bounds $ tokenW $ keyword "merge"
     commit
-    e1 <- bounds exprTerm
+    e1 <- bounds $ exprTerm fc
     the (Grammar state TokenRawToken _ (RawExpr)) $
-      case go (boundToFC initBounds start) (val e1) of
+      case go (boundToFC (originFromFC fc) start) (val e1) of
            (Right x) => pure x
            (Left _) => fail "TODO implement better merge parse"
   where
@@ -735,34 +735,34 @@ mutual
       pure $ EMerge (mergeBounds start fc) x y (Just t)
     go _ _ = Left ()
 
-  toMapTerm : Grammar state (TokenRawToken) True (RawExpr)
-  toMapTerm = Text.Parser.Core.do
+  toMapTerm : FC -> Grammar state (TokenRawToken) True (RawExpr)
+  toMapTerm fc = Text.Parser.Core.do
     start <- bounds $ tokenW $ keyword "toMap"
     commit
-    e <- bounds exprTerm
+    e <- bounds $ exprTerm fc
     pure $ case val e of -- TODO find out why pure must be here?
          (EAnnot fc x y) =>
             EToMap (mergeBounds (boundToFC initBounds start) (boundToFC initBounds e)) x (Just y)
          x =>
             EToMap (mergeBounds (boundToFC initBounds start) (boundToFC initBounds e)) x Nothing
 
-  ifTerm : Grammar state (TokenRawToken) True (RawExpr)
-  ifTerm = do
+  ifTerm : FC -> Grammar state (TokenRawToken) True (RawExpr)
+  ifTerm fc = do
     start <- bounds $ tokenW $ keyword "if"
     commit
-    i <- bounds $ exprTerm
+    i <- bounds $ exprTerm fc
     _ <- whitespace
     _ <- bounds $ tokenW $ keyword "then"
-    t <- bounds $ exprTerm
+    t <- bounds $ exprTerm fc
     _ <- whitespace
     _ <- bounds $ tokenW $ keyword "else"
-    e <- bounds $ exprTerm
-    pure $ EBoolIf (mergeBounds (boundToFC initBounds start) (boundToFC initBounds e))
+    e <- bounds $ exprTerm fc
+    pure $ EBoolIf (mergeBounds (boundToFC (originFromFC fc) start) (boundToFC (originFromFC fc) e))
             (val i) (val t) (val e)
 
-finalParser : Grammar state (TokenRawToken) True (RawExpr)
+finalParser : {default initFC fc : FC} -> Grammar state (TokenRawToken) True (RawExpr)
 finalParser = do
-  e <- exprTerm
+  e <- exprTerm fc
   _ <- optional $ many whitespace
   endOfInput
   pure e
