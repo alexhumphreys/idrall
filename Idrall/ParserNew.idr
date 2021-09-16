@@ -17,29 +17,14 @@ import Text.PrettyPrint.Prettyprinter.Doc
 
 import Idrall.Parser.Lexer
 import Idrall.Parser.Rule
+import Idrall.FC
+import Idrall.Expr
+import Idrall.Path
 import Debug.Trace
 
 public export
-FilePos : Type
-FilePos = (Nat, Nat)
-
--- does fancy stuff for idris, for now it can just be a Maybe filename
-
-OriginDesc : Type
-OriginDesc = Maybe String
-
-public export
-data FC = MkFC        OriginDesc FilePos FilePos
-        | ||| Virtual FCs are FC attached to desugared/generated code.
-          MkVirtualFC OriginDesc FilePos FilePos
-        | EmptyFC
-%name FC fc
-
-Show FC where
-  show (MkFC Nothing x y) = "\{show x}-\{show y}"
-  show (MkFC (Just s) x y) = "\{s}:\{show x}-\{show y}"
-  show (MkVirtualFC x y z) = "MkVirtualFCTODO"
-  show EmptyFC = "(,)"
+RawExpr : Type
+RawExpr = Expr ImportStatement
 
 both : (a -> b) -> (a, a) -> (b, b)
 both f x = (f (fst x), f (snd x))
@@ -64,191 +49,19 @@ mergeBounds EmptyFC f@(MkFC x start end) = f
 mergeBounds EmptyFC f@(MkVirtualFC x start end) = f
 mergeBounds EmptyFC EmptyFC = EmptyFC
 
-public export
-data U = CType | Sort | Kind
-
-export
-Eq U where
-  (==) CType CType = True
-  (==) Sort Sort = True
-  (==) Kind Kind = True
-  (==) _ _ = False
-
-export
-Show U where
-  show CType = "CType"
-  show Sort = "Sort"
-  show Kind = "Kind"
-
-export
-Pretty U where
-  pretty CType = "Type"
-  pretty Sort = "Sort"
-  pretty Kind = "Kind"
-
-mutual
-  public export
-  data Chunks a = MkChunks (List (String, Expr a)) String
-
-  ||| Raw AST representation generated directly from the parser
-  data Expr a
-    = EConst FC U -- = EConst U
-    | EVar FC String -- | EVar Name Int
-    | ELam FC String (Expr a) (Expr a) -- | ELam Name (Expr a) (Expr a)
-    | EPi FC String (Expr a) (Expr a) -- | EPi Name (Expr a) (Expr a)
-    | EApp FC (Expr a) (Expr a) -- | EApp (Expr a) (Expr a)
-    | ELet FC String (Expr a) (Expr a) -- | ELet Name (Maybe (Expr a)) (Expr a) (Expr a)
-    | EAnnot FC (Expr a) (Expr a) -- | EAnnot (Expr a) (Expr a)
-    | EBool FC -- | EBool
-    | EBoolLit FC Bool -- | EBoolLit Bool
-    | EBoolAnd FC (Expr a) (Expr a) -- | EBoolAnd (Expr a) (Expr a)
-    | EBoolOr FC (Expr a) (Expr a) -- | EBoolOr  (Expr a) (Expr a)
-    | EBoolEQ FC (Expr a) (Expr a) -- | EBoolEQ  (Expr a) (Expr a)
-    | EBoolNE FC (Expr a) (Expr a) -- | EBoolNE  (Expr a) (Expr a)
-    | EBoolIf FC (Expr a) (Expr a) (Expr a) -- | EBoolIf (Expr a) (Expr a) (Expr a)
-    | ENatural FC -- | ENatural
-    | ENaturalLit FC Nat -- | ENaturalLit Nat
-    | ENaturalFold FC -- | ENaturalFold
-    | ENaturalBuild FC -- | ENaturalBuild
-    | ENaturalIsZero FC -- | ENaturalIsZero
-    | ENaturalEven FC -- | ENaturalEven
-    | ENaturalOdd FC -- | ENaturalOdd
-    | ENaturalToInteger FC -- | ENaturalToInteger
-    | ENaturalSubtract FC -- | ENaturalSubtract
-    | ENaturalShow FC -- | ENaturalShow
-    | ENaturalPlus FC (Expr a) (Expr a) -- | ENaturalPlus (Expr a) (Expr a)
-    | ENaturalTimes FC (Expr a) (Expr a) -- | ENaturalTimes (Expr a) (Expr a)
-    | EInteger FC -- | EInteger
-    | EIntegerLit FC Integer -- | EIntegerLit Integer
-    | EIntegerShow FC -- | EIntegerShow
-    | EIntegerClamp FC -- | EIntegerClamp
-    | EIntegerNegate FC -- | EIntegerNegate
-    | EIntegerToDouble FC -- | EIntegerToDouble
-    | EDouble FC -- | EDouble
-    | EDoubleLit FC Double -- | EDoubleLit Double
-    | EDoubleShow FC -- | EDoubleShow
-    | EText FC -- | EText
-    | ETextLit FC (Chunks a) -- | ETextLit (Chunks a)
-    | ETextAppend FC (Expr a) (Expr a) -- | ETextAppend (Expr a) (Expr a)
-    | ETextShow FC -- | ETextShow
-    | ETextReplace FC -- | ETextReplace
-    | EList FC -- | EList
-    | EListLit FC (List (Expr a)) -- | EListLit (Maybe (Expr a)) (List (Expr a))
-    | EListAppend FC (Expr a) (Expr a) -- | EListAppend (Expr a) (Expr a)
-    | EListBuild FC -- | EListBuild
-    | EListFold FC -- | EListFold
-    | EListLength FC -- | EListLength
-    | EListHead FC -- | EListHead
-    | EListLast FC -- | EListLast
-    | EListIndexed FC -- | EListIndexed
-    | EListReverse FC -- | EListReverse
-    | EOptional FC -- | EOptional
-    | ENone FC -- | ENone
-    | ESome FC (Expr a) -- | ESome (Expr a)
-    | EEquivalent FC (Expr a) (Expr a) -- | EEquivalent (Expr a) (Expr a)
-    | EAssert FC (Expr a) -- | EAssert (Expr a)
-    | ERecord FC (SortedMap String (Expr a)) -- | ERecord (SortedMap FieldName (Expr a))
-    | ERecordLit FC (SortedMap String (Expr a)) -- | ERecordLit (SortedMap FieldName (Expr a))
-    | EUnion FC (SortedMap String (Maybe (Expr a))) -- | EUnion (SortedMap FieldName (Maybe (Expr a)))
-    | ECombine FC (Expr a) (Expr a) -- | ECombine (Expr a) (Expr a)
-    | ECombineTypes FC (Expr a) (Expr a) -- | ECombineTypes (Expr a) (Expr a)
-    | EPrefer FC (Expr a) (Expr a) -- | EPrefer (Expr a) (Expr a)
-    | ERecordCompletion FC (Expr a) (Expr a) -- | ERecordCompletion (Expr a) (Expr a)
-    | EMerge FC (Expr a) (Expr a) (Maybe (Expr a)) -- | EMerge (Expr a) (Expr a) (Maybe (Expr a))
-    | EToMap FC (Expr a) (Maybe (Expr a)) -- | EToMap (Expr a) (Maybe (Expr a))
-    | EField FC (Expr a) String -- | EField (Expr a) FieldName
-    -- | EProject (Expr a) (Either (List FieldName) (Expr a))
-    | EWith FC (Expr a) (List1 String) (Expr a) -- | EWith (Expr a) (List1 FieldName) (Expr a)
-    | EImportAlt FC (Expr a) (Expr a) -- | EImportAlt (Expr a) (Expr a)
-    | EEmbed FC String -- | EEmbed (Import a)
-
 mkExprFC : OriginDesc -> WithBounds x -> (FC -> x -> Expr a) -> Expr a
 mkExprFC od e mkE = mkE (boundToFC od e) (val e)
 
 mkExprFC0 : OriginDesc -> WithBounds x -> (FC -> Expr a) -> Expr a
 mkExprFC0 od e mkE = mkE (boundToFC od e)
 
-interface HasFC a where
-  constructor MkHasFC
-  getFC : a -> FC
-
-getBounds : Expr a -> FC
-getBounds (EConst fc _) = fc
-getBounds (EVar fc _) = fc
-getBounds (ELam fc _ _ _) = fc
-getBounds (EApp fc _ _) = fc
-getBounds (EPi fc _ _ _) = fc
-getBounds (ELet fc _ _ _) = fc
-getBounds (EAnnot fc _ _) = fc
-getBounds (EBool fc) = fc
-getBounds (EBoolLit fc _) = fc
-getBounds (EBoolAnd fc _ _) = fc
-getBounds (EBoolOr fc _ _) = fc
-getBounds (EBoolEQ fc _ _) = fc
-getBounds (EBoolNE fc _ _) = fc
-getBounds (EBoolIf fc _ _ _) = fc
-getBounds (ENatural fc) = fc
-getBounds (ENaturalLit fc _) = fc
-getBounds (ENaturalBuild fc) = fc
-getBounds (ENaturalFold fc) = fc
-getBounds (ENaturalIsZero fc) = fc
-getBounds (ENaturalEven fc) = fc
-getBounds (ENaturalOdd fc) = fc
-getBounds (ENaturalSubtract fc) = fc
-getBounds (ENaturalToInteger fc) = fc
-getBounds (ENaturalShow fc) = fc
-getBounds (ENaturalPlus fc _ _) = fc
-getBounds (ENaturalTimes fc _ _) = fc
-getBounds (EInteger fc) = fc
-getBounds (EIntegerLit fc _) = fc
-getBounds (EIntegerShow fc) = fc
-getBounds (EIntegerNegate fc) = fc
-getBounds (EIntegerClamp fc) = fc
-getBounds (EIntegerToDouble fc) = fc
-getBounds (EDouble fc) = fc
-getBounds (EDoubleLit fc _) = fc
-getBounds (EDoubleShow fc) = fc
-getBounds (EList fc) = fc
-getBounds (EListLit fc _) = fc
-getBounds (EListAppend fc _ _) = fc
-getBounds (EListBuild fc) = fc
-getBounds (EListFold fc) = fc
-getBounds (EListLength fc) = fc
-getBounds (EListHead fc) = fc
-getBounds (EListLast fc) = fc
-getBounds (EListIndexed fc) = fc
-getBounds (EListReverse fc) = fc
-getBounds (EText fc) = fc
-getBounds (ETextAppend fc _ _) = fc
-getBounds (ETextLit fc _) = fc
-getBounds (ETextShow fc) = fc
-getBounds (ETextReplace fc) = fc
-getBounds (EOptional fc) = fc
-getBounds (ESome fc _) = fc
-getBounds (ENone fc) = fc
-getBounds (EEquivalent fc _ _) = fc
-getBounds (EAssert fc _) = fc
-getBounds (ERecord fc _) = fc
-getBounds (ERecordLit fc _) = fc
-getBounds (EUnion fc _) = fc
-getBounds (ECombine fc _ _) = fc
-getBounds (ECombineTypes fc _ _) = fc
-getBounds (EPrefer fc _ _) = fc
-getBounds (ERecordCompletion fc _ _) = fc
-getBounds (EMerge fc _ _ _) = fc
-getBounds (EToMap fc _ _) = fc
-getBounds (EField fc _ _) = fc
-getBounds (EWith fc _ _ _) = fc
-getBounds (EImportAlt fc _ _) = fc
-getBounds (EEmbed fc _) = fc
-
 updateBounds : FC -> Expr a -> Expr a
 updateBounds fc (EConst _ z) = EConst fc z
-updateBounds fc (EVar _ z) = EVar fc z
+updateBounds fc (EVar _ z n) = EVar fc z n
 updateBounds fc (ELam _ z w v) = ELam fc z w v
 updateBounds fc (EApp _ z w) = EApp fc z w
 updateBounds fc (EPi _ n z w) = EPi fc n z w
-updateBounds fc (ELet _ z w v) = ELet fc z w v
+updateBounds fc (ELet _ z t w v) = ELet fc z t w v
 updateBounds fc (EAnnot _ z w) = EAnnot fc z w
 updateBounds fc (EBool _) = EBool fc
 updateBounds fc (EBoolLit _ z) = EBoolLit fc z
@@ -279,7 +92,7 @@ updateBounds fc (EDouble _) = EDouble fc
 updateBounds fc (EDoubleShow _) = EDoubleShow fc
 updateBounds fc (EDoubleLit _ z) = EDoubleLit fc z
 updateBounds fc (EList _) = EList fc
-updateBounds fc (EListLit _ z) = EListLit fc z
+updateBounds fc (EListLit _ t z) = EListLit fc t z
 updateBounds fc (EListAppend _ z w) = EListAppend fc z w
 updateBounds fc (EListBuild _) = EListBuild fc
 updateBounds fc (EListFold _) = EListFold fc
@@ -309,103 +122,20 @@ updateBounds fc (EPrefer _ x y) = EPrefer fc x y
 updateBounds fc (ERecordCompletion _ x y) = ERecordCompletion fc x y
 updateBounds fc (EMerge _ x y z) = EMerge fc x y z
 updateBounds fc (EToMap _ x y) = EToMap fc x y
+updateBounds fc (EProject _ x y) = EProject fc x y
 updateBounds fc (EImportAlt _ x y) = EImportAlt fc x y
 updateBounds fc (EEmbed _ z) = EEmbed fc z
 
-public export
-Semigroup (Chunks a) where
-  (<+>) (MkChunks xysL zL) (MkChunks [] zR) = MkChunks xysL (zL <+> zR)
-  (<+>) (MkChunks xysL zL) (MkChunks ((x, y) :: xysR) zR) =
-    MkChunks (xysL ++ (zL <+> x, y)::xysR) zR
-
-public export
-Monoid (Chunks a) where
-  neutral = MkChunks [] neutral
-
-mutual
-  Show (Chunks a) where
-    show (MkChunks xs x) = "MkChunks \{show xs} \{show x}"
-
-  Show (Expr a) where
-    show (EConst fc x) = "(\{show fc}:EConst \{show x})"
-    show (EVar fc x) = "(\{show fc}:EVar \{show x})"
-    show (EApp fc x y) = "(\{show fc}:EApp \{show x} \{show y})"
-    show (ELam fc n x y) = "(\{show fc}:ELam \{show n} \{show x} \{show y})"
-    show (EPi fc n x y) = "(\{show fc}:EPi \{show n} \{show x} \{show y})"
-    show (ELet fc x y z) = "(\{show fc}:ELet \{show x} \{show y} \{show z})"
-    show (EAnnot fc x y) = "(\{show fc}:EAnnot \{show x} \{show y}"
-    show (EBool fc) = "\{show fc}:EBool"
-    show (EBoolLit fc x) = "\{show fc}:EBoolLit \{show x}"
-    show (EBoolAnd fc x y) = "(\{show fc}:EBoolAnd \{show x} \{show y})"
-    show (EBoolOr fc x y) = "\{show fc}:EBoolOr \{show x} \{show y})"
-    show (EBoolEQ fc x y) = "\{show fc}:EBoolEQ \{show x} \{show y})"
-    show (EBoolNE fc x y) = "\{show fc}:EBoolNE \{show x} \{show y})"
-    show (EBoolIf fc x y z) = "\{show fc}:EBoolIf \{show x} \{show y}) \{show z})"
-    show (ENatural fc) = "\{show fc}:ENatural"
-    show (ENaturalLit fc x) = "\{show fc}:ENatural \{show x}"
-    show (ENaturalBuild fc) = "(\{show fc}:ENaturalBuild)"
-    show (ENaturalFold fc) = "(\{show fc}:ENaturalFold)"
-    show (ENaturalIsZero fc) = "(\{show fc}:ENaturalZero)"
-    show (ENaturalEven fc) = "(\{show fc}:ENaturalEven)"
-    show (ENaturalOdd fc) = "(\{show fc}:ENaturalOdd)"
-    show (ENaturalSubtract fc) = "(\{show fc}:ENaturalSubtract)"
-    show (ENaturalToInteger fc) = "(\{show fc}:ENaturalToInteger)"
-    show (ENaturalShow fc) = "(\{show fc}:ENaturalShow)"
-    show (ENaturalPlus fc x y) = "\{show fc}:ENaturalPlus \{show x} \{show y})"
-    show (ENaturalTimes fc x y) = "\{show fc}:ENaturalTimes \{show x} \{show y})"
-    show (EInteger fc) = "\{show fc}:EInteger"
-    show (EIntegerLit fc x) = "\{show fc}:EIntegerLit \{show x}"
-    show (EIntegerShow fc) = "(\{show fc}:EIntegerShow)"
-    show (EIntegerNegate fc) = "(\{show fc}:EIntegerNegate)"
-    show (EIntegerClamp fc) = "(\{show fc}:EIntegerClamp)"
-    show (EIntegerToDouble fc) = "(\{show fc}:EIntegerToDouble)"
-    show (EDouble fc) = "\{show fc}:EDouble"
-    show (EDoubleLit fc x) = "(\{show fc}:EDoubleLit \{show x})"
-    show (EDoubleShow fc) = "(\{show fc}:EDoubleShow)"
-    show (EList fc) = "(\{show fc}:EList)"
-    show (EListLit fc x) = "(\{show fc}:EListLit \{show x})"
-    show (EListAppend fc x y) = "(\{show fc}:EListAppend \{show x} \{show y})"
-    show (EListBuild fc) = "(\{show fc}:EListBuild)"
-    show (EListFold fc) = "(\{show fc}:EListFold)"
-    show (EListLength fc) = "(\{show fc}:EListLength)"
-    show (EListHead fc) = "(\{show fc}:EListHead)"
-    show (EListLast fc) = "(\{show fc}:EListLast)"
-    show (EListIndexed fc) = "(\{show fc}:EListIndexed)"
-    show (EListReverse fc) = "(\{show fc}:EListReverse)"
-    show (EText fc) = "(\{show fc}:ETextLit"
-    show (ETextLit fc cs) = "(\{show fc}:ETextLit \{show cs}"
-    show (ETextAppend fc x y) = "(\{show fc}:ETextAppend \{show x} \{show y}"
-    show (ETextShow fc) = "(\{show fc}:ETextShow)"
-    show (ETextReplace fc) = "(\{show fc}:ETextReplace)"
-    show (EOptional fc) = "(\{show fc}:EOptional)"
-    show (ESome fc x) = "(\{show fc}:ESome \{show x})"
-    show (ENone fc) = "(\{show fc}:ENone)"
-    show (EField fc x s) = "(\{show fc}:EField \{show x} \{show s}"
-    show (EWith fc x s y) = "(\{show fc}:EWith \{show x} \{show s} \{show y})"
-    show (EEquivalent fc x y) = "(\{show fc}:EEquivalent \{show x} \{show y}"
-    show (EAssert fc x) = "(\{show fc}:EAssert \{show x}"
-    show (ERecord fc x) = "(\{show fc}:ERecord \{show x}"
-    show (ERecordLit fc x) = "(\{show fc}:ERecordLit \{show x}"
-    show (EUnion fc x) = "(\{show fc}:EUnion \{show x}"
-    show (ECombine fc x y) = "(\{show fc}:ECombine \{show x} \{show y}"
-    show (ECombineTypes fc x y) = "(\{show fc}:ECombineTypes \{show x} \{show y}"
-    show (EPrefer fc x y) = "(\{show fc}:EPrefer \{show x} \{show y}"
-    show (ERecordCompletion fc x y) = "(\{show fc}:ERecordCompletion \{show x} \{show y}"
-    show (EMerge fc x y z) = "(\{show fc}:EMerge \{show x} \{show y} \{show z}"
-    show (EToMap fc x y) = "(\{show fc}:EToMap \{show x} \{show y}"
-    show (EImportAlt fc x y) = "(\{show fc}:EImportAlt \{show fc} \{show x} \{show y})"
-    show (EEmbed fc x) = "(\{show fc}:EEmbed \{show fc} \{show x})"
-
-prettyDottedList : List String -> Doc ann
+prettyDottedList : Pretty a => List a -> Doc ann
 prettyDottedList [] = pretty ""
 prettyDottedList (x :: []) = pretty x
 prettyDottedList (x :: xs) = pretty x <+> pretty "." <+> prettyDottedList xs
 
 mutual
-  prettySortedMap : Pretty x
+  prettySortedMap : Pretty x => Pretty y
                   => (Doc ann -> Doc ann)
                   -> Doc ann
-                  -> (SortedMap String x)
+                  -> (SortedMap x y)
                   -> Doc ann
   prettySortedMap wrapping sign e =
     let ls = SortedMap.toList e
@@ -413,11 +143,11 @@ mutual
     in
     wrapping $ foldl (<++>) neutral (punctuate comma lsDoc)
   where
-    go : Doc ann -> (String, x) -> Doc ann
+    go : Doc ann -> (x, y) -> Doc ann
     go x (s, e) = pretty s <++> x <++> pretty e
 
-  prettyUnion : Pretty x
-              => (SortedMap String (Maybe x))
+  prettyUnion : Pretty x => Pretty y
+              => (SortedMap x (Maybe y))
               -> Doc ann
   prettyUnion e =
     let ls = SortedMap.toList e
@@ -425,16 +155,41 @@ mutual
     in
     enclose langle (space <+> rangle) $ foldl (<++>) neutral (punctuate (space <+> pipe) lsDoc)
   where
-    go : (String, Maybe x) -> Doc ann
+    go : (x, Maybe y) -> Doc ann
     go (s, Nothing) = pretty s
     go (s, Just e) = pretty s <++> colon <++> pretty e
 
-  Pretty (Chunks ()) where
+  Pretty U where
+    pretty CType = "Type"
+    pretty Sort = "Sort"
+    pretty Kind = "Kind"
+
+  Pretty FieldName where
+    pretty (MkFieldName x) = pretty x
+
+  Pretty FilePath where
+    pretty (MkFilePath path Nothing) = pretty $ prettyPrintPath path
+    pretty (MkFilePath path (Just x)) =
+      (pretty $ prettyPrintPath path) <+> pretty "/" <+> pretty x
+
+  Pretty ImportStatement where
+    pretty (LocalFile x) = pretty x
+    pretty (EnvVar x) = pretty "env:" <+> pretty x
+    pretty (Http x) = pretty x
+    pretty Missing = pretty "Missing"
+
+  Pretty a => Pretty (Import a) where
+    pretty (Raw x) = pretty x
+    pretty (Text x) = pretty x <++> pretty "as Text"
+    pretty (Location x) = pretty x <++> pretty "as Location"
+    pretty (Resolved x) = pretty "ERROR: SHOULD NOT BE"
+
+  Pretty a => Pretty (Chunks a) where
     pretty (MkChunks xs x) = pretty xs <+> pretty x
 
-  Pretty (Expr ()) where
+  Pretty a => Pretty (Expr a) where
     pretty (EConst fc x) = pretty x
-    pretty (EVar fc x) = pretty x
+    pretty (EVar fc x n) = pretty x <+> pretty "@" <+> pretty n
     pretty (EApp fc x y) = pretty x <++> pretty y
     pretty (ELam fc n x y) =
       pretty "\\" <+> parens (pretty n <++> colon <++> pretty x)
@@ -443,7 +198,7 @@ mutual
     pretty (EPi fc n x y) =
       pretty "forall" <+> parens (pretty n <++> colon <++> pretty x)
         <++> pretty "->" <++> pretty y
-    pretty (ELet fc x y z) =
+    pretty (ELet fc x t y z) =
       pretty "let" <++> pretty x <++> equals <++> pretty y
         <++> pretty "in" <++> pretty z
     pretty (EAnnot fc x y) = pretty x <++> colon <++> pretty y
@@ -479,7 +234,7 @@ mutual
     pretty (EDoubleLit fc x) = pretty $ show x
     pretty (EDoubleShow fc) = pretty "Double/show"
     pretty (EList fc) = pretty "List"
-    pretty (EListLit fc xs) = pretty xs
+    pretty (EListLit fc t xs) = pretty xs <++> colon <++> pretty t
     pretty (EListAppend fc x y) = pretty x <++> pretty "#" <++> pretty y
     pretty (EListBuild fc) = pretty "List/build"
     pretty (EListFold fc) = pretty "List/fold"
@@ -513,17 +268,17 @@ mutual
     pretty (EMerge fc x y Nothing) = pretty "merge" <++> pretty x <++> pretty y
     pretty (EMerge fc x y (Just z)) = pretty "merge" <++> pretty x <++> pretty y <++> pretty ":" <++> pretty z
     pretty (EToMap fc x Nothing) = pretty "toMap" <++> pretty x
+    pretty (EProject fc x (Left y)) = pretty x <+> dot <+> braces (prettyDottedList y)
+    pretty (EProject fc x (Right y)) = pretty x <+> dot <+> parens (pretty y)
     pretty (EToMap fc x (Just y)) =
       pretty "merge" <++> pretty x
       <++> pretty ":" <++> pretty y
     pretty (EImportAlt fc x y) = pretty x <++> pretty "?" <++> pretty y
     pretty (EEmbed fc x) = pretty x
 
-public export
 Rule : Type -> Type -> Type
 Rule state ty = Grammar state RawToken True ty
 
-public export
 EmptyRule : Type -> Type -> Type
 EmptyRule state ty = Grammar state RawToken False ty
 
@@ -574,12 +329,12 @@ boundedOp : (FC -> Expr a -> Expr a -> Expr a)
           -> Expr a
           -> Expr a
 boundedOp op x y =
-  let xB = getBounds x
-      yB = getBounds y
+  let xB = getFC x
+      yB = getFC y
       mB = mergeBounds xB yB in
       op mB x y
 
-builtinTerm : WithBounds String -> Grammar state (TokenRawToken) False (Expr ())
+builtinTerm : WithBounds String -> Grammar state (TokenRawToken) False (RawExpr)
 builtinTerm str =
   case val str of
      "Natural/build" => pure $ cons ENaturalBuild
@@ -620,107 +375,168 @@ builtinTerm str =
      "Sort" => pure $ EConst (boundToFC initBounds str) Sort
      x => fail "Expected builtin name"
   where
-    cons : (FC -> Expr ()) -> Expr ()
+    cons : (FC -> RawExpr) -> RawExpr
     cons = mkExprFC0 initBounds str
 
 mutual
-  embed : Grammar state (TokenRawToken) True (Expr ())
-  embed = do
-    s <- bounds $ embedPath
-    pure $ mkExprFC initBounds s EEmbed
+  dhallImport : Grammar state (TokenRawToken) True (ImportStatement)
+  dhallImport = httpImport <|> envImport <|> pathImport <|> missingImport
+  where
+    httpImport : Grammar state (TokenRawToken) True (ImportStatement)
+    httpImport = do
+      h <- Rule.httpImport
+      pure $ Http h
+    envImport : Grammar state (TokenRawToken) True (ImportStatement)
+    envImport = do
+      e <- Rule.envImport
+      pure $ EnvVar e
+    pathImport : Grammar state (TokenRawToken) True (ImportStatement)
+    pathImport = do
+      p <- Rule.filePath
+      pure $ LocalFile $ filePathFromPath p
+    missingImport : Grammar state (TokenRawToken) True (ImportStatement)
+    missingImport = Rule.missingImport *> pure Missing
 
-  naturalLit : Grammar state (TokenRawToken) True (Expr ())
+  embed : Grammar state (TokenRawToken) True (RawExpr)
+  embed = do
+    i <- bounds (shaAndAsImport <|> asImport <|> shaImport <|> bareImport)
+    pure $ EEmbed (boundToFC initBounds i) (val i)
+  where
+    asType : Grammar state (TokenRawToken) True (a -> Import a)
+    asType = do
+      (tokenW $ keyword "as Text" *> pure Text)
+        <|> (tokenW $ keyword "as Location" *> pure Location)
+    asImport : Grammar state (TokenRawToken) True (Import ImportStatement)
+    asImport = do
+      i <- dhallImport
+      con <- asType
+      pure $ con i
+    shaImport : Grammar state (TokenRawToken) True (Import ImportStatement)
+    shaImport = do
+      i <- dhallImport
+      _ <- tokenW $ Rule.shaImport
+      pure $ Raw i
+    shaAndAsImport : Grammar state (TokenRawToken) True (Import ImportStatement)
+    shaAndAsImport = do
+      i <- dhallImport
+      _ <- tokenW $ Rule.shaImport
+      con <- asType
+      pure $ con i
+    bareImport : Grammar state (TokenRawToken) True (Import ImportStatement)
+    bareImport = do
+      i <- dhallImport
+      pure $ Raw i
+
+  naturalLit : Grammar state (TokenRawToken) True (RawExpr)
   naturalLit = do
     s <- bounds $ Rule.naturalLit
     pure $ mkExprFC initBounds s ENaturalLit
 
-  integerLit : Grammar state (TokenRawToken) True (Expr ())
+  integerLit : Grammar state (TokenRawToken) True (RawExpr)
   integerLit = do
     s <- bounds $ Rule.integerLit
     pure $ mkExprFC initBounds s EIntegerLit
 
-  doubleLit : Grammar state (TokenRawToken) True (Expr ())
+  doubleLit : Grammar state (TokenRawToken) True (RawExpr)
   doubleLit = do
     s <- bounds $ Rule.doubleLit
     pure $ mkExprFC initBounds s EDoubleLit
 
-  someLit : Grammar state (TokenRawToken) True (Expr ())
+  someLit : Grammar state (TokenRawToken) True (RawExpr)
   someLit = do
     start <- bounds $ tokenW $ someBuiltin
     e <- bounds $ exprTerm
     pure $ ESome (mergeBounds (boundToFC initBounds start) (boundToFC initBounds e)) $ val e
 
-  textLit : Grammar state (TokenRawToken) True (Expr ())
+  textLit : Grammar state (TokenRawToken) True (RawExpr)
   textLit = do
     start <- bounds $ textBoundary
     chunks <- some (interpLit <|> chunkLit)
     end <- bounds $ textBoundary
     pure $ ETextLit (boundToFC2 initBounds start end) (foldl (<+>) neutral chunks)
   where
-    interpLit : Rule (Chunks ())
+    interpLit : Rule (Chunks ImportStatement)
     interpLit = do
       e <- between interpBegin interpEnd exprTerm
       pure $ MkChunks [("", e)] ""
 
-    chunkLit : Rule (Chunks ())
+    chunkLit : Rule (Chunks ImportStatement)
     chunkLit = do
       str <- Parser.Rule.textLit
       pure (MkChunks [] str)
 
-  builtin : Grammar state (TokenRawToken) True (Expr ())
+  builtin : Grammar state (TokenRawToken) True (RawExpr)
   builtin = do
       name <- bounds $ Rule.builtin
       builtinTerm name
 
-  varTerm : Grammar state (TokenRawToken) True (Expr ())
+  varTerm : Grammar state (TokenRawToken) True (RawExpr)
   varTerm = do
       name <- bounds $ identPart
-      pure $ EVar (boundToFC initBounds name) $ val name
+      pure $ EVar (boundToFC initBounds name) (val name) 0
 
-  atom : Grammar state (TokenRawToken) True (Expr ())
+  postFix : WithBounds RawExpr -> Grammar state (TokenRawToken) True (RawExpr)
+  postFix x = do
+    tokenW $ symbol "."
+    commit
+    rightProject <|> leftProject
+  where
+    rightProject : Grammar state (TokenRawToken) True (RawExpr)
+    rightProject = do
+      e <- bounds $ (between (symbol "(") (symbol ")") exprTerm)
+      pure $ EProject (mergeBounds (boundToFC initBounds x) (boundToFC initBounds e)) (val x) (Right $ val e)
+    leftProject : Grammar state (TokenRawToken) True (RawExpr)
+    leftProject = do
+      l <- bounds $ (between (symbol "{") (symbol "}") dottedList)
+      pure $ EProject (mergeBounds (boundToFC initBounds x) (boundToFC initBounds l)) (val x) (Left $ forget $ val l)
+
+  atom : Grammar state (TokenRawToken) True (RawExpr)
   atom = do
-    a <- builtin <|> varTerm <|> textLit
+    a <- bounds $ builtin <|> varTerm <|> textLit
       <|> naturalLit <|> integerLit <|> doubleLit
       <|> someLit
       <|> recordType <|> recordLit
       <|> union
       <|> embed
       <|> listLit <|> (between (symbol "(") (symbol ")") exprTerm)
-    pure a
+    p <- optional $ postFix a
+    pure (case p of
+               Nothing => val a
+               (Just x) => x)
 
   recordParser : Grammar state (TokenRawToken) True ()
-               -> (FC -> (SortedMap String (Expr ())) -> Expr ())
-               -> Grammar state (TokenRawToken) True (Expr ())
+               -> (FC -> (SortedMap FieldName (RawExpr)) -> RawExpr)
+               -> Grammar state (TokenRawToken) True (RawExpr)
   recordParser sep cons = do
     start <- bounds $ tokenW $ symbol "{"
     commit
     let fc = boundToFC initBounds start
     emptyRecord fc <|> populatedRecord fc
   where
-    emptyRecord : FC -> Grammar state (TokenRawToken) True (Expr ())
+    emptyRecord : FC -> Grammar state (TokenRawToken) True (RawExpr)
     emptyRecord fc = do
       end <- bounds $ symbol "}"
       pure $ cons (mergeBounds fc (boundToFC initBounds end)) $ SortedMap.fromList []
-    recordField : Grammar state (TokenRawToken) True (String, Expr ())
+    recordField : Grammar state (TokenRawToken) True (FieldName, RawExpr)
     recordField = do
       i <- identPart
       _ <- optional whitespace
       tokenW $ sep
       e <- exprTerm
-      pure (i, e)
-    populatedRecord : FC -> Grammar state (TokenRawToken) True (Expr ())
+      pure (MkFieldName i, e)
+    populatedRecord : FC -> Grammar state (TokenRawToken) True (RawExpr)
     populatedRecord fc = do
       es <- sepBy (tokenW $ symbol ",") recordField
       end <- bounds $ symbol "}"
       pure $ cons (mergeBounds fc (boundToFC initBounds end)) $ SortedMap.fromList (es)
 
-  recordType : Grammar state (TokenRawToken) True (Expr ())
+  recordType : Grammar state (TokenRawToken) True (RawExpr)
   recordType = recordParser (symbol ":") ERecord
 
-  recordLit : Grammar state (TokenRawToken) True (Expr ())
+  recordLit : Grammar state (TokenRawToken) True (RawExpr)
   recordLit = recordParser (symbol "=") ERecordLit
 
-  union : Grammar state (TokenRawToken) True (Expr ())
+  union : Grammar state (TokenRawToken) True (RawExpr)
   union = do
     start <- bounds $ tokenW $ symbol "<"
     commit
@@ -728,61 +544,73 @@ mutual
     end <- bounds $ tokenW $ symbol ">"
     pure $ EUnion (mergeBounds (boundToFC initBounds start) (boundToFC initBounds end)) $ SortedMap.fromList es
   where
-    unionSimple : Grammar state (TokenRawToken) True (String, Maybe (Expr ()))
+    unionSimple : Grammar state (TokenRawToken) True (FieldName, Maybe (RawExpr))
     unionSimple = do
       name <- tokenW $ identPart
-      pure (name, Nothing)
-    unionComplex : Grammar state (TokenRawToken) True (String, Maybe (Expr ()))
+      pure (MkFieldName name, Nothing)
+    unionComplex : Grammar state (TokenRawToken) True (FieldName, Maybe (RawExpr))
     unionComplex = do
       name <- tokenW $ identPart
       start <- bounds $ tokenW $ symbol ":"
       e <- exprTerm
       _ <- optional whitespace
-      pure (name, Just e)
+      pure (MkFieldName name, Just e)
 
-  listLit : Grammar state (TokenRawToken) True (Expr ())
+  listLit : Grammar state (TokenRawToken) True (RawExpr)
   listLit = do
     start <- bounds $ tokenW $ symbol "["
     commit
     let fc = boundToFC initBounds start
     (populatedList fc) <|> (emptyList fc)
   where
-    emptyList : FC -> Grammar state (TokenRawToken) True (Expr ())
+    listType : Grammar state (TokenRawToken) True (WithBounds RawExpr)
+    listType = do
+      tokenW $ symbol ":"
+      bounds $ exprTerm
+    emptyList : FC -> Grammar state (TokenRawToken) True (RawExpr)
     emptyList fc = do
-      end <- bounds $ symbol "]"
-      pure $ EListLit (mergeBounds fc (boundToFC initBounds end)) []
-    populatedList : FC -> Grammar state (TokenRawToken) True (Expr ())
+      tokenW $ symbol "]"
+      ty <- listType
+      pure $ EListLit (mergeBounds fc (boundToFC initBounds ty)) (Just (val ty)) []
+    populatedList : FC -> Grammar state (TokenRawToken) True (RawExpr)
     populatedList fc = do
       es <- sepBy1 (tokenW $ symbol ",") exprTerm
       end <- bounds $ symbol "]"
-      pure $ EListLit (mergeBounds fc (boundToFC initBounds end)) (forget es)
+      ty <- optional listType
+      pure $ case ty of
+                  Nothing =>
+                    EListLit (mergeBounds fc (boundToFC initBounds end)) Nothing (forget es)
+                  (Just ty') =>
+                    EListLit (mergeBounds fc (boundToFC initBounds ty')) (Just $ val ty') (forget es)
 
   opParser : String
-     -> (FC -> Expr () -> Expr () -> Expr ())
-     -> Grammar state (TokenRawToken) True (Expr () -> Expr () -> Expr ())
+     -> (FC -> RawExpr -> RawExpr -> RawExpr)
+     -> Grammar state (TokenRawToken) True (RawExpr -> RawExpr -> RawExpr)
   opParser op cons = infixOp (do
       _ <- optional whitespace
       tokenW $ symbol op) (boundedOp cons)
 
-  otherOp : FC -> Grammar state (TokenRawToken) True (Expr () -> Expr () -> Expr ())
+  projectParser : FC -> Grammar state (TokenRawToken) True (RawExpr -> RawExpr -> RawExpr)
+
+  otherOp : FC -> Grammar state (TokenRawToken) True (RawExpr -> RawExpr -> RawExpr)
   otherOp fc =
     (opParser "++" ETextAppend) <|> (opParser "#" EListAppend)
       <|> (opParser "/\\" ECombine) <|> (opParser "//\\\\" ECombineTypes)
       <|> (opParser "//" EPrefer) <|> (opParser "::" ERecordCompletion)
       <|> (opParser "===" EEquivalent) <|> (opParser "?" EImportAlt)
 
-  plusOp : FC -> Grammar state (TokenRawToken) True (Expr () -> Expr () -> Expr ())
+  plusOp : FC -> Grammar state (TokenRawToken) True (RawExpr -> RawExpr -> RawExpr)
   plusOp fc = (opParser "+" ENaturalPlus)
 
-  mulOp : FC -> Grammar state (TokenRawToken) True (Expr () -> Expr () -> Expr ())
+  mulOp : FC -> Grammar state (TokenRawToken) True (RawExpr -> RawExpr -> RawExpr)
   mulOp fc = (opParser "*" ENaturalTimes)
 
-  boolOp : FC -> Grammar state (TokenRawToken) True (Expr () -> Expr () -> Expr ())
+  boolOp : FC -> Grammar state (TokenRawToken) True (RawExpr -> RawExpr -> RawExpr)
   boolOp fc =
     (opParser "&&" EBoolAnd) <|> (opParser "||" EBoolOr)
     <|> (opParser "==" EBoolEQ) <|> (opParser "!=" EBoolNE)
 
-  piOp : FC -> Grammar state (TokenRawToken) True (Expr () -> Expr () -> Expr ())
+  piOp : FC -> Grammar state (TokenRawToken) True (RawExpr -> RawExpr -> RawExpr)
   piOp fc =
       infixOp (do
         _ <- optional whitespace
@@ -792,10 +620,10 @@ mutual
     epi' : String -> FC -> Expr a -> Expr a -> Expr a
     epi' n fc y z = EPi fc n y z
 
-  appOp : FC -> Grammar state (TokenRawToken) True (Expr () -> Expr () -> Expr ())
+  appOp : FC -> Grammar state (TokenRawToken) True (RawExpr -> RawExpr -> RawExpr)
   appOp fc = (opParser ":" EAnnot) <|> infixOp whitespace (boundedOp EApp)
 
-  withOp : FC -> Grammar state (TokenRawToken) True (Expr () -> Expr () -> Expr ())
+  withOp : FC -> Grammar state (TokenRawToken) True (RawExpr -> RawExpr -> RawExpr)
   withOp fc =
     do
       -- TODO find a better solution than just `match White` at the start of
@@ -808,43 +636,43 @@ mutual
       tokenW $ symbol "="
       pure (boundedOp (with' dl))
   where
-    with' : List1 String -> FC -> Expr a -> Expr a -> Expr a
+    with' : List1 FieldName -> FC -> Expr a -> Expr a -> Expr a
     with' xs fc x y = EWith fc x xs y
 
-  otherTerm : Grammar state (TokenRawToken) True (Expr ())
+  otherTerm : Grammar state (TokenRawToken) True (RawExpr)
   otherTerm = chainl1 atom (otherOp EmptyFC)
 
-  mulTerm : Grammar state (TokenRawToken) True (Expr ())
+  mulTerm : Grammar state (TokenRawToken) True (RawExpr)
   mulTerm = chainl1 otherTerm (mulOp EmptyFC)
 
-  plusTerm : Grammar state (TokenRawToken) True (Expr ())
+  plusTerm : Grammar state (TokenRawToken) True (RawExpr)
   plusTerm = chainl1 mulTerm (plusOp EmptyFC)
 
-  boolTerm : Grammar state (TokenRawToken) True (Expr ())
+  boolTerm : Grammar state (TokenRawToken) True (RawExpr)
   boolTerm = chainl1 plusTerm (boolOp EmptyFC)
 
-  piTerm : Grammar state (TokenRawToken) True (Expr ())
+  piTerm : Grammar state (TokenRawToken) True (RawExpr)
   piTerm = chainr1 boolTerm (piOp EmptyFC)
 
-  fieldTerm : Grammar state (TokenRawToken) True (Expr ())
+  fieldTerm : Grammar state (TokenRawToken) True (RawExpr)
   fieldTerm = hchainl piTerm fieldOp (bounds identPart)
   where
-    field' : Expr () -> WithBounds String -> Expr ()
+    field' : RawExpr -> WithBounds String -> RawExpr
     field' e s =
-      let start = getBounds e
+      let start = getFC e
           end = boundToFC initBounds $ s
           fc' = mergeBounds start end
-      in EField fc' e (val s)
-    fieldOp : Grammar state (TokenRawToken) True (Expr () -> WithBounds String -> Expr ())
+      in EField fc' e (MkFieldName (val s))
+    fieldOp : Grammar state (TokenRawToken) True (RawExpr -> WithBounds String -> RawExpr)
     fieldOp = do
       _ <- optional whitespace
       _ <- tokenW $ symbol "."
       pure $ field'
 
-  appTerm : Grammar state (TokenRawToken) True (Expr ())
+  appTerm : Grammar state (TokenRawToken) True (RawExpr)
   appTerm = chainl1 fieldTerm (appOp EmptyFC)
 
-  exprTerm : Grammar state (TokenRawToken) True (Expr ())
+  exprTerm : Grammar state (TokenRawToken) True (RawExpr)
   exprTerm = do
     letBinding <|>
     lamTerm <|>
@@ -854,19 +682,20 @@ mutual
     toMapTerm <|>
     chainl1 appTerm (withOp EmptyFC)
 
-  letBinding : Grammar state (TokenRawToken) True (Expr ())
+  letBinding : Grammar state (TokenRawToken) True (RawExpr)
   letBinding = do
     start <- bounds $ tokenW $ keyword "let"
     commit
     name <- tokenW $ identPart
+    ty <- optional (tokenW $ symbol ":" *> exprTerm)
     _ <- tokenW $ symbol "="
     e <- exprTerm
     _ <- whitespace
     end <- bounds $ tokenW $ keyword "in" -- TODO is this a good end position?
     e' <- exprTerm
-    pure $ ELet (mergeBounds (boundToFC initBounds start) (boundToFC initBounds end)) name e e'
+    pure $ ELet (mergeBounds (boundToFC initBounds start) (boundToFC initBounds end)) name ty e e'
 
-  lamTerm : Grammar state (TokenRawToken) True (Expr ())
+  lamTerm : Grammar state (TokenRawToken) True (RawExpr)
   lamTerm = do
     start <- bounds $ tokenW $ (do symbol "\\" ; symbol "(")
     commit
@@ -880,7 +709,7 @@ mutual
     pure $ ELam (mergeBounds (boundToFC initBounds start) (boundToFC initBounds body))
             name (val t) (val body)
 
-  assertTerm : Grammar state (TokenRawToken) True (Expr ())
+  assertTerm : Grammar state (TokenRawToken) True (RawExpr)
   assertTerm = do
     start <- bounds $ tokenW $ keyword "assert"
     commit
@@ -889,24 +718,24 @@ mutual
     e <- bounds $ exprTerm
     pure $ EAssert (mergeBounds (boundToFC initBounds start) (boundToFC initBounds e)) (val e)
 
-  mergeTerm : Grammar state (TokenRawToken) True (Expr ())
+  mergeTerm : Grammar state (TokenRawToken) True (RawExpr)
   mergeTerm = Text.Parser.Core.do
     start <- bounds $ tokenW $ keyword "merge"
     commit
     e1 <- bounds exprTerm
-    the (Grammar state TokenRawToken _ (Expr ())) $
+    the (Grammar state TokenRawToken _ (RawExpr)) $
       case go (boundToFC initBounds start) (val e1) of
            (Right x) => pure x
            (Left _) => fail "TODO implement better merge parse"
   where
-    go : FC -> Expr () -> Either () (Expr ())
+    go : FC -> RawExpr -> Either () (RawExpr)
     go start (EApp fc x y) =
       pure $ EMerge (mergeBounds start fc) x y Nothing
     go start (EAnnot fc (EApp _ x y) t) =
       pure $ EMerge (mergeBounds start fc) x y (Just t)
     go _ _ = Left ()
 
-  toMapTerm : Grammar state (TokenRawToken) True (Expr ())
+  toMapTerm : Grammar state (TokenRawToken) True (RawExpr)
   toMapTerm = Text.Parser.Core.do
     start <- bounds $ tokenW $ keyword "toMap"
     commit
@@ -917,7 +746,7 @@ mutual
          x =>
             EToMap (mergeBounds (boundToFC initBounds start) (boundToFC initBounds e)) x Nothing
 
-  ifTerm : Grammar state (TokenRawToken) True (Expr ())
+  ifTerm : Grammar state (TokenRawToken) True (RawExpr)
   ifTerm = do
     start <- bounds $ tokenW $ keyword "if"
     commit
@@ -931,7 +760,7 @@ mutual
     pure $ EBoolIf (mergeBounds (boundToFC initBounds start) (boundToFC initBounds e))
             (val i) (val t) (val e)
 
-finalParser : Grammar state (TokenRawToken) True (Expr ())
+finalParser : Grammar state (TokenRawToken) True (RawExpr)
 finalParser = do
   e <- exprTerm
   _ <- optional $ many whitespace
@@ -962,18 +791,36 @@ combineWhite (x :: y :: xs) =
        (White, White) => combineWhite (y :: xs)
        (t, u) => x :: combineWhite (y :: xs)
 
+doLex : String -> Either (StopReason, Int, Int, String) (List (WithBounds TokenRawToken))
+doLex input = Idrall.Parser.Lexer.lex input
+
+doParse' : List (WithBounds TokenRawToken) -> Either (List1 (ParsingError RawToken)) (RawExpr, List (WithBounds TokenRawToken))
+doParse' tokens =
+  let processedTokens = (combineWhite . removeComments) tokens
+  in parse finalParser $ processedTokens
+
+public export
+parseExprNew : String -> Either String (RawExpr, Int)
+parseExprNew input = do
+    Right tokens <- pure $ doLex input
+      | Left e => Left $ show e
+
+    Right (expr, x) <- pure $ doParse' tokens
+      | Left e => Left $ show e
+    pure (expr, 0)
+
 doParse : String -> IO ()
 doParse input = do
-  Right tokens <- pure $ Idrall.Parser.Lexer.lex input
+  Right tokens <- pure $ doLex input
     | Left e => printLn $ show e
   putStrLn $ "tokens: " ++ show tokens
 
   let processedTokens = (combineWhite . removeComments) tokens
   putStrLn $ "processedTokens: " ++ show processedTokens
-  Right (expr, x) <- pure $ parse finalParser $ processedTokens -- TODO use finalParser
+  Right (expr, x) <- pure $ doParse' tokens
     | Left e => printLn $ show e
 
-  let doc = the (Doc (Expr ())) $ pretty expr
+  let doc = the (Doc (RawExpr)) $ pretty expr
   putStrLn $
     """
     expr: \{show expr}

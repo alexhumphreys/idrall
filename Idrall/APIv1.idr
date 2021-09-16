@@ -6,6 +6,7 @@ import public Idrall.Error
 import Idrall.Eval
 import Idrall.Check
 import Idrall.Parser
+import Idrall.ParserNew
 import Idrall.Resolve
 import public Idrall.IOEither
 import Idrall.Path
@@ -16,19 +17,32 @@ import Data.String
 
 -- Test Stuff
 
+data WhichParser = OldParser | NewParser
+
+useParser : WhichParser
+useParser = OldParser
+-- useParser = NewParser
+
+parseFunction : WhichParser -> String -> Either String (Expr ImportStatement, Int)
+parseFunction OldParser = Idrall.Parser.parseExpr
+parseFunction NewParser = Idrall.ParserNew.parseExprNew
+
+parseWith : String -> Either String (Expr ImportStatement, Int)
+parseWith = parseFunction useParser
+
 handleError : String -> Error
 handleError x = ErrorMessage initFC x
 
 public export
 exprFromString : String -> IOEither Error (Expr Void)
 exprFromString x = do
-  x' <- mapErr (handleError) (liftEither (parseExpr x))
+  x' <- mapErr (handleError) (liftEither (parseWith x))
   resolve [] Nothing (fst x')
 
 export
 resolveFromString : Maybe FilePath -> String -> IOEither Error (Expr Void)
 resolveFromString path x = do
-  x' <- mapErr (handleError) (liftEither (parseExpr x))
+  x' <- mapErr (handleError) (liftEither (parseWith x))
   resolve [] path (fst x')
 
 public export

@@ -289,6 +289,13 @@ Show ImportStatement where
   show (Http x) = "(Http " ++ x ++ ")"
   show Missing = "Missing"
 
+export
+Show (Import ImportStatement) where
+  show (Raw x) = "(Raw \{show x}"
+  show (Text x) = "(Text \{show x}"
+  show (Location x) = "(Location \{show x}"
+  show (Resolved x) = "(Resolved x)"
+
 mutual
   export
   Show (Import a) where
