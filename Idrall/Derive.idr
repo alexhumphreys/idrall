@@ -38,8 +38,8 @@ public export
 FromString Name where
   fromString s = run (split ('.' ==) s) []
     where run : List1 String -> List String -> Name
-          run (h ::: []) []        = UN h
-          run (h ::: []) ns        = NS (MkNS ns) (UN h)
+          run (h ::: []) []        = UN $ Basic h
+          run (h ::: []) ns        = NS (MkNS ns) (UN $ Basic h)
           run (h ::: (y :: ys)) xs = run (y ::: ys) (h :: xs)
 
 ||| Alias for `var . fromString`
@@ -67,7 +67,7 @@ genReadableSym : String -> Elab Name
 genReadableSym hint = do
   MN v i <- genSym hint
     | _ => fail "cannot generate readable argument name"
-  pure $ UN (v ++ show i)
+  pure $ UN $ Basic (v ++ show i)
 
 ||| from idris2-lsp
 primStr : String -> TTImp
@@ -159,8 +159,8 @@ deriveFromDhall : IdrisType -> (name : Name) -> Elab ()
 deriveFromDhall it n =
   do [(name, _)] <- getType n
              | _ => fail "Ambiguous name"
-     let funName = UN ("fromDhall" ++ show (stripNs name))
-     let objName = UN ("__impl_fromDhall" ++ show (stripNs name))
+     let funName = UN $ Basic ("fromDhall" ++ show (stripNs name))
+     let objName = UN $ Basic ("__impl_fromDhall" ++ show (stripNs name))
 
      conNames <- getCons name
 
