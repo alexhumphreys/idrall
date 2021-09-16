@@ -4,10 +4,24 @@ import Idrall.Error
 import Idrall.Expr
 import Idrall.IOEither
 import Idrall.Parser
+import Idrall.ParserNew
 import Idrall.Path
 
 import System
 import System.File
+
+data WhichParser = OldParser | NewParser
+
+useParser : WhichParser
+-- useParser = OldParser
+useParser = NewParser
+
+parseFunction : WhichParser -> Maybe String -> String -> Either String (Expr ImportStatement, Int)
+parseFunction OldParser x = Idrall.Parser.parseExpr
+parseFunction NewParser x = Idrall.ParserNew.parseExprNew {od = x}
+
+parseWith : Maybe String -> String -> Either String (Expr ImportStatement, Int)
+parseWith x = parseFunction useParser x
 
 parseErrorHandler : FC -> String -> Error
 parseErrorHandler fc x = ErrorMessage fc x
@@ -46,7 +60,7 @@ mutual
   resolveEnvVar : FC -> (history : List FilePath) -> Maybe FilePath -> String -> IOEither Error (Expr Void)
   resolveEnvVar fc h p x = do
     str <- readEnvVar fc x
-    expr <- mapErr (parseErrorHandler fc) (liftEither (parseExpr str))
+    expr <- mapErr (parseErrorHandler fc) (liftEither (parseWith Nothing str))
     resolve h p (fst expr)
 
   resolveLocalFile : FC -> (history : List FilePath) -> (current : Maybe FilePath) -> (next : FilePath) -> IOEither Error (Expr Void)
@@ -61,13 +75,17 @@ mutual
     go : FilePath -> IOEither Error (Expr Void)
     go p = do
       liftEither (alreadyImported fc h (normaliseFilePath p))
-      str <- readFile' (canonicalFilePath p)
-      expr <- mapErr (parseErrorHandler fc) (liftEither (parseExpr str))
+      let fp = canonicalFilePath p
+      str <- readFile' fp
+      expr <- mapErr (parseErrorHandler fc) (liftEither (parseWith (Just fp) str))
       resolve (normaliseFilePath p :: h) (Just p) (fst expr)
 
   export
   covering
-  resolve : (history : List FilePath) -> Maybe FilePath -> Expr ImportStatement -> IOEither Error (Expr Void)
+  resolve : (history : List FilePath)
+          -> Maybe FilePath
+          -> Expr ImportStatement
+          -> IOEither Error (Expr Void)
   resolve h p (EVar fc x i) = pure (EVar fc x i)
   resolve h p (EConst fc x) = pure (EConst fc x)
   resolve h p (EPi fc x y z) = do
