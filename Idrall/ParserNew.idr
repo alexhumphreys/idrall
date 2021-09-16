@@ -527,6 +527,7 @@ mutual
     populatedRecord : FC -> Grammar state (TokenRawToken) True (RawExpr)
     populatedRecord fc = do
       es <- sepBy (tokenW $ symbol ",") recordField
+      _ <- optional whitespace
       end <- bounds $ symbol "}"
       pure $ cons (mergeBounds fc (boundToFC od end)) $ SortedMap.fromList (es)
 
@@ -575,6 +576,7 @@ mutual
     populatedList : FC -> Grammar state (TokenRawToken) True (RawExpr)
     populatedList fc = do
       es <- sepBy1 (tokenW $ symbol ",") $ exprTerm od
+      _ <- optional whitespace
       end <- bounds $ symbol "]"
       ty <- optional listType
       pure $ case ty of
@@ -612,7 +614,7 @@ mutual
   piOp =
       infixOp (do
         _ <- optional whitespace
-        tokenW $ symbol "->")
+        arrow)
         (boundedOp $ epi' "foo")
   where
     epi' : String -> FC -> Expr a -> Expr a -> Expr a
@@ -674,6 +676,7 @@ mutual
   exprTerm od = do
     letBinding od <|>
     lamTerm od <|>
+    piTermLong od <|>
     assertTerm od <|>
     ifTerm od <|>
     mergeTerm od <|>
@@ -693,19 +696,39 @@ mutual
     e' <- exprTerm od
     pure $ ELet (mergeBounds (boundToFC od start) (boundToFC od end)) name ty e e'
 
-  lamTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
-  lamTerm od = do
-    start <- bounds $ tokenW $ (do symbol "\\" ; symbol "(")
+  piTermLong : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
+  piTermLong od = do
+    start <- bounds $ piStart
     commit
     name <- tokenW $ identPart
     _ <- symbol ":"
     _ <- whitespace
     t <- bounds $ exprTerm od
     _ <- tokenW $ symbol ")"
-    _ <- tokenW $ symbol "->"
+    _ <- arrow
+    body <- bounds $ exprTerm od
+    pure $ EPi (mergeBounds (boundToFC od start) (boundToFC od body))
+            name (val t) (val body)
+  where
+    piStart : Grammar state (TokenRawToken) True ()
+    piStart = tokenW $ ((symbol "forall" <|> symbol "∀") *> symbol "(")
+
+  lamTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
+  lamTerm od = do
+    start <- bounds $ lamStart
+    commit
+    name <- tokenW $ identPart
+    _ <- symbol ":"
+    _ <- whitespace
+    t <- bounds $ exprTerm od
+    _ <- tokenW $ symbol ")"
+    _ <- arrow
     body <- bounds $ exprTerm od
     pure $ ELam (mergeBounds (boundToFC od start) (boundToFC od body))
             name (val t) (val body)
+  where
+    lamStart : Grammar state (TokenRawToken) True ()
+    lamStart = tokenW $ ((symbol "\\" <|> symbol "λ") *> symbol "(")
 
   assertTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
   assertTerm od = do

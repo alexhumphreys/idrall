@@ -119,6 +119,10 @@ envImport =
       _ => Nothing
 
 export
+arrow : Rule ()
+arrow = tokenW $ symbol "->" <|> symbol "→"
+
+export
 shaImport : Rule String
 shaImport =
   terminal "expected sha import" $
