@@ -267,8 +267,8 @@ mutual
     pretty (EMerge fc x y Nothing) = pretty "merge" <++> pretty x <++> pretty y
     pretty (EMerge fc x y (Just z)) = pretty "merge" <++> pretty x <++> pretty y <++> pretty ":" <++> pretty z
     pretty (EToMap fc x Nothing) = pretty "toMap" <++> pretty x
-    pretty (EProject fc x (Left y)) = pretty x <++> dot <++> braces (pretty y)
-    pretty (EProject fc x (Right y)) = pretty x <++> dot <++> parens (pretty y)
+    pretty (EProject fc x (Left y)) = pretty x <+> dot <+> braces (prettyDottedList y)
+    pretty (EProject fc x (Right y)) = pretty x <+> dot <+> parens (pretty y)
     pretty (EToMap fc x (Just y)) =
       pretty "merge" <++> pretty x
       <++> pretty ":" <++> pretty y
@@ -476,16 +476,34 @@ mutual
       name <- bounds $ identPart
       pure $ EVar (boundToFC initBounds name) (val name) 0
 
+  postFix : WithBounds RawExpr -> Grammar state (TokenRawToken) True (RawExpr)
+  postFix x = do
+    tokenW $ symbol "."
+    commit
+    rightProject <|> leftProject
+  where
+    rightProject : Grammar state (TokenRawToken) True (RawExpr)
+    rightProject = do
+      e <- bounds $ (between (symbol "(") (symbol ")") exprTerm)
+      pure $ EProject (mergeBounds (boundToFC initBounds x) (boundToFC initBounds e)) (val x) (Right $ val e)
+    leftProject : Grammar state (TokenRawToken) True (RawExpr)
+    leftProject = do
+      l <- bounds $ (between (symbol "{") (symbol "}") dottedList)
+      pure $ EProject (mergeBounds (boundToFC initBounds x) (boundToFC initBounds l)) (val x) (Left $ forget $ val l)
+
   atom : Grammar state (TokenRawToken) True (RawExpr)
   atom = do
-    a <- builtin <|> varTerm <|> textLit
+    a <- bounds $ builtin <|> varTerm <|> textLit
       <|> naturalLit <|> integerLit <|> doubleLit
       <|> someLit
       <|> recordType <|> recordLit
       <|> union
       <|> embed
       <|> listLit <|> (between (symbol "(") (symbol ")") exprTerm)
-    pure a
+    p <- optional $ postFix a
+    pure (case p of
+               Nothing => val a
+               (Just x) => x)
 
   recordParser : Grammar state (TokenRawToken) True ()
                -> (FC -> (SortedMap FieldName (RawExpr)) -> RawExpr)
@@ -572,6 +590,8 @@ mutual
   opParser op cons = infixOp (do
       _ <- optional whitespace
       tokenW $ symbol op) (boundedOp cons)
+
+  projectParser : FC -> Grammar state (TokenRawToken) True (RawExpr -> RawExpr -> RawExpr)
 
   otherOp : FC -> Grammar state (TokenRawToken) True (RawExpr -> RawExpr -> RawExpr)
   otherOp fc =
