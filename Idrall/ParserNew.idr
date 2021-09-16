@@ -22,6 +22,7 @@ import Idrall.Expr
 import Idrall.Path
 import Debug.Trace
 
+public export
 RawExpr : Type
 RawExpr = Expr ImportStatement
 
@@ -275,11 +276,9 @@ mutual
     pretty (EImportAlt fc x y) = pretty x <++> pretty "?" <++> pretty y
     pretty (EEmbed fc x) = pretty x
 
-public export
 Rule : Type -> Type -> Type
 Rule state ty = Grammar state RawToken True ty
 
-public export
 EmptyRule : Type -> Type -> Type
 EmptyRule state ty = Grammar state RawToken False ty
 
@@ -792,15 +791,33 @@ combineWhite (x :: y :: xs) =
        (White, White) => combineWhite (y :: xs)
        (t, u) => x :: combineWhite (y :: xs)
 
+doLex : String -> Either (StopReason, Int, Int, String) (List (WithBounds TokenRawToken))
+doLex input = Idrall.Parser.Lexer.lex input
+
+doParse' : List (WithBounds TokenRawToken) -> Either (List1 (ParsingError RawToken)) (RawExpr, List (WithBounds TokenRawToken))
+doParse' tokens =
+  let processedTokens = (combineWhite . removeComments) tokens
+  in parse finalParser $ processedTokens
+
+public export
+parseExprNew : String -> Either String (RawExpr, Int)
+parseExprNew input = do
+    Right tokens <- pure $ doLex input
+      | Left e => Left $ show e
+
+    Right (expr, x) <- pure $ doParse' tokens
+      | Left e => Left $ show e
+    pure (expr, 0)
+
 doParse : String -> IO ()
 doParse input = do
-  Right tokens <- pure $ Idrall.Parser.Lexer.lex input
+  Right tokens <- pure $ doLex input
     | Left e => printLn $ show e
   putStrLn $ "tokens: " ++ show tokens
 
   let processedTokens = (combineWhite . removeComments) tokens
   putStrLn $ "processedTokens: " ++ show processedTokens
-  Right (expr, x) <- pure $ parse finalParser $ processedTokens
+  Right (expr, x) <- pure $ doParse' tokens
     | Left e => printLn $ show e
 
   let doc = the (Doc (RawExpr)) $ pretty expr
@@ -816,14 +833,3 @@ normalString = "\"f\noo\""
 
 interpString : String
 interpString = "\"fo ${True && \"ba ${False} r\"} o\""
-
-public export
-parseExpr' : String -> Either String (RawExpr, Int)
-parseExpr' input = do
-    Right tokens <- pure $ Idrall.Parser.Lexer.lex input
-      | Left e => Left $ show e
-
-    let processedTokens = (combineWhite . removeComments) tokens
-    Right (expr, x) <- pure $ parse finalParser $ processedTokens
-      | Left e => Left $ show e
-    pure (expr, 0)

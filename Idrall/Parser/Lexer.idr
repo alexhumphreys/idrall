@@ -223,8 +223,10 @@ where
 
 -- imports
 envImport : Tokenizer RawToken
-envImport = match (envStart <+> (someUntil (space) charLexer)) EnvImport
+envImport = match (envStart <+> (someUntil (space) charLexer)) removePrefix
 where
+  removePrefix : String -> RawToken
+  removePrefix x = EnvImport $ pack $ drop 4 (unpack x) -- "env:" is 4 characters
   envStart : Lexer
   envStart = exact "env:"
   charLexer : Lexer

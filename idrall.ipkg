@@ -9,6 +9,8 @@ modules = Idrall.Expr
         , Idrall.Resolve
         , Idrall.Parser
         , Idrall.ParserNew
+        , Idrall.Parser.Rule
+        , Idrall.Parser.Lexer
         , Idrall.Lexer
         , Idrall.Eval
         , Idrall.Check
