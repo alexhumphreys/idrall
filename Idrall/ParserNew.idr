@@ -804,7 +804,7 @@ parseExprNew input = do
       | Left e => Left $ show e
 
     Right (expr, x) <- pure $ doParse' od tokens
-      | Left e => Left $ show e
+      | Left e => Left $ "\{show od} \{show e}"
     pure (expr, 0)
 
 doParse : String -> IO ()
