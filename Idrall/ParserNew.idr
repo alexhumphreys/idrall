@@ -542,7 +542,8 @@ mutual
     start <- bounds $ tokenW $ symbol "<"
     commit
     es <- sepBy (tokenW $ symbol "|") (unionComplex <|> unionSimple)
-    end <- bounds $ tokenW $ symbol ">"
+    _ <- optional whitespace
+    end <- bounds $ symbol ">"
     pure $ EUnion (mergeBounds (boundToFC od start) (boundToFC od end)) $ SortedMap.fromList es
   where
     unionSimple : Grammar state (TokenRawToken) True (FieldName, Maybe (RawExpr))
@@ -597,7 +598,7 @@ mutual
     (opParser "++" ETextAppend) <|> (opParser "#" EListAppend)
       <|> (opParser "/\\" ECombine) <|> (opParser "//\\\\" ECombineTypes)
       <|> (opParser "//" EPrefer) <|> (opParser "::" ERecordCompletion)
-      <|> (opParser "===" EEquivalent) <|> (opParser "?" EImportAlt)
+      <|> (opParser "≡" EEquivalent) <|> (opParser "===" EEquivalent) <|> (opParser "?" EImportAlt)
 
   plusOp : Grammar state (TokenRawToken) True (RawExpr -> RawExpr -> RawExpr)
   plusOp = (opParser "+" ENaturalPlus)

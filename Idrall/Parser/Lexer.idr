@@ -299,6 +299,7 @@ mutual
     <|> match (exact "||") Symbol
     <|> match (exact "&&") Symbol
     <|> match (exact "===") Symbol
+    <|> match (exact "≡") Symbol
     <|> match (exact "==") Symbol
     <|> match (exact "!=") Symbol
     <|> match (exact "=") Symbol
