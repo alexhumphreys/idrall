@@ -487,8 +487,12 @@ mutual
       pure $ EProject (mergeBounds (boundToFC od x) (boundToFC od e)) (val x) (Right $ val e)
     leftProject : Grammar state (TokenRawToken) True (RawExpr)
     leftProject = do
-      l <- bounds $ (between (symbol "{") (symbol "}") dottedList)
-      pure $ EProject (mergeBounds (boundToFC od x) (boundToFC od l)) (val x) (Left $ forget $ val l)
+      l <- bounds $ (between (symbol "{") (symbol "}") (optional dottedList))
+      pure $ case l of
+           (MkBounded Nothing isIrrelevant bounds) =>
+              EProject (mergeBounds (boundToFC od x) (boundToFC od l)) (val x) (Left $ [])
+           (MkBounded (Just y) isIrrelevant bounds) =>
+              EProject (mergeBounds (boundToFC od x) (boundToFC od l)) (val x) (Left $ forget $ y)
 
   atom : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
   atom od = do
@@ -611,19 +615,6 @@ mutual
     (opParser "&&" EBoolAnd) <|> (opParser "||" EBoolOr)
     <|> (opParser "==" EBoolEQ) <|> (opParser "!=" EBoolNE)
 
-  piOp : Grammar state (TokenRawToken) True (RawExpr -> RawExpr -> RawExpr)
-  piOp =
-      infixOp (do
-        _ <- optional whitespace
-        arrow)
-        (boundedOp $ epi' "foo")
-  where
-    epi' : String -> FC -> Expr a -> Expr a -> Expr a
-    epi' n fc y z = EPi fc n y z
-
-  appOp : Grammar state (TokenRawToken) True (RawExpr -> RawExpr -> RawExpr)
-  appOp = (opParser ":" EAnnot) <|> infixOp whitespace (boundedOp EApp)
-
   withOp : Grammar state (TokenRawToken) True (RawExpr -> RawExpr -> RawExpr)
   withOp =
     do
@@ -653,10 +644,19 @@ mutual
   boolTerm od = chainl1 (plusTerm od) (boolOp)
 
   piTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
-  piTerm od = chainr1 (boolTerm od) (piOp)
+  piTerm od = chainr1 (appTerm od) (piOp)
+  where
+    epi' : String -> FC -> Expr a -> Expr a -> Expr a
+    epi' n fc y z = EPi fc n y z
+    piOp : Grammar state (TokenRawToken) True (RawExpr -> RawExpr -> RawExpr)
+    piOp =
+        infixOp (do
+          _ <- optional whitespace
+          arrow)
+          (boundedOp $ epi' "foo")
 
   fieldTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
-  fieldTerm od = hchainl (piTerm od) fieldOp (bounds identPart)
+  fieldTerm od = hchainl (boolTerm od) fieldOp (bounds identPart)
   where
     field' : RawExpr -> WithBounds String -> RawExpr
     field' e s =
@@ -670,8 +670,16 @@ mutual
       _ <- tokenW $ symbol "."
       pure $ field'
 
+  annotTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
+  annotTerm od = chainr1 (piTerm od) (annotOp)
+  where
+    annotOp : Grammar state (TokenRawToken) True (RawExpr -> RawExpr -> RawExpr)
+    annotOp = (opParser ":" EAnnot)
+
   appTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
-  appTerm od = chainl1 (fieldTerm od) (appOp)
+  appTerm od = (do
+                x <- some $ fieldTerm od
+                pure $ List1.foldl1 (EApp EmptyFC) x) -- (appOp)
 
   exprTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
   exprTerm od = do
@@ -682,7 +690,7 @@ mutual
     ifTerm od <|>
     mergeTerm od <|>
     toMapTerm od <|>
-    chainl1 (appTerm od) (withOp)
+    chainl1 (annotTerm od) (withOp)
 
   letBinding : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
   letBinding od = do
@@ -692,7 +700,7 @@ mutual
     ty <- optional (tokenW $ symbol ":" *> exprTerm od)
     _ <- tokenW $ symbol "="
     e <- exprTerm od
-    _ <- whitespace
+    _ <- optional whitespace
     end <- bounds $ tokenW $ keyword "in" -- TODO is this a good end position?
     e' <- exprTerm od
     pure $ ELet (mergeBounds (boundToFC od start) (boundToFC od end)) name ty e e'
@@ -703,7 +711,7 @@ mutual
     commit
     name <- tokenW $ identPart
     _ <- symbol ":"
-    _ <- whitespace
+    _ <- optional whitespace
     t <- bounds $ exprTerm od
     _ <- tokenW $ symbol ")"
     _ <- arrow
@@ -720,7 +728,7 @@ mutual
     commit
     name <- tokenW $ identPart
     _ <- symbol ":"
-    _ <- whitespace
+    _ <- optional whitespace
     t <- bounds $ exprTerm od
     _ <- tokenW $ symbol ")"
     _ <- arrow
@@ -736,7 +744,7 @@ mutual
     start <- bounds $ tokenW $ keyword "assert"
     commit
     _ <- symbol ":"
-    _ <- whitespace
+    _ <- optional whitespace
     e <- bounds $ exprTerm od
     pure $ EAssert (mergeBounds (boundToFC od start) (boundToFC od e)) (val e)
 
@@ -773,10 +781,10 @@ mutual
     start <- bounds $ tokenW $ keyword "if"
     commit
     i <- bounds $ exprTerm od
-    _ <- whitespace
+    _ <- optional whitespace
     _ <- bounds $ tokenW $ keyword "then"
     t <- bounds $ exprTerm od
-    _ <- whitespace
+    _ <- optional whitespace
     _ <- bounds $ tokenW $ keyword "else"
     e <- bounds $ exprTerm od
     pure $ EBoolIf (mergeBounds (boundToFC od start) (boundToFC od e))
@@ -785,7 +793,7 @@ mutual
 finalParser : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
 finalParser od = do
   e <- exprTerm od
-  _ <- optional $ many whitespace
+  -- _ <- optional $ many whitespace
   endOfInput
   pure e
 

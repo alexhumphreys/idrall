@@ -353,6 +353,7 @@ lexTo reject str
       notComment : WithBounds RawToken -> Bool
       notComment t = case t.val of
                           Comment _ => False
+                          White => False
                           _ => True
 
 export
