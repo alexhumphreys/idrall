@@ -132,6 +132,9 @@ where
   isIdentTrailing '/' = True
   isIdentTrailing x = isAlphaNum x || x > chr 160
 
+quotedIdent : Lexer
+quotedIdent = is '`' <+> (manyThen (is '`') (any))
+
 parseIdent : String -> RawToken
 parseIdent x =
   let isKeyword = elem x keywords
@@ -140,6 +143,21 @@ parseIdent x =
        (True, False) => Keyword x
        (False, True) => Builtin x
        (_, _) => Ident x
+
+parseQuotedIdent : String -> RawToken
+parseQuotedIdent x = Ident $ dropQuotes x -- ?parseQuotedIdent_rhs
+  where
+  dropLast : List a -> List a
+  dropLast xs = reverse (drop 1 $ reverse xs)
+  dropFirst : List a -> List a
+  dropFirst xs = drop 1 xs
+  dropQuotes : String -> String
+  dropQuotes x =
+    let str = unpack x
+    in
+    case length str >= 2 of
+         True => pack $ dropFirst . dropLast $ str
+         False => x
 
 -- double
 sign : Lexer
@@ -316,7 +334,6 @@ mutual
     <|> match (exact "::") Symbol
     <|> match (exact ":") Symbol
     <|> match (exact "?") Symbol
-    <|> match (exact "`") Symbol
     <|> match (exact "(") Symbol
     <|> match (exact ")") Symbol
     <|> match (exact "{") Symbol
@@ -333,6 +350,7 @@ mutual
     <|> match spaces (const White)
     <|> match doubleLit (TDouble . cast)
     <|> match naturalLit (TNatural . cast)
+    <|> match quotedIdent parseQuotedIdent
     <|> match ident parseIdent
     <|> compose stringBegin
                 (const $ StringBegin Single)

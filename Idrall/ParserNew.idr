@@ -570,7 +570,7 @@ mutual
       pure $ mkNestedRecord (val ls) e
     punField : FC -> Grammar state (TokenRawToken) True RecordElem
     punField fc = do
-      i <- bounds identPart
+      i <- bounds fieldName
       pure $ SortedMap.fromList [(MkFieldName (val i), EVar fc (val i) 0)] -- TODO check 0 here
     recordField : FC -> Grammar state (TokenRawToken) True RecordElem
     recordField fc = dottedField fc <|> punField fc
@@ -695,7 +695,7 @@ mutual
         infixOp (do
           _ <- optional whitespace
           arrow)
-          (boundedOp $ epi' "foo")
+          (boundedOp $ epi' "_")
 
   fieldTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
   fieldTerm od = hchainl (boolTerm od) fieldOp (bounds fieldName)
