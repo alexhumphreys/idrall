@@ -523,7 +523,7 @@ mutual
       pure $ cons (mergeBounds fc (boundToFC initBounds end)) $ SortedMap.fromList []
     recordField : Grammar state (TokenRawToken) True (FieldName, RawExpr)
     recordField = do
-      i <- identPart
+      i <- fieldName
       _ <- optional whitespace
       tokenW $ sep
       e <- exprTerm od
@@ -552,11 +552,11 @@ mutual
   where
     unionSimple : Grammar state (TokenRawToken) True (FieldName, Maybe (RawExpr))
     unionSimple = do
-      name <- tokenW $ identPart
+      name <- tokenW $ fieldName
       pure (MkFieldName name, Nothing)
     unionComplex : Grammar state (TokenRawToken) True (FieldName, Maybe (RawExpr))
     unionComplex = do
-      name <- tokenW $ identPart
+      name <- tokenW $ fieldName
       start <- bounds $ tokenW $ symbol ":"
       e <- exprTerm od
       _ <- optional whitespace
@@ -656,7 +656,7 @@ mutual
           (boundedOp $ epi' "foo")
 
   fieldTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
-  fieldTerm od = hchainl (boolTerm od) fieldOp (bounds identPart)
+  fieldTerm od = hchainl (boolTerm od) fieldOp (bounds fieldName)
   where
     field' : RawExpr -> WithBounds String -> RawExpr
     field' e s =

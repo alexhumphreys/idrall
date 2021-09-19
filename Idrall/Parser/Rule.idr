@@ -95,6 +95,15 @@ identPart =
       _ => Nothing
 
 export
+fieldName : Rule String
+fieldName =
+  terminal "expected fieldName" $
+    \case
+      Ident x => Just x
+      Builtin x => Just x
+      _ => Nothing
+
+export
 missingImport : Rule ()
 missingImport =
   terminal "expected missing" $
