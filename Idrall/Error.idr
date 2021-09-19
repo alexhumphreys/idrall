@@ -1,5 +1,7 @@
 module Idrall.Error
 
+import Data.String
+
 import public Text.PrettyPrint.Prettyprinter
 import public Idrall.FC
 
@@ -36,6 +38,40 @@ data Error
   | ParseError FC String
   | LexError FC String
   | NestedError FC Error Error
+
+export
+HasFC Error where
+  getFC (MissingVar fc x) = fc
+  getFC (AlphaEquivError fc x) = fc
+  getFC (EvalIntegerNegateErr fc x) = fc
+  getFC (EvalNaturalIsZeroErr fc x) = fc
+  getFC (EvalBoolAndErr fc) = fc
+  getFC (EvalApplyErr fc) = fc
+  getFC (Unexpected fc x) = fc
+  getFC (ErrorMessage fc x) = fc
+  getFC (ReadBackError fc x) = fc
+  getFC (SortError fc) = fc
+  getFC (AssertError fc x) = fc
+  getFC (ListAppendError fc x) = fc
+  getFC (ListHeadError fc x) = fc
+  getFC (FieldNotFoundError fc x) = fc
+  getFC (FieldArgMismatchError fc x) = fc
+  getFC (InvalidFieldType fc x) = fc
+  getFC (CombineError fc x) = fc
+  getFC (RecordFieldCollision fc x) = fc
+  getFC (ReadFileError fc x) = fc
+  getFC (MergeUnusedHandler fc x) = fc
+  getFC (MergeUnhandledCase fc x) = fc
+  getFC (ToMapError fc x) = fc
+  getFC (ToMapEmpty fc x) = fc
+  getFC (EmptyMerge fc x) = fc
+  getFC (InvalidRecordCompletion fc x) = fc
+  getFC (CyclicImportError fc x) = fc
+  getFC (EnvVarError fc x) = fc
+  getFC (FromDhallError fc x) = fc
+  getFC (ParseError fc x) = fc
+  getFC (LexError fc x) = fc
+  getFC (NestedError fc x y) = fc
 
 public export
 Show Error where
@@ -104,3 +140,16 @@ Pretty Error where
   pretty (ParseError fc x) = pretty fc <++> hardline <+> pretty "ParseError" <++> colon <++> pretty (show x)
   pretty (LexError fc x) = pretty fc <++> hardline <+> pretty "LexError" <++> colon <++> pretty (show x)
   pretty (NestedError fc x y) = pretty fc <++> hardline <+> pretty "NestedError" <++> colon <++> pretty (show x)
+
+export
+fancyError : Error -> IO String
+fancyError e =
+  let fc = getFC e
+      doc = the (Doc Error) $ pretty e
+  in do
+    str <- getSpanSnippet fc
+    case str of
+         Nothing => pure $ show e
+    -- putDoc doc
+    -- printLn ""
+         (Just span) => pure $ unlines [span, show e]

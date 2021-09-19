@@ -57,6 +57,11 @@ log True x =
     putDoc doc
     printLn ""
 
+logError : Bool -> Error -> IO ()
+logError False _ = pure ()
+logError True e = do
+  putStrLn $ !(fancyError e)
+
 mkres : Pretty a
       => {default True printLeft : Bool}
       -> {default False printRight : Bool}
@@ -66,7 +71,7 @@ mkres (MkIOEither x) = do
   x' <- x
   case x' of
        (Left y) => do
-         log printLeft y
+         logError printLeft y
          pure (MkResult 0 1)
        (Right y) => do
          log printRight y
