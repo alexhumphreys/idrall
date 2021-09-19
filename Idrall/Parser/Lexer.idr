@@ -116,7 +116,7 @@ export
 keywords : List String
 keywords = ["let", "in", "with",
   "if", "then", "else",
-  "merge", "toMap", "missing",
+  "merge", "toMap", "missing", "forall",
   "using", "assert"]
 
 -- variables
@@ -288,8 +288,11 @@ mutual
     match (blockComment <|> lineComment) Comment
     <|> match integerLit (TInteger . cast)
     <|> match (exact "//\\\\") Symbol
+    <|> match (exact "⩓") Symbol
     <|> match (exact "//") Symbol
+    <|> match (exact "⫽") Symbol
     <|> match (exact "/\\") Symbol
+    <|> match (exact "∧") Symbol
     <|> match (exact "\\") Symbol
     <|> match (exact "λ") Symbol
     <|> match (exact "∀") Symbol

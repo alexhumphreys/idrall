@@ -181,6 +181,14 @@ dottedList = do
   pure $ map MkFieldName x
 
 export
+dottedListRec : Rule (List1 FieldName)
+dottedListRec = do
+  _ <- optional whitespace
+  x <- sepBy1 (tokenW $ symbol ".") (fieldName)
+  pure $ map MkFieldName x
+
+
+export
 builtin : Rule String
 builtin =
   terminal "expected builtin" $
