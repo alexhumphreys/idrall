@@ -83,8 +83,11 @@ safePrint : List String -> (Nat, Nat) -> (Nat, Nat) -> Maybe String
 safePrint xs s@(ln, col) e@(ln', col') =
   case Data.List.inBounds ln xs of
        (Yes prf) =>
-          let str = index ln xs in
-              Just $ unlines [str, printArrows (length str) s e]
+          let str = index ln xs
+              lineNoPrefix = show ln ++ "| "
+              whitePrefix = pack $ List.replicate (length lineNoPrefix) ' '
+              in
+              Just $ unlines [lineNoPrefix ++ str, whitePrefix ++ printArrows (length str) s e]
        (No contra) => neutral -- TODO better failure case
 
 formatSpanSnippet : FC -> String -> Maybe String
