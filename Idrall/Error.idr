@@ -1,5 +1,6 @@
 module Idrall.Error
 
+import public Text.PrettyPrint.Prettyprinter
 import public Idrall.FC
 
 public export
@@ -32,6 +33,8 @@ data Error
   | CyclicImportError FC String
   | EnvVarError FC String
   | FromDhallError FC String
+  | ParseError FC String
+  | LexError FC String
   | NestedError FC Error Error
 
 public export
@@ -64,4 +67,40 @@ Show Error where
   show (CyclicImportError fc str) = "\{show fc}CyclicImportError: \{str}"
   show (EnvVarError fc str) = "\{show fc}EnvVarError \{show str}"
   show (FromDhallError fc str) = "\{show fc}FromDhallError \{show str}"
+  show (ParseError fc str) = "\{show fc}ParseError \{show str}"
+  show (LexError fc str) = "\{show fc}LexError \{show str}"
   show (NestedError fc e e') = "\{show fc}\{show e}\n\{show e'}"
+
+export
+Pretty Error where
+  pretty (MissingVar fc x) = pretty fc <++> hardline <+> pretty "Missing Var" <++> colon <++> pretty (show x)
+  pretty (AlphaEquivError fc x) = pretty fc <++> hardline <+> pretty "AlphaEquivError" <++> colon <++> pretty (show x)
+  pretty (EvalIntegerNegateErr fc x) = pretty fc <++> hardline <+> pretty "EvalIntegerNegateErr" <++> colon <++> pretty (show x)
+  pretty (EvalNaturalIsZeroErr fc x) = pretty fc <++> hardline <+> pretty "EvalNaturalIsZeroErr" <++> colon <++> pretty (show x)
+  pretty (EvalBoolAndErr fc) = pretty fc <++> hardline <+> pretty "EvalBoolAndErr"
+  pretty (EvalApplyErr fc) = pretty fc <++> hardline <+> pretty "EvalApplyErr"
+  pretty (Unexpected fc x) = pretty fc <++> hardline <+> pretty "Unexpected" <++> colon <++> pretty (show x)
+  pretty (ErrorMessage fc x) = pretty fc <++> hardline <+> pretty "ErrorMessage" <++> colon <++> pretty (show x)
+  pretty (ReadBackError fc x) = pretty fc <++> hardline <+> pretty "ReadBackError" <++> colon <++> pretty (show x)
+  pretty (SortError fc) = pretty fc <++> hardline <+> pretty "SortError"
+  pretty (AssertError fc x) = pretty fc <++> hardline <+> pretty "AssertError" <++> colon <++> pretty (show x)
+  pretty (ListAppendError fc x) = pretty fc <++> hardline <+> pretty "ListAppendError" <++> colon <++> pretty (show x)
+  pretty (ListHeadError fc x) = pretty fc <++> hardline <+> pretty "ListHeadError" <++> colon <++> pretty (show x)
+  pretty (FieldNotFoundError fc x) = pretty fc <++> hardline <+> pretty "FieldNotFoundError" <++> colon <++> pretty (show x)
+  pretty (FieldArgMismatchError fc x) = pretty fc <++> hardline <+> pretty "FieldArgMismatchError" <++> colon <++> pretty (show x)
+  pretty (InvalidFieldType fc x) = pretty fc <++> hardline <+> pretty "InvalidFieldType" <++> colon <++> pretty (show x)
+  pretty (CombineError fc x) = pretty fc <++> hardline <+> pretty "CombineError" <++> colon <++> pretty (show x)
+  pretty (RecordFieldCollision fc x) = pretty fc <++> hardline <+> pretty "RecordFieldCollision" <++> colon <++> pretty (show x)
+  pretty (ReadFileError fc x) = pretty fc <++> hardline <+> pretty "ReadFileError" <++> colon <++> pretty (show x)
+  pretty (MergeUnusedHandler fc x) = pretty fc <++> hardline <+> pretty "MergeUnusedHandler" <++> colon <++> pretty (show x)
+  pretty (MergeUnhandledCase fc x) = pretty fc <++> hardline <+> pretty "MergeUnhandledCase" <++> colon <++> pretty (show x)
+  pretty (ToMapError fc x) = pretty fc <++> hardline <+> pretty "ToMapError" <++> colon <++> pretty (show x)
+  pretty (ToMapEmpty fc x) = pretty fc <++> hardline <+> pretty "ToMapEmpty" <++> colon <++> pretty (show x)
+  pretty (EmptyMerge fc x) = pretty fc <++> hardline <+> pretty "EmptyMerge" <++> colon <++> pretty (show x)
+  pretty (InvalidRecordCompletion fc x) = pretty fc <++> hardline <+> pretty "InvalidRecordCompletion" <++> colon <++> pretty (show x)
+  pretty (CyclicImportError fc x) = pretty fc <++> hardline <+> pretty "CyclicImportError" <++> colon <++> pretty (show x)
+  pretty (EnvVarError fc x) = pretty fc <++> hardline <+> pretty "EnvVarError" <++> colon <++> pretty (show x)
+  pretty (FromDhallError fc x) = pretty fc <++> hardline <+> pretty "FromDhallError" <++> colon <++> pretty (show x)
+  pretty (ParseError fc x) = pretty fc <++> hardline <+> pretty "ParseError" <++> colon <++> pretty (show x)
+  pretty (LexError fc x) = pretty fc <++> hardline <+> pretty "LexError" <++> colon <++> pretty (show x)
+  pretty (NestedError fc x y) = pretty fc <++> hardline <+> pretty "NestedError" <++> colon <++> pretty (show x)

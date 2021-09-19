@@ -24,7 +24,7 @@ parseWith : Maybe String -> String -> Either String (Expr ImportStatement, Int)
 parseWith x = parseFunction useParser x
 
 parseErrorHandler : FC -> String -> Error
-parseErrorHandler fc x = ErrorMessage fc x
+parseErrorHandler fc x = ParseError fc x
 
 fileErrorHandler : FC -> String -> FileError -> Error
 fileErrorHandler fc x y = ReadFileError fc (show y ++ " " ++ x)

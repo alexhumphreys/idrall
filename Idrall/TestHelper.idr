@@ -14,6 +14,10 @@ import Data.List
 import Data.String
 import Data.String.Extra
 
+import Text.PrettyPrint.Prettyprinter.Util
+import Text.PrettyPrint.Prettyprinter.Doc
+import Text.PrettyPrint.Prettyprinter.Render.String
+
 public export
 record Result where
   constructor MkResult
@@ -46,11 +50,14 @@ foldlMapM f = foldr f' (pure neutral)
   f' : a -> m b -> m b
   f' x y = liftA2 (<+>) (f x) y
 
-log : Show a => Bool -> a -> IO ()
+log : Pretty a => Bool -> a -> IO ()
 log False _ = pure ()
-log True x = printLn x
+log True x =
+  let doc = the (Doc a) $ pretty x in do
+    putDoc doc
+    printLn ""
 
-mkres : Show a
+mkres : Pretty a
       => {default True printLeft : Bool}
       -> {default False printRight : Bool}
       -> IOEither Error a
@@ -109,7 +116,7 @@ doFilter (f :: xs) x =
   doFilter xs (System.Directory.Tree.filter f (\_ => True) x)
 
 -- running tests
-runTests' : Show a
+runTests' : Pretty a
           => (path : String)
           -> (String -> String -> IOEither Error a)
           -> (filters : List ({root : _} -> FileName root -> Bool))
@@ -121,7 +128,7 @@ runTests' path f filters =
     res <- depthFirst doTest (sort testFiles) $ pure neutral
     pure res
     where
-    runTestPair : Show a
+    runTestPair : Pretty a
                 => TestPair
                 -> (String -> String -> IOEither Error a)
                 -> IOEither Error a
@@ -133,14 +140,14 @@ runTests' path f filters =
       pure $ res <+> !next
 
 public export
-runTests : Show a => (path : String) -> (String -> String -> IOEither Error a) -> IO Result
+runTests : Pretty a => (path : String) -> (String -> String -> IOEither Error a) -> IO Result
 runTests path f = runTests' path f defaultFilters
 
 public export
-runTestsOnly : Show a => (onlyList : List String) -> (path : String) -> (String -> String -> IOEither Error a) -> IO Result
+runTestsOnly : Pretty a => (onlyList : List String) -> (path : String) -> (String -> String -> IOEither Error a) -> IO Result
 runTestsOnly onlyList path f = runTests' path f ((matchFiles onlyList) :: defaultFilters)
 
-runTestFail' : Show a => (path : String)
+runTestFail' : Pretty a => (path : String)
              -> (String -> IOEither Error a)
              -> (filters : List ({root : _} -> FileName root -> Bool))
              -> IO Result
@@ -158,7 +165,7 @@ runTestFail' path f filters =
       pure $ res <+> !next
 
 public export
-runTestFail : Show a
+runTestFail : Pretty a
             => (path : String)
             -> (String -> IOEither Error a)
             -> IO Result

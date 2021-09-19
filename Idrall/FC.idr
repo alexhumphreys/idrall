@@ -1,5 +1,8 @@
 module Idrall.FC
 
+import public Text.PrettyPrint.Prettyprinter
+
+import Idrall.Path
 import Idrall.Path
 
 public export
@@ -32,6 +35,17 @@ Show FC where
   show (MkFC (Just s) x y) = "\{s}:\{show x}-\{show y}"
   show (MkVirtualFC x y z) = "MkVirtualFCTODO"
   show EmptyFC = ""
+
+prettyPairs : (Nat, Nat) -> (Nat, Nat) -> Doc ann
+prettyPairs x y = pretty (show x) <++> pretty "->" <++> pretty (show y)
+
+public export
+Pretty FC where
+  pretty (MkFC Nothing y z) = prettyPairs y z
+  pretty (MkFC (Just x) y z) = pretty x <++> softline <+> prettyPairs y z
+  pretty (MkVirtualFC Nothing y z) = prettyPairs y z
+  pretty (MkVirtualFC (Just x) y z) = pretty "Virtual File" <++> pretty x <++> softline <+> prettyPairs y z
+  pretty EmptyFC = neutral
 
 public export
 initFC : FC
