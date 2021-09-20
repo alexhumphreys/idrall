@@ -278,10 +278,13 @@ embed = httpImport <|> envImport <|> relImport <|> absImport <|> homeDirImport
 
 -- strings
 groupSymbols : List String
-groupSymbols = ["{"]
+groupSymbols = ["{", "[", "(", "<"]
 
 groupClose : String -> String
 groupClose "{" = "}"
+groupClose "[" = "]"
+groupClose "(" = ")"
+groupClose "<" = ">"
 groupClose _ = ""
 
 emptyString : Lexer
@@ -355,14 +358,6 @@ mutual
     <|> match (exact "::") Symbol
     <|> match (exact ":") Symbol
     <|> match (exact "?") Symbol
-    <|> match (exact "(") Symbol
-    <|> match (exact ")") Symbol
-    <|> match (exact "{") Symbol
-    <|> match (exact "}") Symbol
-    <|> match (exact "[") Symbol
-    <|> match (exact "]") Symbol
-    <|> match (exact "<") Symbol
-    <|> match (exact ">") Symbol
     <|> match (exact "|") Symbol
     <|> match (exact ",") Symbol
     <|> match (exact ".") Symbol
