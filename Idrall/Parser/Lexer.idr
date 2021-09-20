@@ -179,6 +179,12 @@ doubleLit
       <+> ((digits <+> is '.' <+> digits <+> opt exponent)
            <|> (digits <+> exponent))
 
+posInfinity : Lexer
+posInfinity = exact "Infinity"
+
+negInfinity : Lexer
+negInfinity = is '-' <+> exact "Infinity"
+
 -- comments
 mutual
   ||| The mutually defined functions represent different states in a
@@ -341,6 +347,8 @@ mutual
     <|> embed
     <|> match (exact "missing") (const MissingImport)
     <|> match shaImport Sha
+    <|> match posInfinity (const $ TDouble (1.0e1000))
+    <|> match negInfinity (const $ TDouble (-1.0e1000))
     <|> match (exact "||") Symbol
     <|> match (exact "&&") Symbol
     <|> match (exact "===") Symbol
