@@ -481,6 +481,16 @@ mutual
       name <- bounds $ identPart
       pure $ EVar (boundToFC od name) (val name) 0
 
+  varAtTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
+  varAtTerm od = do
+      name <- bounds $ identPart
+      symbol "@"
+      end <- bounds $ naturalLit
+      pure $ EVar (mergeBounds (boundToFC od name) (boundToFC od end)) (val name) (cast $ val end)
+
+  variable : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
+  variable od = varAtTerm od <|> varTerm od
+
   postFix : OriginDesc -> WithBounds RawExpr -> Grammar state (TokenRawToken) True (RawExpr)
   postFix od x = do
     tokenW $ symbol "."
@@ -505,7 +515,7 @@ mutual
 
   atom : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
   atom od = do
-    a <- bounds $ builtin od <|> varTerm od
+    a <- bounds $ builtin od <|> variable od
       <|> (textLit od) <|> emptyTextLit od
       <|> naturalLit od <|> integerLit od <|> doubleLit od
       <|> someLit od
@@ -646,16 +656,8 @@ mutual
       _ <- optional whitespace
       tokenW op) (boundedOp cons)
 
-  plusOp : Grammar state (TokenRawToken) True (RawExpr -> RawExpr -> RawExpr)
-  plusOp = (opParser (symbol "+") ENaturalPlus)
-
   mulOp : Grammar state (TokenRawToken) True (RawExpr -> RawExpr -> RawExpr)
   mulOp = (opParser (symbol "*") ENaturalTimes)
-
-  boolOp : Grammar state (TokenRawToken) True (RawExpr -> RawExpr -> RawExpr)
-  boolOp =
-    (opParser (symbol "&&") EBoolAnd) <|> (opParser (symbol "||") EBoolOr)
-    <|> (opParser (symbol "==") EBoolEQ) <|> (opParser (symbol "!=") EBoolNE)
 
   withOp : Grammar state (TokenRawToken) True (RawExpr -> RawExpr -> RawExpr)
   withOp =
@@ -676,14 +678,16 @@ mutual
   mulTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
   mulTerm od = chainl1 (atom od) (mulOp)
 
-  plusTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
-  plusTerm od = chainl1 (mulTerm od) (plusOp)
-
   boolTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
-  boolTerm od = chainl1 (plusTerm od) (boolOp)
+  boolTerm od = chainl1 (mulTerm od) (boolOp)
+  where
+    boolOp : Grammar state (TokenRawToken) True (RawExpr -> RawExpr -> RawExpr)
+    boolOp =
+      (opParser (symbol "&&") EBoolAnd) <|> (opParser (symbol "||") EBoolOr)
+      <|> (opParser (symbol "==") EBoolEQ) <|> (opParser (symbol "!=") EBoolNE)
 
   fieldTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
-  fieldTerm od = hchainl (boolTerm od) fieldOp (bounds fieldName)
+  fieldTerm od = hchainl (mulTerm od) fieldOp (bounds fieldName)
   where
     field' : RawExpr -> WithBounds String -> RawExpr
     field' e s =
@@ -720,12 +724,21 @@ mutual
     annotOp : Grammar state (TokenRawToken) True (RawExpr -> RawExpr -> RawExpr)
     annotOp = (opParser (symbol ":") EAnnot)
 
+  plusTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
+  plusTerm od = chainl1 (annotTerm od) (plusOp)
+  where
+    plusOp : Grammar state (TokenRawToken) True (RawExpr -> RawExpr -> RawExpr)
+    plusOp = (opParser (symbol "+") ENaturalPlus)
+
   otherTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
   otherTerm od = chainl1 (annotTerm od) (otherOp)
   where
     otherOp : Grammar state (TokenRawToken) True (RawExpr -> RawExpr -> RawExpr)
     otherOp =
       (opParser (symbol "++") ETextAppend) <|> (opParser (symbol "#") EListAppend)
+        <|> (opParser (symbol "&&") EBoolAnd) <|> (opParser (symbol "||") EBoolOr)
+        <|> (opParser (symbol "==") EBoolEQ) <|> (opParser (symbol "!=") EBoolNE)
+        <|> (opParser (symbol "+") ENaturalPlus)
         <|> (opParser (symbol "/\\" <|> symbol "∧") ECombine)
         <|> (opParser (symbol "//\\\\" <|> symbol "⩓") ECombineTypes)
         <|> (opParser (symbol "//" <|> symbol "⫽") EPrefer)

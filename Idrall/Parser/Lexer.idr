@@ -318,6 +318,7 @@ mutual
     <|> match (exact "\\") Symbol
     <|> match (exact "λ") Symbol
     <|> match (exact "∀") Symbol
+    <|> match (exact "@") Symbol
     <|> embed
     <|> match (exact "missing") (const MissingImport)
     <|> match shaImport Sha
