@@ -307,6 +307,7 @@ mutual
   rawTokens : Tokenizer RawToken
   rawTokens =
     match (blockComment <|> lineComment) Comment
+    <|> match doubleLit (TDouble . cast)
     <|> match integerLit (TInteger . cast)
     <|> match (exact "//\\\\") Symbol
     <|> match (exact "⩓") Symbol
@@ -351,7 +352,6 @@ mutual
     <|> match (exact "as Text") Keyword
     <|> match (exact "as Location") Keyword
     <|> match spaces (const White)
-    <|> match doubleLit (TDouble . cast)
     <|> match naturalLit (TNatural . cast)
     <|> match quotedIdent parseQuotedIdent
     <|> match ident parseIdent
