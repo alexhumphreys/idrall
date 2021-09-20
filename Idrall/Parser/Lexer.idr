@@ -271,7 +271,7 @@ homeDirImport : Tokenizer RawToken
 homeDirImport = pathImport HomeDirImport (exact "~/")
 
 shaImport : Lexer
-shaImport = (exact "sha:" <+> (someUntil (space) (pred $ isAlphaNum)))
+shaImport = (exact "sha256:" <+> (someUntil (space) (pred $ isAlphaNum)))
 
 embed : Tokenizer RawToken
 embed = httpImport <|> envImport <|> relImport <|> absImport <|> homeDirImport

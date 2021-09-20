@@ -636,16 +636,6 @@ mutual
       _ <- optional whitespace
       tokenW op) (boundedOp cons)
 
-  otherOp : Grammar state (TokenRawToken) True (RawExpr -> RawExpr -> RawExpr)
-  otherOp =
-    (opParser (symbol "++") ETextAppend) <|> (opParser (symbol "#") EListAppend)
-      <|> (opParser (symbol "/\\" <|> symbol "∧") ECombine)
-      <|> (opParser (symbol "//\\\\" <|> symbol "⩓") ECombineTypes)
-      <|> (opParser (symbol "//" <|> symbol "⫽") EPrefer)
-      <|> (opParser (symbol "::") ERecordCompletion)
-      <|> (opParser (symbol "===" <|> symbol "≡") EEquivalent)
-      <|> (opParser (symbol "?") EImportAlt)
-
   plusOp : Grammar state (TokenRawToken) True (RawExpr -> RawExpr -> RawExpr)
   plusOp = (opParser (symbol "+") ENaturalPlus)
 
@@ -673,29 +663,14 @@ mutual
     with' : List1 FieldName -> FC -> Expr a -> Expr a -> Expr a
     with' xs fc x y = EWith fc x xs y
 
-  otherTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
-  otherTerm od = chainl1 (atom od) (otherOp)
-
   mulTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
-  mulTerm od = chainl1 (otherTerm od) (mulOp)
+  mulTerm od = chainl1 (atom od) (mulOp)
 
   plusTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
   plusTerm od = chainl1 (mulTerm od) (plusOp)
 
   boolTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
   boolTerm od = chainl1 (plusTerm od) (boolOp)
-
-  piTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
-  piTerm od = chainr1 (appTerm od) (piOp)
-  where
-    epi' : String -> FC -> Expr a -> Expr a -> Expr a
-    epi' n fc y z = EPi fc n y z
-    piOp : Grammar state (TokenRawToken) True (RawExpr -> RawExpr -> RawExpr)
-    piOp =
-        infixOp (do
-          _ <- optional whitespace
-          arrow)
-          (boundedOp $ epi' "_")
 
   fieldTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
   fieldTerm od = hchainl (boolTerm od) fieldOp (bounds fieldName)
@@ -712,21 +687,46 @@ mutual
       _ <- tokenW $ symbol "."
       pure $ field'
 
+  appTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
+  appTerm od = (do
+                x <- some $ fieldTerm od
+                pure $ List1.foldl1 (EApp EmptyFC) x) -- (appOp)
+
+  piTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
+  piTerm od = chainr1 (appTerm od) (piOp)
+  where
+    epi' : String -> FC -> Expr a -> Expr a -> Expr a
+    epi' n fc y z = EPi fc n y z
+    piOp : Grammar state (TokenRawToken) True (RawExpr -> RawExpr -> RawExpr)
+    piOp =
+        infixOp (do
+          _ <- optional whitespace
+          arrow)
+          (boundedOp $ epi' "_")
+
   annotTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
   annotTerm od = chainr1 (piTerm od) (annotOp)
   where
     annotOp : Grammar state (TokenRawToken) True (RawExpr -> RawExpr -> RawExpr)
     annotOp = (opParser (symbol ":") EAnnot)
 
-  appTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
-  appTerm od = (do
-                x <- some $ fieldTerm od
-                pure $ List1.foldl1 (EApp EmptyFC) x) -- (appOp)
+  otherTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
+  otherTerm od = chainl1 (annotTerm od) (otherOp)
+  where
+    otherOp : Grammar state (TokenRawToken) True (RawExpr -> RawExpr -> RawExpr)
+    otherOp =
+      (opParser (symbol "++") ETextAppend) <|> (opParser (symbol "#") EListAppend)
+        <|> (opParser (symbol "/\\" <|> symbol "∧") ECombine)
+        <|> (opParser (symbol "//\\\\" <|> symbol "⩓") ECombineTypes)
+        <|> (opParser (symbol "//" <|> symbol "⫽") EPrefer)
+        <|> (opParser (symbol "::") ERecordCompletion)
+        <|> (opParser (symbol "===" <|> symbol "≡") EEquivalent)
+        <|> (opParser (symbol "?") EImportAlt)
 
   exprTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
   exprTerm od = do
     piTermLong od <|>
-    chainl1 (annotTerm od) (withOp) <|>
+    chainl1 (otherTerm od) (withOp) <|>
     letBinding od <|>
     lamTerm od <|>
     assertTerm od <|>
