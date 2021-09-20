@@ -268,7 +268,7 @@ mutual
     pretty (EMerge fc x y Nothing) = pretty "merge" <++> pretty x <++> pretty y
     pretty (EMerge fc x y (Just z)) = pretty "merge" <++> pretty x <++> pretty y <++> pretty ":" <++> pretty z
     pretty (EToMap fc x Nothing) = pretty "toMap" <++> pretty x
-    pretty (EProject fc x (Left y)) = pretty x <+> dot <+> braces (prettyDottedList y)
+    pretty (EProject fc x (Left y)) = pretty x <+> dot <+> braces (pretty y) -- TODO fix
     pretty (EProject fc x (Right y)) = pretty x <+> dot <+> parens (pretty y)
     pretty (EToMap fc x (Just y)) =
       pretty "merge" <++> pretty x
@@ -448,6 +448,12 @@ mutual
     e <- bounds $ exprTerm od
     pure $ ESome (mergeBounds (boundToFC od start) (boundToFC od e)) $ val e
 
+  emptyTextLit : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
+  emptyTextLit od = do
+    start <- bounds $ textBoundary
+    end <- bounds $ textBoundary
+    pure $ ETextLit (boundToFC2 od start end) neutral
+
   textLit : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
   textLit od = do
     start <- bounds $ textBoundary
@@ -487,16 +493,20 @@ mutual
       pure $ EProject (mergeBounds (boundToFC od x) (boundToFC od e)) (val x) (Right $ val e)
     leftProject : Grammar state (TokenRawToken) True (RawExpr)
     leftProject = do
-      l <- bounds $ (between (symbol "{") (symbol "}") (optional dottedList))
+      l <- bounds $ (between (symbol "{") (symbol "}") (sepBy (symbol ",") fieldName))
+      pure $ EProject (mergeBounds (boundToFC od x) (boundToFC od l)) (val x) (Left $ map MkFieldName $ val l)
+      {-
       pure $ case l of
            (MkBounded Nothing isIrrelevant bounds) =>
               EProject (mergeBounds (boundToFC od x) (boundToFC od l)) (val x) (Left $ [])
            (MkBounded (Just y) isIrrelevant bounds) =>
               EProject (mergeBounds (boundToFC od x) (boundToFC od l)) (val x) (Left $ forget $ y)
+              -}
 
   atom : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
   atom od = do
-    a <- bounds $ builtin od <|> varTerm od <|> (textLit od)
+    a <- bounds $ builtin od <|> varTerm od
+      <|> (textLit od) <|> emptyTextLit od
       <|> naturalLit od <|> integerLit od <|> doubleLit od
       <|> someLit od
       <|> piTermLong od

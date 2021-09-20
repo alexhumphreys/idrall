@@ -277,6 +277,9 @@ embed : Tokenizer RawToken
 embed = httpImport <|> envImport <|> relImport <|> absImport <|> homeDirImport
 
 -- strings
+emptyString : Lexer
+emptyString = exact "\"\""
+
 stringBegin : Lexer
 stringBegin = is '"'
 
