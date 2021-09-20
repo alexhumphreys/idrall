@@ -277,6 +277,13 @@ embed : Tokenizer RawToken
 embed = httpImport <|> envImport <|> relImport <|> absImport <|> homeDirImport
 
 -- strings
+groupSymbols : List String
+groupSymbols = ["{"]
+
+groupClose : String -> String
+groupClose "{" = "}"
+groupClose _ = ""
+
 emptyString : Lexer
 emptyString = exact "\"\""
 
@@ -285,6 +292,9 @@ stringBegin = is '"'
 
 stringEnd : String
 stringEnd = "\""
+
+stringMultiBegin : Lexer
+stringMultiBegin = exact "''"
 
 multilineEnd : String
 multilineEnd = "''"
@@ -309,6 +319,12 @@ mutual
     match (blockComment <|> lineComment) Comment
     <|> match doubleLit (TDouble . cast)
     <|> match integerLit (TInteger . cast)
+    <|> compose (choice $ exact <$> groupSymbols) -- so '}' in an interpolated string works
+                  Symbol
+                  id
+                  (\_ => rawTokens)
+                  (exact . groupClose)
+                  Symbol
     <|> match (exact "//\\\\") Symbol
     <|> match (exact "⩓") Symbol
     <|> match (exact "//") Symbol
@@ -361,6 +377,12 @@ mutual
                 (\x => 0)
                 (stringTokens False)
                 (\hashtag => exact stringEnd <+> reject (is '"'))
+                (const StringEnd)
+    <|> compose stringMultiBegin
+                (const $ StringBegin Multi)
+                (\x => 0)
+                (stringTokens True)
+                (\hashtag => exact multilineEnd <+> reject (exact "''"))
                 (const StringEnd)
     <|> match any (const Unrecognised)
 
