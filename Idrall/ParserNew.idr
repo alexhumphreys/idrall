@@ -515,7 +515,7 @@ mutual
 
   atom : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
   atom od = do
-    a <- bounds $ builtin od <|> variable od
+    builtin od <|> variable od
       <|> (textLit od) <|> emptyTextLit od
       <|> naturalLit od <|> integerLit od <|> doubleLit od
       <|> someLit od
@@ -524,10 +524,6 @@ mutual
       <|> union od
       <|> embed od
       <|> listLit od <|> (between (symbol "(") (symbol ")") $ exprTerm od)
-    p <- optional $ postFix od a
-    pure (case p of
-               Nothing => val a
-               (Just x) => x)
 
   recordParser : OriginDesc
                -> Grammar state (TokenRawToken) True ()
@@ -679,18 +675,36 @@ mutual
   mulTerm od = chainl1 (atom od) (mulOp)
 
   boolTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
-  boolTerm od = chainl1 (mulTerm od) (boolOp)
+  boolTerm od = chainl1 (fieldTerm od) (boolOp)
   where
     boolOp : Grammar state (TokenRawToken) True (RawExpr -> RawExpr -> RawExpr)
     boolOp =
       (opParser (symbol "&&") EBoolAnd) <|> (opParser (symbol "||") EBoolOr)
       <|> (opParser (symbol "==") EBoolEQ) <|> (opParser (symbol "!=") EBoolNE)
 
-  projTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
-  projTerm od = hchainl (mulTerm od) projOp (exprTerm od <* symbol ")")
+  projTermLeft : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
+  projTermLeft od = hchainl (boolTerm od) projOp listFieldName
   where
-    SndArg : Type
-    SndArg = (Either (List FieldName) (RawExpr))
+    proj' : RawExpr -> WithBounds (List String) -> RawExpr
+    proj' e ls =
+      let start = getFC e
+          end = boundToFC od ls
+          fc' = mergeBounds start end
+      in EProject fc' e $ Left $ map MkFieldName (val ls)
+    projOp : Grammar state (TokenRawToken) True (RawExpr -> WithBounds (List String) -> RawExpr)
+    projOp = do
+      symbol ".{"
+      commit
+      pure proj'
+    listFieldName : Grammar state (TokenRawToken) True (WithBounds (List String))
+    listFieldName = do
+      ls <- bounds $ sepBy (symbol ",") fieldName
+      symbol "}"
+      pure ls
+
+  projTermRight : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
+  projTermRight od = hchainl (projTermLeft od) projOp (exprTerm od <* symbol ")")
+  where
     proj' : RawExpr -> RawExpr -> RawExpr
     proj' e e' =
       let start = getFC e
@@ -699,12 +713,12 @@ mutual
       in EProject fc' e $ Right e'
     projOp : Grammar state (TokenRawToken) True (RawExpr -> RawExpr -> RawExpr)
     projOp = do
-      symbol "."
-      symbol "("
+      symbol ".("
+      commit
       pure proj'
 
   fieldTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
-  fieldTerm od = hchainl (projTerm od) fieldOp (bounds fieldName)
+  fieldTerm od = hchainl (mulTerm od) fieldOp (bounds fieldName)
   where
     field' : RawExpr -> WithBounds String -> RawExpr
     field' e s =
@@ -720,7 +734,7 @@ mutual
 
   appTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
   appTerm od = (do
-                x <- some $ fieldTerm od
+                x <- some $ projTermRight od
                 pure $ List1.foldl1 (EApp EmptyFC) x) -- (appOp)
 
   piTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
