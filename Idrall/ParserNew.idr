@@ -686,8 +686,25 @@ mutual
       (opParser (symbol "&&") EBoolAnd) <|> (opParser (symbol "||") EBoolOr)
       <|> (opParser (symbol "==") EBoolEQ) <|> (opParser (symbol "!=") EBoolNE)
 
+  projTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
+  projTerm od = hchainl (mulTerm od) projOp (exprTerm od <* symbol ")")
+  where
+    SndArg : Type
+    SndArg = (Either (List FieldName) (RawExpr))
+    proj' : RawExpr -> RawExpr -> RawExpr
+    proj' e e' =
+      let start = getFC e
+          end = getFC e'
+          fc' = mergeBounds start end
+      in EProject fc' e $ Right e'
+    projOp : Grammar state (TokenRawToken) True (RawExpr -> RawExpr -> RawExpr)
+    projOp = do
+      symbol "."
+      symbol "("
+      pure proj'
+
   fieldTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
-  fieldTerm od = hchainl (mulTerm od) fieldOp (bounds fieldName)
+  fieldTerm od = hchainl (projTerm od) fieldOp (bounds fieldName)
   where
     field' : RawExpr -> WithBounds String -> RawExpr
     field' e s =
