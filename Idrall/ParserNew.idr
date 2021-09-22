@@ -671,19 +671,8 @@ mutual
     with' : List1 FieldName -> FC -> Expr a -> Expr a -> Expr a
     with' xs fc x y = EWith fc x xs y
 
-  mulTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
-  mulTerm od = chainl1 (atom od) (mulOp)
-
-  boolTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
-  boolTerm od = chainl1 (fieldTerm od) (boolOp)
-  where
-    boolOp : Grammar state (TokenRawToken) True (RawExpr -> RawExpr -> RawExpr)
-    boolOp =
-      (opParser (symbol "&&") EBoolAnd) <|> (opParser (symbol "||") EBoolOr)
-      <|> (opParser (symbol "==") EBoolEQ) <|> (opParser (symbol "!=") EBoolNE)
-
   projTermLeft : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
-  projTermLeft od = hchainl (boolTerm od) projOp listFieldName
+  projTermLeft od = hchainl (fieldTerm od) projOp listFieldName
   where
     proj' : RawExpr -> WithBounds (List String) -> RawExpr
     proj' e ls =
@@ -718,7 +707,7 @@ mutual
       pure proj'
 
   fieldTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
-  fieldTerm od = hchainl (mulTerm od) fieldOp (bounds fieldName)
+  fieldTerm od = hchainl (atom od) fieldOp (bounds fieldName)
   where
     field' : RawExpr -> WithBounds String -> RawExpr
     field' e s =
@@ -737,8 +726,19 @@ mutual
                 x <- some $ projTermRight od
                 pure $ List1.foldl1 (EApp EmptyFC) x) -- (appOp)
 
+  mulTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
+  mulTerm od = chainl1 (appTerm od) (mulOp)
+
+  boolTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
+  boolTerm od = chainl1 (mulTerm od) (boolOp)
+  where
+    boolOp : Grammar state (TokenRawToken) True (RawExpr -> RawExpr -> RawExpr)
+    boolOp =
+      (opParser (symbol "&&") EBoolAnd) <|> (opParser (symbol "||") EBoolOr)
+      <|> (opParser (symbol "==") EBoolEQ) <|> (opParser (symbol "!=") EBoolNE)
+
   piTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
-  piTerm od = chainr1 (appTerm od) (piOp)
+  piTerm od = chainr1 (boolTerm od) (piOp)
   where
     epi' : String -> FC -> Expr a -> Expr a -> Expr a
     epi' n fc y z = EPi fc n y z
