@@ -33,9 +33,11 @@ record ExRec1 where
 %runElab (deriveFromDhall Record `{ ExRec1 })
 ```
 
-There's implementations of `FromDhall` for `String`, `Nat`, `Integer`, `Bool`, `Double`, and `List`/`Maybe` of those. That interface gives you the `fromDhall` function you can use on dhall expression to get a `Maybe` of your Idris ADT or Record. See the `./tests/derive` dir for some examples.
+There's implementations of `FromDhall` for `String`, `Nat`, `Integer`, `Bool`, `Double`, and `List`/`Maybe` of those. That interface gives you the `fromDhall` function you can use on dhall expression to get a `Maybe` of your Idris ADT or Record. For more examples see the `./examples` or the `./tests/derive` dir.
 
-The behaviour of this isn't thought out yet. For example, the `deriveFromDhall ADT` function ignores the dhall union and just looks for matching constructors. Also `deriveFromDhall Record` ignores extra fields on the dhall record. This behaviour may change. Also, as the elaborator reflection returns a `Maybe`, there's no good error messages when `fromDhall` fails, so that'll need updating.
+The behaviour of this isn't thought out yet. For example, the `deriveFromDhall ADT` function ignores the dhall union and just looks for matching constructors. Also `deriveFromDhall Record` ignores extra fields on the dhall record. This behaviour may change. 
+
+For error messages, when the compiler knows what dhall file the input text comes from, it can render a good error message with the `fancyError` function. The error messages are less good when it's just reading dhall from a random idris `String`.
 
 ## Indepth Usage (very alpha, YMMV)
 
