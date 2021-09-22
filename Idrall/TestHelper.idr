@@ -50,31 +50,28 @@ foldlMapM f = foldr f' (pure neutral)
   f' : a -> m b -> m b
   f' x y = liftA2 (<+>) (f x) y
 
-log : Pretty a => Bool -> a -> IO ()
-log False _ = pure ()
-log True x =
-  let doc = the (Doc a) $ pretty x in do
-    putDoc doc
-    printLn ""
-
-logError : Bool -> Error -> IO ()
-logError False _ = pure ()
-logError True e = do
-  putStrLn $ !(fancyError e)
-
 mkres : Pretty a
-      => {default True printLeft : Bool}
-      -> {default False printRight : Bool}
-      -> IOEither Error a
+      => IOEither Error a
       -> IO Result
 mkres (MkIOEither x) = do
   x' <- x
   case x' of
-       (Left y) => do
-         logError printLeft y
+       (Left e) => do
+         putStrLn $ !(fancyError e)
          pure (MkResult 0 1)
        (Right y) => do
-         log printRight y
+         pure (MkResult 1 0)
+
+mkresFail : Show a
+      => IOEither Error a
+      -> IO Result
+mkresFail (MkIOEither x) = do
+  x' <- x
+  case x' of
+       (Left y) => do
+         pure (MkResult 0 1)
+       (Right y) => do
+         putStrLn $ show y
          pure (MkResult 1 0)
 
 flipRes : Result -> Result
@@ -152,7 +149,7 @@ public export
 runTestsOnly : Pretty a => (onlyList : List String) -> (path : String) -> (String -> String -> IOEither Error a) -> IO Result
 runTestsOnly onlyList path f = runTests' path f ((matchFiles onlyList) :: defaultFilters)
 
-runTestFail' : Pretty a => (path : String)
+runTestFail' : Show a => (path : String)
              -> (String -> IOEither Error a)
              -> (filters : List ({root : _} -> FileName root -> Bool))
              -> IO Result
@@ -166,11 +163,11 @@ runTestFail' path f filters =
     doTest : {root : _} -> FileName root -> Lazy (IO Result) -> IO Result
     doTest x next = do
       putStrLn $ "Testing: \{show $ toFilePath x}"
-      res <- mkres {printLeft=False} {printRight=True} $ f (fileName x)
+      res <- mkresFail $ f (fileName x)
       pure $ res <+> !next
 
 public export
-runTestFail : Pretty a
+runTestFail : Show a
             => (path : String)
             -> (String -> IOEither Error a)
             -> IO Result
