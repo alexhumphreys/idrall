@@ -3,8 +3,7 @@ module Main
 import Idrall.TestHelper
 
 import Idrall.Expr
-import Idrall.APIv1
-import Idrall.Derive
+import Idrall.API.V2
 
 import System.Directory
 import Data.List
