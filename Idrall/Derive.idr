@@ -151,7 +151,7 @@ FromDhall a => FromDhall (List a) where
 export
 FromDhall a => FromDhall (Maybe a) where
   fromDhall (ESome fc x) =
-    ?fromDhallMaybe -- pure $ fromDhall x
+    pure $ Just !(fromDhall x)
   fromDhall (EApp fc (ENone fc') _) = pure $ neutral
   fromDhall e = fromDhallErr e "not a Maybe"
 
@@ -162,6 +162,7 @@ data IdrisType
   = ADT
   | Record
 
+public export
 lookupEither : Show k => k -> SortedMap k v -> Either Error v
 lookupEither k sm =
   case lookup k sm of
@@ -199,7 +200,7 @@ deriveFromDhall it n =
 
      let funClaim = IClaim EmptyFC MW Export [Inline] (MkTy EmptyFC EmptyFC funName `(Expr Void -> Either Error ~(var name)))
      -- add a catch all pattern
-     let funDecl = IDef EmptyFC funName (clauses ++ [patClause `(~(var funName) ~(varStr "expr")) `(Left $ FromDhallError (getFC ~(varStr "expr")) "failed2")])
+     let funDecl = IDef EmptyFC funName (clauses ++ [patClause `(~(var funName) ~(varStr "expr")) `(Left $ FromDhallError (getFC ~(varStr "expr")) "\{show expr}")])
 
      -- declare the fuction in the env
      declare [funClaim, funDecl]
@@ -229,11 +230,13 @@ deriveFromDhall it n =
       let cn = primStr (show $ stripNs constructor')
           debug = show $ constructor'
           debug2 = show $ map fst xs
-          lhs = `(~(var funName) (EApp fc (EField _ (EUnion _ xs) (MkFieldName ~cn)) ~(bindvar $ show arg)))
+          lhs0 = `(~(var funName) (EField _ (EUnion _ xs) (MkFieldName ~cn)))
+          lhs1 = `(~(var funName) (EApp fc (EField _ (EUnion _ xs) (MkFieldName ~cn)) ~(bindvar $ show arg)))
+          -- TODO lhsN for data constructors with more than 0 or 1 args
           in do
           case xs of
-               [] => pure $ (lhs, `(pure ~(var constructor')))
-               ((n, _) :: []) => pure $ (lhs, `(pure ~(var constructor') <*> fromDhall ~(var arg)))
+               [] => pure $ (lhs0, `(pure ~(var constructor')))
+               ((n, _) :: []) => pure $ (lhs1, `(pure ~(var constructor') <*> fromDhall ~(var arg)))
                (x :: _) => fail $ "too many args for constructor: " ++ show constructor'
     genClauses : IdrisType -> Name -> Name -> Cons -> Elab (List Clause)
     genClauses ADT funName arg cons = do
@@ -245,11 +248,33 @@ deriveFromDhall it n =
       clausesRecord <- traverse (\(cn, as) => genClauseRecord cn arg (reverse as)) cons
       -- create clause from dhall to `Maybe a` using the above clauses as the rhs
       pure $ pure $ patClause `(~(var funName) (ERecordLit fc ~(bindvar $ show arg)))
-                              (foldl (\acc, x => `(~x <|> ~acc)) `(Left $ FromDhallError ~(varStr "fc") "failed1") (clausesRecord))
+                              (foldl (\acc, x => `(~x)) `(Left $ FromDhallError ~(varStr "fc") "failed1") (clausesRecord)) -- not a real foldl, basically just passes that clausesRecord though, also doesn't support a record with no args
 
 record ExRec1 where
   constructor MkExRec1
   n : Nat
   i : Integer
 
+data Foo = I | J Nat
+
 %runElab (deriveFromDhall Record `{ ExRec1 })
+
+%runElab (deriveFromDhall ADT `{ Foo })
+
+bam1 : Expr Void -> Either Error ExRec1
+bam1 (ERecordLit fc arg12128) = ((pure MkExRec1 <*> (lookupEither (MkFieldName "n") arg12128 >>= fromDhall)) <*> (lookupEither (MkFieldName "i") arg12128 >>= fromDhall)) -- <|> Delay (Left (FromDhallError fc "failed1"))
+bam1 expr = Left (FromDhallError (getFC expr) "failed2")
+
+ex1 : Expr Void
+ex1 = ERecordLit initFC $ fromList
+  [ (MkFieldName "n", ENaturalLit initFC 0)
+  , (MkFieldName "i", ENaturalLit (MkFC Nothing (0,0) (0,1)) 0)
+  ]
+
+{-
+ex2 : Expr Void
+ex2 = EField EUnion initFC $ fromList
+  [ (MkFieldName "I", Nothing)
+  -- , (MkFieldName "i", ENaturalLit (MkFC Nothing (0,0) (0,1)) 0)
+  ]
+  -}

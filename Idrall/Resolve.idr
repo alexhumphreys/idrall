@@ -13,8 +13,8 @@ import System.File
 data WhichParser = OldParser | NewParser
 
 useParser : WhichParser
-useParser = OldParser
--- useParser = NewParser
+-- useParser = OldParser
+useParser = NewParser
 
 parseFunction : WhichParser -> Maybe String -> String -> Either String (Expr ImportStatement, Int)
 parseFunction OldParser x = Idrall.Parser.parseExpr

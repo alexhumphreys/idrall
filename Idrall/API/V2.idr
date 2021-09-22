@@ -9,15 +9,11 @@ import Idrall.APIv1
 
 import System.Path -- TODO make public export in System.Directory.Tree?
 
-liftMaybe : Maybe a -> IOEither Error a
-liftMaybe Nothing = MkIOEither $ pure $ Left $ FromDhallError initFC "failed to convert from dhall"
-liftMaybe (Just x) = pure x
-
 export
 deriveFromDhallString : FromDhall ty => String -> IOEither Error ty
 deriveFromDhallString x = do
   e <- roundTripCheckEvalQuote $ x
-  liftMaybe $ fromDhall e
+  liftEither $ fromDhall e
 
 export
 deriveFromDhallFile : FromDhall a => Path -> IOEither Error a
