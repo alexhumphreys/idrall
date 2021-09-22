@@ -20,8 +20,8 @@ import Data.String
 data WhichParser = OldParser | NewParser
 
 useParser : WhichParser
--- useParser = OldParser
-useParser = NewParser
+useParser = OldParser
+-- useParser = NewParser
 
 parseFunction : WhichParser -> String -> Either String (Expr ImportStatement, Int)
 parseFunction OldParser = Idrall.Parser.parseExpr

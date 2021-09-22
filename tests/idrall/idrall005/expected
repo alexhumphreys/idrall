@@ -8,7 +8,7 @@ Testing: ../../../dhall-lang/tests/normalization/success/haskell-tutorial/access
 Testing: ../../../dhall-lang/tests/normalization/success/haskell-tutorial/access/1A.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/haskell-tutorial/combineTypes/0A.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/haskell-tutorial/combineTypes/1A.dhall
-ErrorMessage: "Parse failed at position 25: expected the end of the string"
+ParseError "Parse failed at position 25: expected the end of the string"
 Testing: ../../../dhall-lang/tests/normalization/success/haskell-tutorial/prefer/0A.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/haskell-tutorial/projection/0A.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/regression/NaturalFoldExtraArgA.dhall
@@ -16,12 +16,12 @@ Testing: ../../../dhall-lang/tests/normalization/success/regression/TrickyBinder
 Testing: ../../../dhall-lang/tests/normalization/success/regression/UnsaturatedBuiltinsA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/simple/completionA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/simple/doubleShowA.dhall
-ErrorMessage: "Parse failed at position 0: char '('"
+ParseError "Parse failed at position 0: char '('"
 Testing: ../../../dhall-lang/tests/normalization/success/simple/enumA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/simple/equalNoCommuteA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/simple/integerShowA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/simple/integerToDoubleA.dhall
-ErrorMessage: "Parse failed at position 0: char '('"
+ParseError "Parse failed at position 0: char '('"
 Testing: ../../../dhall-lang/tests/normalization/success/simple/letAvoidCaptureA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/simple/letenumA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/simple/letletA.dhall
@@ -41,9 +41,9 @@ Unexpected: Not a RecordLit. Value: (VPrefer (VVar "old" 0) (VRecordLit $ fromLi
 Testing: ../../../dhall-lang/tests/normalization/success/simplifications/neA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/simplifications/orA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/simplifications/rightBiasedMergeWithinRecordProjectionWithinFieldSelection0A.dhall
-ErrorMessage: "Parse failed at position 56: expected the end of the string"
+ParseError "Parse failed at position 56: expected the end of the string"
 Testing: ../../../dhall-lang/tests/normalization/success/simplifications/rightBiasedMergeWithinRecordProjectionWithinFieldSelection1A.dhall
-ErrorMessage: "Parse failed at position 75: expected the end of the string"
+ParseError "Parse failed at position 75: expected the end of the string"
 Testing: ../../../dhall-lang/tests/normalization/success/simplifications/rightBiasedMergeWithinRecursiveRecordMergeWithinFieldselectionA.dhall
 AlphaEquivError: (VField (VCombineTypes (VPrefer (VVar "x" 0) (VRecordLit $ fromList [((MkFieldName "b"), (VNaturalLit 0))])) (VRecordLit $ fromList [((MkFieldName "a"), (VRecordLit $ fromList [((MkFieldName "c"), (VNaturalLit 1))]))])) (MkFieldName "b"))
  not alpha equivalent to:
@@ -153,9 +153,9 @@ Testing: ../../../dhall-lang/tests/normalization/success/unit/NaturalSubtractZer
 Testing: ../../../dhall-lang/tests/normalization/success/unit/NaturalToIntegerA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/NaturalToIntegerOneA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/NestedRecordProjectionA.dhall
-ErrorMessage: "Parse failed at position 52: expected the end of the string"
+ParseError "Parse failed at position 52: expected the end of the string"
 Testing: ../../../dhall-lang/tests/normalization/success/unit/NestedRecordProjectionByTypeA.dhall
-ErrorMessage: "Parse failed at position 70: expected the end of the string"
+ParseError "Parse failed at position 70: expected the end of the string"
 Testing: ../../../dhall-lang/tests/normalization/success/unit/NoneA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/OperatorAndEquivalentArgumentsA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/OperatorAndLhsFalseA.dhall
@@ -220,7 +220,7 @@ Unexpected: Not a RecordLit. Value: (VRecordLit $ fromList [((MkFieldName "a"), 
 Testing: ../../../dhall-lang/tests/normalization/success/unit/RecordProjectionByTypeNormalizeProjectionA.dhall
 Unexpected: Not a RecordLit. Value: (VVar "x" 0)
 Testing: ../../../dhall-lang/tests/normalization/success/unit/RecordProjectionByTypeWithinFieldSelectionA.dhall
-ErrorMessage: "Parse failed at position 68: expected the end of the string"
+ParseError "Parse failed at position 68: expected the end of the string"
 Testing: ../../../dhall-lang/tests/normalization/success/unit/RecordProjectionEmptyA.dhall
 Unexpected: Not a RecordLit. Value: (VVar "x" 0)
 Testing: ../../../dhall-lang/tests/normalization/success/unit/RecordProjectionNormalizeArgumentsA.dhall
@@ -228,7 +228,7 @@ Unexpected: Not a RecordLit. Value: (VVar "x" 0)
 Testing: ../../../dhall-lang/tests/normalization/success/unit/RecordProjectionNormalizeFieldsA.dhall
 Unexpected: Not a RecordLit. Value: (VVar "x" 0)
 Testing: ../../../dhall-lang/tests/normalization/success/unit/RecordProjectionWithinFieldSelectionA.dhall
-ErrorMessage: "Parse failed at position 52: expected the end of the string"
+ParseError "Parse failed at position 52: expected the end of the string"
 Testing: ../../../dhall-lang/tests/normalization/success/unit/RecordSelectionA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/RecordSelectionNormalizeArgumentsA.dhall
 AlphaEquivError: (VField (VVar "x" 0) (MkFieldName "a"))
@@ -337,7 +337,7 @@ Testing: ../../../dhall-lang/tests/normalization/success/unit/TextReplaceEmptyA.
 Testing: ../../../dhall-lang/tests/normalization/success/unit/TextReplaceMultipleA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/TextReplaceNFCUnicodeA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/TextReplaceNormalizationA.dhall
-ErrorMessage: "Parse failed at position 117: expected the end of the string"
+ParseError "Parse failed at position 117: expected the end of the string"
 Testing: ../../../dhall-lang/tests/normalization/success/unit/TextReplaceSimpleA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/TextReplaceUnicodeA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/TextReplaceVarA.dhall
@@ -346,7 +346,7 @@ AlphaEquivError: (VTextReplace (VTextLit (MkVChunks [] "a")) (VVar "x" 0) (VText
 (VTextLit (MkVChunks [("", (VVar "x" 0)), ("", (VVar "x" 0)), ("", (VVar "x" 0))] ""))
 Testing: ../../../dhall-lang/tests/normalization/success/unit/TextShowA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/TextShowAllEscapesA.dhall
-ErrorMessage: "Parse failed at position 10: expected the end of the string"
+ParseError "Parse failed at position 10: expected the end of the string"
 Testing: ../../../dhall-lang/tests/normalization/success/unit/TextShowEmptyA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/TextShowInterpolatedA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/ToMapA.dhall
