@@ -25,3 +25,4 @@ main : IO ()
 main = do
   runTest {ty=Foo1} "< A : Natural | B >.A 0"
   runTest {ty=Foo1} "< A : Natural | B >.B"
+  runTest {ty=Foo1} "./ex3.dhall"

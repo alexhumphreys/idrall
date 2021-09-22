@@ -1,0 +1,1 @@
+< A : Natural | B >.C

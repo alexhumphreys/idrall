@@ -1,2 +1,7 @@
 A 0
 B
+0| < A : Natural | B >.C
+   ^^^^^^^^^^^^^^^^^^^^^^
+
+./ex3.dhall:(0, 0)-(0, 21)FieldNotFoundError: (MkFieldName "C")
+
