@@ -20,6 +20,6 @@ Show Package where
 
 main : IO ()
 main = do
-  Right package <- liftIOEither $ deriveFromDhallString {ty=Package} "./package.dhall"
+  Right package <- liftIOEither $ deriveFromDhallString {ty=Package} "./fail.dhall"
   | Left e => putStrLn $ !(fancyError e)
   putStrLn $ show package
