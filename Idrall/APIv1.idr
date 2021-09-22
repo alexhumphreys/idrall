@@ -36,13 +36,13 @@ handleError x = ErrorMessage initFC x
 public export
 exprFromString : String -> IOEither Error (Expr Void)
 exprFromString x = do
-  x' <- mapErr (handleError) (liftEither (parseWith x))
+  x' <- mapErr (ParseError initFC) (liftEither (parseWith x))
   resolve [] Nothing (fst x')
 
 export
 resolveFromString : Maybe FilePath -> String -> IOEither Error (Expr Void)
 resolveFromString path x = do
-  x' <- mapErr (handleError) (liftEither (parseWith x))
+  x' <- mapErr (ParseError initFC) (liftEither (parseWith x))
   resolve [] path (fst x')
 
 public export

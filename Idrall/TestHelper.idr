@@ -14,6 +14,10 @@ import Data.List
 import Data.String
 import Data.String.Extra
 
+import Text.PrettyPrint.Prettyprinter.Util
+import Text.PrettyPrint.Prettyprinter.Doc
+import Text.PrettyPrint.Prettyprinter.Render.String
+
 public export
 record Result where
   constructor MkResult
@@ -46,23 +50,28 @@ foldlMapM f = foldr f' (pure neutral)
   f' : a -> m b -> m b
   f' x y = liftA2 (<+>) (f x) y
 
-log : Show a => Bool -> a -> IO ()
-log False _ = pure ()
-log True x = printLn x
-
-mkres : Show a
-      => {default True printLeft : Bool}
-      -> {default False printRight : Bool}
-      -> IOEither Error a
+mkres : Pretty a
+      => IOEither Error a
       -> IO Result
 mkres (MkIOEither x) = do
   x' <- x
   case x' of
-       (Left y) => do
-         log printLeft y
+       (Left e) => do
+         putStrLn $ !(fancyError e)
          pure (MkResult 0 1)
        (Right y) => do
-         log printRight y
+         pure (MkResult 1 0)
+
+mkresFail : Show a
+      => IOEither Error a
+      -> IO Result
+mkresFail (MkIOEither x) = do
+  x' <- x
+  case x' of
+       (Left y) => do
+         pure (MkResult 0 1)
+       (Right y) => do
+         putStrLn $ show y
          pure (MkResult 1 0)
 
 flipRes : Result -> Result
@@ -109,7 +118,7 @@ doFilter (f :: xs) x =
   doFilter xs (System.Directory.Tree.filter f (\_ => True) x)
 
 -- running tests
-runTests' : Show a
+runTests' : Pretty a
           => (path : String)
           -> (String -> String -> IOEither Error a)
           -> (filters : List ({root : _} -> FileName root -> Bool))
@@ -121,7 +130,7 @@ runTests' path f filters =
     res <- depthFirst doTest (sort testFiles) $ pure neutral
     pure res
     where
-    runTestPair : Show a
+    runTestPair : Pretty a
                 => TestPair
                 -> (String -> String -> IOEither Error a)
                 -> IOEither Error a
@@ -133,11 +142,11 @@ runTests' path f filters =
       pure $ res <+> !next
 
 public export
-runTests : Show a => (path : String) -> (String -> String -> IOEither Error a) -> IO Result
+runTests : Pretty a => (path : String) -> (String -> String -> IOEither Error a) -> IO Result
 runTests path f = runTests' path f defaultFilters
 
 public export
-runTestsOnly : Show a => (onlyList : List String) -> (path : String) -> (String -> String -> IOEither Error a) -> IO Result
+runTestsOnly : Pretty a => (onlyList : List String) -> (path : String) -> (String -> String -> IOEither Error a) -> IO Result
 runTestsOnly onlyList path f = runTests' path f ((matchFiles onlyList) :: defaultFilters)
 
 runTestFail' : Show a => (path : String)
@@ -154,7 +163,7 @@ runTestFail' path f filters =
     doTest : {root : _} -> FileName root -> Lazy (IO Result) -> IO Result
     doTest x next = do
       putStrLn $ "Testing: \{show $ toFilePath x}"
-      res <- mkres {printLeft=False} {printRight=True} $ f (fileName x)
+      res <- mkresFail $ f (fileName x)
       pure $ res <+> !next
 
 public export

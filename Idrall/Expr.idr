@@ -19,6 +19,10 @@ Show FieldName where
   show (MkFieldName x) = "(MkFieldName " ++ show x ++ ")"
 
 public export
+prettyFieldName : FieldName -> String
+prettyFieldName (MkFieldName x) = x
+
+public export
 Eq FieldName where
   (==) (MkFieldName x) (MkFieldName y) = x == y
 

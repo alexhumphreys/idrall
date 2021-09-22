@@ -95,6 +95,15 @@ identPart =
       _ => Nothing
 
 export
+fieldName : Rule String
+fieldName =
+  terminal "expected fieldName" $
+    \case
+      Ident x => Just x
+      Builtin x => Just x
+      _ => Nothing
+
+export
 missingImport : Rule ()
 missingImport =
   terminal "expected missing" $
@@ -117,6 +126,10 @@ envImport =
     \case
       EnvImport x => Just x
       _ => Nothing
+
+export
+arrow : Rule ()
+arrow = tokenW $ symbol "->" <|> symbol "→"
 
 export
 shaImport : Rule String
@@ -166,6 +179,14 @@ dottedList = do
   _ <- optional whitespace
   x <- sepBy1 (tokenW $ symbol ".") (identPart)
   pure $ map MkFieldName x
+
+export
+dottedListRec : Rule (List1 FieldName)
+dottedListRec = do
+  _ <- optional whitespace
+  x <- sepBy1 (tokenW $ symbol ".") (fieldName)
+  pure $ map MkFieldName x
+
 
 export
 builtin : Rule String

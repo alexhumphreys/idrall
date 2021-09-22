@@ -116,7 +116,7 @@ export
 keywords : List String
 keywords = ["let", "in", "with",
   "if", "then", "else",
-  "merge", "toMap", "missing",
+  "merge", "toMap", "missing", "forall",
   "using", "assert"]
 
 -- variables
@@ -132,6 +132,9 @@ where
   isIdentTrailing '/' = True
   isIdentTrailing x = isAlphaNum x || x > chr 160
 
+quotedIdent : Lexer
+quotedIdent = is '`' <+> (manyThen (is '`') (any))
+
 parseIdent : String -> RawToken
 parseIdent x =
   let isKeyword = elem x keywords
@@ -140,6 +143,21 @@ parseIdent x =
        (True, False) => Keyword x
        (False, True) => Builtin x
        (_, _) => Ident x
+
+parseQuotedIdent : String -> RawToken
+parseQuotedIdent x = Ident $ dropQuotes x -- ?parseQuotedIdent_rhs
+  where
+  dropLast : List a -> List a
+  dropLast xs = reverse (drop 1 $ reverse xs)
+  dropFirst : List a -> List a
+  dropFirst xs = drop 1 xs
+  dropQuotes : String -> String
+  dropQuotes x =
+    let str = unpack x
+    in
+    case length str >= 2 of
+         True => pack $ dropFirst . dropLast $ str
+         False => x
 
 -- double
 sign : Lexer
@@ -160,6 +178,12 @@ doubleLit
     = (opt sign)
       <+> ((digits <+> is '.' <+> digits <+> opt exponent)
            <|> (digits <+> exponent))
+
+posInfinity : Lexer
+posInfinity = exact "Infinity"
+
+negInfinity : Lexer
+negInfinity = is '-' <+> exact "Infinity"
 
 -- comments
 mutual
@@ -253,17 +277,35 @@ homeDirImport : Tokenizer RawToken
 homeDirImport = pathImport HomeDirImport (exact "~/")
 
 shaImport : Lexer
-shaImport = (exact "sha:" <+> (someUntil (space) (pred $ isAlphaNum)))
+shaImport = (exact "sha256:" <+> (someUntil (space) (pred $ isAlphaNum)))
 
 embed : Tokenizer RawToken
 embed = httpImport <|> envImport <|> relImport <|> absImport <|> homeDirImport
 
 -- strings
+groupSymbols : List String
+groupSymbols = ["{", "[", ".(", ".{", "<", "("]
+
+groupClose : String -> String
+groupClose "{" = "}"
+groupClose "[" = "]"
+groupClose ".(" = ")"
+groupClose ".{" = "}"
+groupClose "(" = ")"
+groupClose "<" = ">"
+groupClose _ = ""
+
+emptyString : Lexer
+emptyString = exact "\"\""
+
 stringBegin : Lexer
 stringBegin = is '"'
 
 stringEnd : String
 stringEnd = "\""
+
+stringMultiBegin : Lexer
+stringMultiBegin = exact "''"
 
 multilineEnd : String
 multilineEnd = "''"
@@ -286,21 +328,38 @@ mutual
   rawTokens : Tokenizer RawToken
   rawTokens =
     match (blockComment <|> lineComment) Comment
+    <|> match doubleLit (TDouble . cast)
     <|> match integerLit (TInteger . cast)
+    <|> compose (choice $ exact <$> groupSymbols) -- so '}' in an interpolated string works
+                  Symbol
+                  id
+                  (\_ => rawTokens)
+                  (exact . groupClose)
+                  Symbol
     <|> match (exact "//\\\\") Symbol
+    <|> match (exact "⩓") Symbol
     <|> match (exact "//") Symbol
+    <|> match (exact "⫽") Symbol
     <|> match (exact "/\\") Symbol
+    <|> match (exact "∧") Symbol
     <|> match (exact "\\") Symbol
+    <|> match (exact "λ") Symbol
+    <|> match (exact "∀") Symbol
+    <|> match (exact "@") Symbol
     <|> embed
     <|> match (exact "missing") (const MissingImport)
     <|> match shaImport Sha
+    <|> match posInfinity (const $ TDouble (1.0e1000))
+    <|> match negInfinity (const $ TDouble (-1.0e1000))
     <|> match (exact "||") Symbol
     <|> match (exact "&&") Symbol
     <|> match (exact "===") Symbol
+    <|> match (exact "≡") Symbol
     <|> match (exact "==") Symbol
     <|> match (exact "!=") Symbol
     <|> match (exact "=") Symbol
     <|> match (exact "->") Symbol
+    <|> match (exact "→") Symbol
     <|> match (exact "++") Symbol
     <|> match (exact "+") Symbol
     <|> match (exact "-") Symbol
@@ -309,29 +368,26 @@ mutual
     <|> match (exact "::") Symbol
     <|> match (exact ":") Symbol
     <|> match (exact "?") Symbol
-    <|> match (exact "`") Symbol
-    <|> match (exact "(") Symbol
-    <|> match (exact ")") Symbol
-    <|> match (exact "{") Symbol
-    <|> match (exact "}") Symbol
-    <|> match (exact "[") Symbol
-    <|> match (exact "]") Symbol
-    <|> match (exact "<") Symbol
-    <|> match (exact ">") Symbol
     <|> match (exact "|") Symbol
     <|> match (exact ",") Symbol
     <|> match (exact ".") Symbol
     <|> match (exact "as Text") Keyword
     <|> match (exact "as Location") Keyword
     <|> match spaces (const White)
-    <|> match doubleLit (TDouble . cast)
     <|> match naturalLit (TNatural . cast)
+    <|> match quotedIdent parseQuotedIdent
     <|> match ident parseIdent
     <|> compose stringBegin
                 (const $ StringBegin Single)
                 (\x => 0)
                 (stringTokens False)
                 (\hashtag => exact stringEnd <+> reject (is '"'))
+                (const StringEnd)
+    <|> compose stringMultiBegin
+                (const $ StringBegin Multi)
+                (\x => 0)
+                (stringTokens True)
+                (\hashtag => exact multilineEnd <+> reject (exact "''"))
                 (const StringEnd)
     <|> match any (const Unrecognised)
 
@@ -349,6 +405,7 @@ lexTo reject str
       notComment : WithBounds RawToken -> Bool
       notComment t = case t.val of
                           Comment _ => False
+                          White => False
                           _ => True
 
 export
