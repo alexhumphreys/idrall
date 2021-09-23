@@ -163,10 +163,10 @@ data IdrisType
   | Record
 
 public export
-lookupEither : Show k => k -> SortedMap k v -> Either Error v
-lookupEither k sm =
+lookupEither : Show k => Idrall.FC.FC -> k -> SortedMap k v -> Either Error v
+lookupEither fc k sm =
   case lookup k sm of
-       Nothing => Left $ FromDhallError initFC $ "key \{show k} not found"
+       Nothing => Left $ FromDhallError fc $ "key \{show k} not found"
        (Just x) => pure x
 
 Alternative (Either Error) where
@@ -222,7 +222,7 @@ deriveFromDhall it n =
           let rhs = foldr (\(n, type), acc =>
                             let name = primStr $ (show n) in
                                 case type of
-                                     _ => `(~acc <*> (lookupEither (MkFieldName ~name) ~(var arg) >>= fromDhall)))
+                                     _ => `(~acc <*> (lookupEither ~(varStr "fc") (MkFieldName ~name) ~(var arg) >>= fromDhall)))
                           `(pure ~(var constructor')) xs
           pure (rhs)
     genClauseADT : Name -> Name -> Name -> List (Name, TTImp) -> Elab (TTImp, TTImp)

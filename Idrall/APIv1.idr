@@ -30,9 +30,6 @@ parseFunction NewParser = Idrall.ParserNew.parseExprNew
 parseWith : String -> Either String (Expr ImportStatement, Int)
 parseWith = parseFunction useParser
 
-handleError : String -> Error
-handleError x = ErrorMessage initFC x
-
 public export
 exprFromString : String -> IOEither Error (Expr Void)
 exprFromString x = do
