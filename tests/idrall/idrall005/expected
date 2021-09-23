@@ -1,14 +1,17 @@
 1/1: Building All (All.idr)
 Main> Testing: ../../../dhall-lang/tests/normalization/success/WithRecordValueA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/remoteSystemsA.dhall
-AlphaEquivError: (VTextAppend (VTextLit (MkVChunks [("            ", (VMerge (VRecordLit $ fromList [((MkFieldName "None"), (VField (VVar "x" 0) (MkFieldName "host"))), ((MkFieldName "Some"), (VLambda VText (MkClosure "user" (Extend (Extend (Extend (Extend Empty "Text/concatMap" (VLambda (VConst CType) (MkClosure "a" Empty (ELam f (EPi _ (EVar "a" 0) EText) (ELam xs (EApp EList (EVar "a" 0)) (EApp (EApp (EApp (EApp (EApp EListFold (EVar "a" 0)) (EVar "xs" 0)) EText) (ELam x (EVar "a" 0) (ELam y EText (ETextAppend (EApp (EVar "f" 0) (EVar "x" 0)) (EVar "y" 0))))) (ETextLit MkChunks [] ""))))))) "Text/concatSep" (VLambda VText (MkClosure "separator" (Extend (Extend Empty "Text/concatMap" (VLambda (VConst CType) (MkClosure "a" Empty (ELam f (EPi _ (EVar "a" 0) EText) (ELam xs (EApp EList (EVar "a" 0)) (EApp (EApp (EApp (EApp (EApp EListFold (EVar "a" 0)) (EVar "xs" 0)) EText) (ELam x (EVar "a" 0) (ELam y EText (ETextAppend (EApp (EVar "f" 0) (EVar "x" 0)) (EVar "y" 0))))) (ETextLit MkChunks [] ""))))))) "Status" (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)])) (ELam elements (EApp EList EText) (ELet "status" Nothing (EApp (EApp (EApp (EApp (EApp EListFold EText) (EVar "elements" 0)) (EVar "Status" 0)) (ELam element EText (ELam status (EVar "Status" 0) (EMerge (ERecordLit fromList [((MkFieldName "Empty"), (EApp (EField (EVar "Status" 0) (MkFieldName "NonEmpty")) (EVar "element" 0))), ((MkFieldName "NonEmpty"), (ELam result EText (EApp (EField (EVar "Status" 0) (MkFieldName "NonEmpty")) (ETextAppend (ETextAppend (EVar "element" 0) (EVar "separator" 0)) (EVar "result" 0)))))]) (EVar "status" 0) Nothing)))) (EField (EVar "Status" 0) (MkFieldName "Empty"))) (EMerge (ERecordLit fromList [((MkFieldName "Empty"), (ETextLit MkChunks [] "")), ((MkFieldName "NonEmpty"), (ELam result EText (EVar "result" 0)))]) (EVar "status" 0) Nothing)))))) "Row" (VRecord $ fromList [((MkFieldName "cores"), VNatural), ((MkFieldName "host"), VText), ((MkFieldName "key"), VText), ((MkFieldName "mandatoryFeatures"), (VList VText)), ((MkFieldName "platforms"), (VList VText)), ((MkFieldName "speedFactor"), VNatural), ((MkFieldName "supportedFeatures"), (VList VText)), ((MkFieldName "user"), (VOptional VText))])) "row" (VVar "x" 0)) (ETextLit MkChunks [("", (EVar "user" 0)), ("@", (EField (EVar "row" 0) (MkFieldName "host")))] ""))))]) (VField (VVar "x" 0) (MkFieldName "user")) Nothing)), (" ", (VMerge (VRecordLit $ fromList [((MkFieldName "Empty"), (VTextLit (MkVChunks [] ""))), ((MkFieldName "NonEmpty"), (VLambda VText (MkClosure "result" (Extend (Extend (Extend (Extend (Extend Empty "Text/concatMap" (VLambda (VConst CType) (MkClosure "a" Empty (ELam f (EPi _ (EVar "a" 0) EText) (ELam xs (EApp EList (EVar "a" 0)) (EApp (EApp (EApp (EApp (EApp EListFold (EVar "a" 0)) (EVar "xs" 0)) EText) (ELam x (EVar "a" 0) (ELam y EText (ETextAppend (EApp (EVar "f" 0) (EVar "x" 0)) (EVar "y" 0))))) (ETextLit MkChunks [] ""))))))) "Status" (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)])) "separator" (VTextLit (MkVChunks [] ","))) "elements" (VField (VVar "x" 0) (MkFieldName "platforms"))) "status" (VListFold VText (VField (VVar "x" 0) (MkFieldName "platforms")) (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)]) (VLambda VText (MkClosure "element" (Extend (Extend (Extend (Extend Empty "Text/concatMap" (VLambda (VConst CType) (MkClosure "a" Empty (ELam f (EPi _ (EVar "a" 0) EText) (ELam xs (EApp EList (EVar "a" 0)) (EApp (EApp (EApp (EApp (EApp EListFold (EVar "a" 0)) (EVar "xs" 0)) EText) (ELam x (EVar "a" 0) (ELam y EText (ETextAppend (EApp (EVar "f" 0) (EVar "x" 0)) (EVar "y" 0))))) (ETextLit MkChunks [] ""))))))) "Status" (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)])) "separator" (VTextLit (MkVChunks [] ","))) "elements" (VField (VVar "x" 0) (MkFieldName "platforms"))) (ELam status (EVar "Status" 0) (EMerge (ERecordLit fromList [((MkFieldName "Empty"), (EApp (EField (EVar "Status" 0) (MkFieldName "NonEmpty")) (EVar "element" 0))), ((MkFieldName "NonEmpty"), (ELam result EText (EApp (EField (EVar "Status" 0) (MkFieldName "NonEmpty")) (ETextAppend (ETextAppend (EVar "element" 0) (EVar "separator" 0)) (EVar "result" 0)))))]) (EVar "status" 0) Nothing)))) (VInject fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)] (MkFieldName "Empty") Nothing))) (EVar "result" 0))))]) (VListFold VText (VField (VVar "x" 0) (MkFieldName "platforms")) (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)]) (VLambda VText (MkClosure "element" (Extend (Extend (Extend (Extend Empty "Text/concatMap" (VLambda (VConst CType) (MkClosure "a" Empty (ELam f (EPi _ (EVar "a" 0) EText) (ELam xs (EApp EList (EVar "a" 0)) (EApp (EApp (EApp (EApp (EApp EListFold (EVar "a" 0)) (EVar "xs" 0)) EText) (ELam x (EVar "a" 0) (ELam y EText (ETextAppend (EApp (EVar "f" 0) (EVar "x" 0)) (EVar "y" 0))))) (ETextLit MkChunks [] ""))))))) "Status" (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)])) "separator" (VTextLit (MkVChunks [] ","))) "elements" (VField (VVar "x" 0) (MkFieldName "platforms"))) (ELam status (EVar "Status" 0) (EMerge (ERecordLit fromList [((MkFieldName "Empty"), (EApp (EField (EVar "Status" 0) (MkFieldName "NonEmpty")) (EVar "element" 0))), ((MkFieldName "NonEmpty"), (ELam result EText (EApp (EField (EVar "Status" 0) (MkFieldName "NonEmpty")) (ETextAppend (ETextAppend (EVar "element" 0) (EVar "separator" 0)) (EVar "result" 0)))))]) (EVar "status" 0) Nothing)))) (VInject fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)] (MkFieldName "Empty") Nothing)) Nothing)), (" ", (VField (VVar "x" 0) (MkFieldName "key"))), (" ", (VIntegerShow (VNaturalToInteger (VField (VVar "x" 0) (MkFieldName "cores"))))), (" ", (VIntegerShow (VNaturalToInteger (VField (VVar "x" 0) (MkFieldName "speedFactor"))))), (" ", (VMerge (VRecordLit $ fromList [((MkFieldName "Empty"), (VTextLit (MkVChunks [] ""))), ((MkFieldName "NonEmpty"), (VLambda VText (MkClosure "result" (Extend (Extend (Extend (Extend (Extend Empty "Text/concatMap" (VLambda (VConst CType) (MkClosure "a" Empty (ELam f (EPi _ (EVar "a" 0) EText) (ELam xs (EApp EList (EVar "a" 0)) (EApp (EApp (EApp (EApp (EApp EListFold (EVar "a" 0)) (EVar "xs" 0)) EText) (ELam x (EVar "a" 0) (ELam y EText (ETextAppend (EApp (EVar "f" 0) (EVar "x" 0)) (EVar "y" 0))))) (ETextLit MkChunks [] ""))))))) "Status" (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)])) "separator" (VTextLit (MkVChunks [] ","))) "elements" (VField (VVar "x" 0) (MkFieldName "supportedFeatures"))) "status" (VListFold VText (VField (VVar "x" 0) (MkFieldName "supportedFeatures")) (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)]) (VLambda VText (MkClosure "element" (Extend (Extend (Extend (Extend Empty "Text/concatMap" (VLambda (VConst CType) (MkClosure "a" Empty (ELam f (EPi _ (EVar "a" 0) EText) (ELam xs (EApp EList (EVar "a" 0)) (EApp (EApp (EApp (EApp (EApp EListFold (EVar "a" 0)) (EVar "xs" 0)) EText) (ELam x (EVar "a" 0) (ELam y EText (ETextAppend (EApp (EVar "f" 0) (EVar "x" 0)) (EVar "y" 0))))) (ETextLit MkChunks [] ""))))))) "Status" (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)])) "separator" (VTextLit (MkVChunks [] ","))) "elements" (VField (VVar "x" 0) (MkFieldName "supportedFeatures"))) (ELam status (EVar "Status" 0) (EMerge (ERecordLit fromList [((MkFieldName "Empty"), (EApp (EField (EVar "Status" 0) (MkFieldName "NonEmpty")) (EVar "element" 0))), ((MkFieldName "NonEmpty"), (ELam result EText (EApp (EField (EVar "Status" 0) (MkFieldName "NonEmpty")) (ETextAppend (ETextAppend (EVar "element" 0) (EVar "separator" 0)) (EVar "result" 0)))))]) (EVar "status" 0) Nothing)))) (VInject fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)] (MkFieldName "Empty") Nothing))) (EVar "result" 0))))]) (VListFold VText (VField (VVar "x" 0) (MkFieldName "supportedFeatures")) (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)]) (VLambda VText (MkClosure "element" (Extend (Extend (Extend (Extend Empty "Text/concatMap" (VLambda (VConst CType) (MkClosure "a" Empty (ELam f (EPi _ (EVar "a" 0) EText) (ELam xs (EApp EList (EVar "a" 0)) (EApp (EApp (EApp (EApp (EApp EListFold (EVar "a" 0)) (EVar "xs" 0)) EText) (ELam x (EVar "a" 0) (ELam y EText (ETextAppend (EApp (EVar "f" 0) (EVar "x" 0)) (EVar "y" 0))))) (ETextLit MkChunks [] ""))))))) "Status" (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)])) "separator" (VTextLit (MkVChunks [] ","))) "elements" (VField (VVar "x" 0) (MkFieldName "supportedFeatures"))) (ELam status (EVar "Status" 0) (EMerge (ERecordLit fromList [((MkFieldName "Empty"), (EApp (EField (EVar "Status" 0) (MkFieldName "NonEmpty")) (EVar "element" 0))), ((MkFieldName "NonEmpty"), (ELam result EText (EApp (EField (EVar "Status" 0) (MkFieldName "NonEmpty")) (ETextAppend (ETextAppend (EVar "element" 0) (EVar "separator" 0)) (EVar "result" 0)))))]) (EVar "status" 0) Nothing)))) (VInject fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)] (MkFieldName "Empty") Nothing)) Nothing)), (" ", (VMerge (VRecordLit $ fromList [((MkFieldName "Empty"), (VTextLit (MkVChunks [] ""))), ((MkFieldName "NonEmpty"), (VLambda VText (MkClosure "result" (Extend (Extend (Extend (Extend (Extend Empty "Text/concatMap" (VLambda (VConst CType) (MkClosure "a" Empty (ELam f (EPi _ (EVar "a" 0) EText) (ELam xs (EApp EList (EVar "a" 0)) (EApp (EApp (EApp (EApp (EApp EListFold (EVar "a" 0)) (EVar "xs" 0)) EText) (ELam x (EVar "a" 0) (ELam y EText (ETextAppend (EApp (EVar "f" 0) (EVar "x" 0)) (EVar "y" 0))))) (ETextLit MkChunks [] ""))))))) "Status" (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)])) "separator" (VTextLit (MkVChunks [] ","))) "elements" (VField (VVar "x" 0) (MkFieldName "mandatoryFeatures"))) "status" (VListFold VText (VField (VVar "x" 0) (MkFieldName "mandatoryFeatures")) (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)]) (VLambda VText (MkClosure "element" (Extend (Extend (Extend (Extend Empty "Text/concatMap" (VLambda (VConst CType) (MkClosure "a" Empty (ELam f (EPi _ (EVar "a" 0) EText) (ELam xs (EApp EList (EVar "a" 0)) (EApp (EApp (EApp (EApp (EApp EListFold (EVar "a" 0)) (EVar "xs" 0)) EText) (ELam x (EVar "a" 0) (ELam y EText (ETextAppend (EApp (EVar "f" 0) (EVar "x" 0)) (EVar "y" 0))))) (ETextLit MkChunks [] ""))))))) "Status" (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)])) "separator" (VTextLit (MkVChunks [] ","))) "elements" (VField (VVar "x" 0) (MkFieldName "mandatoryFeatures"))) (ELam status (EVar "Status" 0) (EMerge (ERecordLit fromList [((MkFieldName "Empty"), (EApp (EField (EVar "Status" 0) (MkFieldName "NonEmpty")) (EVar "element" 0))), ((MkFieldName "NonEmpty"), (ELam result EText (EApp (EField (EVar "Status" 0) (MkFieldName "NonEmpty")) (ETextAppend (ETextAppend (EVar "element" 0) (EVar "separator" 0)) (EVar "result" 0)))))]) (EVar "status" 0) Nothing)))) (VInject fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)] (MkFieldName "Empty") Nothing))) (EVar "result" 0))))]) (VListFold VText (VField (VVar "x" 0) (MkFieldName "mandatoryFeatures")) (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)]) (VLambda VText (MkClosure "element" (Extend (Extend (Extend (Extend Empty "Text/concatMap" (VLambda (VConst CType) (MkClosure "a" Empty (ELam f (EPi _ (EVar "a" 0) EText) (ELam xs (EApp EList (EVar "a" 0)) (EApp (EApp (EApp (EApp (EApp EListFold (EVar "a" 0)) (EVar "xs" 0)) EText) (ELam x (EVar "a" 0) (ELam y EText (ETextAppend (EApp (EVar "f" 0) (EVar "x" 0)) (EVar "y" 0))))) (ETextLit MkChunks [] ""))))))) "Status" (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)])) "separator" (VTextLit (MkVChunks [] ","))) "elements" (VField (VVar "x" 0) (MkFieldName "mandatoryFeatures"))) (ELam status (EVar "Status" 0) (EMerge (ERecordLit fromList [((MkFieldName "Empty"), (EApp (EField (EVar "Status" 0) (MkFieldName "NonEmpty")) (EVar "element" 0))), ((MkFieldName "NonEmpty"), (ELam result EText (EApp (EField (EVar "Status" 0) (MkFieldName "NonEmpty")) (ETextAppend (ETextAppend (EVar "element" 0) (EVar "separator" 0)) (EVar "result" 0)))))]) (EVar "status" 0) Nothing)))) (VInject fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)] (MkFieldName "Empty") Nothing)) Nothing))] "\n            ")) (VVar "y" 0))
+6|         List/fold a xs Text (λ(x : a) → λ(y : Text) → f x ++ y) ""
+                                                                ^^
+
+../../../dhall-lang/tests/normalization/success/../../../Prelude/Text/./concatMap.dhall:(6, 61)-(6, 62)AlphaEquivError: (VTextAppend (VTextLit (MkVChunks [("\n            ", (VMerge (VRecordLit $ fromList [((MkFieldName "None"), (VField (VVar "x" 0) (MkFieldName "host"))), ((MkFieldName "Some"), (VLambda VText (MkClosure "user" (Extend (Extend (Extend (Extend Empty "Text/concatMap" (VLambda (VConst CType) (MkClosure "a" Empty (ELam f (EPi _ (EVar "a" 0) EText) (ELam xs (EApp EList (EVar "a" 0)) (EApp (EApp (EApp (EApp (EApp EListFold (EVar "a" 0)) (EVar "xs" 0)) EText) (ELam x (EVar "a" 0) (ELam y EText (ETextAppend (EApp (EVar "f" 0) (EVar "x" 0)) (EVar "y" 0))))) (ETextLit MkChunks [] ""))))))) "Text/concatSep" (VLambda VText (MkClosure "separator" (Extend (Extend Empty "Text/concatMap" (VLambda (VConst CType) (MkClosure "a" Empty (ELam f (EPi _ (EVar "a" 0) EText) (ELam xs (EApp EList (EVar "a" 0)) (EApp (EApp (EApp (EApp (EApp EListFold (EVar "a" 0)) (EVar "xs" 0)) EText) (ELam x (EVar "a" 0) (ELam y EText (ETextAppend (EApp (EVar "f" 0) (EVar "x" 0)) (EVar "y" 0))))) (ETextLit MkChunks [] ""))))))) "Status" (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)])) (ELam elements (EApp EList EText) (ELet "status" Nothing (EApp (EApp (EApp (EApp (EApp EListFold EText) (EVar "elements" 0)) (EVar "Status" 0)) (ELam element EText (ELam status (EVar "Status" 0) (EMerge (ERecordLit fromList [((MkFieldName "Empty"), (EApp (EField (EVar "Status" 0) (MkFieldName "NonEmpty")) (EVar "element" 0))), ((MkFieldName "NonEmpty"), (ELam result EText (EApp (EField (EVar "Status" 0) (MkFieldName "NonEmpty")) (ETextAppend (ETextAppend (EVar "element" 0) (EVar "separator" 0)) (EVar "result" 0)))))]) (EVar "status" 0) Nothing)))) (EField (EVar "Status" 0) (MkFieldName "Empty"))) (EMerge (ERecordLit fromList [((MkFieldName "Empty"), (ETextLit MkChunks [] "")), ((MkFieldName "NonEmpty"), (ELam result EText (EVar "result" 0)))]) (EVar "status" 0) Nothing)))))) "Row" (VRecord $ fromList [((MkFieldName "cores"), VNatural), ((MkFieldName "host"), VText), ((MkFieldName "key"), VText), ((MkFieldName "mandatoryFeatures"), (VList VText)), ((MkFieldName "platforms"), (VList VText)), ((MkFieldName "speedFactor"), VNatural), ((MkFieldName "supportedFeatures"), (VList VText)), ((MkFieldName "user"), (VOptional VText))])) "row" (VVar "x" 0)) (ETextLit MkChunks [("", (EVar "user" 0)), ("@", (EField (EVar "row" 0) (MkFieldName "host")))] ""))))]) (VField (VVar "x" 0) (MkFieldName "user")) Nothing)), (" ", (VMerge (VRecordLit $ fromList [((MkFieldName "Empty"), (VTextLit (MkVChunks [] ""))), ((MkFieldName "NonEmpty"), (VLambda VText (MkClosure "result" (Extend (Extend (Extend (Extend (Extend Empty "Text/concatMap" (VLambda (VConst CType) (MkClosure "a" Empty (ELam f (EPi _ (EVar "a" 0) EText) (ELam xs (EApp EList (EVar "a" 0)) (EApp (EApp (EApp (EApp (EApp EListFold (EVar "a" 0)) (EVar "xs" 0)) EText) (ELam x (EVar "a" 0) (ELam y EText (ETextAppend (EApp (EVar "f" 0) (EVar "x" 0)) (EVar "y" 0))))) (ETextLit MkChunks [] ""))))))) "Status" (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)])) "separator" (VTextLit (MkVChunks [] ","))) "elements" (VField (VVar "x" 0) (MkFieldName "platforms"))) "status" (VListFold VText (VField (VVar "x" 0) (MkFieldName "platforms")) (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)]) (VLambda VText (MkClosure "element" (Extend (Extend (Extend (Extend Empty "Text/concatMap" (VLambda (VConst CType) (MkClosure "a" Empty (ELam f (EPi _ (EVar "a" 0) EText) (ELam xs (EApp EList (EVar "a" 0)) (EApp (EApp (EApp (EApp (EApp EListFold (EVar "a" 0)) (EVar "xs" 0)) EText) (ELam x (EVar "a" 0) (ELam y EText (ETextAppend (EApp (EVar "f" 0) (EVar "x" 0)) (EVar "y" 0))))) (ETextLit MkChunks [] ""))))))) "Status" (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)])) "separator" (VTextLit (MkVChunks [] ","))) "elements" (VField (VVar "x" 0) (MkFieldName "platforms"))) (ELam status (EVar "Status" 0) (EMerge (ERecordLit fromList [((MkFieldName "Empty"), (EApp (EField (EVar "Status" 0) (MkFieldName "NonEmpty")) (EVar "element" 0))), ((MkFieldName "NonEmpty"), (ELam result EText (EApp (EField (EVar "Status" 0) (MkFieldName "NonEmpty")) (ETextAppend (ETextAppend (EVar "element" 0) (EVar "separator" 0)) (EVar "result" 0)))))]) (EVar "status" 0) Nothing)))) (VInject fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)] (MkFieldName "Empty") Nothing))) (EVar "result" 0))))]) (VListFold VText (VField (VVar "x" 0) (MkFieldName "platforms")) (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)]) (VLambda VText (MkClosure "element" (Extend (Extend (Extend (Extend Empty "Text/concatMap" (VLambda (VConst CType) (MkClosure "a" Empty (ELam f (EPi _ (EVar "a" 0) EText) (ELam xs (EApp EList (EVar "a" 0)) (EApp (EApp (EApp (EApp (EApp EListFold (EVar "a" 0)) (EVar "xs" 0)) EText) (ELam x (EVar "a" 0) (ELam y EText (ETextAppend (EApp (EVar "f" 0) (EVar "x" 0)) (EVar "y" 0))))) (ETextLit MkChunks [] ""))))))) "Status" (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)])) "separator" (VTextLit (MkVChunks [] ","))) "elements" (VField (VVar "x" 0) (MkFieldName "platforms"))) (ELam status (EVar "Status" 0) (EMerge (ERecordLit fromList [((MkFieldName "Empty"), (EApp (EField (EVar "Status" 0) (MkFieldName "NonEmpty")) (EVar "element" 0))), ((MkFieldName "NonEmpty"), (ELam result EText (EApp (EField (EVar "Status" 0) (MkFieldName "NonEmpty")) (ETextAppend (ETextAppend (EVar "element" 0) (EVar "separator" 0)) (EVar "result" 0)))))]) (EVar "status" 0) Nothing)))) (VInject fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)] (MkFieldName "Empty") Nothing)) Nothing)), (" ", (VField (VVar "x" 0) (MkFieldName "key"))), (" ", (VIntegerShow (VNaturalToInteger (VField (VVar "x" 0) (MkFieldName "cores"))))), (" ", (VIntegerShow (VNaturalToInteger (VField (VVar "x" 0) (MkFieldName "speedFactor"))))), (" ", (VMerge (VRecordLit $ fromList [((MkFieldName "Empty"), (VTextLit (MkVChunks [] ""))), ((MkFieldName "NonEmpty"), (VLambda VText (MkClosure "result" (Extend (Extend (Extend (Extend (Extend Empty "Text/concatMap" (VLambda (VConst CType) (MkClosure "a" Empty (ELam f (EPi _ (EVar "a" 0) EText) (ELam xs (EApp EList (EVar "a" 0)) (EApp (EApp (EApp (EApp (EApp EListFold (EVar "a" 0)) (EVar "xs" 0)) EText) (ELam x (EVar "a" 0) (ELam y EText (ETextAppend (EApp (EVar "f" 0) (EVar "x" 0)) (EVar "y" 0))))) (ETextLit MkChunks [] ""))))))) "Status" (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)])) "separator" (VTextLit (MkVChunks [] ","))) "elements" (VField (VVar "x" 0) (MkFieldName "supportedFeatures"))) "status" (VListFold VText (VField (VVar "x" 0) (MkFieldName "supportedFeatures")) (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)]) (VLambda VText (MkClosure "element" (Extend (Extend (Extend (Extend Empty "Text/concatMap" (VLambda (VConst CType) (MkClosure "a" Empty (ELam f (EPi _ (EVar "a" 0) EText) (ELam xs (EApp EList (EVar "a" 0)) (EApp (EApp (EApp (EApp (EApp EListFold (EVar "a" 0)) (EVar "xs" 0)) EText) (ELam x (EVar "a" 0) (ELam y EText (ETextAppend (EApp (EVar "f" 0) (EVar "x" 0)) (EVar "y" 0))))) (ETextLit MkChunks [] ""))))))) "Status" (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)])) "separator" (VTextLit (MkVChunks [] ","))) "elements" (VField (VVar "x" 0) (MkFieldName "supportedFeatures"))) (ELam status (EVar "Status" 0) (EMerge (ERecordLit fromList [((MkFieldName "Empty"), (EApp (EField (EVar "Status" 0) (MkFieldName "NonEmpty")) (EVar "element" 0))), ((MkFieldName "NonEmpty"), (ELam result EText (EApp (EField (EVar "Status" 0) (MkFieldName "NonEmpty")) (ETextAppend (ETextAppend (EVar "element" 0) (EVar "separator" 0)) (EVar "result" 0)))))]) (EVar "status" 0) Nothing)))) (VInject fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)] (MkFieldName "Empty") Nothing))) (EVar "result" 0))))]) (VListFold VText (VField (VVar "x" 0) (MkFieldName "supportedFeatures")) (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)]) (VLambda VText (MkClosure "element" (Extend (Extend (Extend (Extend Empty "Text/concatMap" (VLambda (VConst CType) (MkClosure "a" Empty (ELam f (EPi _ (EVar "a" 0) EText) (ELam xs (EApp EList (EVar "a" 0)) (EApp (EApp (EApp (EApp (EApp EListFold (EVar "a" 0)) (EVar "xs" 0)) EText) (ELam x (EVar "a" 0) (ELam y EText (ETextAppend (EApp (EVar "f" 0) (EVar "x" 0)) (EVar "y" 0))))) (ETextLit MkChunks [] ""))))))) "Status" (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)])) "separator" (VTextLit (MkVChunks [] ","))) "elements" (VField (VVar "x" 0) (MkFieldName "supportedFeatures"))) (ELam status (EVar "Status" 0) (EMerge (ERecordLit fromList [((MkFieldName "Empty"), (EApp (EField (EVar "Status" 0) (MkFieldName "NonEmpty")) (EVar "element" 0))), ((MkFieldName "NonEmpty"), (ELam result EText (EApp (EField (EVar "Status" 0) (MkFieldName "NonEmpty")) (ETextAppend (ETextAppend (EVar "element" 0) (EVar "separator" 0)) (EVar "result" 0)))))]) (EVar "status" 0) Nothing)))) (VInject fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)] (MkFieldName "Empty") Nothing)) Nothing)), (" ", (VMerge (VRecordLit $ fromList [((MkFieldName "Empty"), (VTextLit (MkVChunks [] ""))), ((MkFieldName "NonEmpty"), (VLambda VText (MkClosure "result" (Extend (Extend (Extend (Extend (Extend Empty "Text/concatMap" (VLambda (VConst CType) (MkClosure "a" Empty (ELam f (EPi _ (EVar "a" 0) EText) (ELam xs (EApp EList (EVar "a" 0)) (EApp (EApp (EApp (EApp (EApp EListFold (EVar "a" 0)) (EVar "xs" 0)) EText) (ELam x (EVar "a" 0) (ELam y EText (ETextAppend (EApp (EVar "f" 0) (EVar "x" 0)) (EVar "y" 0))))) (ETextLit MkChunks [] ""))))))) "Status" (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)])) "separator" (VTextLit (MkVChunks [] ","))) "elements" (VField (VVar "x" 0) (MkFieldName "mandatoryFeatures"))) "status" (VListFold VText (VField (VVar "x" 0) (MkFieldName "mandatoryFeatures")) (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)]) (VLambda VText (MkClosure "element" (Extend (Extend (Extend (Extend Empty "Text/concatMap" (VLambda (VConst CType) (MkClosure "a" Empty (ELam f (EPi _ (EVar "a" 0) EText) (ELam xs (EApp EList (EVar "a" 0)) (EApp (EApp (EApp (EApp (EApp EListFold (EVar "a" 0)) (EVar "xs" 0)) EText) (ELam x (EVar "a" 0) (ELam y EText (ETextAppend (EApp (EVar "f" 0) (EVar "x" 0)) (EVar "y" 0))))) (ETextLit MkChunks [] ""))))))) "Status" (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)])) "separator" (VTextLit (MkVChunks [] ","))) "elements" (VField (VVar "x" 0) (MkFieldName "mandatoryFeatures"))) (ELam status (EVar "Status" 0) (EMerge (ERecordLit fromList [((MkFieldName "Empty"), (EApp (EField (EVar "Status" 0) (MkFieldName "NonEmpty")) (EVar "element" 0))), ((MkFieldName "NonEmpty"), (ELam result EText (EApp (EField (EVar "Status" 0) (MkFieldName "NonEmpty")) (ETextAppend (ETextAppend (EVar "element" 0) (EVar "separator" 0)) (EVar "result" 0)))))]) (EVar "status" 0) Nothing)))) (VInject fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)] (MkFieldName "Empty") Nothing))) (EVar "result" 0))))]) (VListFold VText (VField (VVar "x" 0) (MkFieldName "mandatoryFeatures")) (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)]) (VLambda VText (MkClosure "element" (Extend (Extend (Extend (Extend Empty "Text/concatMap" (VLambda (VConst CType) (MkClosure "a" Empty (ELam f (EPi _ (EVar "a" 0) EText) (ELam xs (EApp EList (EVar "a" 0)) (EApp (EApp (EApp (EApp (EApp EListFold (EVar "a" 0)) (EVar "xs" 0)) EText) (ELam x (EVar "a" 0) (ELam y EText (ETextAppend (EApp (EVar "f" 0) (EVar "x" 0)) (EVar "y" 0))))) (ETextLit MkChunks [] ""))))))) "Status" (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)])) "separator" (VTextLit (MkVChunks [] ","))) "elements" (VField (VVar "x" 0) (MkFieldName "mandatoryFeatures"))) (ELam status (EVar "Status" 0) (EMerge (ERecordLit fromList [((MkFieldName "Empty"), (EApp (EField (EVar "Status" 0) (MkFieldName "NonEmpty")) (EVar "element" 0))), ((MkFieldName "NonEmpty"), (ELam result EText (EApp (EField (EVar "Status" 0) (MkFieldName "NonEmpty")) (ETextAppend (ETextAppend (EVar "element" 0) (EVar "separator" 0)) (EVar "result" 0)))))]) (EVar "status" 0) Nothing)))) (VInject fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)] (MkFieldName "Empty") Nothing)) Nothing))] "\n            ")) (VVar "y" 0))
  not alpha equivalent to:
-(VTextLit (MkVChunks [("          ", (VMerge (VRecordLit $ fromList [((MkFieldName "None"), (VField (VVar "x" 0) (MkFieldName "host"))), ((MkFieldName "Some"), (VLambda VText (MkClosure "user" (Extend (Extend (Extend Empty "xs" (VVar "xs" 0)) "x" (VVar "x" 0)) "y" (VVar "y" 0)) (ETextLit MkChunks [("", (EVar "user" 0)), ("@", (EField (EVar "x" 0) (MkFieldName "host")))] ""))))]) (VField (VVar "x" 0) (MkFieldName "user")) Nothing)), (" ", (VMerge (VRecordLit $ fromList [((MkFieldName "Empty"), (VTextLit (MkVChunks [] ""))), ((MkFieldName "NonEmpty"), (VLambda VText (MkClosure "result" (Extend (Extend (Extend Empty "xs" (VVar "xs" 0)) "x" (VVar "x" 0)) "y" (VVar "y" 0)) (EVar "result" 0))))]) (VListFold VText (VField (VVar "x" 0) (MkFieldName "platforms")) (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)]) (VLambda VText (MkClosure "element" (Extend (Extend (Extend Empty "xs" (VVar "xs" 0)) "x" (VVar "x" 0)) "y" (VVar "y" 0)) (ELam status (EUnion $ fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just EText)]) (EMerge (ERecordLit fromList [((MkFieldName "Empty"), (EApp (EField (EUnion $ fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just EText)]) (MkFieldName "NonEmpty")) (EVar "element" 0))), ((MkFieldName "NonEmpty"), (ELam result EText (EApp (EField (EUnion $ fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just EText)]) (MkFieldName "NonEmpty")) (ETextLit MkChunks [("", (EVar "element" 0)), (",", (EVar "result" 0))] ""))))]) (EVar "status" 0) Nothing)))) (VInject fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)] (MkFieldName "Empty") Nothing)) Nothing)), (" ", (VField (VVar "x" 0) (MkFieldName "key"))), (" ", (VIntegerShow (VNaturalToInteger (VField (VVar "x" 0) (MkFieldName "cores"))))), (" ", (VIntegerShow (VNaturalToInteger (VField (VVar "x" 0) (MkFieldName "speedFactor"))))), (" ", (VMerge (VRecordLit $ fromList [((MkFieldName "Empty"), (VTextLit (MkVChunks [] ""))), ((MkFieldName "NonEmpty"), (VLambda VText (MkClosure "result" (Extend (Extend (Extend Empty "xs" (VVar "xs" 0)) "x" (VVar "x" 0)) "y" (VVar "y" 0)) (EVar "result" 0))))]) (VListFold VText (VField (VVar "x" 0) (MkFieldName "supportedFeatures")) (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)]) (VLambda VText (MkClosure "element" (Extend (Extend (Extend Empty "xs" (VVar "xs" 0)) "x" (VVar "x" 0)) "y" (VVar "y" 0)) (ELam status (EUnion $ fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just EText)]) (EMerge (ERecordLit fromList [((MkFieldName "Empty"), (EApp (EField (EUnion $ fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just EText)]) (MkFieldName "NonEmpty")) (EVar "element" 0))), ((MkFieldName "NonEmpty"), (ELam result EText (EApp (EField (EUnion $ fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just EText)]) (MkFieldName "NonEmpty")) (ETextLit MkChunks [("", (EVar "element" 0)), (",", (EVar "result" 0))] ""))))]) (EVar "status" 0) Nothing)))) (VInject fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)] (MkFieldName "Empty") Nothing)) Nothing)), (" ", (VMerge (VRecordLit $ fromList [((MkFieldName "Empty"), (VTextLit (MkVChunks [] ""))), ((MkFieldName "NonEmpty"), (VLambda VText (MkClosure "result" (Extend (Extend (Extend Empty "xs" (VVar "xs" 0)) "x" (VVar "x" 0)) "y" (VVar "y" 0)) (EVar "result" 0))))]) (VListFold VText (VField (VVar "x" 0) (MkFieldName "mandatoryFeatures")) (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)]) (VLambda VText (MkClosure "element" (Extend (Extend (Extend Empty "xs" (VVar "xs" 0)) "x" (VVar "x" 0)) "y" (VVar "y" 0)) (ELam status (EUnion $ fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just EText)]) (EMerge (ERecordLit fromList [((MkFieldName "Empty"), (EApp (EField (EUnion $ fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just EText)]) (MkFieldName "NonEmpty")) (EVar "element" 0))), ((MkFieldName "NonEmpty"), (ELam result EText (EApp (EField (EUnion $ fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just EText)]) (MkFieldName "NonEmpty")) (ETextLit MkChunks [("", (EVar "element" 0)), (",", (EVar "result" 0))] ""))))]) (EVar "status" 0) Nothing)))) (VInject fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)] (MkFieldName "Empty") Nothing)) Nothing)), ("\n          ", (VVar "y" 0))] ""))
+(VTextLit (MkVChunks [("\n          ", (VMerge (VRecordLit $ fromList [((MkFieldName "None"), (VField (VVar "x" 0) (MkFieldName "host"))), ((MkFieldName "Some"), (VLambda VText (MkClosure "user" (Extend (Extend (Extend Empty "xs" (VVar "xs" 0)) "x" (VVar "x" 0)) "y" (VVar "y" 0)) (ETextLit MkChunks [("", (EVar "user" 0)), ("@", (EField (EVar "x" 0) (MkFieldName "host")))] ""))))]) (VField (VVar "x" 0) (MkFieldName "user")) Nothing)), (" ", (VMerge (VRecordLit $ fromList [((MkFieldName "Empty"), (VTextLit (MkVChunks [] ""))), ((MkFieldName "NonEmpty"), (VLambda VText (MkClosure "result" (Extend (Extend (Extend Empty "xs" (VVar "xs" 0)) "x" (VVar "x" 0)) "y" (VVar "y" 0)) (EVar "result" 0))))]) (VListFold VText (VField (VVar "x" 0) (MkFieldName "platforms")) (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)]) (VLambda VText (MkClosure "element" (Extend (Extend (Extend Empty "xs" (VVar "xs" 0)) "x" (VVar "x" 0)) "y" (VVar "y" 0)) (ELam status (EUnion $ fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just EText)]) (EMerge (ERecordLit fromList [((MkFieldName "Empty"), (EApp (EField (EUnion $ fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just EText)]) (MkFieldName "NonEmpty")) (EVar "element" 0))), ((MkFieldName "NonEmpty"), (ELam result EText (EApp (EField (EUnion $ fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just EText)]) (MkFieldName "NonEmpty")) (ETextLit MkChunks [("", (EVar "element" 0)), (",", (EVar "result" 0))] ""))))]) (EVar "status" 0) Nothing)))) (VInject fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)] (MkFieldName "Empty") Nothing)) Nothing)), (" ", (VField (VVar "x" 0) (MkFieldName "key"))), (" ", (VIntegerShow (VNaturalToInteger (VField (VVar "x" 0) (MkFieldName "cores"))))), (" ", (VIntegerShow (VNaturalToInteger (VField (VVar "x" 0) (MkFieldName "speedFactor"))))), (" ", (VMerge (VRecordLit $ fromList [((MkFieldName "Empty"), (VTextLit (MkVChunks [] ""))), ((MkFieldName "NonEmpty"), (VLambda VText (MkClosure "result" (Extend (Extend (Extend Empty "xs" (VVar "xs" 0)) "x" (VVar "x" 0)) "y" (VVar "y" 0)) (EVar "result" 0))))]) (VListFold VText (VField (VVar "x" 0) (MkFieldName "supportedFeatures")) (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)]) (VLambda VText (MkClosure "element" (Extend (Extend (Extend Empty "xs" (VVar "xs" 0)) "x" (VVar "x" 0)) "y" (VVar "y" 0)) (ELam status (EUnion $ fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just EText)]) (EMerge (ERecordLit fromList [((MkFieldName "Empty"), (EApp (EField (EUnion $ fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just EText)]) (MkFieldName "NonEmpty")) (EVar "element" 0))), ((MkFieldName "NonEmpty"), (ELam result EText (EApp (EField (EUnion $ fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just EText)]) (MkFieldName "NonEmpty")) (ETextLit MkChunks [("", (EVar "element" 0)), (",", (EVar "result" 0))] ""))))]) (EVar "status" 0) Nothing)))) (VInject fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)] (MkFieldName "Empty") Nothing)) Nothing)), (" ", (VMerge (VRecordLit $ fromList [((MkFieldName "Empty"), (VTextLit (MkVChunks [] ""))), ((MkFieldName "NonEmpty"), (VLambda VText (MkClosure "result" (Extend (Extend (Extend Empty "xs" (VVar "xs" 0)) "x" (VVar "x" 0)) "y" (VVar "y" 0)) (EVar "result" 0))))]) (VListFold VText (VField (VVar "x" 0) (MkFieldName "mandatoryFeatures")) (VUnion fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)]) (VLambda VText (MkClosure "element" (Extend (Extend (Extend Empty "xs" (VVar "xs" 0)) "x" (VVar "x" 0)) "y" (VVar "y" 0)) (ELam status (EUnion $ fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just EText)]) (EMerge (ERecordLit fromList [((MkFieldName "Empty"), (EApp (EField (EUnion $ fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just EText)]) (MkFieldName "NonEmpty")) (EVar "element" 0))), ((MkFieldName "NonEmpty"), (ELam result EText (EApp (EField (EUnion $ fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just EText)]) (MkFieldName "NonEmpty")) (ETextLit MkChunks [("", (EVar "element" 0)), (",", (EVar "result" 0))] ""))))]) (EVar "status" 0) Nothing)))) (VInject fromList [((MkFieldName "Empty"), Nothing), ((MkFieldName "NonEmpty"), Just VText)] (MkFieldName "Empty") Nothing)) Nothing)), ("\n          ", (VVar "y" 0))] ""))
+
 Testing: ../../../dhall-lang/tests/normalization/success/haskell-tutorial/access/0A.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/haskell-tutorial/access/1A.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/haskell-tutorial/combineTypes/0A.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/haskell-tutorial/combineTypes/1A.dhall
-ParseError "Parse failed at position 25: expected the end of the string"
 Testing: ../../../dhall-lang/tests/normalization/success/haskell-tutorial/prefer/0A.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/haskell-tutorial/projection/0A.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/regression/NaturalFoldExtraArgA.dhall
@@ -16,12 +19,17 @@ Testing: ../../../dhall-lang/tests/normalization/success/regression/TrickyBinder
 Testing: ../../../dhall-lang/tests/normalization/success/regression/UnsaturatedBuiltinsA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/simple/completionA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/simple/doubleShowA.dhall
-ParseError "Parse failed at position 0: char '('"
+2| , example2 = Double/show NaN
+                            ^^^^
+
+../../../dhall-lang/tests/normalization/success/simple/doubleShowA.dhall:(2, 25)-(2, 28)AlphaEquivError: "+nan.0"
+ not alpha equivalent to:
+"NaN"
+
 Testing: ../../../dhall-lang/tests/normalization/success/simple/enumA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/simple/equalNoCommuteA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/simple/integerShowA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/simple/integerToDoubleA.dhall
-ParseError "Parse failed at position 0: char '('"
 Testing: ../../../dhall-lang/tests/normalization/success/simple/letAvoidCaptureA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/simple/letenumA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/simple/letletA.dhall
@@ -37,22 +45,34 @@ Testing: ../../../dhall-lang/tests/normalization/success/simplifications/andA.dh
 Testing: ../../../dhall-lang/tests/normalization/success/simplifications/eqA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/simplifications/ifThenElseA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/simplifications/issue661A.dhall
-Unexpected: Not a RecordLit. Value: (VPrefer (VVar "old" 0) (VRecordLit $ fromList [((MkFieldName "b"), (VTextLit (MkVChunks [] "Hello")))]))
+8| let g = λ(old : T2) → { z = [ old, old.{ a } ⫽ { b = "Bye" } ] : List T2 }
+                                      ^^^^^^^^
+
+../../../dhall-lang/tests/normalization/success/simplifications/issue661A.dhall:(8, 35)-(8, 42)Unexpected: Not a RecordLit. Value: (VPrefer (VVar "old" 0) (VRecordLit $ fromList [((MkFieldName "b"), (VTextLit (MkVChunks [] "Hello")))]))
+
 Testing: ../../../dhall-lang/tests/normalization/success/simplifications/neA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/simplifications/orA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/simplifications/rightBiasedMergeWithinRecordProjectionWithinFieldSelection0A.dhall
-ParseError "Parse failed at position 56: expected the end of the string"
+(0, 0)-(0, 130)ParseError "Just \"../../../dhall-lang/tests/normalization/success/simplifications/rightBiasedMergeWithinRecordProjectionWithinFieldSelection0A.dhall\" [error: expected builtin\ntokens: Just (MkBounds 0 56 0 57)]"
 Testing: ../../../dhall-lang/tests/normalization/success/simplifications/rightBiasedMergeWithinRecordProjectionWithinFieldSelection1A.dhall
-ParseError "Parse failed at position 75: expected the end of the string"
+(0, 0)-(0, 130)ParseError "Just \"../../../dhall-lang/tests/normalization/success/simplifications/rightBiasedMergeWithinRecordProjectionWithinFieldSelection1A.dhall\" [error: expected builtin\ntokens: Just (MkBounds 0 75 0 76)]"
 Testing: ../../../dhall-lang/tests/normalization/success/simplifications/rightBiasedMergeWithinRecursiveRecordMergeWithinFieldselectionA.dhall
-AlphaEquivError: (VField (VCombineTypes (VPrefer (VVar "x" 0) (VRecordLit $ fromList [((MkFieldName "b"), (VNaturalLit 0))])) (VRecordLit $ fromList [((MkFieldName "a"), (VRecordLit $ fromList [((MkFieldName "c"), (VNaturalLit 1))]))])) (MkFieldName "b"))
+0| λ(x : { a : {} }) → (x ⫽ { b = 0 } ∧ { a = { c = 1 } }).b
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+../../../dhall-lang/tests/normalization/success/simplifications/rightBiasedMergeWithinRecursiveRecordMergeWithinFieldselectionA.dhall:(0, 21)-(0, 57)AlphaEquivError: (VField (VCombineTypes (VPrefer (VVar "x" 0) (VRecordLit $ fromList [((MkFieldName "b"), (VNaturalLit 0))])) (VRecordLit $ fromList [((MkFieldName "a"), (VRecordLit $ fromList [((MkFieldName "c"), (VNaturalLit 1))]))])) (MkFieldName "b"))
  not alpha equivalent to:
 (VNaturalLit 0)
+
 Testing: ../../../dhall-lang/tests/normalization/success/unit/AssertNormalizeArgumentA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/BareInterpolationA.dhall
-AlphaEquivError: (VTextLit (MkVChunks [("", (VVar "x" 0))] ""))
+0| λ(x : Text) → "${x}"
+                 ^^^^^^^
+
+../../../dhall-lang/tests/normalization/success/unit/BareInterpolationA.dhall:(0, 14)-(0, 20)AlphaEquivError: (VTextLit (MkVChunks [("", (VVar "x" 0))] ""))
  not alpha equivalent to:
 (VVar "x" 0)
+
 Testing: ../../../dhall-lang/tests/normalization/success/unit/BoolA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/CompletionA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/DoubleA.dhall
@@ -153,9 +173,17 @@ Testing: ../../../dhall-lang/tests/normalization/success/unit/NaturalSubtractZer
 Testing: ../../../dhall-lang/tests/normalization/success/unit/NaturalToIntegerA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/NaturalToIntegerOneA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/NestedRecordProjectionA.dhall
-ParseError "Parse failed at position 52: expected the end of the string"
+0| λ(x : { a : Bool, b : Bool, c : Bool }) → x.{ a, b }.{ a }
+                                             ^^^^^^^^^
+
+../../../dhall-lang/tests/normalization/success/unit/NestedRecordProjectionA.dhall:(0, 42)-(0, 50)Unexpected: Not a RecordLit. Value: (VVar "x" 0)
+
 Testing: ../../../dhall-lang/tests/normalization/success/unit/NestedRecordProjectionByTypeA.dhall
-ParseError "Parse failed at position 70: expected the end of the string"
+1| → x.({ a : Bool, b : Bool }).({ a : Bool })
+        ^^^^^^^^^^^^^^^^^^^^^^^
+
+../../../dhall-lang/tests/normalization/success/unit/NestedRecordProjectionByTypeA.dhall:(1, 5)-(1, 27)Unexpected: Not a RecordLit. Value: (VVar "x" 0)
+
 Testing: ../../../dhall-lang/tests/normalization/success/unit/NoneA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/OperatorAndEquivalentArgumentsA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/OperatorAndLhsFalseA.dhall
@@ -187,14 +215,22 @@ Testing: ../../../dhall-lang/tests/normalization/success/unit/OperatorPlusOneAnd
 Testing: ../../../dhall-lang/tests/normalization/success/unit/OperatorPlusRhsZeroA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/OperatorTextConcatenateLhsEmptyA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/OperatorTextConcatenateLhsNonEmptyA.dhall
-AlphaEquivError: (VTextAppend (VTextLit (MkVChunks [] "hai")) (VVar "x" 0))
+0| λ(x : Text) → "hai" ++ x
+                 ^^^^^^^^^^^
+
+../../../dhall-lang/tests/normalization/success/unit/OperatorTextConcatenateLhsNonEmptyA.dhall:(0, 14)-(0, 24)AlphaEquivError: (VTextAppend (VTextLit (MkVChunks [] "hai")) (VVar "x" 0))
  not alpha equivalent to:
 (VTextLit (MkVChunks [("hai", (VVar "x" 0))] ""))
+
 Testing: ../../../dhall-lang/tests/normalization/success/unit/OperatorTextConcatenateRhsEmptyA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/OperatorTextConcatenateRhsNonEmptyA.dhall
-AlphaEquivError: (VTextAppend (VVar "x" 0) (VTextLit (MkVChunks [] "hai")))
+0| λ(x : Text) → x ++ "hai"
+                 ^^^^^^^^^^^
+
+../../../dhall-lang/tests/normalization/success/unit/OperatorTextConcatenateRhsNonEmptyA.dhall:(0, 14)-(0, 24)AlphaEquivError: (VTextAppend (VVar "x" 0) (VTextLit (MkVChunks [] "hai")))
  not alpha equivalent to:
 (VTextLit (MkVChunks [("", (VVar "x" 0))] "hai"))
+
 Testing: ../../../dhall-lang/tests/normalization/success/unit/OperatorTextConcatenateTextTextA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/OperatorTimesLhsOneA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/OperatorTimesLhsZeroA.dhall
@@ -214,58 +250,114 @@ Testing: ../../../dhall-lang/tests/normalization/success/unit/RecordLitPun2A.dha
 Testing: ../../../dhall-lang/tests/normalization/success/unit/RecordLitTriplicateFieldsA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/RecordProjectionA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/RecordProjectionByTypeEmptyA.dhall
-Unexpected: Not a RecordLit. Value: (VRecordLit $ fromList [((MkFieldName "a"), (VNaturalLit 10)), ((MkFieldName "b"), (VSome (VNaturalLit 10)))])
+0| { a = 10, b = Some 10 }.({})
+                            ^^^
+
+../../../dhall-lang/tests/normalization/success/unit/RecordProjectionByTypeEmptyA.dhall:(0, 25)-(0, 27)Unexpected: Not a RecordLit. Value: (VRecordLit $ fromList [((MkFieldName "a"), (VNaturalLit 10)), ((MkFieldName "b"), (VSome (VNaturalLit 10)))])
+
 Testing: ../../../dhall-lang/tests/normalization/success/unit/RecordProjectionByTypeNonEmptyA.dhall
-Unexpected: Not a RecordLit. Value: (VRecordLit $ fromList [((MkFieldName "a"), (VNaturalLit 10)), ((MkFieldName "b"), (VSome (VNaturalLit 10))), ((MkFieldName "c"), (VListLit Nothing[(VTextLit (MkVChunks [] "text"))]))])
+0| { a = 10, b = Some 10, c = [ "text" ]}.({ a : Natural, b : Optional Natural })
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+../../../dhall-lang/tests/normalization/success/unit/RecordProjectionByTypeNonEmptyA.dhall:(0, 40)-(0, 77)Unexpected: Not a RecordLit. Value: (VRecordLit $ fromList [((MkFieldName "a"), (VNaturalLit 10)), ((MkFieldName "b"), (VSome (VNaturalLit 10))), ((MkFieldName "c"), (VListLit Nothing[(VTextLit (MkVChunks [] "text"))]))])
+
 Testing: ../../../dhall-lang/tests/normalization/success/unit/RecordProjectionByTypeNormalizeProjectionA.dhall
-Unexpected: Not a RecordLit. Value: (VVar "x" 0)
+0| λ(x : { a : Bool, b : Bool, c : Bool }) → x.({ a : Bool, b : Bool })
+                                                ^^^^^^^^^^^^^^^^^^^^^^^
+
+../../../dhall-lang/tests/normalization/success/unit/RecordProjectionByTypeNormalizeProjectionA.dhall:(0, 45)-(0, 67)Unexpected: Not a RecordLit. Value: (VVar "x" 0)
+
 Testing: ../../../dhall-lang/tests/normalization/success/unit/RecordProjectionByTypeWithinFieldSelectionA.dhall
-ParseError "Parse failed at position 68: expected the end of the string"
+(0, 0)-(0, 102)ParseError "Just \"../../../dhall-lang/tests/normalization/success/unit/RecordProjectionByTypeWithinFieldSelectionA.dhall\" [error: expected builtin\ntokens: Just (MkBounds 0 68 0 69)]"
 Testing: ../../../dhall-lang/tests/normalization/success/unit/RecordProjectionEmptyA.dhall
-Unexpected: Not a RecordLit. Value: (VVar "x" 0)
+0| λ(x : { a : Bool }) → x.{}
+   ^-^-^
+
+../../../dhall-lang/tests/normalization/success/unit/RecordProjectionEmptyA.dhall:(0, 22)-(0, 0)Unexpected: Not a RecordLit. Value: (VVar "x" 0)
+
 Testing: ../../../dhall-lang/tests/normalization/success/unit/RecordProjectionNormalizeArgumentsA.dhall
-Unexpected: Not a RecordLit. Value: (VVar "x" 0)
+0| λ(x : { a : Bool, b : Bool, c : Bool }) → (if True then x else x).{ a, b }
+                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+../../../dhall-lang/tests/normalization/success/unit/RecordProjectionNormalizeArgumentsA.dhall:(0, 43)-(0, 72)Unexpected: Not a RecordLit. Value: (VVar "x" 0)
+
 Testing: ../../../dhall-lang/tests/normalization/success/unit/RecordProjectionNormalizeFieldsA.dhall
-Unexpected: Not a RecordLit. Value: (VVar "x" 0)
+0| λ(x : { a : Bool, b : Bool, c : Bool }) → x.{ c, a }
+                                             ^^^^^^^^^
+
+../../../dhall-lang/tests/normalization/success/unit/RecordProjectionNormalizeFieldsA.dhall:(0, 42)-(0, 50)Unexpected: Not a RecordLit. Value: (VVar "x" 0)
+
 Testing: ../../../dhall-lang/tests/normalization/success/unit/RecordProjectionWithinFieldSelectionA.dhall
-ParseError "Parse failed at position 52: expected the end of the string"
+(0, 0)-(0, 96)ParseError "Just \"../../../dhall-lang/tests/normalization/success/unit/RecordProjectionWithinFieldSelectionA.dhall\" [error: expected builtin\ntokens: Just (MkBounds 0 52 0 53)]"
 Testing: ../../../dhall-lang/tests/normalization/success/unit/RecordSelectionA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/RecordSelectionNormalizeArgumentsA.dhall
-AlphaEquivError: (VField (VVar "x" 0) (MkFieldName "a"))
+0| λ(x : { a : Bool }) → λ(y : { a : Bool }) → (if True then x else y).a
+                                                ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+../../../dhall-lang/tests/normalization/success/unit/RecordSelectionNormalizeArgumentsA.dhall:(0, 45)-(0, 69)AlphaEquivError: (VField (VVar "x" 0) (MkFieldName "a"))
  not alpha equivalent to:
 (VField (VVar "x" 0) (MkFieldName "a"))
+
 Testing: ../../../dhall-lang/tests/normalization/success/unit/RecordTypeA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/RecordTypeEmptyA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/RecursiveRecordMergeCollisionA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/RecursiveRecordMergeLhsEmptyA.dhall
-AlphaEquivError: (VCombineTypes (VRecordLit $ fromList []) (VVar "x" 0))
+0| λ(x : { a : Bool }) → {=} ∧ x
+                         ^^^^^^^^
+
+../../../dhall-lang/tests/normalization/success/unit/RecursiveRecordMergeLhsEmptyA.dhall:(0, 22)-(0, 29)AlphaEquivError: (VCombineTypes (VRecordLit $ fromList []) (VVar "x" 0))
  not alpha equivalent to:
 (VVar "x" 0)
+
 Testing: ../../../dhall-lang/tests/normalization/success/unit/RecursiveRecordMergeNoCollisionA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/RecursiveRecordMergeNormalizeArgumentsA.dhall
-AlphaEquivError: (VCombineTypes (VVar "x" 0) (VRecordLit $ fromList []))
+0| λ(x : { a : Bool }) → λ(y : { b : Bool }) → x ∧ {=} ∧ ({=} ∧ y)
+                                               ^^^^^^^^
+
+../../../dhall-lang/tests/normalization/success/unit/RecursiveRecordMergeNormalizeArgumentsA.dhall:(0, 44)-(0, 51)AlphaEquivError: (VCombineTypes (VVar "x" 0) (VRecordLit $ fromList []))
  not alpha equivalent to:
 (VVar "x" 0)
+
 Testing: ../../../dhall-lang/tests/normalization/success/unit/RecursiveRecordMergeRhsEmptyA.dhall
-AlphaEquivError: (VCombineTypes (VVar "x" 0) (VRecordLit $ fromList []))
+0| λ(x : { a : Bool }) → x ∧ {=}
+                         ^^^^^^^^
+
+../../../dhall-lang/tests/normalization/success/unit/RecursiveRecordMergeRhsEmptyA.dhall:(0, 22)-(0, 29)AlphaEquivError: (VCombineTypes (VVar "x" 0) (VRecordLit $ fromList []))
  not alpha equivalent to:
 (VVar "x" 0)
+
 Testing: ../../../dhall-lang/tests/normalization/success/unit/RecursiveRecordMergeWithinFieldSelection0A.dhall
-AlphaEquivError: (VField (VCombineTypes (VVar "x" 0) (VRecordLit $ fromList [((MkFieldName "a"), (VNaturalLit 0)), ((MkFieldName "b"), (VNaturalLit 1))])) (MkFieldName "a"))
+0| λ(x : { c : Bool }) → (x ∧ { a = 0, b = 1 }).a
+                          ^^^^^^^^^^^^^^^^^^^^^^^^
+
+../../../dhall-lang/tests/normalization/success/unit/RecursiveRecordMergeWithinFieldSelection0A.dhall:(0, 23)-(0, 46)AlphaEquivError: (VField (VCombineTypes (VVar "x" 0) (VRecordLit $ fromList [((MkFieldName "a"), (VNaturalLit 0)), ((MkFieldName "b"), (VNaturalLit 1))])) (MkFieldName "a"))
  not alpha equivalent to:
 (VField (VCombineTypes (VVar "x" 0) (VRecordLit $ fromList [((MkFieldName "a"), (VNaturalLit 0))])) (MkFieldName "a"))
+
 Testing: ../../../dhall-lang/tests/normalization/success/unit/RecursiveRecordMergeWithinFieldSelection1A.dhall
-AlphaEquivError: (VField (VCombineTypes (VVar "x" 0) (VRecordLit $ fromList [((MkFieldName "a"), (VNaturalLit 1))])) (MkFieldName "b"))
+0| λ(x : { b : Bool }) → (x ∧ { a = 1 }).b
+                          ^^^^^^^^^^^^^^^^^
+
+../../../dhall-lang/tests/normalization/success/unit/RecursiveRecordMergeWithinFieldSelection1A.dhall:(0, 23)-(0, 39)AlphaEquivError: (VField (VCombineTypes (VVar "x" 0) (VRecordLit $ fromList [((MkFieldName "a"), (VNaturalLit 1))])) (MkFieldName "b"))
  not alpha equivalent to:
 (VField (VVar "x" 0) (MkFieldName "b"))
+
 Testing: ../../../dhall-lang/tests/normalization/success/unit/RecursiveRecordMergeWithinFieldSelection2A.dhall
-AlphaEquivError: (VField (VCombineTypes (VRecordLit $ fromList [((MkFieldName "a"), (VNaturalLit 1))]) (VVar "x" 0)) (MkFieldName "b"))
+0| λ(x : { b : Bool }) → ({ a = 1 } ∧ x).b
+                          ^^^^^^^^^^^^^^^^^
+
+../../../dhall-lang/tests/normalization/success/unit/RecursiveRecordMergeWithinFieldSelection2A.dhall:(0, 23)-(0, 39)AlphaEquivError: (VField (VCombineTypes (VRecordLit $ fromList [((MkFieldName "a"), (VNaturalLit 1))]) (VVar "x" 0)) (MkFieldName "b"))
  not alpha equivalent to:
 (VField (VVar "x" 0) (MkFieldName "b"))
+
 Testing: ../../../dhall-lang/tests/normalization/success/unit/RecursiveRecordMergeWithinFieldSelection3A.dhall
-AlphaEquivError: (VField (VCombineTypes (VRecordLit $ fromList [((MkFieldName "a"), (VNaturalLit 0)), ((MkFieldName "b"), (VNaturalLit 1))]) (VVar "x" 0)) (MkFieldName "a"))
+0| λ(x : { c : Bool }) → ({ a = 0, b = 1 } ∧ x).a
+                          ^^^^^^^^^^^^^^^^^^^^^^^^
+
+../../../dhall-lang/tests/normalization/success/unit/RecursiveRecordMergeWithinFieldSelection3A.dhall:(0, 23)-(0, 46)AlphaEquivError: (VField (VCombineTypes (VRecordLit $ fromList [((MkFieldName "a"), (VNaturalLit 0)), ((MkFieldName "b"), (VNaturalLit 1))]) (VVar "x" 0)) (MkFieldName "a"))
  not alpha equivalent to:
 (VField (VCombineTypes (VRecordLit $ fromList [((MkFieldName "a"), (VNaturalLit 0))]) (VVar "x" 0)) (MkFieldName "a"))
+
 Testing: ../../../dhall-lang/tests/normalization/success/unit/RecursiveRecordTypeMergeCollisionA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/RecursiveRecordTypeMergeDeepA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/RecursiveRecordTypeMergeLhsEmptyA.dhall
@@ -274,80 +366,159 @@ Testing: ../../../dhall-lang/tests/normalization/success/unit/RecursiveRecordTyp
 Testing: ../../../dhall-lang/tests/normalization/success/unit/RecursiveRecordTypeMergeRhsEmptyA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/RecursiveRecordTypeMergeSortsA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/RightBiasedMergeEquivalentArgumentsA.dhall
-AlphaEquivError: (VPrefer (VVar "x" 0) (VVar "x" 0))
+0| λ(x : { a : Bool }) → x ⫽ x
+                         ^^^^^^
+
+../../../dhall-lang/tests/normalization/success/unit/RightBiasedMergeEquivalentArgumentsA.dhall:(0, 22)-(0, 27)AlphaEquivError: (VPrefer (VVar "x" 0) (VVar "x" 0))
  not alpha equivalent to:
 (VVar "x" 0)
+
 Testing: ../../../dhall-lang/tests/normalization/success/unit/RightBiasedMergeWithinFieldSelection0A.dhall
-AlphaEquivError: (VField (VPrefer (VVar "x" 0) (VRecordLit $ fromList [((MkFieldName "a"), (VNaturalLit 0))])) (MkFieldName "a"))
+0| λ(x : { a : Bool }) → (x ⫽ { a = 0 }).a
+                          ^^^^^^^^^^^^^^^^^
+
+../../../dhall-lang/tests/normalization/success/unit/RightBiasedMergeWithinFieldSelection0A.dhall:(0, 23)-(0, 39)AlphaEquivError: (VField (VPrefer (VVar "x" 0) (VRecordLit $ fromList [((MkFieldName "a"), (VNaturalLit 0))])) (MkFieldName "a"))
  not alpha equivalent to:
 (VNaturalLit 0)
+
 Testing: ../../../dhall-lang/tests/normalization/success/unit/RightBiasedMergeWithinFieldSelection1A.dhall
-AlphaEquivError: (VField (VPrefer (VVar "x" 0) (VRecordLit $ fromList [((MkFieldName "a"), (VNaturalLit 0))])) (MkFieldName "b"))
+0| λ(x : { b : Bool }) → (x ⫽ { a = 0 }).b
+                          ^^^^^^^^^^^^^^^^^
+
+../../../dhall-lang/tests/normalization/success/unit/RightBiasedMergeWithinFieldSelection1A.dhall:(0, 23)-(0, 39)AlphaEquivError: (VField (VPrefer (VVar "x" 0) (VRecordLit $ fromList [((MkFieldName "a"), (VNaturalLit 0))])) (MkFieldName "b"))
  not alpha equivalent to:
 (VField (VVar "x" 0) (MkFieldName "b"))
+
 Testing: ../../../dhall-lang/tests/normalization/success/unit/RightBiasedMergeWithinFieldSelection2A.dhall
-AlphaEquivError: (VField (VPrefer (VRecordLit $ fromList [((MkFieldName "a"), (VVar "y" 0))]) (VVar "x" 0)) (MkFieldName "b"))
+0| λ(x : { b : Bool }) → λ(y : Bool) → ({ a = y } ⫽ x).b
+                                        ^^^^^^^^^^^^^^^^^
+
+../../../dhall-lang/tests/normalization/success/unit/RightBiasedMergeWithinFieldSelection2A.dhall:(0, 37)-(0, 53)AlphaEquivError: (VField (VPrefer (VRecordLit $ fromList [((MkFieldName "a"), (VVar "y" 0))]) (VVar "x" 0)) (MkFieldName "b"))
  not alpha equivalent to:
 (VField (VVar "x" 0) (MkFieldName "b"))
+
 Testing: ../../../dhall-lang/tests/normalization/success/unit/RightBiasedMergeWithinFieldSelection3A.dhall
-AlphaEquivError: (VField (VPrefer (VRecordLit $ fromList [((MkFieldName "a"), (VNaturalLit 0)), ((MkFieldName "b"), (VNaturalLit 1))]) (VVar "x" 0)) (MkFieldName "a"))
+0| λ(x : { a : Bool }) → ({ a = 0, b = 1 } ⫽ x).a
+                          ^^^^^^^^^^^^^^^^^^^^^^^^
+
+../../../dhall-lang/tests/normalization/success/unit/RightBiasedMergeWithinFieldSelection3A.dhall:(0, 23)-(0, 46)AlphaEquivError: (VField (VPrefer (VRecordLit $ fromList [((MkFieldName "a"), (VNaturalLit 0)), ((MkFieldName "b"), (VNaturalLit 1))]) (VVar "x" 0)) (MkFieldName "a"))
  not alpha equivalent to:
 (VField (VPrefer (VRecordLit $ fromList [((MkFieldName "a"), (VNaturalLit 0))]) (VVar "x" 0)) (MkFieldName "a"))
+
 Testing: ../../../dhall-lang/tests/normalization/success/unit/RightBiasedRecordMergeCollisionA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/RightBiasedRecordMergeLhsEmptyA.dhall
-AlphaEquivError: (VPrefer (VRecordLit $ fromList []) (VVar "x" 0))
+0| λ(x : { a : Bool }) → {=} ⫽ x
+                         ^^^^^^^^
+
+../../../dhall-lang/tests/normalization/success/unit/RightBiasedRecordMergeLhsEmptyA.dhall:(0, 22)-(0, 29)AlphaEquivError: (VPrefer (VRecordLit $ fromList []) (VVar "x" 0))
  not alpha equivalent to:
 (VVar "x" 0)
+
 Testing: ../../../dhall-lang/tests/normalization/success/unit/RightBiasedRecordMergeNoCollisionA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/RightBiasedRecordMergeNormalizeArgumentsA.dhall
-AlphaEquivError: (VPrefer (VVar "x" 0) (VRecordLit $ fromList []))
+0| λ(x : { a : Bool }) → λ(y : { a : Bool }) → x ⫽ {=} ⫽ (y ⫽ {=})
+                                               ^^^^^^^^
+
+../../../dhall-lang/tests/normalization/success/unit/RightBiasedRecordMergeNormalizeArgumentsA.dhall:(0, 44)-(0, 51)AlphaEquivError: (VPrefer (VVar "x" 0) (VRecordLit $ fromList []))
  not alpha equivalent to:
 (VVar "x" 0)
+
 Testing: ../../../dhall-lang/tests/normalization/success/unit/RightBiasedRecordMergeRhsEmptyA.dhall
-AlphaEquivError: (VPrefer (VVar "x" 0) (VRecordLit $ fromList []))
+0| λ(x : { a : Bool }) → x ⫽ {=}
+                         ^^^^^^^^
+
+../../../dhall-lang/tests/normalization/success/unit/RightBiasedRecordMergeRhsEmptyA.dhall:(0, 22)-(0, 29)AlphaEquivError: (VPrefer (VVar "x" 0) (VRecordLit $ fromList []))
  not alpha equivalent to:
 (VVar "x" 0)
+
 Testing: ../../../dhall-lang/tests/normalization/success/unit/RightBiasedRecordMergeWithinRecordProjectionA.dhall
-Unexpected: Not a RecordLit. Value: (VPrefer (VVar "x" 0) (VRecordLit $ fromList [((MkFieldName "a"), (VNaturalLit 1)), ((MkFieldName "b"), (VNaturalLit 2))]))
+0| λ(x : { c : Natural }) → (x ⫽ { a = 1, b = 2 }).{ a, c }
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+../../../dhall-lang/tests/normalization/success/unit/RightBiasedRecordMergeWithinRecordProjectionA.dhall:(0, 26)-(0, 54)Unexpected: Not a RecordLit. Value: (VPrefer (VVar "x" 0) (VRecordLit $ fromList [((MkFieldName "a"), (VNaturalLit 1)), ((MkFieldName "b"), (VNaturalLit 2))]))
+
 Testing: ../../../dhall-lang/tests/normalization/success/unit/SomeNormalizeArgumentsA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/SortA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/TextA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/TextInterpolateA.dhall
-AlphaEquivError: "s"
+0| λ(x : Text) → "s${"b${x}"}"
+                 ^^^^^^^^^^^^^^
+
+../../../dhall-lang/tests/normalization/success/unit/TextInterpolateA.dhall:(0, 14)-(0, 27)AlphaEquivError: "s"
  not alpha equivalent to:
 "sb"
+
 Testing: ../../../dhall-lang/tests/normalization/success/unit/TextLitNested1A.dhall
-AlphaEquivError: (VTextLit (MkVChunks [("", (VTextLit (MkVChunks [] ""))), ("", (VVar "x" 0))] ""))
+0| λ(x: Text) → "${""}${x}"
+                ^^^^^^^^^^^^
+
+../../../dhall-lang/tests/normalization/success/unit/TextLitNested1A.dhall:(0, 13)-(0, 24)AlphaEquivError: (VTextLit (MkVChunks [("", (VTextLit (MkVChunks [] ""))), ("", (VVar "x" 0))] ""))
  not alpha equivalent to:
 (VVar "x" 0)
+
 Testing: ../../../dhall-lang/tests/normalization/success/unit/TextLitNested2A.dhall
-AlphaEquivError: (VTextLit (MkVChunks [("", (VTextLit (MkVChunks [("", (VVar "x" 0))] "")))] ""))
+0| λ(x: Text) → "${"${x}"}"
+                ^^^^^^^^^^^^
+
+../../../dhall-lang/tests/normalization/success/unit/TextLitNested2A.dhall:(0, 13)-(0, 24)AlphaEquivError: (VTextLit (MkVChunks [("", (VTextLit (MkVChunks [("", (VVar "x" 0))] "")))] ""))
  not alpha equivalent to:
 (VVar "x" 0)
+
 Testing: ../../../dhall-lang/tests/normalization/success/unit/TextLitNested3A.dhall
-AlphaEquivError: (VTextLit (MkVChunks [("", (VTextLit (MkVChunks [("", (VTextLit (MkVChunks [] "")))] ""))), ("", (VVar "x" 0))] ""))
+0| λ(x: Text) → "${"${""}"}${x}"
+                ^^^^^^^^^^^^^^^^^
+
+../../../dhall-lang/tests/normalization/success/unit/TextLitNested3A.dhall:(0, 13)-(0, 29)AlphaEquivError: (VTextLit (MkVChunks [("", (VTextLit (MkVChunks [("", (VTextLit (MkVChunks [] "")))] ""))), ("", (VVar "x" 0))] ""))
  not alpha equivalent to:
 (VVar "x" 0)
+
 Testing: ../../../dhall-lang/tests/normalization/success/unit/TextLiteralA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/TextNormalizeInterpolationsA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/TextReplaceAbstractA.dhall
-ErrorMessage: "could not make string for replacement"
+2| λ(x : Text) → Text/replace "a" "-${x}-" "_a__a_"
+                                  ^^^^^^^^^
+
+../../../dhall-lang/tests/normalization/success/unit/TextReplaceAbstractA.dhall:(2, 31)-(2, 39)ErrorMessage: "could not make string for replacement"
+
 Testing: ../../../dhall-lang/tests/normalization/success/unit/TextReplaceAbstractHaystackA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/TextReplaceEmptyA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/TextReplaceMultipleA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/TextReplaceNFCUnicodeA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/TextReplaceNormalizationA.dhall
-ParseError "Parse failed at position 117: expected the end of the string"
+2| Text/replace "a\u{0301}" "b" "\u{00e1}c"
+                            ^^^^
+
+../../../dhall-lang/tests/normalization/success/unit/TextReplaceNormalizationA.dhall:(2, 25)-(2, 28)AlphaEquivError: "\\u{00e1}c"
+ not alpha equivalent to:
+"\225c"
+
 Testing: ../../../dhall-lang/tests/normalization/success/unit/TextReplaceSimpleA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/TextReplaceUnicodeA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/TextReplaceVarA.dhall
-AlphaEquivError: (VTextReplace (VTextLit (MkVChunks [] "a")) (VVar "x" 0) (VTextLit (MkVChunks [] "aaa")))
+2| λ(x : Text) → Text/replace "a" x "aaa"
+                                    ^^^^^^
+
+../../../dhall-lang/tests/normalization/success/unit/TextReplaceVarA.dhall:(2, 33)-(2, 38)AlphaEquivError: (VTextReplace (VTextLit (MkVChunks [] "a")) (VVar "x" 0) (VTextLit (MkVChunks [] "aaa")))
  not alpha equivalent to:
 (VTextLit (MkVChunks [("", (VVar "x" 0)), ("", (VVar "x" 0)), ("", (VVar "x" 0))] ""))
+
 Testing: ../../../dhall-lang/tests/normalization/success/unit/TextShowA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/TextShowAllEscapesA.dhall
-ParseError "Parse failed at position 10: expected the end of the string"
+0| Text/show "\"\$\\\b\f\n\r\tツa\u0007b\u0010c"
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+../../../dhall-lang/tests/normalization/success/unit/TextShowAllEscapesA.dhall:(0, 10)-(0, 44)AlphaEquivError: "\"\\\\\\\"\\\\\\u0024\\\\\\\\\\\\b\\\\f\\\\n\\\\r\\\\t\12484a\\\\u0007b\\\\u0010c\""
+ not alpha equivalent to:
+"\\\"\\\\\\\"\\\\u0024\\\\\\\\\\\\b\\\\f\\\\n\\\\r\\\\t\12484a\\\\u0007b\\\\u0010c\\\""
+
 Testing: ../../../dhall-lang/tests/normalization/success/unit/TextShowEmptyA.dhall
+0| Text/show ""
+             ^^^
+
+../../../dhall-lang/tests/normalization/success/unit/TextShowEmptyA.dhall:(0, 10)-(0, 12)AlphaEquivError: "\"\""
+ not alpha equivalent to:
+"\\\"\\\""
+
 Testing: ../../../dhall-lang/tests/normalization/success/unit/TextShowInterpolatedA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/ToMapA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/ToMapWithTypeA.dhall
@@ -361,18 +532,12 @@ Testing: ../../../dhall-lang/tests/normalization/success/unit/UnionTypeNormalize
 Testing: ../../../dhall-lang/tests/normalization/success/unit/VariableA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/WithA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/WithChainedA.dhall
-AlphaEquivError: fromList [((MkFieldName "a"), (VNaturalLit 1)), ((MkFieldName "b"), (VWith (VNaturalLit 2) [(MkFieldName "c")] (VNaturalLit 3)))]
- not alpha equivalent to:
-fromList [((MkFieldName "a"), (VNaturalLit 1)), ((MkFieldName "b"), (VNaturalLit 2)), ((MkFieldName "c"), (VNaturalLit 3))]
 Testing: ../../../dhall-lang/tests/normalization/success/unit/WithCreateIntermediateRecordsA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/WithDesugarA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/WithNestedA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/WithPartiallyAbstractA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/WithPriorityA.dhall
-AlphaEquivError: (VWith (VNaturalLit 2) [(MkFieldName "a")] (VNaturalLit 3))
- not alpha equivalent to:
-(VNaturalLit 3)
 Result:
-Pass: 221
-Fail: 48
+Pass: 224
+Fail: 45
 Main> Bye for now!

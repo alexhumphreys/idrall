@@ -349,8 +349,8 @@ mutual
     <|> embed
     <|> match (exact "missing") (const MissingImport)
     <|> match shaImport Sha
-    <|> match posInfinity (const $ TDouble (1.0e1000))
-    <|> match negInfinity (const $ TDouble (-1.0e1000))
+    <|> match posInfinity (const $ TDouble (1.0/0.0))
+    <|> match negInfinity (const $ TDouble (-1.0/0.0))
     <|> match (exact "||") Symbol
     <|> match (exact "&&") Symbol
     <|> match (exact "===") Symbol

@@ -5,6 +5,7 @@ import Data.List1
 import public Data.String
 
 import Idrall.Expr
+import Idrall.Error
 import Idrall.Eval
 
 %language ElabReflection
@@ -109,43 +110,50 @@ where
 
 public export
 interface FromDhall a where
-  fromDhall : Expr Void -> Maybe a
+  fromDhall : Expr Void -> Either Error a
+
+fromDhallErr : Expr Void -> String -> Either Error a
+fromDhallErr e str = Left $ FromDhallError (getFC e) str
 
 export
 FromDhall Nat where
   fromDhall (ENaturalLit fc x) = pure x
-  fromDhall _ = neutral
+  fromDhall e = fromDhallErr e "not a Nat"
 
 export
 FromDhall Bool where
   fromDhall (EBoolLit fc x) = pure x
-  fromDhall _ = neutral
+  fromDhall e = fromDhallErr e "not a Bool"
 
 export
 FromDhall Integer where
   fromDhall (EIntegerLit fc x) = pure x
-  fromDhall _ = neutral
+  fromDhall e = fromDhallErr e "not an Int"
 
 export
 FromDhall Double where
   fromDhall (EDoubleLit fc x) = pure x
-  fromDhall _ = neutral
+  fromDhall e = fromDhallErr e "not a Double"
 
 export
 FromDhall String where
-  fromDhall x = strFromExpr x
+  fromDhall e =
+    let str = strFromExpr e in
+    case str of
+         Nothing => fromDhallErr e "couldn't normalise string"
+         (Just y) => pure y
 
 export
 FromDhall a => FromDhall (List a) where
   fromDhall (EListLit fc _ xs) = pure $ !(traverse fromDhall xs)
-  fromDhall _ = neutral
+  fromDhall e = fromDhallErr e "not a List"
 
 export
 FromDhall a => FromDhall (Maybe a) where
   fromDhall (ESome fc x) =
-    pure $ fromDhall x
+    pure $ Just !(fromDhall x)
   fromDhall (EApp fc (ENone fc') _) = pure $ neutral
-  fromDhall _ = neutral
+  fromDhall e = fromDhallErr e "not a Maybe"
 
 ||| Used with FromDhall interface, to dervice implementations
 ||| for ADTs or Records
@@ -153,6 +161,18 @@ public export
 data IdrisType
   = ADT
   | Record
+
+public export
+lookupEither : Show k => k -> SortedMap k v -> Either Error v
+lookupEither k sm =
+  case lookup k sm of
+       Nothing => Left $ FromDhallError initFC $ "key \{show k} not found"
+       (Just x) => pure x
+
+Alternative (Either Error) where
+  empty = Left $ FromDhallError initFC "Alternative failed"
+  (Left x) <|> y = y
+  (Right x) <|> _ = (Right x)
 
 export
 deriveFromDhall : IdrisType -> (name : Name) -> Elab ()
@@ -178,9 +198,9 @@ deriveFromDhall it n =
 
      clauses <- genClauses it funName argName cons
 
-     let funClaim = IClaim EmptyFC MW Export [Inline] (MkTy EmptyFC EmptyFC funName `(Expr Void -> Maybe ~(var name)))
+     let funClaim = IClaim EmptyFC MW Export [Inline] (MkTy EmptyFC EmptyFC funName `(Expr Void -> Either Error ~(var name)))
      -- add a catch all pattern
-     let funDecl = IDef EmptyFC funName (clauses ++ [patClause `(~(var funName) ~implicit') `(Nothing)])
+     let funDecl = IDef EmptyFC funName (clauses ++ [patClause `(~(var funName) ~(varStr "expr")) `(Left $ FromDhallError (getFC ~(varStr "expr")) "\{show expr}")])
 
      -- declare the fuction in the env
      declare [funClaim, funDecl]
@@ -202,7 +222,7 @@ deriveFromDhall it n =
           let rhs = foldr (\(n, type), acc =>
                             let name = primStr $ (show n) in
                                 case type of
-                                     _ => `(~acc <*> (lookup (MkFieldName ~name) ~(var arg) >>= fromDhall)))
+                                     _ => `(~acc <*> (lookupEither (MkFieldName ~name) ~(var arg) >>= fromDhall)))
                           `(pure ~(var constructor')) xs
           pure (rhs)
     genClauseADT : Name -> Name -> Name -> List (Name, TTImp) -> Elab (TTImp, TTImp)
@@ -210,11 +230,13 @@ deriveFromDhall it n =
       let cn = primStr (show $ stripNs constructor')
           debug = show $ constructor'
           debug2 = show $ map fst xs
-          lhs = `(~(var funName) (EApp _ (EField _ (EUnion _ xs) (MkFieldName ~cn)) ~(bindvar $ show arg)))
+          lhs0 = `(~(var funName) (EField _ (EUnion _ xs) (MkFieldName ~cn)))
+          lhs1 = `(~(var funName) (EApp fc (EField _ (EUnion _ xs) (MkFieldName ~cn)) ~(bindvar $ show arg)))
+          -- TODO lhsN for data constructors with more than 0 or 1 args
           in do
           case xs of
-               [] => pure $ (lhs, `(pure ~(var constructor')))
-               ((n, _) :: []) => pure $ (lhs, `(pure ~(var constructor') <*> fromDhall ~(var arg)))
+               [] => pure $ (lhs0, `(pure ~(var constructor')))
+               ((n, _) :: []) => pure $ (lhs1, `(pure ~(var constructor') <*> fromDhall ~(var arg)))
                (x :: _) => fail $ "too many args for constructor: " ++ show constructor'
     genClauses : IdrisType -> Name -> Name -> Cons -> Elab (List Clause)
     genClauses ADT funName arg cons = do
@@ -225,5 +247,5 @@ deriveFromDhall it n =
       -- given constructors, lookup names in dhall records for those constructors
       clausesRecord <- traverse (\(cn, as) => genClauseRecord cn arg (reverse as)) cons
       -- create clause from dhall to `Maybe a` using the above clauses as the rhs
-      pure $ pure $ patClause `(~(var funName) (ERecordLit _ ~(bindvar $ show arg)))
-                              (foldl (\acc, x => `(~x <|> ~acc)) `(Nothing) (clausesRecord))
+      pure $ pure $ patClause `(~(var funName) (ERecordLit fc ~(bindvar $ show arg)))
+                              (foldl (\acc, x => `(~x)) `(Left $ FromDhallError ~(varStr "fc") "failed1") (clausesRecord)) -- not a real foldl, basically just passes that clausesRecord though, also doesn't support a record with no args
