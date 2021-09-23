@@ -50,8 +50,8 @@ mutual
     let (x', v) = fresh x env in
     pure $ ELam fc x' !(quote env a) !(quoteBind x env !(t v))
   quote env (VHLam fc NaturalSubtractZero _) =
-    pure $ EApp fc (ENaturalSubtract initFC) (ENaturalLit initFC 0)
-  quote env (VHLam fc _ t) = quote env !(t $ VPrimVar initFC)
+    pure $ EApp fc (ENaturalSubtract (fcToVFC fc)) (ENaturalLit (fcToVFC fc) 0)
+  quote env (VHLam fc _ t) = quote env !(t $ VPrimVar (fcToVFC fc))
   quote env (VPi fc a b) =
     let (x, v, b') = freshCl b env in
         pure $ EPi fc x !(quote env a) !(quoteBind x env !(inst b' v))
@@ -89,7 +89,7 @@ mutual
   quote env (VText fc) = pure $ EText fc
   quote env (VTextLit fc (MkVChunks xs x)) =
     let chx = traverse (mapChunks (quote env)) xs in
-    pure $ ETextLit initFC (MkChunks !chx x)
+    pure $ ETextLit fc (MkChunks !chx x)
   quote env (VTextAppend fc t u) = pure $ ETextAppend fc !(quote env t) !(quote env u)
   quote env (VTextShow fc t) = qApp fc env (ETextShow fc) t
   quote env (VTextReplace fc t u v) = qAppM fc env (ETextReplace fc) [t, u, v]
@@ -132,10 +132,10 @@ mutual
   quote env (VField fc x y) = pure $ EField fc !(quote env x) y
   quote env (VInject fc m k Nothing) =
     let m' = traverse (mapMaybe (quote env)) m in
-    pure $ EField fc (EUnion initFC !m') k
+    pure $ EField fc (EUnion (fcToVFC fc) !m') k
   quote env (VInject fc m k (Just t)) =
     let m' = traverse (mapMaybe (quote env)) m in
-    qApp fc env (EField fc (EUnion initFC !m') k) t
+    qApp fc env (EField fc (EUnion (fcToVFC fc) !m') k) t
   quote env (VProject fc t (Left ks)) = pure $ EProject fc !(quote env t) (Left ks)
   quote env (VProject fc t (Right u)) = pure $ EProject fc !(quote env t) (pure $ !(quote env u))
   quote env (VWith fc t ks u) = pure $ EWith fc !(quote env t) ks !(quote env u)
@@ -315,16 +315,16 @@ mutual
     (t, tt) <- infer cxt t
     _ <- check cxt f tt
     pure $ (EBoolIf fc b t f, tt)
-  infer cxt (ENatural fc) = pure $ (ENatural fc, VConst fc CType)
-  infer cxt (ENaturalLit fc k) = pure $ (ENaturalLit fc k, VNatural initFC)
-  infer cxt (ENaturalBuild fc) = pure $ (ENaturalBuild fc, vFun (natFoldTy initFC) (VNatural initFC))
-  infer cxt (ENaturalFold fc) = pure (ENaturalFold fc, vFun (VNatural initFC) (natFoldTy initFC))
-  infer cxt (ENaturalIsZero fc) = pure $ (ENaturalIsZero fc, (vFun (VNatural initFC) (VBool initFC)))
-  infer cxt (ENaturalEven fc) = pure $ (ENaturalEven fc, (vFun (VNatural initFC) (VBool initFC)))
-  infer cxt (ENaturalOdd fc) = pure $ (ENaturalOdd fc, (vFun (VNatural initFC) (VBool initFC)))
-  infer cxt (ENaturalSubtract fc) = pure $ (ENaturalOdd fc, (vFun (VNatural initFC) (vFun (VNatural initFC) (VNatural initFC))))
-  infer cxt (ENaturalToInteger fc) = pure $ (ENaturalToInteger fc, (vFun (VNatural initFC) (VInteger initFC)))
-  infer cxt (ENaturalShow fc) = pure $ (ENaturalShow fc, (vFun (VNatural initFC) (VText initFC)))
+  infer cxt (ENatural fc) = pure $ (ENatural fc, VConst (fcToVFC fc) CType)
+  infer cxt (ENaturalLit fc k) = pure $ (ENaturalLit fc k, VNatural (fcToVFC fc))
+  infer cxt (ENaturalBuild fc) = pure $ (ENaturalBuild fc, vFun (natFoldTy (fcToVFC fc)) (VNatural (fcToVFC fc)))
+  infer cxt (ENaturalFold fc) = pure (ENaturalFold fc, vFun (VNatural (fcToVFC fc)) (natFoldTy (fcToVFC fc)))
+  infer cxt (ENaturalIsZero fc) = pure $ (ENaturalIsZero fc, (vFun (VNatural (fcToVFC fc)) (VBool (fcToVFC fc))))
+  infer cxt (ENaturalEven fc) = pure $ (ENaturalEven fc, (vFun (VNatural (fcToVFC fc)) (VBool (fcToVFC fc))))
+  infer cxt (ENaturalOdd fc) = pure $ (ENaturalOdd fc, (vFun (VNatural (fcToVFC fc)) (VBool (fcToVFC fc))))
+  infer cxt (ENaturalSubtract fc) = pure $ (ENaturalOdd fc, (vFun (VNatural (fcToVFC fc)) (vFun (VNatural (fcToVFC fc)) (VNatural (fcToVFC fc)))))
+  infer cxt (ENaturalToInteger fc) = pure $ (ENaturalToInteger fc, (vFun (VNatural (fcToVFC fc)) (VInteger (fcToVFC fc))))
+  infer cxt (ENaturalShow fc) = pure $ (ENaturalShow (fcToVFC fc), (vFun (VNatural (fcToVFC fc)) (VText (fcToVFC fc))))
   infer cxt (ENaturalPlus fc t u) = do
     _ <- check cxt t (VNatural initFC)
     _ <- check cxt u (VNatural initFC)
@@ -332,46 +332,46 @@ mutual
   infer cxt (ENaturalTimes fc t u) = do
     _ <- check cxt t (VNatural initFC)
     _ <- check cxt u (VNatural initFC)
-    pure $ (ENaturalTimes fc t u, VNatural fc)
-  infer cxt (EInteger fc) = pure $ (EInteger fc, VConst fc CType)
-  infer cxt (EIntegerLit fc x) = pure $ (EIntegerLit fc x, VInteger initFC)
-  infer cxt (EIntegerShow fc) = pure $ (EIntegerShow fc, (vFun (VInteger initFC) (VText initFC)))
-  infer cxt (EIntegerNegate fc) = pure $ (EIntegerNegate fc, (vFun (VInteger initFC) (VInteger initFC)))
-  infer cxt (EIntegerClamp fc) = pure $ (EIntegerNegate fc, (vFun (VInteger initFC) (VNatural initFC)))
-  infer cxt (EIntegerToDouble fc) = pure $ (EIntegerNegate fc, (vFun (VInteger initFC) (VDouble initFC)))
+    pure $ (ENaturalTimes fc t u, VNatural $ fcToVFC fc)
+  infer cxt (EInteger fc) = pure $ (EInteger fc, VConst (fcToVFC fc) CType)
+  infer cxt (EIntegerLit fc x) = pure $ (EIntegerLit fc x, VInteger (fcToVFC fc))
+  infer cxt (EIntegerShow fc) = pure $ (EIntegerShow fc, (vFun (VInteger (fcToVFC fc)) (VText (fcToVFC fc))))
+  infer cxt (EIntegerNegate fc) = pure $ (EIntegerNegate fc, (vFun (VInteger (fcToVFC fc)) (VInteger (fcToVFC fc))))
+  infer cxt (EIntegerClamp fc) = pure $ (EIntegerNegate fc, (vFun (VInteger (fcToVFC fc)) (VNatural (fcToVFC fc))))
+  infer cxt (EIntegerToDouble fc) = pure $ (EIntegerNegate fc, (vFun (VInteger (fcToVFC fc)) (VDouble (fcToVFC fc))))
   infer cxt (EDouble fc) = pure $ (EDouble fc, VConst fc CType)
-  infer cxt (EDoubleLit fc x) = pure $ (EDoubleLit fc x, VDouble initFC)
-  infer cxt (EDoubleShow fc) = pure $ (EDoubleShow fc, (vFun (VDouble initFC) (VText initFC)))
-  infer cxt (EText fc) = pure $ (EText fc, VConst initFC CType)
+  infer cxt (EDoubleLit fc x) = pure $ (EDoubleLit fc x, VDouble fc)
+  infer cxt (EDoubleShow fc) = pure $ (EDoubleShow fc, (vFun (VDouble $ fcToVFC fc) (VText $ fcToVFC fc)))
+  infer cxt (EText fc) = pure $ (EText fc, VConst (fcToVFC fc) CType)
   infer cxt (ETextLit fc (MkChunks xs x)) =
-    let go = mapChunks (\e => check cxt e (VText initFC)) in do
+    let go = mapChunks (\e => check cxt e (VText (fcToVFC fc))) in do
     _ <- traverse go xs
-    pure $ (ETextLit fc (MkChunks xs x), (VText initFC))
+    pure $ (ETextLit fc (MkChunks xs x), (VText (fcToVFC fc)))
   infer cxt (ETextAppend fc t u) = do
     _ <- check cxt t (VText initFC)
     _ <- check cxt u (VText initFC)
-    pure $ (ETextAppend fc t u, VText initFC)
-  infer cxt (ETextShow fc) = pure $ (EIntegerShow fc, (vFun (VText initFC) (VText initFC)))
+    pure $ (ETextAppend fc t u, VText (fcToVFC fc))
+  infer cxt (ETextShow fc) = pure $ (EIntegerShow fc, (vFun (VText (fcToVFC fc)) (VText (fcToVFC fc))))
   infer cxt (ETextReplace fc) =
     pure ( ETextReplace fc,
-           VHPi fc "needle" (VText initFC) $ \needle =>
-           pure $ VHPi fc "replacement" (VText initFC) $ \replacement =>
-           pure $ VHPi fc "haystack" (VText initFC) $ \haystack =>
-           pure $ VText initFC)
+           VHPi fc "needle" (VText (fcToVFC fc)) $ \needle =>
+           pure $ VHPi fc "replacement" (VText (fcToVFC fc)) $ \replacement =>
+           pure $ VHPi fc "haystack" (VText (fcToVFC fc)) $ \haystack =>
+           pure $ VText (fcToVFC fc))
   infer cxt (EList fc) = do
-    pure $ (EList fc, VHPi fc "a" vType $ \a => pure $ vType)
+    pure $ (EList fc, VHPi (fcToVFC fc) "a" vType $ \a => pure $ vType)
   infer cxt (EListLit fc Nothing []) = do
     Left $ ErrorMessage fc "Not type for list" -- TODO better error message
   infer cxt (EListLit fc Nothing (x :: xs)) = do
     (x', ty) <- infer cxt x
     _ <- traverse (\e => check cxt e ty) xs
-    pure $ (EListLit fc Nothing (x :: xs), VList fc ty)
+    pure $ (EListLit fc Nothing (x :: xs), VList (fcToVFC fc) ty)
   infer cxt (EListLit fc (Just a) []) = do
     case !(eval (values cxt) a) of
          VList _ a' => do
            ea' <- quote (envNames $ values cxt) a'
            _ <- check cxt ea' (VConst initFC CType)
-           pure $ (EListLit fc (Just a) [], VList fc a')
+           pure $ (EListLit fc (Just a) [], VList (fcToVFC fc) a')
          other => Left $ ErrorMessage fc $ "Not a list annotation: " ++ show other
   infer cxt (EListLit fc (Just a) (x :: xs)) = do
     ty <- eval (values cxt) a
@@ -387,30 +387,30 @@ mutual
            pure $ (EListAppend fc t u, tt)
          _ => Left $ ListAppendError fc "not a list" -- TODO better error message
   infer cxt (EListBuild fc) =
-    pure (EListBuild fc, VHPi fc "a" vType $ \a => pure $ vFun (listFoldTy fc a) (VList fc a))
+    pure (EListBuild fc, VHPi (fcToVFC fc) "a" vType $ \a => pure $ vFun (listFoldTy (fcToVFC fc) a) (VList (fcToVFC fc) a))
   infer cxt (EListFold fc) =
-    pure (EListFold fc, VHPi fc "a" vType $ \a => pure $ vFun (VList fc a) (listFoldTy fc a))
+    pure (EListFold fc, VHPi (fcToVFC fc) "a" vType $ \a => pure $ vFun (VList (fcToVFC fc) a) (listFoldTy (fcToVFC fc) a))
   infer cxt (EListLength fc) =
-    pure (EListLength fc, VHPi fc "a" vType $ \a => pure $ vFun (VList fc a) (VNatural fc))
+    pure (EListLength fc, VHPi (fcToVFC fc) "a" vType $ \a => pure $ vFun (VList (fcToVFC fc) a) (VNatural (fcToVFC fc)))
   infer cxt (EListHead fc) =
-    pure (EListHead fc, VHPi fc "a" vType $ \a => pure $ vFun (VList fc a) (VOptional fc a))
+    pure (EListHead fc, VHPi (fcToVFC fc) "a" vType $ \a => pure $ vFun (VList (fcToVFC fc) a) (VOptional (fcToVFC fc) a))
   infer cxt (EListLast fc) =
-    pure (EListLast fc, VHPi fc "a" vType $ \a => pure $ vFun (VList fc a) (VOptional fc a))
+    pure (EListLast fc, VHPi (fcToVFC fc) "a" vType $ \a => pure $ vFun (VList (fcToVFC fc) a) (VOptional (fcToVFC fc) a))
   infer cxt (EListIndexed fc) =
     pure (EListIndexed fc
          , VHPi fc "a" vType $ \a =>
-           pure $ vFun (VList fc a)
-                  (VList fc (VRecord initFC (fromList [(MkFieldName "index", VNatural initFC), (MkFieldName "value", a)]))))
+           pure $ vFun (VList (fcToVFC fc) a)
+                  (VList fc (VRecord (fcToVFC fc) (fromList [(MkFieldName "index", VNatural (fcToVFC fc)), (MkFieldName "value", a)]))))
   infer cxt (EListReverse fc) =
-    pure (EListReverse fc, VHPi fc "a" vType $ \a => pure $ vFun (VList initFC a) (VList initFC a))
+    pure (EListReverse fc, VHPi (fcToVFC fc) "a" vType $ \a => pure $ vFun (VList (fcToVFC fc) a) (VList (fcToVFC fc) a))
   infer cxt (EOptional fc) =
-    pure $ (EOptional fc, VHPi fc "a" vType $ \a => pure $ vType)
+    pure $ (EOptional fc, VHPi (fcToVFC fc) "a" vType $ \a => pure $ vType)
   infer cxt (ESome fc t) = do
     (t, tt) <- infer cxt t
     _ <- check cxt !(quote (envNames $ values cxt) tt) vType -- TODO abstract this out?
-    pure (ESome fc t, VOptional fc tt)
+    pure (ESome fc t, VOptional (fcToVFC fc) tt)
   infer cxt (ENone fc) =
-    pure $ (ENone fc, VHPi fc "a" vType $ \a => pure $ (VOptional fc a))
+    pure $ (ENone fc, VHPi (fcToVFC fc) "a" vType $ \a => pure $ (VOptional (fcToVFC fc) a))
   infer cxt e@(EEquivalent fc t u) = do
     (t, tt) <- infer cxt t
     _ <- check cxt u tt
@@ -421,24 +421,24 @@ mutual
     av <- eval (values cxt) a
     bv <- eval (values cxt) b
     conv (values cxt) av bv
-    pure (EAssert fc (EEquivalent fc' a b), VEquivalent fc' av bv)
+    pure (EAssert fc (EEquivalent fc' a b), VEquivalent (fcToVFC fc') av bv)
   infer cxt (EAssert fc _) = Left $ AssertError fc "not an EEquivalent type" -- TODO better error message
   infer cxt (ERecord fc x) = do
     xs' <- traverse (inferSkip cxt) x
-    pure $ (ERecord fc x, VConst fc (getHighestType xs'))
+    pure $ (ERecord fc x, VConst (fcToVFC fc) (getHighestType xs'))
   infer cxt (ERecordLit fc x) = do
     xs' <- traverse (inferSkip cxt) x
-    pure $ (ERecordLit fc x, VRecord fc xs')
+    pure $ (ERecordLit fc x, VRecord (fcToVFC fc) xs')
   infer cxt (EUnion fc x) = do
     xs' <- traverse (mapMaybe (inferSkip cxt)) x
-    pure $ (EUnion fc x, VConst fc (getHighestTypeM xs'))
+    pure $ (EUnion fc x, VConst (fcToVFC fc) (getHighestTypeM xs'))
   infer cxt (ECombine fc t u) = do
     (t, tt) <- infer cxt t
     (u, uu) <- infer cxt u
     case (tt, uu) of
          (VRecord _ a', VRecord _ b') => do
            ty <- mergeWithApp (doCombine fc) a' b'
-           pure $ (ECombine fc t u, VRecord fc ty)
+           pure $ (ECombine fc t u, VRecord (fcToVFC fc) ty)
          (VRecord _ _, other) => unexpected "Not a RecordLit" other
          (other, _) => unexpected "Not a RecordLit" other
   infer cxt (ECombineTypes fc a b) = do -- TODO lot of traversals here
@@ -446,16 +446,16 @@ mutual
     bv <- eval (values cxt) b
     case (av, bv) of
          (VRecord _ a', VRecord _ b') => do
-           ty <- mergeWithApp (doCombine fc) a' b'
-           pure $ (ECombineTypes fc a b, snd !(infer cxt !(quote (envNames $ values cxt) (VRecord fc ty))))
+           ty <- mergeWithApp (doCombine (fcToVFC fc)) a' b'
+           pure $ (ECombineTypes fc a b, snd !(infer cxt !(quote (envNames $ values cxt) (VRecord (fcToVFC fc) ty))))
          (other, _) => unexpected "Not a Record" other
   infer cxt (EPrefer fc t u) = do
     (t, tt) <- infer cxt t
     (u, uu) <- infer cxt u
     case (tt, uu) of
          (VRecord _ a', VRecord _ b') => do
-           ty <- mergeWithApp' (doCombine fc) a' b'
-           pure $ (EPrefer fc t u, VRecord fc ty)
+           ty <- mergeWithApp' (doCombine (fcToVFC fc)) a' b'
+           pure $ (EPrefer fc t u, VRecord (fcToVFC fc) ty)
          (VRecord _ _, other) => unexpected "Not a RecordLit" other
          (other, _) => unexpected "Not a RecordLit" other
   infer cxt (EMerge fc t u a) = do
@@ -474,7 +474,7 @@ mutual
          (VOptional _ a', VRecord _ us) =>
            let newUnion = SortedMap.fromList $
                             [(MkFieldName "None", Nothing), (MkFieldName "Some", Just a')]
-           in pure (EMerge fc t u a, !(inferMerge fc cxt newUnion us Nothing))
+           in pure (EMerge fc t u a, !(inferMerge (fcToVFC fc) cxt newUnion us Nothing))
          (other, VRecord _ _) => unexpected "Not a RecordLit or Optional" other
          (_, other) => unexpected "Not a RecordLit" other
   infer cxt (EToMap fc t a) = do

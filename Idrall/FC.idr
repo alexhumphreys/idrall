@@ -60,6 +60,12 @@ originFromFC (MkFC x y z) = x
 originFromFC (MkVirtualFC x y z) = x
 originFromFC EmptyFC = Nothing
 
+export
+fcToVFC : FC -> FC
+fcToVFC (MkFC x y z) = MkVirtualFC x y z
+fcToVFC fc@(MkVirtualFC x y z) = fc
+fcToVFC EmptyFC = EmptyFC
+
 ex1 : String
 ex1 = """
 1 some text
@@ -73,7 +79,8 @@ printArrows max (ln, col) (ln', col') =
        (True, True) =>
           let pad = replicate col ' '
               end = if col' > max then max else col'
-              arrowCount = (minus end col) + 1
+              add1 = if (ln == ln' && col == col') then 1 else 0
+              arrowCount = (minus end col) + add1
               -- the 1 is for if the span starts and ends on a single char
               arrows = replicate arrowCount '^'
           in pack $ pad ++ arrows

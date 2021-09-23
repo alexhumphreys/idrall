@@ -687,20 +687,18 @@ mutual
       pure proj'
     listFieldName : Grammar state (TokenRawToken) True (WithBounds (List String))
     listFieldName = do
-      ls <- bounds $ sepBy (symbol ",") fieldName
-      symbol "}"
+      ls <- bounds $ (sepBy (symbol ",") fieldName) <* symbol "}"
       pure ls
 
   projTermRight : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
-  projTermRight od = hchainl (projTermLeft od) projOp (exprTerm od <* symbol ")")
+  projTermRight od = hchainl (projTermLeft od) projOp (bounds $ exprTerm od <* symbol ")")
   where
-    proj' : RawExpr -> RawExpr -> RawExpr
+    proj' : RawExpr -> WithBounds RawExpr -> RawExpr
     proj' e e' =
       let start = getFC e
-          end = getFC e'
-          fc' = mergeBounds start end
-      in EProject fc' e $ Right e'
-    projOp : Grammar state (TokenRawToken) True (RawExpr -> RawExpr -> RawExpr)
+          fc' = mergeBounds start (boundToFC od e')
+      in EProject fc' e $ Right $ val e'
+    projOp : Grammar state (TokenRawToken) True (RawExpr -> WithBounds RawExpr -> RawExpr)
     projOp = do
       symbol ".("
       commit

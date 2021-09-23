@@ -1,7 +1,7 @@
 A 0
 B
 0| < A : Natural | B >.C
-   ^^^^^^^^^^^^^^^^^^^^^^
+   ^^^^^^^^^^^^^^^^^^^^^
 
 ./fail-exadt1.dhall:(0, 0)-(0, 21)FieldNotFoundError: (MkFieldName "C")
 
@@ -10,9 +10,13 @@ Foo
 (Baz Just True)
 (0, 0)-(0, 48)FieldNotFoundError: (MkFieldName "hello")
 (MkExample3 Just 1 0 -1 True 2.0 [True, False] "foo" Just "yeah" Just "nah")
-FromDhallError "key (MkFieldName \"n\") not found"
+0|   { mn = Some 1 }
+     ^^^^^^^^^^^^^^^
+
+./fail-exadt2.dhall:(0, 2)-(0, 17)FromDhallError "key (MkFieldName \"n\") not found"
+
 0| { mn = Some 1, n = True }
-                      ^^^^^
+                      ^^^^
 
 ./fail-exrec1.dhall:(0, 19)-(0, 23)FromDhallError "not a Nat"
 

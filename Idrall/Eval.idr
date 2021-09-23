@@ -13,7 +13,7 @@ import Data.String
 nestError : Either Error b -> Error -> Either Error b
 nestError x e =
   case x of
-       (Left e') => Left $ NestedError initFC e e'
+       (Left e') => Left $ NestedError (getFC e') e e'
        (Right x') => pure x'
 
 ||| returns `VConst CType`
@@ -129,15 +129,15 @@ mutual
     pure $ VPrim $ \natural =>
     pure $ VPrim $ \succ =>
     pure $ VPrim $ \zero =>
-    let inert = VNaturalFold initFC n natural succ zero
+    let inert = VNaturalFold (fcToVFC fc) n natural succ zero
     in case zero of
-            VPrimVar fc => pure inert
+            VPrimVar _ => pure inert
             _ => case succ of
-                      VPrimVar fc => pure inert
+                      VPrimVar _ => pure inert
                       _ => case natural of
-                                VPrimVar fc => pure inert
+                                VPrimVar _ => pure inert
                                 _ => case n of
-                                          VNaturalLit fc' n' =>
+                                          VNaturalLit _ n' =>
                                               go succ zero n'
                                           _ => pure inert
   where
@@ -517,16 +517,16 @@ mutual
     go [] t = [(0, t)]
     go acc@((i, _) :: _) u = (i+1, u) :: acc
     toRecordList : (Nat, Value) -> List (FieldName, Value)
-    toRecordList (i, v) = [(MkFieldName "index", VNaturalLit initFC i), (MkFieldName "value", v)]
+    toRecordList (i, v) = [(MkFieldName "index", VNaturalLit (fcToVFC $ getFC v) i), (MkFieldName "value", v)]
     toRecord : List (FieldName, Value) -> Value
-    toRecord xs = VRecordLit initFC $ fromList xs
+    toRecord xs = VRecordLit (fcToVFC fc) $ fromList xs
 
   covering
   doApply : Value -> Value -> Either Error Value
   doApply (VLambda fc ty closure) arg =
     evalClosure closure arg
   doApply (VHLam fc i f) arg = (f arg)
-  doApply f arg = pure $ VApp initFC f arg
+  doApply f arg = pure $ VApp (fcToVFC $ getFC f) f arg
 
   vApp : Value -> Value -> Either Error Value
   vApp = doApply
@@ -595,7 +595,7 @@ mutual
   export
   strFromChunks : List (String, Value) -> Maybe String
   strFromChunks [] = Just neutral
-  strFromChunks ((str, (VTextLit initFC (MkVChunks xys' y))) :: xs') = do
+  strFromChunks ((str, (VTextLit _ (MkVChunks xys' y))) :: xs') = do
     rest <- strFromChunks xs'
     mid <- strFromChunks xys'
     Just (str ++ mid ++ y ++ rest)
