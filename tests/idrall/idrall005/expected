@@ -66,13 +66,6 @@ Testing: ../../../dhall-lang/tests/normalization/success/simplifications/rightBi
 
 Testing: ../../../dhall-lang/tests/normalization/success/unit/AssertNormalizeArgumentA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/BareInterpolationA.dhall
-0| λ(x : Text) → "${x}"
-                 ^^^^^^
-
-../../../dhall-lang/tests/normalization/success/unit/BareInterpolationA.dhall:(0, 14)-(0, 20)AlphaEquivError: (VTextLit (MkVChunks [("", (VVar "x" 0))] ""))
- not alpha equivalent to:
-(VVar "x" 0)
-
 Testing: ../../../dhall-lang/tests/normalization/success/unit/BoolA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/CompletionA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/DoubleA.dhall
@@ -457,18 +450,11 @@ Testing: ../../../dhall-lang/tests/normalization/success/unit/TextLitNested1A.dh
 (VVar "x" 0)
 
 Testing: ../../../dhall-lang/tests/normalization/success/unit/TextLitNested2A.dhall
-0| λ(x: Text) → "${"${x}"}"
-                ^^^^^^^^^^^
-
-../../../dhall-lang/tests/normalization/success/unit/TextLitNested2A.dhall:(0, 13)-(0, 24)AlphaEquivError: (VTextLit (MkVChunks [("", (VTextLit (MkVChunks [("", (VVar "x" 0))] "")))] ""))
- not alpha equivalent to:
-(VVar "x" 0)
-
 Testing: ../../../dhall-lang/tests/normalization/success/unit/TextLitNested3A.dhall
 0| λ(x: Text) → "${"${""}"}${x}"
                 ^^^^^^^^^^^^^^^^
 
-../../../dhall-lang/tests/normalization/success/unit/TextLitNested3A.dhall:(0, 13)-(0, 29)AlphaEquivError: (VTextLit (MkVChunks [("", (VTextLit (MkVChunks [("", (VTextLit (MkVChunks [] "")))] ""))), ("", (VVar "x" 0))] ""))
+../../../dhall-lang/tests/normalization/success/unit/TextLitNested3A.dhall:(0, 13)-(0, 29)AlphaEquivError: (VTextLit (MkVChunks [("", (VTextLit (MkVChunks [] ""))), ("", (VVar "x" 0))] ""))
  not alpha equivalent to:
 (VVar "x" 0)
 
@@ -531,6 +517,6 @@ Testing: ../../../dhall-lang/tests/normalization/success/unit/WithNestedA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/WithPartiallyAbstractA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/WithPriorityA.dhall
 Result:
-Pass: 225
-Fail: 44
+Pass: 227
+Fail: 42
 Main> Bye for now!

@@ -234,7 +234,10 @@ mutual
   eval env (EText fc) = pure $ VText fc
   eval env (ETextLit fc (MkChunks xs x)) = do
     xs' <- traverse (mapChunks (eval env)) xs
-    pure (VTextLit fc (MkVChunks xs' x))
+    -- pure (VTextLit fc (MkVChunks xs' x))
+    case (xs', x) of
+         ([("", t)], "") => pure t
+         _ => pure (VTextLit fc (MkVChunks xs' x))
   eval env (ETextAppend fc x y) =
     case (!(eval env x), !(eval env y)) of
          (VTextLit fc (MkVChunks [] ""), u) => pure u
