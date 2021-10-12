@@ -422,7 +422,7 @@ mutual
     bv <- eval (values cxt) b
     conv (values cxt) av bv
     pure (EAssert fc (EEquivalent fc' a b), VEquivalent (fcToVFC fc') av bv)
-  infer cxt (EAssert fc _) = Left $ AssertError fc "not an EEquivalent type" -- TODO better error message
+  infer cxt (EAssert fc x) = Left $ AssertError fc "not an EEquivalent type: \{show x}" -- TODO better error message
   infer cxt (ERecord fc x) = do
     xs' <- traverse (inferSkip cxt) x
     pure $ (ERecord fc x, VConst (fcToVFC fc) (getHighestType xs'))

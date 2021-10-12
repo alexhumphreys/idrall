@@ -6,6 +6,7 @@ import Data.String -- needed for pretty?
 import Data.SortedMap
 
 import Text.Parser
+import Text.Parser.Expression
 import Text.Quantity
 import Text.Token
 import Text.Lexer
@@ -513,6 +514,25 @@ mutual
               EProject (mergeBounds (boundToFC od x) (boundToFC od l)) (val x) (Left $ forget $ y)
               -}
 
+  table : List (List (Op state TokenRawToken RawExpr))
+  table =
+    [ -- [ Prefix (lexeme $ NegE <$ bits8 0xab)
+        -- ]
+      [ Infix piOp AssocLeft
+      ]
+    , [ Infix (opParser (symbol ":") EAnnot) AssocLeft
+      ]
+    , [ Infix (opParser (symbol "*") ENaturalTimes) AssocLeft
+      ]
+    , [ Infix (opParser (symbol "&&") EBoolAnd) AssocLeft
+      , Infix (opParser (symbol "||") EBoolOr) AssocLeft
+      , Infix (opParser (symbol "==") EBoolEQ) AssocLeft
+      , Infix (opParser (symbol "!=") EBoolNE) AssocLeft
+      ]
+      --, [ Infix (lexeme $ Bin Plus <$ bits8 0xaa) AssocLeft
+        --, Infix (lexeme $ Bin Minus <$ bits8 0xab) AssocLeft
+    ]
+
   atom : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
   atom od = do
     builtin od <|> variable od
@@ -722,12 +742,12 @@ mutual
   appTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
   appTerm od = (do
                 x <- some $ projTermRight od
-                pure $ List1.foldl1 (EApp EmptyFC) x) -- (appOp)
+                pure $ List1.foldl1 (EApp EmptyFC) x)
 
-  mulTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
+  mulTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr) -- DONE
   mulTerm od = chainl1 (appTerm od) (mulOp)
 
-  boolTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
+  boolTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr) -- DONE
   boolTerm od = chainl1 (mulTerm od) (boolOp)
   where
     boolOp : Grammar state (TokenRawToken) True (RawExpr -> RawExpr -> RawExpr)
@@ -735,19 +755,20 @@ mutual
       (opParser (symbol "&&") EBoolAnd) <|> (opParser (symbol "||") EBoolOr)
       <|> (opParser (symbol "==") EBoolEQ) <|> (opParser (symbol "!=") EBoolNE)
 
-  piTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
-  piTerm od = chainr1 (boolTerm od) (piOp)
+  piOp : Grammar state (TokenRawToken) True (RawExpr -> RawExpr -> RawExpr)
+  piOp =
+      infixOp (do
+        _ <- optional whitespace
+        arrow)
+        (boundedOp $ epi' "_")
   where
     epi' : String -> FC -> Expr a -> Expr a -> Expr a
     epi' n fc y z = EPi fc n y z
-    piOp : Grammar state (TokenRawToken) True (RawExpr -> RawExpr -> RawExpr)
-    piOp =
-        infixOp (do
-          _ <- optional whitespace
-          arrow)
-          (boundedOp $ epi' "_")
 
-  annotTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
+  piTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr) -- DONE
+  piTerm od = chainr1 (boolTerm od) (piOp)
+
+  annotTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr) -- DONE
   annotTerm od = chainr1 (piTerm od) (annotOp)
   where
     annotOp : Grammar state (TokenRawToken) True (RawExpr -> RawExpr -> RawExpr)
@@ -779,6 +800,7 @@ mutual
   exprTerm od = do
     piTermLong od <|>
     chainl1 (otherTerm od) (withOp) <|>
+    buildExpressionParser table (atom od) <|>
     letBinding od <|>
     lamTerm od <|>
     assertTerm od <|>
