@@ -32,7 +32,7 @@ both f x = (f (fst x), f (snd x))
 boundToFC : OriginDesc -> WithBounds t -> FC
 boundToFC mbModIdent b = MkFC mbModIdent (both cast $ start b) (both cast $ end b)
 
-boundToFC2 : OriginDesc -> WithBounds t -> WithBounds t -> FC
+boundToFC2 : OriginDesc -> WithBounds t -> WithBounds u -> FC
 boundToFC2 mbModIdent s e = MkFC mbModIdent (both cast $ start s) (both cast $ end e)
 
 initBounds : OriginDesc
@@ -456,8 +456,8 @@ mutual
 
   textLit : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
   textLit od = do
-    start <- bounds $ textBoundary
-    chunks <- some (interpLit <|> chunkLit)
+    start <- bounds $ textBegin
+    chunks <- some (interpLit <|> chunkLit (val start))
     end <- bounds $ textBoundary
     pure $ ETextLit (boundToFC2 od start end) (foldl (<+>) neutral chunks)
   where
@@ -466,9 +466,9 @@ mutual
       e <- between interpBegin interpEnd $ exprTerm od
       pure $ MkChunks [("", e)] ""
 
-    chunkLit : Rule (Chunks ImportStatement)
-    chunkLit = do
-      str <- Parser.Rule.textLit
+    chunkLit : IsMultiline -> Rule (Chunks ImportStatement)
+    chunkLit x = do
+      str <- Parser.Rule.textLit x
       pure (MkChunks [] str)
 
   builtin : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
