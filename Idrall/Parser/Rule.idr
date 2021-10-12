@@ -71,24 +71,25 @@ textBoundary =
       _ => Nothing
 
 escapeSingle : List Char -> List Char -> Maybe (List Char)
-escapeSingle parsed [] = Just parsed
-escapeSingle parsed ('\\' :: x :: xs) =
-  case x of
-       'b' => escapeSingle ('\b' :: parsed) xs
-       'f' => escapeSingle ('\f' :: parsed) xs
-       'n' => escapeSingle ('\n' :: parsed) xs
-       'r' => escapeSingle ('\r' :: parsed) xs
-       't' => escapeSingle ('\t' :: parsed) xs
-       '"' => escapeSingle ('"' :: parsed) xs
-       '$' => escapeSingle ('$' :: parsed) xs
-       '\\' => escapeSingle ('\\' :: parsed) xs
-       '/' => escapeSingle ('/' :: parsed) xs
+escapeSingle escapeChars [] = pure []
+escapeSingle escapeChars (x :: xs) =
+  if isPrefixOf escapeChars (x :: xs)
+  then case drop (length escapeChars) (x::xs) of
+       ('b' :: xs) => pure $ '\b' :: !(escapeSingle escapeChars xs)
+       ('f' :: xs) => escapeSingle escapeChars ('\f' :: xs)
+       ('n' :: xs) => escapeSingle escapeChars ('\n' :: xs)
+       ('r' :: xs) => escapeSingle escapeChars ('\r' :: xs)
+       ('t' :: xs) => escapeSingle escapeChars ('\t' :: xs)
+       ('"' :: xs) => escapeSingle escapeChars ('"' :: xs)
+       ('$' :: xs) => escapeSingle escapeChars ('$' :: xs)
+       ('\\' :: xs) => escapeSingle escapeChars ('\\' :: xs)
+       ('/' :: xs) => escapeSingle escapeChars ('/' :: xs)
        -- TODO unicode
-       case_val => Nothing
-escapeSingle parsed (x :: xs) = escapeSingle (x :: parsed) xs
+       _ => pure $ x :: !(escapeSingle escapeChars xs)
+  else Just $ x :: !(escapeSingle escapeChars xs)
 
 escape : IsMultiline -> String -> Maybe String
-escape Single str = Just $ pack $ reverse !(escapeSingle [] $ unpack str)
+escape Single str = Just $ pack $ !(escapeSingle ['\\'] $ unpack str)
 escape Multi str = Just $ str
 
 export
