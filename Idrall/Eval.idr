@@ -234,10 +234,10 @@ mutual
   eval env (EText fc) = pure $ VText fc
   eval env (ETextLit fc (MkChunks xs x)) = do
     xs' <- traverse (mapChunks (eval env)) xs
-    -- pure (VTextLit fc (MkVChunks xs' x))
-    case (xs', x) of
+    let xs'' = compressChunks xs'
+    case (xs'', x) of
          ([("", t)], "") => pure t
-         _ => pure (VTextLit fc (MkVChunks xs' x))
+         _ => pure (VTextLit fc (MkVChunks xs'' x))
   eval env (ETextAppend fc x y) =
     case (!(eval env x), !(eval env y)) of
          (VTextLit fc (MkVChunks [] ""), u) => pure u
@@ -583,6 +583,12 @@ mutual
 
   convErr : (Show x) => FC -> x -> x -> Either Error a
   convErr fc x y = Left $ AlphaEquivError fc $ show x ++ "\n not alpha equivalent to:\n" ++ show y
+
+  export
+  compressChunks : List (String, Value) -> List (String, Value)
+  compressChunks [] = []
+  compressChunks (("", (VTextLit _ (MkVChunks [] ""))) :: xs) = compressChunks xs
+  compressChunks (x :: xs) = x :: compressChunks xs
 
   export
   strFromExpr : Expr Void -> Maybe String

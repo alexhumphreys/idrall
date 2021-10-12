@@ -442,22 +442,8 @@ Testing: ../../../dhall-lang/tests/normalization/success/unit/TextInterpolateA.d
 "sb"
 
 Testing: ../../../dhall-lang/tests/normalization/success/unit/TextLitNested1A.dhall
-0| λ(x: Text) → "${""}${x}"
-                ^^^^^^^^^^^
-
-../../../dhall-lang/tests/normalization/success/unit/TextLitNested1A.dhall:(0, 13)-(0, 24)AlphaEquivError: (VTextLit (MkVChunks [("", (VTextLit (MkVChunks [] ""))), ("", (VVar "x" 0))] ""))
- not alpha equivalent to:
-(VVar "x" 0)
-
 Testing: ../../../dhall-lang/tests/normalization/success/unit/TextLitNested2A.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/TextLitNested3A.dhall
-0| λ(x: Text) → "${"${""}"}${x}"
-                ^^^^^^^^^^^^^^^^
-
-../../../dhall-lang/tests/normalization/success/unit/TextLitNested3A.dhall:(0, 13)-(0, 29)AlphaEquivError: (VTextLit (MkVChunks [("", (VTextLit (MkVChunks [] ""))), ("", (VVar "x" 0))] ""))
- not alpha equivalent to:
-(VVar "x" 0)
-
 Testing: ../../../dhall-lang/tests/normalization/success/unit/TextLiteralA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/TextNormalizeInterpolationsA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/TextReplaceAbstractA.dhall
@@ -517,6 +503,6 @@ Testing: ../../../dhall-lang/tests/normalization/success/unit/WithNestedA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/WithPartiallyAbstractA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/WithPriorityA.dhall
 Result:
-Pass: 227
-Fail: 42
+Pass: 229
+Fail: 40
 Main> Bye for now!
