@@ -54,6 +54,14 @@ symbol req =
       _ => Nothing
 
 export
+textBegin : Rule IsMultiline
+textBegin =
+  terminal "expected \" or ''" $
+    \case
+      StringBegin x => Just x
+      _ => Nothing
+
+export
 textBoundary : Rule ()
 textBoundary =
   terminal "expected \" or ''" $
@@ -62,12 +70,34 @@ textBoundary =
       StringEnd => Just ()
       _ => Nothing
 
+escapeSingle : List Char -> List Char -> Maybe (List Char)
+escapeSingle escapeChars [] = pure []
+escapeSingle escapeChars (x :: xs) =
+  if isPrefixOf escapeChars (x :: xs)
+  then case drop (length escapeChars) (x::xs) of
+       ('b' :: xs) => pure $ '\b' :: !(escapeSingle escapeChars xs)
+       ('f' :: xs) => escapeSingle escapeChars ('\f' :: xs)
+       ('n' :: xs) => escapeSingle escapeChars ('\n' :: xs)
+       ('r' :: xs) => escapeSingle escapeChars ('\r' :: xs)
+       ('t' :: xs) => escapeSingle escapeChars ('\t' :: xs)
+       ('"' :: xs) => escapeSingle escapeChars ('"' :: xs)
+       ('$' :: xs) => escapeSingle escapeChars ('$' :: xs)
+       ('\\' :: xs) => escapeSingle escapeChars ('\\' :: xs)
+       ('/' :: xs) => escapeSingle escapeChars ('/' :: xs)
+       -- TODO unicode
+       _ => pure $ x :: !(escapeSingle escapeChars xs)
+  else Just $ x :: !(escapeSingle escapeChars xs)
+
+escape : IsMultiline -> String -> Maybe String
+escape Single str = Just $ pack $ !(escapeSingle ['\\'] $ unpack str)
+escape Multi str = Just $ str
+
 export
-textLit : Rule String
-textLit =
+textLit : IsMultiline -> Rule String
+textLit x =
   terminal "expected valid Text" $
     \case
-      StringLit x => Just x
+      StringLit str => escape x str
       _ => Nothing
 
 export

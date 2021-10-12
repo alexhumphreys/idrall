@@ -8,6 +8,7 @@ import public Text.Lexer.Tokenizer
 
 public export
 data IsMultiline = Multi | Single
+
 Eq IsMultiline where
   (==) Multi Multi = True
   (==) Single Single = True
