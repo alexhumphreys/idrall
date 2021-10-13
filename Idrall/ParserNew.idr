@@ -514,18 +514,13 @@ mutual
               EProject (mergeBounds (boundToFC od x) (boundToFC od l)) (val x) (Left $ forget $ y)
               -}
 
-  appTerm2 : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr -> RawExpr)
-  appTerm2 od = do
-    e <- exprTerm od
-    pure $ app' e
-  where
-    app' : RawExpr -> RawExpr -> RawExpr
-    app' x y = boundedOp EApp y x
-
+  -- https://stackoverflow.com/questions/10475337/parsec-expr-repeated-prefix-postfix-operator-not-supported
   table : OriginDesc -> List (List (Op state TokenRawToken RawExpr))
   table od =
-    [ [ Infix piOp AssocRight
-      ]
+    [ [ Infix piOp AssocRight ]
+    , [ Postfix (projTermLeft2 od) ]
+    , [ Postfix (projTermRight2 od) ]
+    , [ Postfix (fieldOp2 od) ]
     , [ Infix (opParser (symbol ":") EAnnot) AssocLeft
       ]
     , [ Infix (opParser (symbol "*") ENaturalTimes) AssocLeft
@@ -713,7 +708,34 @@ mutual
     with' : List1 FieldName -> FC -> Expr a -> Expr a -> Expr a
     with' xs fc x y = EWith fc x xs y
 
-  projTermLeft : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr) -- TODO table
+  projTermLeft2 : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr -> RawExpr)
+  projTermLeft2 od = do
+    symbol ".{"
+    commit
+    ls <- bounds $ (sepBy (symbol ",") fieldName) <* symbol "}"
+    pure $ proj' ls
+  where
+    proj' : WithBounds (List String) -> RawExpr -> RawExpr
+    proj' ls e =
+      let start = getFC e
+          end = boundToFC od ls
+          fc' = mergeBounds start end
+      in EProject fc' e $ Left $ map MkFieldName (val ls)
+
+  projTermRight2 : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr -> RawExpr)
+  projTermRight2 od = do
+    symbol ".("
+    commit
+    e <- bounds $ exprTerm od <* symbol ")"
+    pure $ proj' e
+  where
+    proj' : WithBounds RawExpr -> RawExpr -> RawExpr
+    proj' x y =
+      let start = getFC y
+          fc' = mergeBounds start (boundToFC od x)
+      in EProject fc' y $ Right $ val x
+
+  projTermLeft : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr) -- DONE
   projTermLeft od = hchainl (fieldTerm od) projOp listFieldName
   where
     proj' : RawExpr -> WithBounds (List String) -> RawExpr
@@ -732,7 +754,7 @@ mutual
       ls <- bounds $ (sepBy (symbol ",") fieldName) <* symbol "}"
       pure ls
 
-  projTermRight : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr) -- TODO table
+  projTermRight : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr) -- DONE
   projTermRight od = hchainl (projTermLeft od) projOp (bounds $ exprTerm od <* symbol ")")
   where
     proj' : RawExpr -> WithBounds RawExpr -> RawExpr
@@ -746,13 +768,27 @@ mutual
       commit
       pure proj'
 
-  fieldTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr) -- TODO table
+  fieldTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr) -- DONE
   fieldTerm od = hchainl (atom od) (fieldOp od) (bounds fieldName)
 
-  appTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr) -- TODO table???
+  appTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr) -- DONE
   appTerm od = (do
                 x <- some $ atom od
                 pure $ List1.foldl1 (EApp EmptyFC) x)
+
+  fieldOp2 : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr -> RawExpr)
+  fieldOp2 od = do
+    symbol "."
+    commit
+    x <- bounds fieldName
+    pure $ field' x
+  where
+    field' : WithBounds String -> RawExpr -> RawExpr
+    field' s e =
+      let start = getFC e
+          end = boundToFC od $ s
+          fc' = mergeBounds start end
+      in EField fc' e (MkFieldName (val s))
 
   fieldOp : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr -> WithBounds String -> RawExpr)
   fieldOp od = do
