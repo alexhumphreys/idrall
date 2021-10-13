@@ -514,11 +514,19 @@ mutual
               EProject (mergeBounds (boundToFC od x) (boundToFC od l)) (val x) (Left $ forget $ y)
               -}
 
-  table : List (List (Op state TokenRawToken RawExpr))
-  table =
-    [ -- [ Prefix (lexeme $ NegE <$ bits8 0xab)
-        -- ]
-      [ Infix piOp AssocLeft
+  appTerm2 : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr -> RawExpr)
+  appTerm2 od = do
+    e <- exprTerm od
+    pure $ app' e
+  where
+    app' : RawExpr -> RawExpr -> RawExpr
+    app' x y = boundedOp EApp y x
+
+  table : OriginDesc -> List (List (Op state TokenRawToken RawExpr))
+  table od =
+    [ [ Postfix (appTerm2 od)
+      ]
+    , [ Infix piOp AssocRight
       ]
     , [ Infix (opParser (symbol ":") EAnnot) AssocLeft
       ]
@@ -528,6 +536,22 @@ mutual
       , Infix (opParser (symbol "||") EBoolOr) AssocLeft
       , Infix (opParser (symbol "==") EBoolEQ) AssocLeft
       , Infix (opParser (symbol "!=") EBoolNE) AssocLeft
+      ]
+    , [ Infix (opParser (symbol "++") ETextAppend) AssocLeft
+      , Infix (opParser (symbol "#") EListAppend) AssocLeft
+      , Infix (opParser (symbol "&&") EBoolAnd) AssocLeft
+      , Infix (opParser (symbol "||") EBoolOr) AssocLeft
+      , Infix (opParser (symbol "==") EBoolEQ) AssocLeft
+      , Infix (opParser (symbol "!=") EBoolNE) AssocLeft
+      , Infix (opParser (symbol "+") ENaturalPlus) AssocLeft
+      , Infix (opParser (symbol "/\\" <|> symbol "∧") ECombine) AssocLeft
+      , Infix (opParser (symbol "//\\\\" <|> symbol "⩓") ECombineTypes) AssocLeft
+      , Infix (opParser (symbol "//" <|> symbol "⫽") EPrefer) AssocLeft
+      , Infix (opParser (symbol "::") ERecordCompletion) AssocLeft
+      , Infix (opParser (symbol "===" <|> symbol "≡") EEquivalent) AssocLeft
+      , Infix (opParser (symbol "?") EImportAlt) AssocLeft
+      ]
+    , [ Infix withOp AssocLeft
       ]
       --, [ Infix (lexeme $ Bin Plus <$ bits8 0xaa) AssocLeft
         --, Infix (lexeme $ Bin Minus <$ bits8 0xab) AssocLeft
@@ -672,10 +696,10 @@ mutual
       _ <- optional whitespace
       tokenW op) (boundedOp cons)
 
-  mulOp : Grammar state (TokenRawToken) True (RawExpr -> RawExpr -> RawExpr)
+  mulOp : Grammar state (TokenRawToken) True (RawExpr -> RawExpr -> RawExpr) -- Done
   mulOp = (opParser (symbol "*") ENaturalTimes)
 
-  withOp : Grammar state (TokenRawToken) True (RawExpr -> RawExpr -> RawExpr)
+  withOp : Grammar state (TokenRawToken) True (RawExpr -> RawExpr -> RawExpr) -- Done
   withOp =
     do
       -- TODO find a better solution than just `match White` at the start of
@@ -691,7 +715,7 @@ mutual
     with' : List1 FieldName -> FC -> Expr a -> Expr a -> Expr a
     with' xs fc x y = EWith fc x xs y
 
-  projTermLeft : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
+  projTermLeft : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr) -- TODO table
   projTermLeft od = hchainl (fieldTerm od) projOp listFieldName
   where
     proj' : RawExpr -> WithBounds (List String) -> RawExpr
@@ -710,7 +734,7 @@ mutual
       ls <- bounds $ (sepBy (symbol ",") fieldName) <* symbol "}"
       pure ls
 
-  projTermRight : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
+  projTermRight : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr) -- TODO table
   projTermRight od = hchainl (projTermLeft od) projOp (bounds $ exprTerm od <* symbol ")")
   where
     proj' : RawExpr -> WithBounds RawExpr -> RawExpr
@@ -724,8 +748,19 @@ mutual
       commit
       pure proj'
 
-  fieldTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
-  fieldTerm od = hchainl (atom od) fieldOp (bounds fieldName)
+  fieldTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr) -- TODO table
+  fieldTerm od = hchainl (atom od) (fieldOp od) (bounds fieldName)
+
+  appTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr) -- TODO table???
+  appTerm od = (do
+                x <- some $ projTermRight od
+                pure $ List1.foldl1 (EApp EmptyFC) x)
+
+  fieldOp : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr -> WithBounds String -> RawExpr)
+  fieldOp od = do
+    _ <- optional whitespace
+    _ <- tokenW $ symbol "."
+    pure $ field'
   where
     field' : RawExpr -> WithBounds String -> RawExpr
     field' e s =
@@ -733,16 +768,6 @@ mutual
           end = boundToFC od $ s
           fc' = mergeBounds start end
       in EField fc' e (MkFieldName (val s))
-    fieldOp : Grammar state (TokenRawToken) True (RawExpr -> WithBounds String -> RawExpr)
-    fieldOp = do
-      _ <- optional whitespace
-      _ <- tokenW $ symbol "."
-      pure $ field'
-
-  appTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
-  appTerm od = (do
-                x <- some $ projTermRight od
-                pure $ List1.foldl1 (EApp EmptyFC) x)
 
   mulTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr) -- DONE
   mulTerm od = chainl1 (appTerm od) (mulOp)
@@ -755,7 +780,7 @@ mutual
       (opParser (symbol "&&") EBoolAnd) <|> (opParser (symbol "||") EBoolOr)
       <|> (opParser (symbol "==") EBoolEQ) <|> (opParser (symbol "!=") EBoolNE)
 
-  piOp : Grammar state (TokenRawToken) True (RawExpr -> RawExpr -> RawExpr)
+  piOp : Grammar state (TokenRawToken) True (RawExpr -> RawExpr -> RawExpr) -- DONE
   piOp =
       infixOp (do
         _ <- optional whitespace
@@ -774,13 +799,13 @@ mutual
     annotOp : Grammar state (TokenRawToken) True (RawExpr -> RawExpr -> RawExpr)
     annotOp = (opParser (symbol ":") EAnnot)
 
-  plusTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
+  plusTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr) -- DONE
   plusTerm od = chainl1 (annotTerm od) (plusOp)
   where
     plusOp : Grammar state (TokenRawToken) True (RawExpr -> RawExpr -> RawExpr)
     plusOp = (opParser (symbol "+") ENaturalPlus)
 
-  otherTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
+  otherTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr) -- DONE
   otherTerm od = chainl1 (annotTerm od) (otherOp)
   where
     otherOp : Grammar state (TokenRawToken) True (RawExpr -> RawExpr -> RawExpr)
@@ -799,8 +824,8 @@ mutual
   exprTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
   exprTerm od = do
     piTermLong od <|>
-    chainl1 (otherTerm od) (withOp) <|>
-    buildExpressionParser table (atom od) <|>
+    -- chainl1 (otherTerm od) (withOp) <|>
+    buildExpressionParser (table od) (atom od) <|>
     letBinding od <|>
     lamTerm od <|>
     assertTerm od <|>
