@@ -524,9 +524,7 @@ mutual
 
   table : OriginDesc -> List (List (Op state TokenRawToken RawExpr))
   table od =
-    [ [ Postfix (appTerm2 od)
-      ]
-    , [ Infix piOp AssocRight
+    [ [ Infix piOp AssocRight
       ]
     , [ Infix (opParser (symbol ":") EAnnot) AssocLeft
       ]
@@ -753,7 +751,7 @@ mutual
 
   appTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr) -- TODO table???
   appTerm od = (do
-                x <- some $ projTermRight od
+                x <- some $ atom od
                 pure $ List1.foldl1 (EApp EmptyFC) x)
 
   fieldOp : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr -> WithBounds String -> RawExpr)
@@ -825,7 +823,7 @@ mutual
   exprTerm od = do
     piTermLong od <|>
     -- chainl1 (otherTerm od) (withOp) <|>
-    buildExpressionParser (table od) (atom od) <|>
+    buildExpressionParser (table od) (appTerm od) <|>
     letBinding od <|>
     lamTerm od <|>
     assertTerm od <|>
