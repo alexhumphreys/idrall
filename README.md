@@ -148,9 +148,8 @@ There is an [`idris1` tag](https://github.com/alexhumphreys/idrall/releases/tag/
 ## Future work
 
 - Add the missing things from the features list above.
-- `Check.idr` takes about 8s to type check, should split up this file. Could be related to [this issue](https://github.com/idris-lang/Idris2/issues/797).
 - Use dependent types to prove field names in values are elements of their Unions/Records.
-- Improved parsing (Not really sure what I'm doing here)
+- Improve postfix operator parsing (`x.y`, `x.(y)`, `x.{y}`...)
 - Think about what api/types to expose so as to make this as nice as possible to use.
-- Try out [this reflection tutorial](https://github.com/stefan-hoeck/idris2-elab-util) to attempt to derive a generic `fromDhall` utility similar to the dhall-haskell implementation.
+- Derive a generic `ToDhall` interface (to go with the current `FromDhall` interface) similar to the dhall-haskell implementation.
 - Scope checking as found in [Tiny Idris](https://github.com/edwinb/SPLV20), you can find some failed attempts [here](https://github.com/alexhumphreys/idrall/blob/feat/scope-checking2/Idrall/Binder.idr).
