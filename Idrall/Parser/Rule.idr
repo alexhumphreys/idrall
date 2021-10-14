@@ -82,7 +82,7 @@ escapeSingle escapeChars (x :: xs) =
        ('t' :: xs) => escapeSingle escapeChars ('\t' :: xs)
        ('"' :: xs) => escapeSingle escapeChars ('"' :: xs)
        ('$' :: xs) => escapeSingle escapeChars ('$' :: xs)
-       ('\\' :: xs) => escapeSingle escapeChars ('\\' :: xs)
+       ('\\' :: xs) => pure $ '\\' :: !(escapeSingle escapeChars xs)
        ('/' :: xs) => escapeSingle escapeChars ('/' :: xs)
        -- TODO unicode
        _ => pure $ x :: !(escapeSingle escapeChars xs)

@@ -479,9 +479,9 @@ Testing: ../../../dhall-lang/tests/normalization/success/unit/TextShowAllEscapes
 0| Text/show "\"\$\\\b\f\n\r\tツa\u0007b\u0010c"
              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-../../../dhall-lang/tests/normalization/success/unit/TextShowAllEscapesA.dhall:(0, 10)-(0, 44)AlphaEquivError: "\"\\\"\\u0024\\b\\f\\n\\r\\t\12484a\\\\u0007b\\\\u0010c\""
+../../../dhall-lang/tests/normalization/success/unit/TextShowAllEscapesA.dhall:(0, 10)-(0, 44)AlphaEquivError: "\"\\\"\\u0024\\\\\\b\\f\\n\\r\\t\12484a\\\\u0007b\\\\u0010c\""
  not alpha equivalent to:
-"\"\"\\u0024\b\f\n\r\t\12484a\\u0007b\\u0010c\""
+"\"\\\"\\u0024\\\\\\b\\f\\n\\r\\t\12484a\\u0007b\\u0010c\""
 
 Testing: ../../../dhall-lang/tests/normalization/success/unit/TextShowEmptyA.dhall
 Testing: ../../../dhall-lang/tests/normalization/success/unit/TextShowInterpolatedA.dhall
