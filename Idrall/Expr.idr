@@ -301,7 +301,7 @@ Show (Import ImportStatement) where
   show (Resolved x) = "(Resolved x)"
 
 mutual
-  export partial
+  export covering
   Show (Import a) where
     show (Raw x) = "(Raw)" -- TODO show x
     show (Text x) = "(Text)" -- TODO show x
