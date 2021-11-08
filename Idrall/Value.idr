@@ -143,7 +143,7 @@ mutual
     show (MkClosure closureName closureEnv closureBody)
       = "(MkClosure " ++ show closureName ++ " " ++ show closureEnv ++ " " ++ show closureBody ++ ")"
 
-  public export partial
+  public export covering
   Show VChunks where
     show (MkVChunks xs x) = "(MkVChunks " ++ show xs ++ " " ++ show x ++ ")"
 
