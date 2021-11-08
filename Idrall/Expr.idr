@@ -382,7 +382,7 @@ mutual
     show (EImportAlt fc x y) = "(EImportAlt " ++ show x ++ " " ++ show y ++ ")"
     show (EEmbed fc x) = "(EEmbed " ++ show x ++ ")"
 
-  public export partial
+  public export covering
   Show (Chunks a) where
     show (MkChunks xs x) = "MkChunks " ++ (show xs) ++ " " ++ show x
 
