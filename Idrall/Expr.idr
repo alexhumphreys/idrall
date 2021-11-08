@@ -308,7 +308,7 @@ mutual
     show (Location x) = "(Location)" -- TODO show x
     show (Resolved x) = "(Resolved " ++ show x ++ ")"
 
-  export partial
+  export covering
   Show (Expr a) where
     show (EConst fc x) = "(EConst " ++ show x ++ ")"
     show (EVar fc x i) = "(EVar " ++ show x ++ " " ++ show i ++ ")"
