@@ -176,7 +176,7 @@ record Cxt where
   values : Env
   types  : Types
 
-partial
+covering
 Show Cxt where
   show x = "(MkCxt { values = " ++ show (values x) ++ ", types = " ++ show 2 ++ "})"
 
