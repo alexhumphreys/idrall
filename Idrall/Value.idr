@@ -147,7 +147,7 @@ mutual
   Show VChunks where
     show (MkVChunks xs x) = "(MkVChunks " ++ show xs ++ " " ++ show x ++ ")"
 
-  public export partial
+  public export covering
   Show Value where
     show (VConst fc x) = "(VConst " ++ show x ++ ")"
     show (VVar fc x i) = "(VVar " ++ show x ++ " " ++ show i ++ ")"
