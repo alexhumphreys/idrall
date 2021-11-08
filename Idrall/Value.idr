@@ -138,7 +138,7 @@ mutual
     show (Skip x y) = "(Skip " ++ show x ++ " " ++ show y ++ ")"
     show (Extend x y z) = "(Extend " ++ show x ++ " " ++ show y ++ " " ++ show z ++ ")"
 
-  public export partial
+  public export covering
   Show Closure where
     show (MkClosure closureName closureEnv closureBody)
       = "(MkClosure " ++ show closureName ++ " " ++ show closureEnv ++ " " ++ show closureBody ++ ")"
