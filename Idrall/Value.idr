@@ -132,7 +132,7 @@ mutual
     show (Typed x y) = "(Typed " ++ show x ++ " " ++ show y ++ ")"
     show NaturalSubtractZero = "NaturalSubtractZero"
 
-  public export partial
+  public export covering
   Show Env where
     show Empty = "Empty"
     show (Skip x y) = "(Skip " ++ show x ++ " " ++ show y ++ ")"
