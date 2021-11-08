@@ -301,14 +301,14 @@ Show (Import ImportStatement) where
   show (Resolved x) = "(Resolved x)"
 
 mutual
-  export
+  export partial
   Show (Import a) where
     show (Raw x) = "(Raw)" -- TODO show x
     show (Text x) = "(Text)" -- TODO show x
     show (Location x) = "(Location)" -- TODO show x
     show (Resolved x) = "(Resolved " ++ show x ++ ")"
 
-  export
+  export partial
   Show (Expr a) where
     show (EConst fc x) = "(EConst " ++ show x ++ ")"
     show (EVar fc x i) = "(EVar " ++ show x ++ " " ++ show i ++ ")"
@@ -382,7 +382,7 @@ mutual
     show (EImportAlt fc x y) = "(EImportAlt " ++ show x ++ " " ++ show y ++ ")"
     show (EEmbed fc x) = "(EEmbed " ++ show x ++ ")"
 
-  public export
+  public export partial
   Show (Chunks a) where
     show (MkChunks xs x) = "MkChunks " ++ (show xs) ++ " " ++ show x
 

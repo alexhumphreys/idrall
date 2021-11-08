@@ -150,6 +150,7 @@ vAnyPi t = Left $ Unexpected (getFC t) $ show t ++ " is not a VPi or VHPi"
 data Types = TEmpty
            | TBind Types Name Value
 
+partial
 Show Types where
   show TEmpty = "TEmpty"
   show (TBind x y z) = "(TBind " ++ show x ++ " " ++ show y ++ " " ++ show z ++ ")"
@@ -175,6 +176,7 @@ record Cxt where
   values : Env
   types  : Types
 
+partial
 Show Cxt where
   show x = "(MkCxt { values = " ++ show (values x) ++ ", types = " ++ show 2 ++ "})"
 
