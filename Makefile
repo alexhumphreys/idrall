@@ -18,7 +18,7 @@ repl: test-setup
 	rlwrap -n idris2 -p contrib Idrall/APIv1.idr
 
 repl2: test-setup
-	rlwrap -n idris2 -p contrib Idrall/ParserNew.idr
+	rlwrap -n idris2 -p contrib Idrall/Derive/ToDhall.idr
 
 edit-tests: test-setup
 	cd ./tests/idrall/idrall002 && rlwrap -n idris2 -p contrib -p test -p idrall All.idr
