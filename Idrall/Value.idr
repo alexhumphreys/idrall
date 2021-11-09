@@ -126,27 +126,28 @@ VPrim : (Value -> Either Error Value) -> Value
 VPrim f = VHLam initFC Prim f
 
 mutual
+  partial
   Show HLamInfo where
     show Prim = "Prim"
     show (Typed x y) = "(Typed " ++ show x ++ " " ++ show y ++ ")"
     show NaturalSubtractZero = "NaturalSubtractZero"
 
-  public export
+  public export covering
   Show Env where
     show Empty = "Empty"
     show (Skip x y) = "(Skip " ++ show x ++ " " ++ show y ++ ")"
     show (Extend x y z) = "(Extend " ++ show x ++ " " ++ show y ++ " " ++ show z ++ ")"
 
-  public export
+  public export covering
   Show Closure where
     show (MkClosure closureName closureEnv closureBody)
       = "(MkClosure " ++ show closureName ++ " " ++ show closureEnv ++ " " ++ show closureBody ++ ")"
 
-  public export
+  public export covering
   Show VChunks where
     show (MkVChunks xs x) = "(MkVChunks " ++ show xs ++ " " ++ show x ++ ")"
 
-  public export
+  public export covering
   Show Value where
     show (VConst fc x) = "(VConst " ++ show x ++ ")"
     show (VVar fc x i) = "(VVar " ++ show x ++ " " ++ show i ++ ")"
