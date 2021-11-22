@@ -74,7 +74,9 @@ mutual
 
   export
   Pretty a => Pretty (Chunks a) where
-    pretty (MkChunks xs x) = pretty xs <+> pretty x
+    pretty (MkChunks [] x) = dquotes $ pretty x
+    pretty (MkChunks (y :: xs) x) = dquotes $ pretty y <+> pretty xs <+> pretty x
+
 
   export
   Pretty a => Pretty (Expr a) where

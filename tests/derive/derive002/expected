@@ -1,6 +1,6 @@
 [1, 2, 3] : Natural
 10
-Some []foo
-None Optional Bool
+Some "foo"
+None Bool
 True
 2.4

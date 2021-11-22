@@ -45,7 +45,7 @@ ToDhall ty => ToDhall (List ty) where
 export
 ToDhall ty => ToDhall (Maybe ty) where
   toDhallType = Right $ EApp EmptyFC (EOptional EmptyFC) !(toDhallType {ty=ty})
-  toDhall Nothing = Right $ EApp EmptyFC (ENone EmptyFC) !(toDhallType {ty=Maybe ty})
+  toDhall Nothing = Right $ EApp EmptyFC (ENone EmptyFC) !(toDhallType {ty=ty})
   toDhall (Just x) = Right $ ESome EmptyFC !(toDhall x)
 
 export
