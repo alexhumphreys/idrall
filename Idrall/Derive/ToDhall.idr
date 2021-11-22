@@ -48,6 +48,7 @@ ToDhall ty => ToDhall (Maybe ty) where
   toDhall Nothing = Right $ EApp EmptyFC (ENone EmptyFC) !(toDhallType {ty=Maybe ty})
   toDhall (Just x) = Right $ ESome EmptyFC !(toDhall x)
 
+export
 Pretty Void where
   pretty x = pretty ""
 

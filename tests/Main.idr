@@ -32,6 +32,7 @@ failTests = MkTestPool "dhall-lang expected fail tests" [] Default
 deriveTests : TestPool
 deriveTests = MkTestPool "derive tests" [] Default
   [ "derive001"
+  , "derive002"
   ]
 
 examplesTests : TestPool
