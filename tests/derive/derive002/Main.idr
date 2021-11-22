@@ -2,7 +2,7 @@ module Main
 
 import Idrall.API.V2
 import Idrall.Pretty
-import Text.PrettyPrint.PrettyPrinter.Render.Terminal
+import Text.PrettyPrint.Prettyprinter.Render.Terminal
 
 testPretty : ToDhall ty => ty -> IO ()
 testPretty x =
