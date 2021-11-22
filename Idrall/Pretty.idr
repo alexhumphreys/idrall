@@ -14,6 +14,9 @@ prettyDottedList [] = pretty ""
 prettyDottedList (x :: []) = pretty x
 prettyDottedList (x :: xs) = pretty x <+> pretty "." <+> prettyDottedList xs
 
+sbraces : Doc ann -> Doc ann
+sbraces = enclose lbrace (space <+> rbrace)
+
 mutual
   prettySortedMap : Pretty x => Pretty y
                   => (Doc ann -> Doc ann)
@@ -36,7 +39,7 @@ mutual
     let ls = SortedMap.toList e
         lsDoc = map go ls
     in
-    enclose langle (space <+> rangle) $ foldl (<++>) neutral (punctuate (space <+> pipe) lsDoc)
+    enclose langle (space <++> rangle) $ foldl (<++>) neutral (punctuate (space <+> pipe) lsDoc)
   where
     go : (x, Maybe y) -> Doc ann
     go (s, Nothing) = pretty s
@@ -150,8 +153,8 @@ mutual
       prettyDottedList (forget xs) <++> equals <++> pretty y
     pretty (EEquivalent fc x y) = pretty x <++> pretty "===" <++> pretty y
     pretty (EAssert fc x) = pretty "assert" <++> colon <++> pretty x
-    pretty (ERecord fc x) = prettySortedMap braces colon x
-    pretty (ERecordLit fc x) = prettySortedMap braces equals x
+    pretty (ERecord fc x) = prettySortedMap sbraces colon x
+    pretty (ERecordLit fc x) = prettySortedMap sbraces equals x
     pretty (EUnion fc x) = prettyUnion x
     pretty (ECombine fc x y) = pretty x <++> pretty "/\\" <++> pretty y
     pretty (ECombineTypes fc x y) = pretty x <++> pretty "//\\\\" <++> pretty y

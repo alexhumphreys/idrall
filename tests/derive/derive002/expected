@@ -4,3 +4,4 @@ Some "foo"
 None Bool
 True
 2.4
+{ n = 20 }
