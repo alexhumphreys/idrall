@@ -5,7 +5,6 @@ import public Idrall.Value
 import public Idrall.Error
 import Idrall.Eval
 import Idrall.Check
-import Idrall.Parser
 import Idrall.ParserNew
 import Idrall.Resolve
 import public Idrall.IOEither
@@ -17,18 +16,8 @@ import Data.String
 
 -- Test Stuff
 
-data WhichParser = OldParser | NewParser
-
-useParser : WhichParser
--- useParser = OldParser
-useParser = NewParser
-
-parseFunction : WhichParser -> String -> Either String (Expr ImportStatement, Int)
-parseFunction OldParser = Idrall.Parser.parseExpr
-parseFunction NewParser = Idrall.ParserNew.parseExprNew
-
 parseWith : String -> Either String (Expr ImportStatement, Int)
-parseWith = parseFunction useParser
+parseWith = Idrall.ParserNew.parseExprNew
 
 public export
 exprFromString : String -> IOEither Error (Expr Void)

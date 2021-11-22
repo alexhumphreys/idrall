@@ -7,7 +7,6 @@ modules = Idrall.Expr
         , Idrall.Value
         , Idrall.FC
         , Idrall.Resolve
-        , Idrall.Parser
         , Idrall.ParserNew
         , Idrall.Parser.Rule
         , Idrall.Parser.Lexer
@@ -22,3 +21,4 @@ modules = Idrall.Expr
         , Idrall.APIv1
         , Idrall.API.V2
         , Idrall.Derive
+        , Idrall.Pretty
