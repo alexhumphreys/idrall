@@ -7,8 +7,6 @@ import Idrall.Value
 import Idrall.Error
 import Idrall.IOEither
 import Idrall.APIv1
-import Idrall.Parser
-import Idrall.ParserNew
 
 import System
 import System.Directory

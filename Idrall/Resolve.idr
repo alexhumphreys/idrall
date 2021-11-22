@@ -3,25 +3,14 @@ module Idrall.Resolve
 import Idrall.Error
 import Idrall.Expr
 import Idrall.IOEither
-import Idrall.Parser
 import Idrall.ParserNew
 import Idrall.Path
 
 import System
 import System.File
 
-data WhichParser = OldParser | NewParser
-
-useParser : WhichParser
--- useParser = OldParser
-useParser = NewParser
-
-parseFunction : WhichParser -> Maybe String -> String -> Either String (Expr ImportStatement, Int)
-parseFunction OldParser x = Idrall.Parser.parseExpr
-parseFunction NewParser x = Idrall.ParserNew.parseExprNew {od = x}
-
 parseWith : Maybe String -> String -> Either String (Expr ImportStatement, Int)
-parseWith x = parseFunction useParser x
+parseWith x = Idrall.ParserNew.parseExprNew {od = x}
 
 parseErrorHandler : FC -> String -> Error
 parseErrorHandler fc x = ParseError fc x
