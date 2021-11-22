@@ -5,7 +5,6 @@ import Idrall.Error
 import Idrall.Pretty
 
 import public Data.SortedMap
-import Text.PrettyPrint.PrettyPrinter.Render.Terminal
 
 public export
 interface ToDhall ty where
@@ -51,12 +50,3 @@ ToDhall ty => ToDhall (Maybe ty) where
 export
 Pretty Void where
   pretty x = pretty ""
-
-testPretty : ToDhall ty => ty -> IO ()
-testPretty x =
-  let dhall = toDhall x
-  in case dhall of
-          (Left y) => do
-            putStrLn $ show y
-          (Right y) => do
-            putDoc $ pretty y
