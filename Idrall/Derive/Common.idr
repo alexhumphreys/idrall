@@ -53,6 +53,7 @@ patClause = PatClause EmptyFC
 ------
 
 ||| from idris2-lsp
+export
 stripNs : Name -> Name
 stripNs (NS _ x) = x
 stripNs x = x
@@ -66,39 +67,55 @@ genReadableSym hint = do
   pure $ UN $ Basic (v ++ show i)
 
 ||| from idris2-lsp
+export
 primStr : String -> TTImp
 primStr = IPrimVal EmptyFC . Str
 
 ||| from idris2-lsp
+export
 bindvar : String -> TTImp
 bindvar = IBindVar EmptyFC
 
 ||| from idris2-lsp
+export
 implicit' : TTImp
 implicit' = Implicit EmptyFC True
 
 ||| moved from where clause
+export
 getArgs : TTImp -> Elab (List (Name, TTImp))
 getArgs (IPi _ _ _ (Just n) argTy retTy) = ((n, argTy) ::) <$> getArgs retTy
 getArgs (IPi _ _ _ Nothing _ _) = fail $ "All arguments must be explicitly named"
 getArgs _ = pure []
 
+public export
 Cons : Type
 Cons = (List (Name, List (Name, TTImp)))
 
+export
 logCons : Cons -> Elab ()
-logCons [] = pure ()
+logCons [] = do
+  logMsg "hello22!" 4 ("stuufff")
+  pure ()
 logCons (x :: xs) = do
+  logMsg "hello!" 4 ("stuufff")
   more x
   logCons xs
 where
   go : List (Name, TTImp) -> Elab ()
   go [] =  pure ()
   go ((n, t) :: ys) = do
-    logMsg "" 7 ("ArgName: " ++ show n)
-    logTerm "" 7 "ArgType" t
+    logMsg "" 4 ("ArgName: " ++ show n)
+    logTerm "" 4 "ArgType" t
     go ys
   more : (Name, List (Name, TTImp)) -> Elab ()
   more (constructor', args) = do
-    logMsg "" 7 ("Constructor: " ++ show constructor')
+    logMsg "" 4 ("Constructor: " ++ show constructor')
     go args
+
+||| Used with FromDhall interface, to dervice implementations
+||| for ADTs or Records
+public export
+data IdrisType
+  = ADT
+  | Record
