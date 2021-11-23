@@ -22,4 +22,5 @@ modules = Idrall.Expr
         , Idrall.API.V2
         , Idrall.Derive
         , Idrall.Pretty
+        , Idrall.Derive.Common
         , Idrall.Derive.ToDhall

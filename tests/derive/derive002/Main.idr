@@ -14,8 +14,8 @@ record Foo where
 
 ToDhall Foo where
   toDhallType =
-    ERecord EmptyFC $ fromList [ (MkFieldName "n", ENatural EmptyFC) ]
-  toDhall foo = ERecordLit EmptyFC $ fromList [ (MkFieldName "n", (toDhall $ someNat foo)) ]
+    ERecord EmptyFC $ fromList [ (MkFieldName "someNat", ENatural EmptyFC) ]
+  toDhall foo = ERecordLit EmptyFC $ fromList [ (MkFieldName "someNat", (toDhall $ someNat foo)) ]
 
 main : IO ()
 main = do
