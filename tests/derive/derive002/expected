@@ -1,0 +1,7 @@
+[1, 2, 3] : Natural
+10
+Some "foo"
+None Bool
+True
+2.4
+{ n = 20 }

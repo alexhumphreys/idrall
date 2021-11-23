@@ -4,6 +4,7 @@ import Idrall.Value
 import public Idrall.Expr
 import public Idrall.Error
 import public Idrall.Derive
+import public Idrall.Derive.ToDhall
 import public Idrall.IOEither
 import Idrall.APIv1
 
