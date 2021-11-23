@@ -5,22 +5,17 @@ import Idrall.Pretty
 import Text.PrettyPrint.Prettyprinter.Render.Terminal
 
 testPretty : ToDhall ty => ty -> IO ()
-testPretty x =
-  let dhall = toDhall x
-  in case dhall of
-          (Left y) => do
-            putStrLn $ show y
-          (Right y) => do
-            putDoc $ pretty y
+testPretty x = do
+  putDoc $ pretty $ toDhall x
 
 record Foo where
   constructor MkFoo
   someNat : Nat
 
 ToDhall Foo where
-  toDhallType = Right $
+  toDhallType =
     ERecord EmptyFC $ fromList [ (MkFieldName "n", ENatural EmptyFC) ]
-  toDhall foo = Right $ ERecordLit EmptyFC $ fromList [ (MkFieldName "n", !(toDhall $ someNat foo)) ]
+  toDhall foo = ERecordLit EmptyFC $ fromList [ (MkFieldName "n", (toDhall $ someNat foo)) ]
 
 main : IO ()
 main = do

@@ -8,44 +8,44 @@ import public Data.SortedMap
 
 public export
 interface ToDhall ty where
-  toDhallType : Either Error (Expr Void)
-  toDhall : ty -> Either Error (Expr Void)
+  toDhallType : Expr Void
+  toDhall : ty -> Expr Void
 
 export
 ToDhall Nat where
-  toDhallType = Right $ ENatural EmptyFC
-  toDhall x = Right $ ENaturalLit EmptyFC x
+  toDhallType = ENatural EmptyFC
+  toDhall x = ENaturalLit EmptyFC x
 
 export
 ToDhall Bool where
-  toDhallType = Right $ EBool EmptyFC
-  toDhall x = Right $ EBoolLit EmptyFC x
+  toDhallType = EBool EmptyFC
+  toDhall x = EBoolLit EmptyFC x
 
 export
 ToDhall Integer where
-  toDhallType = Right $ EInteger EmptyFC
-  toDhall x = Right $ EIntegerLit EmptyFC x
+  toDhallType = EInteger EmptyFC
+  toDhall x = EIntegerLit EmptyFC x
 
 export
 ToDhall Double where
-  toDhallType = Right $ EDouble EmptyFC
-  toDhall x = Right $ EDoubleLit EmptyFC x
+  toDhallType = EDouble EmptyFC
+  toDhall x = EDoubleLit EmptyFC x
 
 export
 ToDhall String where
-  toDhallType = Right $ EText EmptyFC
-  toDhall x = Right $ ETextLit EmptyFC (MkChunks [] x)
+  toDhallType = EText EmptyFC
+  toDhall x = ETextLit EmptyFC (MkChunks [] x)
 
 export
 ToDhall ty => ToDhall (List ty) where
-  toDhallType = Right $ EApp EmptyFC (EList EmptyFC) !(toDhallType {ty=ty})
-  toDhall xs = Right $ EListLit EmptyFC (Just !(toDhallType {ty=ty})) !(traverse toDhall xs)
+  toDhallType = EApp EmptyFC (EList EmptyFC) (toDhallType {ty=ty})
+  toDhall xs = EListLit EmptyFC (Just (toDhallType {ty=ty})) (map toDhall xs)
 
 export
 ToDhall ty => ToDhall (Maybe ty) where
-  toDhallType = Right $ EApp EmptyFC (EOptional EmptyFC) !(toDhallType {ty=ty})
-  toDhall Nothing = Right $ EApp EmptyFC (ENone EmptyFC) !(toDhallType {ty=ty})
-  toDhall (Just x) = Right $ ESome EmptyFC !(toDhall x)
+  toDhallType = EApp EmptyFC (EOptional EmptyFC) (toDhallType {ty=ty})
+  toDhall Nothing = EApp EmptyFC (ENone EmptyFC) (toDhallType {ty=ty})
+  toDhall (Just x) = ESome EmptyFC (toDhall x)
 
 export
 Pretty Void where
