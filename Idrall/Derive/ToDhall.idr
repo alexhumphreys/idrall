@@ -115,12 +115,19 @@ deriveToDhall n = do
 
   declare []
   where
-    dhallRecFieldFromRecArg : List (Name, TTImp) -> Elab TTImp -- (List (FieldName, Expr Void))
-    dhallRecFieldFromRecArg [] = pure $ `([])
-    dhallRecFieldFromRecArg ((n, t) :: xs) =
+    -- given a idris Record constructor arg in the form (Name, type),
+    -- return a dhall record field for use in the ERecord constructor.
+    argToField : List (Name, TTImp) -> Elab (TTImp)
+    argToField [] = pure $ `([])
+    argToField ((n, t) :: xs) =
       let name = primStr $ (show n)
       in do
-        pure $ `(ERecord EmptyFC $ fromList $ MkPair (MkFieldName ~name) (toDhallType {ty = ~t}) :: (~(!(dhallRecFieldFromRecArg xs))))
+        pure $ `(MkPair (MkFieldName ~name) (toDhallType {ty = ~t}) :: ~(!(argToField xs)))
+
+    dhallRecFieldFromRecArg : List (Name, TTImp) -> Elab TTImp -- (List (FieldName, Expr Void))
+    dhallRecFieldFromRecArg xs = do
+        pure $ `(ERecord EmptyFC $ fromList $ ~(!(argToField xs)))
+
     genClauses : -- IdrisType ->
                  Name -> Name -> Cons -> Elab (List Clause)
     genClauses funName arg [] = do
@@ -132,6 +139,7 @@ deriveToDhall n = do
 record ExRec1 where
   constructor MkExRec1
   mn : Maybe Nat
+  st : String
 
 %runElab (deriveToDhall `{ ExRec1 })
 
