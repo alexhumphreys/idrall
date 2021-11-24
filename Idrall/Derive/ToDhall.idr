@@ -59,13 +59,74 @@ export
 Pretty Void where
   pretty x = pretty ""
 
+{-
+export
+deriveFromDhall : IdrisType -> (name : Name) -> Elab ()
+deriveFromDhall it n =
+  do [(name, _)] <- getType n
+             | _ => fail "Ambiguous name"
+     let funName = UN $ Basic ("fromDhall" ++ show (stripNs name))
+     let objName = UN $ Basic ("__impl_fromDhall" ++ show (stripNs name))
+
+     conNames <- getCons name
+
+     -- get the constructors of the record
+     -- cons : (List (Name, List (Name, TTImp)))
+     cons <- for conNames $ \n => do
+       [(conName, conImpl)] <- getType n
+         | _ => fail $ show n ++ "constructor must be in scope and unique"
+       args <- getArgs conImpl
+       pure (conName, args)
+
+     logCons cons
+     -}
+
 export
 deriveToDhall : -- IdrisType ->
                   (name : Name) -> Elab ()
-deriveToDhall n =
-  do logMsg "" 1 ("yesss")
+deriveToDhall n = do
+  logMsg "" 0 ("yesss")
+  [(name, _)] <- getType n
+          | _ => fail "Ambiguous name"
+  let funName = UN $ Basic ("toDhall" ++ show (stripNs name))
+  let objName = UN $ Basic ("__impl_fromDhall" ++ show (stripNs name))
 
-     declare []
+  conNames <- getCons name
+
+  -- get the constructors of the record
+  -- cons : (List (Name, List (Name, TTImp)))
+  cons <- for conNames $ \n => do
+    [(conName, conImpl)] <- getType n
+      | _ => fail $ show n ++ "constructor must be in scope and unique"
+    args <- getArgs conImpl
+    pure (conName, args)
+
+  logCons cons
+
+  argName <- genReadableSym "arg"
+
+  -- clauses <- genClauses funName argName cons
+  let funClaim = IClaim EmptyFC MW Export [Inline] (MkTy EmptyFC EmptyFC funName `(Expr Void))
+  -- add a catch all pattern
+  let funDecl = IDef EmptyFC funName $ !(genClauses funName argName cons) -- ([patClause `(~(var funName)) `(ENatural EmptyFC)])
+
+  -- declare the fuction in the env
+  declare [funClaim, funDecl]
+
+  declare []
+  where
+    dhallRecFieldFromRecArg : List (Name, TTImp) -> Elab TTImp -- (List (FieldName, Expr Void))
+    dhallRecFieldFromRecArg [] = pure $ `([])
+    dhallRecFieldFromRecArg ((n, t) :: xs) =
+      let name = primStr $ (show n)
+      in do
+        pure $ `(ERecord EmptyFC $ fromList $ MkPair (MkFieldName ~name) (toDhallType {ty = ~t}) :: (~(!(dhallRecFieldFromRecArg xs))))
+    genClauses : -- IdrisType ->
+                 Name -> Name -> Cons -> Elab (List Clause)
+    genClauses funName arg [] = do
+      pure $ pure $ patClause `(~(var funName)) `(EInteger EmptyFC)
+    genClauses funName arg ((n, ls) :: xs) = do
+      pure $ pure $ patClause `(~(var funName)) !(dhallRecFieldFromRecArg ls)
 
 -- Record example
 record ExRec1 where
@@ -96,7 +157,7 @@ enumDecl name = simpleData Public (UN $ Basic name) . map mkCon
 export
 mkEnum : (name : String) -> (cons : List String) -> Elab ()
 mkEnum name cons = do
-  logMsg "grr" 0 ("yesss")
+  logMsg "grr" 1 ("yesss")
   declare [enumDecl name cons]
 
 %runElab mkEnum "Gender" ["Female","Male","NonBinary"]

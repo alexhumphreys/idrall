@@ -60,6 +60,7 @@ stripNs x = x
 
 ||| from idris2-lsp
 covering
+export
 genReadableSym : String -> Elab Name
 genReadableSym hint = do
   MN v i <- genSym hint
@@ -95,22 +96,20 @@ Cons = (List (Name, List (Name, TTImp)))
 export
 logCons : Cons -> Elab ()
 logCons [] = do
-  logMsg "hello22!" 4 ("stuufff")
   pure ()
 logCons (x :: xs) = do
-  logMsg "hello!" 4 ("stuufff")
   more x
   logCons xs
 where
   go : List (Name, TTImp) -> Elab ()
   go [] =  pure ()
   go ((n, t) :: ys) = do
-    logMsg "" 4 ("ArgName: " ++ show n)
-    logTerm "" 4 "ArgType" t
+    logMsg "" 0 ("ArgName: " ++ show n)
+    logTerm "" 0 "ArgType" t
     go ys
   more : (Name, List (Name, TTImp)) -> Elab ()
   more (constructor', args) = do
-    logMsg "" 4 ("Constructor: " ++ show constructor')
+    logMsg "" 0 ("Constructor: " ++ show constructor')
     go args
 
 ||| Used with FromDhall interface, to dervice implementations
