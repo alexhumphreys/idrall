@@ -108,7 +108,7 @@ deriveToDhall n = do
   -- clauses <- genClauses funName argName cons
   let funClaim = IClaim EmptyFC MW Export [Inline] (MkTy EmptyFC EmptyFC funName `(Expr Void))
   -- add a catch all pattern
-  let funDecl = IDef EmptyFC funName $ !(genClauses funName argName cons) -- ([patClause `(~(var funName)) `(ENatural EmptyFC)])
+  let funDecl = IDef EmptyFC funName $ (genClauses funName argName cons) -- ([patClause `(~(var funName)) `(ENatural EmptyFC)])
 
   -- declare the fuction in the env
   declare [funClaim, funDecl]
@@ -117,23 +117,22 @@ deriveToDhall n = do
   where
     -- given a idris Record constructor arg in the form (Name, type),
     -- return a dhall record field for use in the ERecord constructor.
-    argToField : List (Name, TTImp) -> Elab (TTImp)
-    argToField [] = pure $ `([])
+    argToField : List (Name, TTImp) -> TTImp
+    argToField [] = `([])
     argToField ((n, t) :: xs) =
       let name = primStr $ (show n)
-      in do
-        pure $ `(MkPair (MkFieldName ~name) (toDhallType {ty = ~t}) :: ~(!(argToField xs)))
+      in `(MkPair (MkFieldName ~name) (toDhallType {ty = ~t}) :: ~(argToField xs))
 
-    dhallRecFieldFromRecArg : List (Name, TTImp) -> Elab TTImp -- (List (FieldName, Expr Void))
-    dhallRecFieldFromRecArg xs = do
-        pure $ `(ERecord EmptyFC $ fromList $ ~(!(argToField xs)))
+    dhallRecFieldFromRecArg : List (Name, TTImp) -> TTImp -- (List (FieldName, Expr Void))
+    dhallRecFieldFromRecArg xs =
+      `(ERecord EmptyFC $ fromList $ ~(argToField xs))
 
     genClauses : -- IdrisType ->
-                 Name -> Name -> Cons -> Elab (List Clause)
+                 Name -> Name -> Cons -> List Clause
     genClauses funName arg [] = do
-      pure $ pure $ patClause `(~(var funName)) `(EInteger EmptyFC)
+      pure $ patClause `(~(var funName)) `(EInteger EmptyFC)
     genClauses funName arg ((n, ls) :: xs) = do
-      pure $ pure $ patClause `(~(var funName)) !(dhallRecFieldFromRecArg ls)
+      pure $ patClause `(~(var funName)) (dhallRecFieldFromRecArg ls)
 
 -- Record example
 record ExRec1 where
