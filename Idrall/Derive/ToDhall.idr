@@ -112,6 +112,13 @@ deriveToDhallRecord name funNameType funNameLit cons =
     declare [funDeclType]
     declare [funDeclLit]
 
+-- ADT Type functions
+argToADTFieldType : List (Name, TTImp) -> TTImp
+argToADTFieldType [] = `([])
+argToADTFieldType ((n, t) :: xs) =
+  let name = primStr $ (show n)
+  in `(MkPair (MkFieldName ~name) (toDhallType {ty = ~t}) :: ~(argToFieldType xs))
+
 deriveToDhallADT : Name
                  -> Name
                  -> Cons
@@ -119,9 +126,10 @@ deriveToDhallADT : Name
 deriveToDhallADT funName arg cons = ?foo2
 
 export
-deriveToDhall : -- IdrisType ->
-                  (name : Name) -> Elab ()
-deriveToDhall n = do
+deriveToDhall : IdrisType
+              -> (name : Name)
+              -> Elab ()
+deriveToDhall it n = do
   logMsg "" 0 ("yesss")
   [(name, _)] <- getType n
           | _ => fail "Ambiguous name"
@@ -147,8 +155,9 @@ deriveToDhall n = do
   -- declare the function type signatures in the env
   declare [funClaimType, funClaimLit]
 
-  -- declare the function bodies in the env
-  deriveToDhallRecord name funNameType funNameLit cons
+  case it of
+       Record => deriveToDhallRecord name funNameType funNameLit cons
+       ADT => ?fooo1
 
 -- Record example
 record ExRec1 where
@@ -156,6 +165,6 @@ record ExRec1 where
   mn : Maybe Nat
   st : String
 
-%runElab (deriveToDhall `{ ExRec1 })
+%runElab (deriveToDhall Record `{ ExRec1 })
 
 {--}
