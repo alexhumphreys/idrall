@@ -5,3 +5,5 @@ None Bool
 True
 2.4
 { someNat = 20 }
+< ADouble : Double | Bar  >.ADouble 30.0
+< ADouble : Double | Bar  >.Bar

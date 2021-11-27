@@ -16,6 +16,7 @@ import Language.Reflection
 
 public export
 interface ToDhall ty where
+  constructor MkToDhall
   toDhallType : Expr Void
   toDhall : ty -> Expr Void
 
@@ -112,17 +113,237 @@ deriveToDhallRecord name funNameType funNameLit cons =
     declare [funDeclType]
     declare [funDeclLit]
 
+-- ADT Type functions
+getTypeTTImp : Name -> List (Name, TTImp) -> Elab (TTImp)
+getTypeTTImp consName [] =
+  let cn = primStr $ show $ stripNs consName in
+  do
+    pure `(MkPair (MkFieldName ~cn) Nothing)
+getTypeTTImp consName ((n, t) :: []) =
+  let cn = primStr $ show $ stripNs consName in
+  do
+    pure $ `(MkPair (MkFieldName ~cn) $ Just (toDhallType {ty = ~t}))
+getTypeTTImp consName (_ :: xs) = do
+   fail $ "too many args for constructor: " ++ show consName
+
+someLogging : List (Name, TTImp) -> Elab ()
+someLogging [] = pure ()
+someLogging ((n, t) :: xs) = do
+  logTerm "" 0 "this guy" t
+  someLogging xs
+go : Name -> Cons -> Elab (TTImp)
+go name [] = pure `([])
+go name ((n, t) :: xs) = do
+  logMsg " " 0 $ show n
+  -- someLogging t
+  pair <- getTypeTTImp n t
+  pure $ `(~(pair) :: ~(!(go name xs)))
+mkUnion : Name -> Cons -> Elab (TTImp)
+mkUnion n cons = pure `(EUnion EmptyFC $ fromList $ ~(!(go n cons)))
+
+argToADTFieldType : List (Name, TTImp) -> TTImp
+argToADTFieldType [] = `([])
+argToADTFieldType ((n, t) :: xs) =
+  let name = primStr $ (show n)
+  in `(MkPair (MkFieldName ~name) (toDhallType {ty = ~t}) :: ~(argToFieldType xs))
+
+foo : Name -> Maybe (Name, TTImp) -> (FieldName, Maybe (Expr Void))
+foo constructor' xs =
+  let cn = (show $ stripNs constructor')
+  in
+    case xs of
+         Nothing => do
+           MkPair (MkFieldName cn) (the (Maybe (Expr Void)) Nothing)
+         Just (n, t) => do
+           MkPair (MkFieldName cn) (the (Maybe (Expr Void)) Nothing)
+
+genFromList : List (Name, List (Name, TTImp)) -> Elab (List (FieldName, Maybe (Expr Void)))
+genFromList [] = pure $ []
+-- genFromList ((cn, args) :: xs) = pure $ `(!(foo cn args) :: !(genFromList xs))
+genFromList ((cn, args) :: xs) =
+  case args of
+       [] =>
+         let x = foo cn Nothing in
+         do pure $ [x]
+       (x :: []) => pure $ []
+       x => pure $ []
+
+genClauseADTType : Name -> Name -> Name -> List (Name, TTImp) -> Elab (FieldName, Maybe (Expr Void))
+genClauseADTType name funName constructor' xs =
+  let cn = (show $ stripNs constructor')
+      debug = show $ constructor'
+      debug2 = show $ map fst xs
+      lhs0 = `(~(var funName))
+  in do
+  logMsg "here" 0 debug
+  logMsg "here" 0 debug2
+  case xs of
+       [] => pure $ MkPair (MkFieldName cn) (Nothing)
+       ((n, t) :: []) => do
+         pure $ MkPair (MkFieldName cn) (Nothing)
+       (x :: _) => fail $ "too many args for constructor: " ++ show constructor'
+
+genClauseADT : Name -> Name -> Name -> List (Name, TTImp) -> Elab (TTImp, TTImp)
+genClauseADT name funName constructor' xs =
+  let cn = primStr (show $ stripNs constructor')
+      cnShort = show $ stripNs $ constructor'
+      nameShort = show $ stripNs $ name
+      debug = show $ stripNs $ constructor'
+      debug2 = show $ map fst xs
+      lhs0 = `(~(var funName) ~(var constructor'))
+      toDhallTypeFunName = "toDhallType" ++ nameShort
+      fieldName = IPrimVal EmptyFC $ Str cnShort
+  in do
+    logMsg "foo" 0 $ nameShort
+    case xs of
+         [] => pure $ MkPair lhs0
+            -- TODO need to implement ToDhall interface to fix EText EmptyFC here
+            `(EField EmptyFC (~(varStr toDhallTypeFunName)) (MkFieldName ~cn))
+         ((n, t) :: []) => do
+            argName <- genReadableSym "arg"
+            pure $ MkPair
+  -- pure $ patClause `(~(var funName) ~(bindvar $ show arg)) (dhallRecLitFromRecArg arg ls)
+              `(~(var funName) (~(varStr cnShort) ~(bindvar $ show argName)))
+              `(EApp EmptyFC (EField EmptyFC (~(varStr toDhallTypeFunName)) (MkFieldName ~fieldName)) (toDhall ~(var argName)))
+         (x :: _) => fail $ "too many args for constructor: " ++ show constructor'
+
 deriveToDhallADT : Name
+                 -> Name
                  -> Name
                  -> Cons
                  -> Elab ()
-deriveToDhallADT funName arg cons = ?foo2
+deriveToDhallADT name funNameType funNameLit cons = do
+  -- given constructors, lookup names in dhall records for those constructors
+  stuff <- genFromList cons
+  let rhs = `(EUnion EmptyFC $ fromList stuff)
+  rhs2 <- mkUnion name cons
+  clausesType <- pure $ patClause
+     `(~(var funNameType)) rhs2
+  let funDeclType = IDef EmptyFC funNameType [clausesType]
+  declare [funDeclType]
+
+  clausesADTLit <- traverse (\(cn, as) => genClauseADT name funNameLit cn (reverse as)) cons
+  clausesLit <- pure $ map (\x => patClause (fst x) (snd x)) clausesADTLit
+  let funDeclLit = IDef EmptyFC funNameLit clausesLit
+   -- declare []
+  declare [funDeclLit]
+
+go' : List Name -> Elab Name
+go' [] = fail "Not enough names"
+go' [x] = pure x
+go' (x :: xs) = fail "Too many names"
+
+toDhallImpl : String -> List Decl
+toDhallImpl typeName =
+  let -- names
+      mkToDhall = UN $ Basic "MkToDhall"
+      toDhallType = UN $ Basic "toDhallType"
+      toDhallName = UN $ Basic "toDhall"
+      rhsToDhallType = UN $ Basic $ "toDhallType" ++ typeName
+      rhsToDhallLit = UN $ Basic $ "toDhallLit" ++ typeName
+      functionName = UN . Basic $ "implToDhall" ++ typeName
+
+      typeNameImp = var $ UN $ Basic typeName
+      toDhallType = var toDhallType
+      toDhall = var toDhallName
+      function = var functionName
+      -- enum         = arg $ varStr enumName
+
+      toDhallLitClause = patClause toDhall $ var rhsToDhallLit
+      toDhallTypeClause = patClause toDhallType $ var rhsToDhallType
+
+  -- let objClaimType = IClaim EmptyFC MW Export [Hint True, Inline] (MkTy EmptyFC EmptyFC objNameType retty)
+      -- TODO keep following along with https://github.com/stefan-hoeck/idris2-elab-util/blame/main/src/Doc/Enum2.md#L179
+      -- toDhall : ty -> Expr Void
+      impl = ILocal EmptyFC
+          [ IClaim EmptyFC MW Private [] (MkTy EmptyFC EmptyFC toDhallName `(~(typeNameImp) -> Expr Void))
+          , IDef EmptyFC toDhallName [toDhallLitClause]
+          ]
+          `(~(var mkToDhall) ~(var rhsToDhallType) ~(var rhsToDhallLit))
+
+  in [ IClaim EmptyFC MW Public [Hint True] $ MkTy EmptyFC EmptyFC functionName `(ToDhall ~(typeNameImp)) -- (IApp EmptyFC (toDhall) (typeNameImp))
+     , IDef EmptyFC functionName [patClause function impl] ]
 
 export
-deriveToDhall : -- IdrisType ->
-                  (name : Name) -> Elab ()
-deriveToDhall n = do
-  logMsg "" 0 ("yesss")
+deriveToDhall : IdrisType
+              -> (name : Name)
+              -> Elab ()
+deriveToDhall it n = do
+  [(name, _)] <- getType n
+          | _ => fail "Ambiguous name"
+  let funNameType = UN $ Basic ("toDhallType" ++ show (stripNs name))
+  let funNameLit = UN $ Basic ("toDhallLit" ++ show (stripNs name))
+  let objNameType = UN $ Basic ("__impl_toDhallType" ++ show (stripNs name))
+  let objNameLit = UN $ Basic ("__impl_toDhallLit" ++ show (stripNs name))
+
+  conNames <- getCons name
+
+  -- get the constructors of the record
+  -- cons : (List (Name, List (Name, TTImp)))
+  cons <- for conNames $ \n => do
+    [(conName, conImpl)] <- getType n
+      | _ => fail $ show n ++ "constructor must be in scope and unique"
+    args <- getArgs conImpl
+    pure (conName, args)
+
+  -- logCons cons
+
+  -- create the function type signatures
+  let funClaimType = IClaim EmptyFC MW Export [Inline] (MkTy EmptyFC EmptyFC funNameType `(Expr Void))
+  let funClaimLit = IClaim EmptyFC MW Export [Inline] (MkTy EmptyFC EmptyFC funNameLit `(~(var name) -> Expr Void))
+  -- declare the function type signatures in the env
+  declare [funClaimType, funClaimLit]
+
+  [(ifName, _)] <- getType `{ToDhall}
+    | _ => fail "ToDhall interface must be in scope and unique"
+  x <- getCons ifName
+  let ifCon = stripNs !(go' x)
+
+  let retty = `(ToDhall ~(var name))
+  let objClaimType = IClaim EmptyFC MW Export [Hint True, Inline] (MkTy EmptyFC EmptyFC objNameType retty)
+  let objrhstype = `(~(var ifCon) ~(var funNameType))
+  let objDeclType = IDef EmptyFC objNameType [(PatClause EmptyFC (var objNameType) objrhstype)]
+  -- ?jkookj
+
+  let objClaimLit = IClaim EmptyFC MW Export [Hint True, Inline] (MkTy EmptyFC EmptyFC objNameLit retty)
+  let objrhslit = `(~(var ifCon) ~(var funNameLit))
+  let objDeclLit = IDef EmptyFC objNameLit [(PatClause EmptyFC (var objNameLit) objrhslit)]
+  -- declare [objClaimLit] -- , objDeclLit]
+  case it of
+       Record => do
+         deriveToDhallRecord name funNameType funNameLit cons
+         -- declare [objClaimLit] --, objDeclLit]
+         -- declare [objClaimType] --, objDeclType]
+         declare $ toDhallImpl $ "ExRec1"
+       ADT => do
+         deriveToDhallADT name funNameType funNameLit cons
+         -- declare [objClaimLit] --, objDeclLit]
+         -- declare [objClaimType] --, objDeclType]
+         declare $ toDhallImpl $ "ExADTTest"
+
+-- Record example
+record ExRec1 where
+  constructor MkExRec1
+  mn : Maybe Nat
+  st : String
+
+%runElab (deriveToDhall Record `{ ExRec1 })
+
+data ExADTTest
+  = Bar
+  | ADouble Double
+%runElab (deriveToDhall ADT `{ ExADTTest })
+
+data Ex1
+  = ANat Nat
+  | ADoub Double
+  | ANone
+
+forDebug : Expr Void
+
+forDebug2 : (name : Name)
+          -> Elab ()
+forDebug2 n = do
   [(name, _)] <- getType n
           | _ => fail "Ambiguous name"
   let funNameType = UN $ Basic ("toDhallType" ++ show (stripNs name))
@@ -139,23 +360,39 @@ deriveToDhall n = do
     args <- getArgs conImpl
     pure (conName, args)
 
-  logCons cons
+  -- logCons cons
+  let lhs = `(~(var (UN $ Basic "forDebug")))
+  rhs <- mkUnion name cons
+  let foo = IDef EmptyFC (UN $ Basic "forDebug") $ [patClause lhs rhs]
+  declare [foo]
+  where
+    getTypeTTImp : Name -> List (Name, TTImp) -> Elab (TTImp)
+    getTypeTTImp consName [] =
+      let cn = primStr $ show $ stripNs consName in
+      do
+        pure `(MkPair (MkFieldName ~cn) Nothing)
+    getTypeTTImp consName ((n, t) :: []) =
+      let cn = primStr $ show $ stripNs consName in
+      do
+        pure $ `(MkPair (MkFieldName ~cn) $ Just (toDhallType {ty = ~t}))
+    getTypeTTImp consName (_ :: xs) = do
+       fail $ "too many args for constructor: " ++ show consName
 
-  -- create the function type signatures
-  let funClaimType = IClaim EmptyFC MW Export [Inline] (MkTy EmptyFC EmptyFC funNameType `(Expr Void))
-  let funClaimLit = IClaim EmptyFC MW Export [Inline] (MkTy EmptyFC EmptyFC funNameLit `(~(var name) -> Expr Void))
-  -- declare the function type signatures in the env
-  declare [funClaimType, funClaimLit]
+    someLogging : List (Name, TTImp) -> Elab ()
+    someLogging [] = pure ()
+    someLogging ((n, t) :: xs) = do
+      logTerm "" 0 "this guy" t
+      someLogging xs
+    go : Name -> Cons -> Elab (TTImp)
+    go name [] = pure `([])
+    go name ((n, t) :: xs) = do
+      logMsg " " 0 $ show n
+      -- someLogging t
+      pair <- getTypeTTImp n t
+      pure $ `(~(pair) :: ~(!(go name xs)))
+    mkUnion : Name -> Cons -> Elab (TTImp)
+    mkUnion n cons = pure `(EUnion EmptyFC $ fromList $ ~(!(go n cons)))
 
-  -- declare the function bodies in the env
-  deriveToDhallRecord name funNameType funNameLit cons
-
--- Record example
-record ExRec1 where
-  constructor MkExRec1
-  mn : Maybe Nat
-  st : String
-
-%runElab (deriveToDhall `{ ExRec1 })
+%runElab (forDebug2 `{ Ex1 })
 
 {--}
