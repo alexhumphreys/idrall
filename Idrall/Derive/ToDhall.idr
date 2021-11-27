@@ -119,11 +119,40 @@ argToADTFieldType ((n, t) :: xs) =
   let name = primStr $ (show n)
   in `(MkPair (MkFieldName ~name) (toDhallType {ty = ~t}) :: ~(argToFieldType xs))
 
+genClauseADT : Name -> Name -> Name -> List (Name, TTImp) -> Elab (TTImp, TTImp)
+genClauseADT funName constructor' arg xs =
+  let cn = primStr (show $ stripNs constructor')
+      debug = show $ constructor'
+      debug2 = show $ map fst xs
+      lhs0 = `(~(var funName) ~(var constructor'))
+      rhs1 = `(~(var funName) (EApp fc (EField _ (EUnion _ xs) (MkFieldName ~cn)) ~(bindvar $ show arg)))
+      -- TODO lhsN for data constructors with more than 0 or 1 args
+      in do
+      logMsg "here" 0 debug
+      logMsg "here" 0 debug2
+      case xs of
+           [] => pure (lhs0, `(EField EmptyFC (toDhallType {ty=ExADTTest}) (MkFieldName ~(var constructor'))))
+           ((n, t) :: []) => do
+            argName <- genReadableSym "arg"
+            pure $ MkPair
+              `(~(var funName) (~(var constructor') argName))
+              ?todo2
+           (x :: _) => fail $ "too many args for constructor: " ++ show constructor'
+      {-
+      case xs of
+           [] => pure $ (lhs0, `(pure ~(var constructor')))
+           ((n, _) :: []) => pure $ (lhs1, `(pure ~(var constructor') <*> fromDhall ~(var arg)))
+           (x :: _) => fail $ "too many args for constructor: " ++ show constructor'
+         -}
+
 deriveToDhallADT : Name
                  -> Name
                  -> Cons
                  -> Elab ()
-deriveToDhallADT funName arg cons = ?foo2
+deriveToDhallADT funName arg cons = do
+   -- given constructors, lookup names in dhall records for those constructors
+   clausesADT <- traverse (\(cn, as) => genClauseADT funName cn arg (reverse as)) cons
+   ?fppp
 
 export
 deriveToDhall : IdrisType
