@@ -97,6 +97,27 @@ genRecordLitClauses funName arg [] = do
 genRecordLitClauses funName arg ((n, ls) :: xs) = do
   pure $ patClause `(~(var funName) ~(bindvar $ show arg)) (dhallRecLitFromRecArg arg ls)
 
+deriveToDhallRecord : Name
+                    -> Name
+                    -> Name
+                    -> Cons
+                    -> Elab ()
+deriveToDhallRecord name funNameType funNameLit cons =
+  -- clauses <- genClauses funName argName cons
+  let argName = genReadableSym "arg"
+      funDeclType = IDef EmptyFC funNameType $ (genRecordTypeClauses funNameType !argName cons)
+      funDeclLit = IDef EmptyFC funNameLit $ (genRecordLitClauses funNameLit !argName cons)
+  in do
+    -- declare the fuction in the env
+    declare [funDeclType]
+    declare [funDeclLit]
+
+deriveToDhallADT : Name
+                 -> Name
+                 -> Cons
+                 -> Elab ()
+deriveToDhallADT funName arg cons = ?foo2
+
 export
 deriveToDhall : -- IdrisType ->
                   (name : Name) -> Elab ()
@@ -120,20 +141,14 @@ deriveToDhall n = do
 
   logCons cons
 
-  argName <- genReadableSym "arg"
-
-  -- clauses <- genClauses funName argName cons
+  -- create the function type signatures
   let funClaimType = IClaim EmptyFC MW Export [Inline] (MkTy EmptyFC EmptyFC funNameType `(Expr Void))
-  -- add a catch all pattern
-  let funDeclType = IDef EmptyFC funNameType $ (genRecordTypeClauses funNameType argName cons)
-  -- declare the fuction in the env
-  declare [funClaimType, funDeclType]
-
   let funClaimLit = IClaim EmptyFC MW Export [Inline] (MkTy EmptyFC EmptyFC funNameLit `(~(var name) -> Expr Void))
-  let funDeclLit = IDef EmptyFC funNameLit $ (genRecordLitClauses funNameLit argName cons)
-  declare [funClaimLit, funDeclLit]
+  -- declare the function type signatures in the env
+  declare [funClaimType, funClaimLit]
 
-  declare []
+  -- declare the function bodies in the env
+  deriveToDhallRecord name funNameType funNameLit cons
 
 -- Record example
 record ExRec1 where
@@ -143,36 +158,4 @@ record ExRec1 where
 
 %runElab (deriveToDhall `{ ExRec1 })
 
-type :  TTImp
-type = IType EmptyFC
-
-iData :  Visibility
-      -> Name
-      -> (tycon : TTImp)
-      -> (opts  : List DataOpt)
-      -> (cons  : List ITy)
-      -> Decl
-iData v n tycon opts cons = IData EmptyFC v (MkData EmptyFC n tycon opts cons)
-
-simpleData : Visibility -> Name -> (cons : List ITy) -> Decl
-simpleData v n = iData v n type []
-
-enumDecl : (name : String) -> (cons : List String) -> Decl
-enumDecl name = simpleData Public (UN $ Basic name) . map mkCon
-  where mkCon : String -> ITy
-        mkCon n = mkTy (UN $ Basic n) (varStr name)
-
-export
-mkEnum : (name : String) -> (cons : List String) -> Elab ()
-mkEnum name cons = do
-  logMsg "grr" 1 ("yesss")
-  declare [enumDecl name cons]
-
-%runElab mkEnum "Gender" ["Female","Male","NonBinary"]
-
-foo : Nat
-foo = 2
-
-Show (Elab ()) where
-  show x = ""
 {--}
