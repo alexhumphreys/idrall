@@ -119,27 +119,26 @@ argToADTFieldType ((n, t) :: xs) =
   let name = primStr $ (show n)
   in `(MkPair (MkFieldName ~name) (toDhallType {ty = ~t}) :: ~(argToFieldType xs))
 
-foo : Name -> List (Name, TTImp) -> Elab (TTImp)
+foo : Name -> Maybe (Name, TTImp) -> (FieldName, Maybe (Expr Void))
 foo constructor' xs =
   let cn = (show $ stripNs constructor')
   in
     case xs of
-         [] => do
-           pure $ `(MkPair (MkFieldName "cn") (the (Maybe (Expr Void)) Nothing))
-         ((n, t) :: []) => do
-           pure $ `(MkPair (MkFieldName "cn") (the (Maybe (Expr Void)) Nothing))
-         (x :: _) => do
-           fail $ "too many args for constructor: " ++ show constructor'
+         Nothing => do
+           MkPair (MkFieldName cn) (the (Maybe (Expr Void)) Nothing)
+         Just (n, t) => do
+           MkPair (MkFieldName cn) (the (Maybe (Expr Void)) Nothing)
 
-genFromList : List (Name, List (Name, TTImp)) -> Elab (TTImp)
-genFromList [] = pure $ `([])
+genFromList : List (Name, List (Name, TTImp)) -> Elab (List (FieldName, Maybe (Expr Void)))
+genFromList [] = pure $ []
 -- genFromList ((cn, args) :: xs) = pure $ `(!(foo cn args) :: !(genFromList xs))
 genFromList ((cn, args) :: xs) =
-  let rest = genFromList xs
-  in do
-    rest' <- rest
-    x <- foo cn args
-    pure `(~x :: ~rest')
+  case args of
+       [] =>
+         let x = foo cn Nothing in
+         do pure $ [x]
+       (x :: []) => pure $ []
+       x => pure $ []
 
 genClauseADTType : Name -> Name -> Name -> List (Name, TTImp) -> Elab (FieldName, Maybe (Expr Void))
 genClauseADTType name funName constructor' xs =
@@ -182,8 +181,9 @@ deriveToDhallADT : Name
 deriveToDhallADT name funNameType funNameLit cons = do
   -- given constructors, lookup names in dhall records for those constructors
   stuff <- genFromList cons
+  let rhs = `(EUnion EmptyFC $ fromList stuff)
   clausesType <- pure $ patClause
-     `(~(var funNameType)) `(EUnion EmptyFC $ fromList ~stuff)
+     `(~(var funNameType)) rhs
   let funDeclType = IDef EmptyFC funNameType [clausesType]
   declare [funDeclType]
 
@@ -237,7 +237,66 @@ record ExRec1 where
 
 data ExADTTest
   = Bar
-  -- | ADouble Double
+  | ADouble Double
+-- %runElab (deriveToDhall ADT `{ ExADTTest })
 
-%runElab (deriveToDhall ADT `{ ExADTTest })
+data Ex1
+  = ANat Nat
+  | ADoub Double
+
+forDebug : List (Maybe Type)
+
+forDebug2 : (name : Name)
+          -> Elab ()
+forDebug2 n = do
+  logMsg "" 0 ("yesss")
+  [(name, _)] <- getType n
+          | _ => fail "Ambiguous name"
+  let funNameType = UN $ Basic ("toDhallType" ++ show (stripNs name))
+  let funNameLit = UN $ Basic ("toDhallLit" ++ show (stripNs name))
+  let objName = UN $ Basic ("__impl_toDhall" ++ show (stripNs name))
+
+  conNames <- getCons name
+
+  -- get the constructors of the record
+  -- cons : (List (Name, List (Name, TTImp)))
+  cons <- for conNames $ \n => do
+    [(conName, conImpl)] <- getType n
+      | _ => fail $ show n ++ "constructor must be in scope and unique"
+    args <- getArgs conImpl
+    pure (conName, args)
+
+  logMsg "yyyy" 0 $ show name
+  logCons cons
+  let lhs = `(~(var (UN $ Basic "forDebug")))
+  rhs <- go name cons
+  let foo = IDef EmptyFC (UN $ Basic "forDebug") $ [patClause lhs rhs]
+  declare [foo]
+  where
+      --logTerm "" 0 "this guy" t
+    getTypeTTImp : List (Name, TTImp) -> Elab (Maybe TTImp)
+    getTypeTTImp [] = pure Nothing
+    getTypeTTImp ((n, t) :: []) =
+      pure $ pure t
+    getTypeTTImp (_ :: xs) = do
+      pure Nothing
+
+    someLogging : List (Name, TTImp) -> Elab ()
+    someLogging [] = pure ()
+    someLogging ((n, t) :: xs) = do
+      logTerm "" 0 "this guy" t
+      someLogging xs
+    go : Name -> Cons -> Elab (TTImp)
+    go name [] = pure `([Just ~(var name)])
+    go name ((n, t) :: xs) = do
+      logMsg " " 0 $ show n
+      someLogging t
+      x <- getTypeTTImp t
+      case x of
+           Just ttimp => pure `(Just ~(ttimp) :: ~(!(go name xs)))
+           Nothing => go name xs
+      -- pure $ `(~(!(getTypeTTImp t)) :: ~(!(go name xs)))
+      -- pure $ `((MkPair (show n) ~(var name)) :: !(go name xs))
+
+%runElab (forDebug2 `{ Ex1 })
 {--}
