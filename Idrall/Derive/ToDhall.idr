@@ -119,40 +119,79 @@ argToADTFieldType ((n, t) :: xs) =
   let name = primStr $ (show n)
   in `(MkPair (MkFieldName ~name) (toDhallType {ty = ~t}) :: ~(argToFieldType xs))
 
-genClauseADT : Name -> Name -> Name -> List (Name, TTImp) -> Elab (TTImp, TTImp)
-genClauseADT funName constructor' arg xs =
+foo : Name -> List (Name, TTImp) -> Elab (TTImp)
+foo constructor' xs =
+  let cn = (show $ stripNs constructor')
+  in
+    case xs of
+         [] => do
+           pure $ `(MkPair (MkFieldName "cn") (the (Maybe (Expr Void)) Nothing))
+         ((n, t) :: []) => do
+           pure $ `(MkPair (MkFieldName "cn") (the (Maybe (Expr Void)) Nothing))
+         (x :: _) => do
+           fail $ "too many args for constructor: " ++ show constructor'
+
+genFromList : List (Name, List (Name, TTImp)) -> Elab (TTImp)
+genFromList [] = pure $ `([])
+-- genFromList ((cn, args) :: xs) = pure $ `(!(foo cn args) :: !(genFromList xs))
+genFromList ((cn, args) :: xs) =
+  let rest = genFromList xs
+  in do
+    rest' <- rest
+    x <- foo cn args
+    pure `(~x :: ~rest')
+
+genClauseADTType : Name -> Name -> Name -> List (Name, TTImp) -> Elab (FieldName, Maybe (Expr Void))
+genClauseADTType name funName constructor' xs =
+  let cn = (show $ stripNs constructor')
+      debug = show $ constructor'
+      debug2 = show $ map fst xs
+      lhs0 = `(~(var funName))
+  in do
+  logMsg "here" 0 debug
+  logMsg "here" 0 debug2
+  case xs of
+       [] => pure $ MkPair (MkFieldName cn) (Nothing)
+       ((n, t) :: []) => do
+         pure $ MkPair (MkFieldName cn) (Nothing)
+       (x :: _) => fail $ "too many args for constructor: " ++ show constructor'
+
+genClauseADT : Name -> Name -> List (Name, TTImp) -> Elab (TTImp, TTImp)
+genClauseADT funName constructor' xs =
   let cn = primStr (show $ stripNs constructor')
       debug = show $ constructor'
       debug2 = show $ map fst xs
       lhs0 = `(~(var funName) ~(var constructor'))
-      rhs1 = `(~(var funName) (EApp fc (EField _ (EUnion _ xs) (MkFieldName ~cn)) ~(bindvar $ show arg)))
-      -- TODO lhsN for data constructors with more than 0 or 1 args
-      in do
-      logMsg "here" 0 debug
-      logMsg "here" 0 debug2
-      case xs of
-           [] => pure (lhs0, `(EField EmptyFC (toDhallType {ty=ExADTTest}) (MkFieldName ~(var constructor'))))
-           ((n, t) :: []) => do
+  in do
+    case xs of
+         [] => pure $ MkPair lhs0
+            -- TODO fix EText EmptyFC here
+            `(EField EmptyFC (EText EmptyFC) (MkFieldName ~cn))
+         ((n, t) :: []) => do
             argName <- genReadableSym "arg"
             pure $ MkPair
               `(~(var funName) (~(var constructor') argName))
-              ?todo2
-           (x :: _) => fail $ "too many args for constructor: " ++ show constructor'
-      {-
-      case xs of
-           [] => pure $ (lhs0, `(pure ~(var constructor')))
-           ((n, _) :: []) => pure $ (lhs1, `(pure ~(var constructor') <*> fromDhall ~(var arg)))
-           (x :: _) => fail $ "too many args for constructor: " ++ show constructor'
-         -}
+              `(EApp EmptyFC (EField EmptyFC (toDhallType) (MkFieldName ~(var constructor'))) (toDhall x))
+         (x :: _) => fail $ "too many args for constructor: " ++ show constructor'
 
 deriveToDhallADT : Name
                  -> Name
+                 -> Name
                  -> Cons
                  -> Elab ()
-deriveToDhallADT funName arg cons = do
-   -- given constructors, lookup names in dhall records for those constructors
-   clausesADT <- traverse (\(cn, as) => genClauseADT funName cn arg (reverse as)) cons
-   ?fppp
+deriveToDhallADT name funNameType funNameLit cons = do
+  -- given constructors, lookup names in dhall records for those constructors
+  stuff <- genFromList cons
+  clausesType <- pure $ patClause
+     `(~(var funNameType)) `(EUnion EmptyFC $ fromList ~stuff)
+  let funDeclType = IDef EmptyFC funNameType [clausesType]
+  declare [funDeclType]
+
+  clausesADTLit <- traverse (\(cn, as) => genClauseADT funNameLit cn (reverse as)) cons
+  clausesLit <- pure $ map (\x => patClause (fst x) (snd x)) clausesADTLit
+  let funDeclLit = IDef EmptyFC funNameLit clausesLit
+   -- declare []
+  declare [funDeclLit]
 
 export
 deriveToDhall : IdrisType
@@ -186,7 +225,7 @@ deriveToDhall it n = do
 
   case it of
        Record => deriveToDhallRecord name funNameType funNameLit cons
-       ADT => ?fooo1
+       ADT => deriveToDhallADT name funNameType funNameLit cons
 
 -- Record example
 record ExRec1 where
@@ -196,4 +235,9 @@ record ExRec1 where
 
 %runElab (deriveToDhall Record `{ ExRec1 })
 
+data ExADTTest
+  = Bar
+  -- | ADouble Double
+
+%runElab (deriveToDhall ADT `{ ExADTTest })
 {--}
