@@ -243,8 +243,9 @@ data ExADTTest
 data Ex1
   = ANat Nat
   | ADoub Double
+  | ANone
 
-forDebug : List (Maybe Type)
+forDebug : List (String, Maybe Type)
 
 forDebug2 : (name : Name)
           -> Elab ()
@@ -274,12 +275,17 @@ forDebug2 n = do
   declare [foo]
   where
       --logTerm "" 0 "this guy" t
-    getTypeTTImp : List (Name, TTImp) -> Elab (Maybe TTImp)
-    getTypeTTImp [] = pure Nothing
-    getTypeTTImp ((n, t) :: []) =
-      pure $ pure t
-    getTypeTTImp (_ :: xs) = do
-      pure Nothing
+    getTypeTTImp : Name -> List (Name, TTImp) -> Elab (TTImp)
+    getTypeTTImp consName [] =
+      let cn = primStr $ show $ stripNs consName in
+      do
+        pure `(MkPair ~cn Nothing)
+    getTypeTTImp consName ((n, t) :: []) =
+      let cn = primStr $ show $ stripNs consName in
+      do
+        pure $ `(MkPair ~cn $ Just ~t)
+    getTypeTTImp consName (_ :: xs) = do
+      pure `(MkPair $ "" Nothing)
 
     someLogging : List (Name, TTImp) -> Elab ()
     someLogging [] = pure ()
@@ -287,14 +293,12 @@ forDebug2 n = do
       logTerm "" 0 "this guy" t
       someLogging xs
     go : Name -> Cons -> Elab (TTImp)
-    go name [] = pure `([Just ~(var name)])
+    go name [] = pure `([])
     go name ((n, t) :: xs) = do
       logMsg " " 0 $ show n
       someLogging t
-      x <- getTypeTTImp t
-      case x of
-           Just ttimp => pure `(Just ~(ttimp) :: ~(!(go name xs)))
-           Nothing => go name xs
+      x <- getTypeTTImp n t
+      pure $ `(~(x) :: ~(!(go name xs)))
       -- pure $ `(~(!(getTypeTTImp t)) :: ~(!(go name xs)))
       -- pure $ `((MkPair (show n) ~(var name)) :: !(go name xs))
 
