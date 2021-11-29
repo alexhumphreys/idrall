@@ -113,6 +113,33 @@ deriveToDhallRecord name funNameType funNameLit cons =
     declare [funDeclLit]
 
 -- ADT Type functions
+getTypeTTImp : Name -> List (Name, TTImp) -> Elab (TTImp)
+getTypeTTImp consName [] =
+  let cn = primStr $ show $ stripNs consName in
+  do
+    pure `(MkPair (MkFieldName ~cn) Nothing)
+getTypeTTImp consName ((n, t) :: []) =
+  let cn = primStr $ show $ stripNs consName in
+  do
+    pure $ `(MkPair (MkFieldName ~cn) $ Just (toDhallType {ty = ~t}))
+getTypeTTImp consName (_ :: xs) = do
+   fail $ "too many args for constructor: " ++ show consName
+
+someLogging : List (Name, TTImp) -> Elab ()
+someLogging [] = pure ()
+someLogging ((n, t) :: xs) = do
+  logTerm "" 0 "this guy" t
+  someLogging xs
+go : Name -> Cons -> Elab (TTImp)
+go name [] = pure `([])
+go name ((n, t) :: xs) = do
+  logMsg " " 0 $ show n
+  -- someLogging t
+  pair <- getTypeTTImp n t
+  pure $ `(~(pair) :: ~(!(go name xs)))
+mkUnion : Name -> Cons -> Elab (TTImp)
+mkUnion n cons = pure `(EUnion EmptyFC $ fromList $ ~(!(go n cons)))
+
 argToADTFieldType : List (Name, TTImp) -> TTImp
 argToADTFieldType [] = `([])
 argToADTFieldType ((n, t) :: xs) =
@@ -182,8 +209,9 @@ deriveToDhallADT name funNameType funNameLit cons = do
   -- given constructors, lookup names in dhall records for those constructors
   stuff <- genFromList cons
   let rhs = `(EUnion EmptyFC $ fromList stuff)
+  rhs2 <- mkUnion name cons
   clausesType <- pure $ patClause
-     `(~(var funNameType)) rhs
+     `(~(var funNameType)) rhs2
   let funDeclType = IDef EmptyFC funNameType [clausesType]
   declare [funDeclType]
 
@@ -237,15 +265,15 @@ record ExRec1 where
 
 data ExADTTest
   = Bar
-  | ADouble Double
--- %runElab (deriveToDhall ADT `{ ExADTTest })
+  -- | ADouble Double
+%runElab (deriveToDhall ADT `{ ExADTTest })
 
 data Ex1
   = ANat Nat
   | ADoub Double
   | ANone
 
-forDebug : List (String, Maybe Type)
+forDebug : Expr Void
 
 forDebug2 : (name : Name)
           -> Elab ()
@@ -270,22 +298,21 @@ forDebug2 n = do
   logMsg "yyyy" 0 $ show name
   logCons cons
   let lhs = `(~(var (UN $ Basic "forDebug")))
-  rhs <- go name cons
+  rhs <- mkUnion name cons
   let foo = IDef EmptyFC (UN $ Basic "forDebug") $ [patClause lhs rhs]
   declare [foo]
   where
-      --logTerm "" 0 "this guy" t
     getTypeTTImp : Name -> List (Name, TTImp) -> Elab (TTImp)
     getTypeTTImp consName [] =
       let cn = primStr $ show $ stripNs consName in
       do
-        pure `(MkPair ~cn Nothing)
+        pure `(MkPair (MkFieldName ~cn) Nothing)
     getTypeTTImp consName ((n, t) :: []) =
       let cn = primStr $ show $ stripNs consName in
       do
-        pure $ `(MkPair ~cn $ Just ~t)
+        pure $ `(MkPair (MkFieldName ~cn) $ Just (toDhallType {ty = ~t}))
     getTypeTTImp consName (_ :: xs) = do
-      pure `(MkPair $ "" Nothing)
+       fail $ "too many args for constructor: " ++ show consName
 
     someLogging : List (Name, TTImp) -> Elab ()
     someLogging [] = pure ()
@@ -296,11 +323,11 @@ forDebug2 n = do
     go name [] = pure `([])
     go name ((n, t) :: xs) = do
       logMsg " " 0 $ show n
-      someLogging t
-      x <- getTypeTTImp n t
-      pure $ `(~(x) :: ~(!(go name xs)))
-      -- pure $ `(~(!(getTypeTTImp t)) :: ~(!(go name xs)))
-      -- pure $ `((MkPair (show n) ~(var name)) :: !(go name xs))
+      -- someLogging t
+      pair <- getTypeTTImp n t
+      pure $ `(~(pair) :: ~(!(go name xs)))
+    mkUnion : Name -> Cons -> Elab (TTImp)
+    mkUnion n cons = pure `(EUnion EmptyFC $ fromList $ ~(!(go n cons)))
 
 %runElab (forDebug2 `{ Ex1 })
 {--}
