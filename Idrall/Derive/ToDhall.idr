@@ -182,22 +182,26 @@ genClauseADTType name funName constructor' xs =
          pure $ MkPair (MkFieldName cn) (Nothing)
        (x :: _) => fail $ "too many args for constructor: " ++ show constructor'
 
-genClauseADT : Name -> Name -> List (Name, TTImp) -> Elab (TTImp, TTImp)
-genClauseADT funName constructor' xs =
+genClauseADT : Name -> Name -> Name -> List (Name, TTImp) -> Elab (TTImp, TTImp)
+genClauseADT name funName constructor' xs =
   let cn = primStr (show $ stripNs constructor')
-      debug = show $ constructor'
+      cnShort = show $ stripNs $ constructor'
+      debug = show $ stripNs $ constructor'
       debug2 = show $ map fst xs
       lhs0 = `(~(var funName) ~(var constructor'))
   in do
+    logMsg "hllll" 0 debug
     case xs of
          [] => pure $ MkPair lhs0
-            -- TODO fix EText EmptyFC here
+            -- TODO need to implement ToDhall interface to fix EText EmptyFC here
             `(EField EmptyFC (EText EmptyFC) (MkFieldName ~cn))
          ((n, t) :: []) => do
             argName <- genReadableSym "arg"
             pure $ MkPair
-              `(~(var funName) (~(var constructor') argName))
-              `(EApp EmptyFC (EField EmptyFC (toDhallType) (MkFieldName ~(var constructor'))) (toDhall x))
+  -- pure $ patClause `(~(var funName) ~(bindvar $ show arg)) (dhallRecLitFromRecArg arg ls)
+              `(~(var funName) (~(varStr cnShort) ~(bindvar $ show argName)))
+              `(EText EmptyFC)
+              -- `(EApp EmptyFC (EField EmptyFC (EText EmptyFC) (MkFieldName "hello")) (toDhall ~(var argName)))
          (x :: _) => fail $ "too many args for constructor: " ++ show constructor'
 
 deriveToDhallADT : Name
@@ -215,7 +219,7 @@ deriveToDhallADT name funNameType funNameLit cons = do
   let funDeclType = IDef EmptyFC funNameType [clausesType]
   declare [funDeclType]
 
-  clausesADTLit <- traverse (\(cn, as) => genClauseADT funNameLit cn (reverse as)) cons
+  clausesADTLit <- traverse (\(cn, as) => genClauseADT name funNameLit cn (reverse as)) cons
   clausesLit <- pure $ map (\x => patClause (fst x) (snd x)) clausesADTLit
   let funDeclLit = IDef EmptyFC funNameLit clausesLit
    -- declare []
@@ -265,7 +269,7 @@ record ExRec1 where
 
 data ExADTTest
   = Bar
-  -- | ADouble Double
+  | ADouble Double
 %runElab (deriveToDhall ADT `{ ExADTTest })
 
 data Ex1
