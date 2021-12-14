@@ -190,7 +190,6 @@ genClauseADT name funName constructor' xs =
       debug2 = show $ map fst xs
       lhs0 = `(~(var funName) ~(var constructor'))
   in do
-    logMsg "hllll" 0 debug
     case xs of
          [] => pure $ MkPair lhs0
             -- TODO need to implement ToDhall interface to fix EText EmptyFC here
@@ -230,12 +229,12 @@ deriveToDhall : IdrisType
               -> (name : Name)
               -> Elab ()
 deriveToDhall it n = do
-  logMsg "" 0 ("yesss")
   [(name, _)] <- getType n
           | _ => fail "Ambiguous name"
   let funNameType = UN $ Basic ("toDhallType" ++ show (stripNs name))
   let funNameLit = UN $ Basic ("toDhallLit" ++ show (stripNs name))
-  let objName = UN $ Basic ("__impl_toDhall" ++ show (stripNs name))
+  let objNameType = UN $ Basic ("__impl_toDhallType" ++ show (stripNs name))
+  let objNameLit = UN $ Basic ("__impl_toDhallLit" ++ show (stripNs name))
 
   conNames <- getCons name
 
@@ -247,7 +246,7 @@ deriveToDhall it n = do
     args <- getArgs conImpl
     pure (conName, args)
 
-  logCons cons
+  -- logCons cons
 
   -- create the function type signatures
   let funClaimType = IClaim EmptyFC MW Export [Inline] (MkTy EmptyFC EmptyFC funNameType `(Expr Void))
@@ -255,9 +254,31 @@ deriveToDhall it n = do
   -- declare the function type signatures in the env
   declare [funClaimType, funClaimLit]
 
+  [(ifName, _)] <- getType `{ToDhall}
+    | _ => fail "ToDhall interface must be in scope and unique"
+  [NS _ (DN _ ifCon)] <- getCons ifName
+    | _ => fail "Interface constructor error"
+
+  let retty = `(ToDhall ~(var name))
+  let objClaimType = IClaim EmptyFC MW Export [Hint True, Inline] (MkTy EmptyFC EmptyFC objNameType retty)
+  let objrhstype = `(~(var ifCon) ~(var funNameType))
+  let objDeclType = IDef EmptyFC objNameType [(PatClause EmptyFC (var objNameType) objrhstype)]
+  -- ?jkookj
+
+  let objClaimLit = IClaim EmptyFC MW Export [Hint True, Inline] (MkTy EmptyFC EmptyFC objNameLit retty)
+  let objrhslit = `(~(var ifCon) ~(var funNameLit))
+  let objDeclLit = IDef EmptyFC objNameLit [(PatClause EmptyFC (var objNameLit) objrhslit)]
+  -- declare [objClaimLit, objDeclLit]
+  logTerm "foo" 0 "bar" objrhslit
   case it of
-       Record => deriveToDhallRecord name funNameType funNameLit cons
-       ADT => deriveToDhallADT name funNameType funNameLit cons
+       Record => do
+         deriveToDhallRecord name funNameType funNameLit cons
+         declare [objClaimLit] --, objDeclLit]
+         declare [objClaimType] --, objDeclType]
+       ADT => do
+         deriveToDhallADT name funNameType funNameLit cons
+         declare [objClaimLit] --, objDeclLit]
+         declare [objClaimType] --, objDeclType]
 
 -- Record example
 record ExRec1 where
@@ -282,7 +303,6 @@ forDebug : Expr Void
 forDebug2 : (name : Name)
           -> Elab ()
 forDebug2 n = do
-  logMsg "" 0 ("yesss")
   [(name, _)] <- getType n
           | _ => fail "Ambiguous name"
   let funNameType = UN $ Basic ("toDhallType" ++ show (stripNs name))
@@ -299,8 +319,7 @@ forDebug2 n = do
     args <- getArgs conImpl
     pure (conName, args)
 
-  logMsg "yyyy" 0 $ show name
-  logCons cons
+  -- logCons cons
   let lhs = `(~(var (UN $ Basic "forDebug")))
   rhs <- mkUnion name cons
   let foo = IDef EmptyFC (UN $ Basic "forDebug") $ [patClause lhs rhs]
@@ -334,4 +353,34 @@ forDebug2 n = do
     mkUnion n cons = pure `(EUnion EmptyFC $ fromList $ ~(!(go n cons)))
 
 %runElab (forDebug2 `{ Ex1 })
+
+toDhallImpl : String -> List String -> List Decl
+toDhallImpl typeName cons =
+  let -- names
+      mkToDhall = UN $ Basic "MkToDhall"
+      toDhallType = UN $ Basic "toDhallType"
+      toDhallName = UN $ Basic "toDhall"
+      rhsToDhallType = UN $ Basic $ "toDhallType" ++ typeName
+      rhsToDhallLit = UN $ Basic $ "toDhallLit" ++ typeName
+      functionName = UN . Basic $ "implToDhall" ++ typeName
+
+      typeNameImp = var $ UN $ Basic typeName
+      toDhallType = var toDhallType
+      toDhall = var toDhallName
+      function = var functionName
+      -- enum         = arg $ varStr enumName
+
+      toDhallLitClause = patClause toDhall $ var rhsToDhallLit
+      toDhallTypeClause = patClause toDhallType $ var rhsToDhallType
+
+      -- TODO keep following along with https://github.com/stefan-hoeck/idris2-elab-util/blame/main/src/Doc/Enum2.md#L179
+      -- toDhall : ty -> Expr Void
+      impl = ILocal EmptyFC
+          [ IClaim EmptyFC MW Private [] (MkTy EmptyFC EmptyFC toDhallName `(typeName -> Expr Void))
+          , IDef EmptyFC toDhallName [toDhallLitClause]
+          ]
+          ?lkjlkj
+
+  in ?toDhallImpl_rhs
+
 {--}
