@@ -16,6 +16,7 @@ import Language.Reflection
 
 public export
 interface ToDhall ty where
+  constructor MkToDhall
   toDhallType : Expr Void
   toDhall : ty -> Expr Void
 
@@ -224,6 +225,11 @@ deriveToDhallADT name funNameType funNameLit cons = do
    -- declare []
   declare [funDeclLit]
 
+go' : List Name -> Elab Name
+go' [] = fail "Not enough names"
+go' [x] = pure x
+go' (x :: xs) = fail "Too many names"
+
 export
 deriveToDhall : IdrisType
               -> (name : Name)
@@ -256,8 +262,10 @@ deriveToDhall it n = do
 
   [(ifName, _)] <- getType `{ToDhall}
     | _ => fail "ToDhall interface must be in scope and unique"
-  [NS _ (DN _ ifCon)] <- getCons ifName
-    | _ => fail "Interface constructor error"
+  logMsg "FOO" 0 $ show $ "blah"
+  x <- getCons ifName
+  logMsg "printe" 0 $ show $ stripNs !(go' x)
+  let ifCon = stripNs !(go' x)
 
   let retty = `(ToDhall ~(var name))
   let objClaimType = IClaim EmptyFC MW Export [Hint True, Inline] (MkTy EmptyFC EmptyFC objNameType retty)
@@ -354,8 +362,8 @@ forDebug2 n = do
 
 %runElab (forDebug2 `{ Ex1 })
 
-toDhallImpl : String -> List String -> List Decl
-toDhallImpl typeName cons =
+toDhallImpl : String -> List Decl
+toDhallImpl typeName =
   let -- names
       mkToDhall = UN $ Basic "MkToDhall"
       toDhallType = UN $ Basic "toDhallType"
@@ -379,8 +387,9 @@ toDhallImpl typeName cons =
           [ IClaim EmptyFC MW Private [] (MkTy EmptyFC EmptyFC toDhallName `(typeName -> Expr Void))
           , IDef EmptyFC toDhallName [toDhallLitClause]
           ]
-          ?lkjlkj
+          `(~(var mkToDhall) ~(var rhsToDhallType) ~(var rhsToDhallLit))
 
-  in ?toDhallImpl_rhs
+  in [IClaim EmptyFC MW Public [Hint False] $ MkTy EmptyFC EmptyFC functionName (IApp EmptyFC (toDhall) (typeNameImp))
+     , IDef EmptyFC functionName [patClause function impl] ]
 
 {--}
