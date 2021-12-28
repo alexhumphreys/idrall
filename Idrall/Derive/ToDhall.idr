@@ -230,6 +230,36 @@ go' [] = fail "Not enough names"
 go' [x] = pure x
 go' (x :: xs) = fail "Too many names"
 
+toDhallImpl : String -> List Decl
+toDhallImpl typeName =
+  let -- names
+      mkToDhall = UN $ Basic "MkToDhall"
+      toDhallType = UN $ Basic "toDhallType"
+      toDhallName = UN $ Basic "toDhall"
+      rhsToDhallType = UN $ Basic $ "toDhallType" ++ typeName
+      rhsToDhallLit = UN $ Basic $ "toDhallLit" ++ typeName
+      functionName = UN . Basic $ "implToDhall" ++ typeName
+
+      typeNameImp = var $ UN $ Basic typeName
+      toDhallType = var toDhallType
+      toDhall = var toDhallName
+      function = var functionName
+      -- enum         = arg $ varStr enumName
+
+      toDhallLitClause = patClause toDhall $ var rhsToDhallLit
+      toDhallTypeClause = patClause toDhallType $ var rhsToDhallType
+
+      -- TODO keep following along with https://github.com/stefan-hoeck/idris2-elab-util/blame/main/src/Doc/Enum2.md#L179
+      -- toDhall : ty -> Expr Void
+      impl = ILocal EmptyFC
+          [ IClaim EmptyFC MW Private [] (MkTy EmptyFC EmptyFC toDhallName `(~(typeNameImp) -> Expr Void))
+          , IDef EmptyFC toDhallName [toDhallLitClause]
+          ]
+          `(~(var mkToDhall) ~(var rhsToDhallType) ~(var rhsToDhallLit))
+
+  in [ IClaim EmptyFC MW Public [Hint False] $ MkTy EmptyFC EmptyFC functionName `(ToDhall ~(typeNameImp)) -- (IApp EmptyFC (toDhall) (typeNameImp))
+     , IDef EmptyFC functionName [patClause function impl] ]
+
 export
 deriveToDhall : IdrisType
               -> (name : Name)
@@ -281,12 +311,14 @@ deriveToDhall it n = do
   case it of
        Record => do
          deriveToDhallRecord name funNameType funNameLit cons
-         declare [objClaimLit] --, objDeclLit]
-         declare [objClaimType] --, objDeclType]
+         -- declare [objClaimLit] --, objDeclLit]
+         -- declare [objClaimType] --, objDeclType]
+         declare $ toDhallImpl $ "ExRec1"
        ADT => do
          deriveToDhallADT name funNameType funNameLit cons
-         declare [objClaimLit] --, objDeclLit]
-         declare [objClaimType] --, objDeclType]
+         -- declare [objClaimLit] --, objDeclLit]
+         -- declare [objClaimType] --, objDeclType]
+         declare $ toDhallImpl $ "ExADTTest"
 
 -- Record example
 record ExRec1 where
@@ -361,35 +393,5 @@ forDebug2 n = do
     mkUnion n cons = pure `(EUnion EmptyFC $ fromList $ ~(!(go n cons)))
 
 %runElab (forDebug2 `{ Ex1 })
-
-toDhallImpl : String -> List Decl
-toDhallImpl typeName =
-  let -- names
-      mkToDhall = UN $ Basic "MkToDhall"
-      toDhallType = UN $ Basic "toDhallType"
-      toDhallName = UN $ Basic "toDhall"
-      rhsToDhallType = UN $ Basic $ "toDhallType" ++ typeName
-      rhsToDhallLit = UN $ Basic $ "toDhallLit" ++ typeName
-      functionName = UN . Basic $ "implToDhall" ++ typeName
-
-      typeNameImp = var $ UN $ Basic typeName
-      toDhallType = var toDhallType
-      toDhall = var toDhallName
-      function = var functionName
-      -- enum         = arg $ varStr enumName
-
-      toDhallLitClause = patClause toDhall $ var rhsToDhallLit
-      toDhallTypeClause = patClause toDhallType $ var rhsToDhallType
-
-      -- TODO keep following along with https://github.com/stefan-hoeck/idris2-elab-util/blame/main/src/Doc/Enum2.md#L179
-      -- toDhall : ty -> Expr Void
-      impl = ILocal EmptyFC
-          [ IClaim EmptyFC MW Private [] (MkTy EmptyFC EmptyFC toDhallName `(typeName -> Expr Void))
-          , IDef EmptyFC toDhallName [toDhallLitClause]
-          ]
-          `(~(var mkToDhall) ~(var rhsToDhallType) ~(var rhsToDhallLit))
-
-  in [IClaim EmptyFC MW Public [Hint False] $ MkTy EmptyFC EmptyFC functionName (IApp EmptyFC (toDhall) (typeNameImp))
-     , IDef EmptyFC functionName [patClause function impl] ]
 
 {--}
