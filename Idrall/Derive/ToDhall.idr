@@ -187,21 +187,24 @@ genClauseADT : Name -> Name -> Name -> List (Name, TTImp) -> Elab (TTImp, TTImp)
 genClauseADT name funName constructor' xs =
   let cn = primStr (show $ stripNs constructor')
       cnShort = show $ stripNs $ constructor'
+      nameShort = show $ stripNs $ name
       debug = show $ stripNs $ constructor'
       debug2 = show $ map fst xs
       lhs0 = `(~(var funName) ~(var constructor'))
+      toDhallTypeFunName = "toDhallType" ++ nameShort
+      fieldName = IPrimVal EmptyFC $ Str cnShort
   in do
+    logMsg "foo" 0 $ nameShort
     case xs of
          [] => pure $ MkPair lhs0
             -- TODO need to implement ToDhall interface to fix EText EmptyFC here
-            `(EField EmptyFC (EText EmptyFC) (MkFieldName ~cn))
+            `(EField EmptyFC (~(varStr toDhallTypeFunName)) (MkFieldName ~cn))
          ((n, t) :: []) => do
             argName <- genReadableSym "arg"
             pure $ MkPair
   -- pure $ patClause `(~(var funName) ~(bindvar $ show arg)) (dhallRecLitFromRecArg arg ls)
               `(~(var funName) (~(varStr cnShort) ~(bindvar $ show argName)))
-              `(EText EmptyFC)
-              -- `(EApp EmptyFC (EField EmptyFC (EText EmptyFC) (MkFieldName "hello")) (toDhall ~(var argName)))
+              `(EApp EmptyFC (EField EmptyFC (~(varStr toDhallTypeFunName)) (MkFieldName ~fieldName)) (toDhall ~(var argName)))
          (x :: _) => fail $ "too many args for constructor: " ++ show constructor'
 
 deriveToDhallADT : Name
@@ -249,6 +252,7 @@ toDhallImpl typeName =
       toDhallLitClause = patClause toDhall $ var rhsToDhallLit
       toDhallTypeClause = patClause toDhallType $ var rhsToDhallType
 
+  -- let objClaimType = IClaim EmptyFC MW Export [Hint True, Inline] (MkTy EmptyFC EmptyFC objNameType retty)
       -- TODO keep following along with https://github.com/stefan-hoeck/idris2-elab-util/blame/main/src/Doc/Enum2.md#L179
       -- toDhall : ty -> Expr Void
       impl = ILocal EmptyFC
@@ -257,7 +261,7 @@ toDhallImpl typeName =
           ]
           `(~(var mkToDhall) ~(var rhsToDhallType) ~(var rhsToDhallLit))
 
-  in [ IClaim EmptyFC MW Public [Hint False] $ MkTy EmptyFC EmptyFC functionName `(ToDhall ~(typeNameImp)) -- (IApp EmptyFC (toDhall) (typeNameImp))
+  in [ IClaim EmptyFC MW Public [Hint True] $ MkTy EmptyFC EmptyFC functionName `(ToDhall ~(typeNameImp)) -- (IApp EmptyFC (toDhall) (typeNameImp))
      , IDef EmptyFC functionName [patClause function impl] ]
 
 export
@@ -292,9 +296,7 @@ deriveToDhall it n = do
 
   [(ifName, _)] <- getType `{ToDhall}
     | _ => fail "ToDhall interface must be in scope and unique"
-  logMsg "FOO" 0 $ show $ "blah"
   x <- getCons ifName
-  logMsg "printe" 0 $ show $ stripNs !(go' x)
   let ifCon = stripNs !(go' x)
 
   let retty = `(ToDhall ~(var name))
@@ -306,8 +308,7 @@ deriveToDhall it n = do
   let objClaimLit = IClaim EmptyFC MW Export [Hint True, Inline] (MkTy EmptyFC EmptyFC objNameLit retty)
   let objrhslit = `(~(var ifCon) ~(var funNameLit))
   let objDeclLit = IDef EmptyFC objNameLit [(PatClause EmptyFC (var objNameLit) objrhslit)]
-  -- declare [objClaimLit, objDeclLit]
-  logTerm "foo" 0 "bar" objrhslit
+  -- declare [objClaimLit] -- , objDeclLit]
   case it of
        Record => do
          deriveToDhallRecord name funNameType funNameLit cons
