@@ -129,7 +129,10 @@ mutual
     pretty (EDoubleLit fc x) = pretty $ show x
     pretty (EDoubleShow fc) = pretty "Double/show"
     pretty (EList fc) = pretty "List"
-    pretty (EListLit fc t xs) = pretty xs <++> colon <++> pretty t
+    pretty (EListLit fc t []) =
+      pretty (the (List (Expr a)) [])
+        <++> colon <++> pretty "List" <++> pretty t
+    pretty (EListLit fc t xs) = pretty xs
     pretty (EListAppend fc x y) = pretty x <++> pretty "#" <++> pretty y
     pretty (EListBuild fc) = pretty "List/build"
     pretty (EListFold fc) = pretty "List/fold"

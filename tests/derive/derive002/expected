@@ -1,4 +1,5 @@
-[1, 2, 3] : Natural
+[1, 2, 3]
+[] : List Bool
 10
 Some "foo"
 None Bool
@@ -7,3 +8,8 @@ True
 { someNat = 20 }
 < ADouble : Double | Bar  >.ADouble 30.0
 < ADouble : Double | Bar  >.Bar
+{ someList = [ 1.2
+             , 3.4 ], someNat = 2, someOpBool = Some True, someStr = "mkfoo" }
+< ADouble2 : Double | Bar2 | Baz : Natural  >.ADouble2 40.0
+< ADouble2 : Double | Bar2 | Baz : Natural  >.Bar2
+< ADouble2 : Double | Bar2 | Baz : Natural  >.Baz 1

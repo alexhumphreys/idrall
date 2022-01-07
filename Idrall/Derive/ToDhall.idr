@@ -129,12 +129,12 @@ getTypeTTImp consName (_ :: xs) = do
 someLogging : List (Name, TTImp) -> Elab ()
 someLogging [] = pure ()
 someLogging ((n, t) :: xs) = do
-  logTerm "" 0 "this guy" t
+  logTerm "" 7 "this guy" t
   someLogging xs
 go : Name -> Cons -> Elab (TTImp)
 go name [] = pure `([])
 go name ((n, t) :: xs) = do
-  logMsg " " 0 $ show n
+  logMsg " " 7 $ show n
   -- someLogging t
   pair <- getTypeTTImp n t
   pure $ `(~(pair) :: ~(!(go name xs)))
@@ -175,8 +175,6 @@ genClauseADTType name funName constructor' xs =
       debug2 = show $ map fst xs
       lhs0 = `(~(var funName))
   in do
-  logMsg "here" 0 debug
-  logMsg "here" 0 debug2
   case xs of
        [] => pure $ MkPair (MkFieldName cn) (Nothing)
        ((n, t) :: []) => do
@@ -194,7 +192,6 @@ genClauseADT name funName constructor' xs =
       toDhallTypeFunName = "toDhallType" ++ nameShort
       fieldName = IPrimVal EmptyFC $ Str cnShort
   in do
-    logMsg "foo" 0 $ nameShort
     case xs of
          [] => pure $ MkPair lhs0
             -- TODO need to implement ToDhall interface to fix EText EmptyFC here
