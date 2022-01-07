@@ -271,10 +271,11 @@ deriveToDhall : IdrisType
 deriveToDhall it n = do
   [(name, _)] <- getType n
           | _ => fail "Ambiguous name"
-  let funNameType = UN $ Basic ("toDhallType" ++ show (stripNs name))
-  let funNameLit = UN $ Basic ("toDhallLit" ++ show (stripNs name))
-  let objNameType = UN $ Basic ("__impl_toDhallType" ++ show (stripNs name))
-  let objNameLit = UN $ Basic ("__impl_toDhallLit" ++ show (stripNs name))
+  let nameShortStr = show (stripNs name)
+  let funNameType = UN $ Basic ("toDhallType" ++ nameShortStr)
+  let funNameLit = UN $ Basic ("toDhallLit" ++ nameShortStr)
+  let objNameType = UN $ Basic ("__impl_toDhallType" ++ nameShortStr)
+  let objNameLit = UN $ Basic ("__impl_toDhallLit" ++ nameShortStr)
 
   conNames <- getCons name
 
@@ -299,27 +300,13 @@ deriveToDhall it n = do
   x <- getCons ifName
   let ifCon = stripNs !(go' x)
 
-  let retty = `(ToDhall ~(var name))
-  let objClaimType = IClaim EmptyFC MW Export [Hint True, Inline] (MkTy EmptyFC EmptyFC objNameType retty)
-  let objrhstype = `(~(var ifCon) ~(var funNameType))
-  let objDeclType = IDef EmptyFC objNameType [(PatClause EmptyFC (var objNameType) objrhstype)]
-  -- ?jkookj
-
-  let objClaimLit = IClaim EmptyFC MW Export [Hint True, Inline] (MkTy EmptyFC EmptyFC objNameLit retty)
-  let objrhslit = `(~(var ifCon) ~(var funNameLit))
-  let objDeclLit = IDef EmptyFC objNameLit [(PatClause EmptyFC (var objNameLit) objrhslit)]
-  -- declare [objClaimLit] -- , objDeclLit]
   case it of
        Record => do
          deriveToDhallRecord name funNameType funNameLit cons
-         -- declare [objClaimLit] --, objDeclLit]
-         -- declare [objClaimType] --, objDeclType]
-         declare $ toDhallImpl $ "ExRec1"
+         declare $ toDhallImpl $ nameShortStr
        ADT => do
          deriveToDhallADT name funNameType funNameLit cons
-         -- declare [objClaimLit] --, objDeclLit]
-         -- declare [objClaimType] --, objDeclType]
-         declare $ toDhallImpl $ "ExADTTest"
+         declare $ toDhallImpl $ nameShortStr
 
 -- Record example
 record ExRec1 where
@@ -339,60 +326,3 @@ data Ex1
   | ADoub Double
   | ANone
 
-forDebug : Expr Void
-
-forDebug2 : (name : Name)
-          -> Elab ()
-forDebug2 n = do
-  [(name, _)] <- getType n
-          | _ => fail "Ambiguous name"
-  let funNameType = UN $ Basic ("toDhallType" ++ show (stripNs name))
-  let funNameLit = UN $ Basic ("toDhallLit" ++ show (stripNs name))
-  let objName = UN $ Basic ("__impl_toDhall" ++ show (stripNs name))
-
-  conNames <- getCons name
-
-  -- get the constructors of the record
-  -- cons : (List (Name, List (Name, TTImp)))
-  cons <- for conNames $ \n => do
-    [(conName, conImpl)] <- getType n
-      | _ => fail $ show n ++ "constructor must be in scope and unique"
-    args <- getArgs conImpl
-    pure (conName, args)
-
-  -- logCons cons
-  let lhs = `(~(var (UN $ Basic "forDebug")))
-  rhs <- mkUnion name cons
-  let foo = IDef EmptyFC (UN $ Basic "forDebug") $ [patClause lhs rhs]
-  declare [foo]
-  where
-    getTypeTTImp : Name -> List (Name, TTImp) -> Elab (TTImp)
-    getTypeTTImp consName [] =
-      let cn = primStr $ show $ stripNs consName in
-      do
-        pure `(MkPair (MkFieldName ~cn) Nothing)
-    getTypeTTImp consName ((n, t) :: []) =
-      let cn = primStr $ show $ stripNs consName in
-      do
-        pure $ `(MkPair (MkFieldName ~cn) $ Just (toDhallType {ty = ~t}))
-    getTypeTTImp consName (_ :: xs) = do
-       fail $ "too many args for constructor: " ++ show consName
-
-    someLogging : List (Name, TTImp) -> Elab ()
-    someLogging [] = pure ()
-    someLogging ((n, t) :: xs) = do
-      logTerm "" 0 "this guy" t
-      someLogging xs
-    go : Name -> Cons -> Elab (TTImp)
-    go name [] = pure `([])
-    go name ((n, t) :: xs) = do
-      logMsg " " 0 $ show n
-      -- someLogging t
-      pair <- getTypeTTImp n t
-      pure $ `(~(pair) :: ~(!(go name xs)))
-    mkUnion : Name -> Cons -> Elab (TTImp)
-    mkUnion n cons = pure `(EUnion EmptyFC $ fromList $ ~(!(go n cons)))
-
-%runElab (forDebug2 `{ Ex1 })
-
-{--}

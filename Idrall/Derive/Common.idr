@@ -104,12 +104,12 @@ where
   go : List (Name, TTImp) -> Elab ()
   go [] =  pure ()
   go ((n, t) :: ys) = do
-    logMsg "" 0 ("ArgName: " ++ show n)
-    logTerm "" 0 "ArgType" t
+    logMsg "" 7 ("ArgName: " ++ show n)
+    logTerm "" 7 "ArgType" t
     go ys
   more : (Name, List (Name, TTImp)) -> Elab ()
   more (constructor', args) = do
-    logMsg "" 0 ("Constructor: " ++ show constructor')
+    logMsg "" 7 ("Constructor: " ++ show constructor')
     go args
 
 ||| Used with FromDhall interface, to dervice implementations
