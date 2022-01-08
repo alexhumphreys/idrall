@@ -4,6 +4,10 @@ import Idrall.API.V2
 import Idrall.Pretty
 import Text.PrettyPrint.Prettyprinter.Render.Terminal
 
+import Language.Reflection
+
+%language ElabReflection
+
 testPretty : ToDhall ty => ty -> IO ()
 testPretty x = do
   putDoc $ pretty $ toDhall x
@@ -33,9 +37,26 @@ ToDhall ExADTTest where
   toDhall Bar =
     EField EmptyFC (toDhallType {ty=ExADTTest}) (MkFieldName "Bar")
 
+record Foo2 where
+  constructor MkFoo2
+  someNat, someNat1 : Nat
+  someStr : String
+  someList : List Double
+  someOpBool : Maybe Bool
+
+%runElab (deriveToDhall Record `{ Foo2 })
+
+data ExADTTest2
+  = ADouble2 Double
+  | Bar2
+  | Baz (Maybe Nat)
+
+%runElab (deriveToDhall ADT `{ ExADTTest2 })
+
 main : IO ()
 main = do
   testPretty $ the (List Nat) [1,2,3]
+  testPretty $ the (List Bool) []
   testPretty $ the (Integer) 10
   testPretty $ Just "foo"
   testPretty $ the (Maybe Bool) Nothing
@@ -44,3 +65,7 @@ main = do
   testPretty $ MkFoo 20
   testPretty $ ADouble 30.0
   testPretty $ Bar
+  testPretty $ MkFoo2 2 3 "mkfoo" [1.2, 3.4] $ Just True
+  testPretty $ ADouble2 40.0
+  testPretty $ Bar2
+  testPretty $ Baz $ Just 1

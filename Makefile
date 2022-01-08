@@ -18,7 +18,8 @@ repl: test-setup
 	rlwrap -n idris2 -p contrib Idrall/APIv1.idr
 
 repl2: test-setup
-	rlwrap idris2 -p contrib Idrall/Derive/ToDhall.idr --log 0
+	rlwrap -n idris2 -p contrib Idrall/Derive/ToDhall.idr --log 0
+
 edit-tests: test-setup
 	cd ./tests/idrall/idrall002 && rlwrap -n idris2 -p contrib -p test -p idrall All.idr
 
@@ -26,7 +27,7 @@ edit-tests-one: test-setup
 	cd ./tests/idrall/idrall004 && rlwrap -n idris2 -p contrib -p test -p idrall One.idr
 
 edit-tests-derive: test-setup
-	cd ./tests/derive/derive001 && rlwrap -n idris2 -p contrib -p test -p idrall Main.idr
+	cd ./tests/derive/derive002 && rlwrap -n idris2 -p contrib -p test -p idrall Main.idr
 
 clean:
 	rm -f tests/*.idr~
