@@ -14,7 +14,7 @@ Still a work in progress, but for a given dhall expression with not much imports
 
 For an example of how to do a whole `parse -> resolve -> typecheck -> eval` pass of a dhall file, and marshall it into an idris type, check out the file [`./examples/Package.idr`](https://github.com/alexhumphreys/idrall/blob/master/examples/Package.idr)
 
-There Is a `FromDhall` interface that you can use elaborator reflection to derive. You can use it for both ADTs and Records like so:
+There are `FromDhall` and `ToDhall` interfaces that you can use elaborator reflection to derive. You can use it for both ADTs and Records like so:
 
 ```
 -- ADT example
@@ -24,6 +24,7 @@ data ExADT1
   | Baz (Maybe Bool)
 
 %runElab (deriveFromDhall ADT `{ ExADT1 })
+%runElab (deriveToDhall ADT `{ ExADT1 })
 
 -- Record example
 record ExRec1 where
@@ -31,9 +32,10 @@ record ExRec1 where
   mn : Maybe Nat
 
 %runElab (deriveFromDhall Record `{ ExRec1 })
+%runElab (deriveToDhall Record `{ ExRec1 })
 ```
 
-There's implementations of `FromDhall` for `String`, `Nat`, `Integer`, `Bool`, `Double`, and `List`/`Maybe` of those. That interface gives you the `fromDhall` function you can use on dhall expression to get a `Maybe` of your Idris ADT or Record. For more examples see the `./examples` or the `./tests/derive` dir.
+There's implementations of `FromDhall` and `ToDhall` for `String`, `Nat`, `Integer`, `Bool`, `Double`, and `List`/`Maybe` of those. That `FromDhall` interface gives you the `fromDhall` function you can use on dhall expression to get a `Maybe` of your Idris ADT or Record. The `ToDhall` interface gives you a `toDhall` and `toDhallType` function, for returning dhall literals and dhall types respectively. For more examples see the `./examples` or the `./tests/derive` dir.
 
 The behaviour of this isn't thought out yet. For example, the `deriveFromDhall ADT` function ignores the dhall union and just looks for matching constructors. Also `deriveFromDhall Record` ignores extra fields on the dhall record. This behaviour may change. 
 

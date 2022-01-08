@@ -49,7 +49,7 @@ record Foo2 where
 data ExADTTest2
   = ADouble2 Double
   | Bar2
-  | Baz Nat
+  | Baz (Maybe Nat)
 
 %runElab (deriveToDhall ADT `{ ExADTTest2 })
 
@@ -68,4 +68,4 @@ main = do
   testPretty $ MkFoo2 2 3 "mkfoo" [1.2, 3.4] $ Just True
   testPretty $ ADouble2 40.0
   testPretty $ Bar2
-  testPretty $ Baz 1
+  testPretty $ Baz $ Just 1
