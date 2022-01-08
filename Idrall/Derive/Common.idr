@@ -53,12 +53,14 @@ patClause = PatClause EmptyFC
 ------
 
 ||| from idris2-lsp
+export
 stripNs : Name -> Name
 stripNs (NS _ x) = x
 stripNs x = x
 
 ||| from idris2-lsp
 covering
+export
 genReadableSym : String -> Elab Name
 genReadableSym hint = do
   MN v i <- genSym hint
@@ -66,28 +68,35 @@ genReadableSym hint = do
   pure $ UN $ Basic (v ++ show i)
 
 ||| from idris2-lsp
+export
 primStr : String -> TTImp
 primStr = IPrimVal EmptyFC . Str
 
 ||| from idris2-lsp
+export
 bindvar : String -> TTImp
 bindvar = IBindVar EmptyFC
 
 ||| from idris2-lsp
+export
 implicit' : TTImp
 implicit' = Implicit EmptyFC True
 
 ||| moved from where clause
+export
 getArgs : TTImp -> Elab (List (Name, TTImp))
 getArgs (IPi _ _ _ (Just n) argTy retTy) = ((n, argTy) ::) <$> getArgs retTy
 getArgs (IPi _ _ _ Nothing _ _) = fail $ "All arguments must be explicitly named"
 getArgs _ = pure []
 
+public export
 Cons : Type
 Cons = (List (Name, List (Name, TTImp)))
 
+export
 logCons : Cons -> Elab ()
-logCons [] = pure ()
+logCons [] = do
+  pure ()
 logCons (x :: xs) = do
   more x
   logCons xs
@@ -102,3 +111,10 @@ where
   more (constructor', args) = do
     logMsg "" 7 ("Constructor: " ++ show constructor')
     go args
+
+||| Used with FromDhall interface, to dervice implementations
+||| for ADTs or Records
+public export
+data IdrisType
+  = ADT
+  | Record
