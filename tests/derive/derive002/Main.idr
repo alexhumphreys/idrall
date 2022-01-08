@@ -39,7 +39,7 @@ ToDhall ExADTTest where
 
 record Foo2 where
   constructor MkFoo2
-  someNat : Nat
+  someNat, someNat1 : Nat
   someStr : String
   someList : List Double
   someOpBool : Maybe Bool
@@ -65,7 +65,7 @@ main = do
   testPretty $ MkFoo 20
   testPretty $ ADouble 30.0
   testPretty $ Bar
-  testPretty $ MkFoo2 2 "mkfoo" [1.2, 3.4] $ Just True
+  testPretty $ MkFoo2 2 3 "mkfoo" [1.2, 3.4] $ Just True
   testPretty $ ADouble2 40.0
   testPretty $ Bar2
   testPretty $ Baz 1
