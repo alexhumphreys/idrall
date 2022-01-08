@@ -1,7 +1,6 @@
 module Idrall.Derive.ToDhall
 
 import Idrall.Expr
-import Idrall.Error
 import Idrall.Pretty
 import Idrall.Derive.Common
 
@@ -12,7 +11,6 @@ import Language.Reflection
 %language ElabReflection
 
 %hide Idrall.Expr.Name
-%hide Data.List.lookup
 
 public export
 interface ToDhall ty where
