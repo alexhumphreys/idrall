@@ -16,6 +16,10 @@ jobs:
     runs-on: ubuntu-latest
     container: snazzybucket/idris2:latest
     steps:
+      - name: idrall build and test
+        run: |
+          apt update && apt install git
+        shell: bash
       - name: Checkout
         uses: actions/checkout@v2
         with:
