@@ -28,3 +28,10 @@ jobs:
         run: |
           make clean && make build && make install && make test INTERACTIVE=''
         shell: bash
+      - name: Step To run on failure
+        if: ${{ failure() }}
+        run: |
+          cat -vet tests/idrall/idrall001/expected
+          cat -vet tests/idrall/idrall001/output
+          md5sum tests/idrall/idrall001/expected
+          md5sum tests/idrall/idrall001/output
