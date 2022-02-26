@@ -1,5 +1,5 @@
 cp ../../../examples/Fail.idr .
 cp ../../../examples/fail.dhall .
-idris2 --no-banner --no-color --console-width 0 -p contrib -p idrall Fail.idr --exec main
+idris2 -q --no-banner --no-color --console-width 0 -p contrib -p idrall Fail.idr --exec main
 
 rm -rf build

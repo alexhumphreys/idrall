@@ -1,4 +1,3 @@
-1/1: Building Good (Good.idr)
 Main> Testing: ../../../dhall-lang/tests/type-inference/success/simple/mergeEquivalenceA.dhall
 Testing: ../../../dhall-lang/tests/type-inference/success/unit/AssertTrivialA.dhall
 Testing: ../../../dhall-lang/tests/type-inference/success/unit/BoolA.dhall
@@ -56,4 +55,4 @@ Testing: ../../../dhall-lang/tests/type-inference/success/unit/UnionTypeTypeA.dh
 Result:
 Pass: 48
 Fail: 1
-Main> Bye for now!
+Main> 
