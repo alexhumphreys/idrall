@@ -29,6 +29,12 @@ Testing: ../../../dhall-lang/tests/type-inference/success/unit/NaturalToIntegerA
 Testing: ../../../dhall-lang/tests/type-inference/success/unit/NoneA.dhall
 Testing: ../../../dhall-lang/tests/type-inference/success/unit/OperatorListConcatenateA.dhall
 Testing: ../../../dhall-lang/tests/type-inference/success/unit/OptionalA.dhall
+Testing: ../../../dhall-lang/tests/type-inference/success/unit/ShowConstructorOptionalA.dhall
+0| showConstructor (Some 0)
+   ^^^^^^^^^^^^^^^
+
+../../../dhall-lang/tests/type-inference/success/unit/ShowConstructorOptionalA.dhall:(0, 0)-(0, 15)MissingVar: "showConstructor@0\n in Cxt: (MkCxt { values = Empty, types = 2})"
+
 Testing: ../../../dhall-lang/tests/type-inference/success/unit/SomeTrueA.dhall
 Testing: ../../../dhall-lang/tests/type-inference/success/unit/TextA.dhall
 Testing: ../../../dhall-lang/tests/type-inference/success/unit/TextLiteralA.dhall
@@ -49,5 +55,5 @@ Testing: ../../../dhall-lang/tests/type-inference/success/unit/UnionTypeOneA.dha
 Testing: ../../../dhall-lang/tests/type-inference/success/unit/UnionTypeTypeA.dhall
 Result:
 Pass: 48
-Fail: 0
+Fail: 1
 Main> Bye for now!

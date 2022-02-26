@@ -1,10 +1,12 @@
 1/1: Building All (All.idr)
-Main> Testing: ../../../dhall-lang/tests/type-inference/failure/SortInLet.dhall
+Main> Testing: ../../../dhall-lang/tests/type-inference/failure/DateApplyTime.dhall
+Testing: ../../../dhall-lang/tests/type-inference/failure/SortInLet.dhall
 Testing: ../../../dhall-lang/tests/type-inference/failure/hurkensParadox.dhall
 Testing: ../../../dhall-lang/tests/type-inference/failure/recordOfKind.dhall
 Testing: ../../../dhall-lang/tests/type-inference/failure/unit/AnnotationRecordWrongFieldName.dhall
 Testing: ../../../dhall-lang/tests/type-inference/failure/unit/AnnotationRecordWrongFieldType.dhall
 Testing: ../../../dhall-lang/tests/type-inference/failure/unit/AssertAlphaTrap.dhall
+Testing: ../../../dhall-lang/tests/type-inference/failure/unit/AssertAlphaTrap2.dhall
 Testing: ../../../dhall-lang/tests/type-inference/failure/unit/AssertDoubleZeros.dhall
 Testing: ../../../dhall-lang/tests/type-inference/failure/unit/AssertNotEquivalence.dhall
 Testing: ../../../dhall-lang/tests/type-inference/failure/unit/AssertTriviallyFalse.dhall
@@ -97,6 +99,9 @@ Testing: ../../../dhall-lang/tests/type-inference/failure/unit/RemovedBuiltinOpt
 Testing: ../../../dhall-lang/tests/type-inference/failure/unit/RemovedBuiltinOptionalFold.dhall
 Testing: ../../../dhall-lang/tests/type-inference/failure/unit/RightBiasedRecordMergeLhsNotRecord.dhall
 Testing: ../../../dhall-lang/tests/type-inference/failure/unit/RightBiasedRecordMergeRhsNotRecord.dhall
+Testing: ../../../dhall-lang/tests/type-inference/failure/unit/ShowConstructorNotFullyApplied.dhall
+Testing: ../../../dhall-lang/tests/type-inference/failure/unit/ShowConstructorNotFullyAppliedOptional.dhall
+Testing: ../../../dhall-lang/tests/type-inference/failure/unit/ShowConstructorWrongArgument.dhall
 Testing: ../../../dhall-lang/tests/type-inference/failure/unit/SomeNotType.dhall
 Testing: ../../../dhall-lang/tests/type-inference/failure/unit/Sort.dhall
 Testing: ../../../dhall-lang/tests/type-inference/failure/unit/TextLiteralInterpolateNotText.dhall
@@ -109,9 +114,13 @@ Testing: ../../../dhall-lang/tests/type-inference/failure/unit/UnionTypeDuplicat
 Testing: ../../../dhall-lang/tests/type-inference/failure/unit/UnionTypeDuplicateVariants2.dhall
 Testing: ../../../dhall-lang/tests/type-inference/failure/unit/UnionTypeNotType.dhall
 Testing: ../../../dhall-lang/tests/type-inference/failure/unit/VariableFree.dhall
+Testing: ../../../dhall-lang/tests/type-inference/failure/unit/WithInfersKind.dhall
 Testing: ../../../dhall-lang/tests/type-inference/failure/unit/WithInvalidOverrideA.dhall
+Testing: ../../../dhall-lang/tests/type-inference/failure/unit/WithNotOptional.dhall
 Testing: ../../../dhall-lang/tests/type-inference/failure/unit/WithNotRecord.dhall
+Testing: ../../../dhall-lang/tests/type-inference/failure/unit/WithOptionalTypeChanged.dhall
+Testing: ../../../dhall-lang/tests/type-inference/failure/unit/Z.dhall
 Result:
-Failed as intended: 112
+Failed as intended: 121
 Passed but shouldn't: 0
 Main> Bye for now!

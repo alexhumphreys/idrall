@@ -16,10 +16,10 @@ Testing: ../../../dhall-lang/tests/type-inference/success/accessTypeA.dhall
 Testing: ../../../dhall-lang/tests/type-inference/success/preferMixedRecordsA.dhall
 Testing: ../../../dhall-lang/tests/type-inference/success/preferMixedRecordsSameFieldA.dhall
 Testing: ../../../dhall-lang/tests/type-inference/success/preludeA.dhall
-23|     ? ./unpackOptionals.dhall
-          ^^^^^^^^^^^^^^^^^^^^^^^
+55|     ? ./Text/package.dhall
+          ^^^^^^^^^^^^^^^^^^^^
 
-../../../dhall-lang/tests/type-inference/success/../../../Prelude/./Map/package.dhall:(23, 6)-(23, 29)ParseError "Just \"../../../dhall-lang/tests/type-inference/success/../../../Prelude/./Map/./unpackOptionals.dhall\" [error: Expected '\8704'\ntokens: Just (MkBounds 2 0 2 3), error: Expected 'forall'\ntokens: Just (MkBounds 2 0 2 3), error: expected builtin\ntokens: Just (MkBounds 2 0 2 3), error: expected name\ntokens: Just (MkBounds 2 0 2 3), error: expected name\ntokens: Just (MkBounds 2 0 2 3), error: expected \" or ''\ntokens: Just (MkBounds 2 0 2 3), error: expected \" or ''\ntokens: Just (MkBounds 2 0 2 3), error: expected natural\ntokens: Just (MkBounds 2 0 2 3), error: expected integer\ntokens: Just (MkBounds 2 0 2 3), error: expected double\ntokens: Just (MkBounds 2 0 2 3), error: expected builtin\ntokens: Just (MkBounds 2 0 2 3), error: Expected '\8704'\ntokens: Just (MkBounds 2 0 2 3), error: Expected 'forall'\ntokens: Just (MkBounds 2 0 2 3), error: Expected '{'\ntokens: Just (MkBounds 2 0 2 3), error: Expected '{'\ntokens: Just (MkBounds 2 0 2 3), error: Expected '<'\ntokens: Just (MkBounds 2 0 2 3), error: expected http import\ntokens: Just (MkBounds 2 0 2 3), error: expected env import\ntokens: Just (MkBounds 2 0 2 3), error: expected import path\ntokens: Just (MkBounds 2 0 2 3), error: expected missing\ntokens: Just (MkBounds 2 0 2 3), error: expected http import\ntokens: Just (MkBounds 2 0 2 3), error: expected env import\ntokens: Just (MkBounds 2 0 2 3), error: expected import path\ntokens: Just (MkBounds 2 0 2 3), error: expected missing\ntokens: Just (MkBounds 2 0 2 3), error: expected http import\ntokens: Just (MkBounds 2 0 2 3), error: expected env import\ntokens: Just (MkBounds 2 0 2 3), error: expected import path\ntokens: Just (MkBounds 2 0 2 3), error: expected missing\ntokens: Just (MkBounds 2 0 2 3), error: expected http import\ntokens: Just (MkBounds 2 0 2 3), error: expected env import\ntokens: Just (MkBounds 2 0 2 3), error: expected import path\ntokens: Just (MkBounds 2 0 2 3), error: expected missing\ntokens: Just (MkBounds 2 0 2 3), error: Expected '['\ntokens: Just (MkBounds 2 0 2 3), error: Expected '('\ntokens: Just (MkBounds 2 0 2 3), error: Expected '\8704'\ntokens: Just (MkBounds 6 0 6 3), error: Expected 'forall'\ntokens: Just (MkBounds 6 0 6 3), error: expected builtin\ntokens: Just (MkBounds 6 0 6 3), error: expected name\ntokens: Just (MkBounds 6 0 6 3), error: expected name\ntokens: Just (MkBounds 6 0 6 3), error: expected \" or ''\ntokens: Just (MkBounds 6 0 6 3), error: expected \" or ''\ntokens: Just (MkBounds 6 0 6 3), error: expected natural\ntokens: Just (MkBounds 6 0 6 3), error: expected integer\ntokens: Just (MkBounds 6 0 6 3), error: expected double\ntokens: Just (MkBounds 6 0 6 3), error: expected builtin\ntokens: Just (MkBounds 6 0 6 3), error: Expected '\8704'\ntokens: Just (MkBounds 6 0 6 3), error: Expected 'forall'\ntokens: Just (MkBounds 6 0 6 3), error: Expected '{'\ntokens: Just (MkBounds 6 0 6 3), error: Expected '{'\ntokens: Just (MkBounds 6 0 6 3), error: Expected '<'\ntokens: Just (MkBounds 6 0 6 3), error: expected http import\ntokens: Just (MkBounds 6 0 6 3), error: expected env import\ntokens: Just (MkBounds 6 0 6 3), error: expected import path\ntokens: Just (MkBounds 6 0 6 3), error: expected missing\ntokens: Just (MkBounds 6 0 6 3), error: expected http import\ntokens: Just (MkBounds 6 0 6 3), error: expected env import\ntokens: Just (MkBounds 6 0 6 3), error: expected import path\ntokens: Just (MkBounds 6 0 6 3), error: expected missing\ntokens: Just (MkBounds 6 0 6 3), error: expected http import\ntokens: Just (MkBounds 6 0 6 3), error: expected env import\ntokens: Just (MkBounds 6 0 6 3), error: expected import path\ntokens: Just (MkBounds 6 0 6 3), error: expected missing\ntokens: Just (MkBounds 6 0 6 3), error: expected http import\ntokens: Just (MkBounds 6 0 6 3), error: expected env import\ntokens: Just (MkBounds 6 0 6 3), error: expected import path\ntokens: Just (MkBounds 6 0 6 3), error: expected missing\ntokens: Just (MkBounds 6 0 6 3), error: Expected '['\ntokens: Just (MkBounds 6 0 6 3), error: Expected '('\ntokens: Just (MkBounds 6 0 6 3), error: Expected '\8704'\ntokens: Just (MkBounds 10 0 10 3), error: Expected 'forall'\ntokens: Just (MkBounds 10 0 10 3), error: expected builtin\ntokens: Just (MkBounds 10 0 10 3), error: expected name\ntokens: Just (MkBounds 10 0 10 3), error: expected name\ntokens: Just (MkBounds 10 0 10 3), error: expected \" or ''\ntokens: Just (MkBounds 10 0 10 3), error: expected \" or ''\ntokens: Just (MkBounds 10 0 10 3), error: expected natural\ntokens: Just (MkBounds 10 0 10 3), error: expected integer\ntokens: Just (MkBounds 10 0 10 3), error: expected double\ntokens: Just (MkBounds 10 0 10 3), error: expected builtin\ntokens: Just (MkBounds 10 0 10 3), error: Expected '\8704'\ntokens: Just (MkBounds 10 0 10 3), error: Expected 'forall'\ntokens: Just (MkBounds 10 0 10 3), error: Expected '{'\ntokens: Just (MkBounds 10 0 10 3), error: Expected '{'\ntokens: Just (MkBounds 10 0 10 3), error: Expected '<'\ntokens: Just (MkBounds 10 0 10 3), error: expected http import\ntokens: Just (MkBounds 10 0 10 3), error: expected env import\ntokens: Just (MkBounds 10 0 10 3), error: expected import path\ntokens: Just (MkBounds 10 0 10 3), error: expected missing\ntokens: Just (MkBounds 10 0 10 3), error: expected http import\ntokens: Just (MkBounds 10 0 10 3), error: expected env import\ntokens: Just (MkBounds 10 0 10 3), error: expected import path\ntokens: Just (MkBounds 10 0 10 3), error: expected missing\ntokens: Just (MkBounds 10 0 10 3), error: expected http import\ntokens: Just (MkBounds 10 0 10 3), error: expected env import\ntokens: Just (MkBounds 10 0 10 3), error: expected import path\ntokens: Just (MkBounds 10 0 10 3), error: expected missing\ntokens: Just (MkBounds 10 0 10 3), error: expected http import\ntokens: Just (MkBounds 10 0 10 3), error: expected env import\ntokens: Just (MkBounds 10 0 10 3), error: expected import path\ntokens: Just (MkBounds 10 0 10 3), error: expected missing\ntokens: Just (MkBounds 10 0 10 3), error: Expected '['\ntokens: Just (MkBounds 10 0 10 3), error: Expected '('\ntokens: Just (MkBounds 10 0 10 3), error: Expected '\8704'\ntokens: Just (MkBounds 14 0 14 3), error: Expected 'forall'\ntokens: Just (MkBounds 14 0 14 3), error: expected builtin\ntokens: Just (MkBounds 14 0 14 3), error: expected name\ntokens: Just (MkBounds 14 0 14 3), error: expected name\ntokens: Just (MkBounds 14 0 14 3), error: expected \" or ''\ntokens: Just (MkBounds 14 0 14 3), error: expected \" or ''\ntokens: Just (MkBounds 14 0 14 3), error: expected natural\ntokens: Just (MkBounds 14 0 14 3), error: expected integer\ntokens: Just (MkBounds 14 0 14 3), error: expected double\ntokens: Just (MkBounds 14 0 14 3), error: expected builtin\ntokens: Just (MkBounds 14 0 14 3), error: Expected '\8704'\ntokens: Just (MkBounds 14 0 14 3), error: Expected 'forall'\ntokens: Just (MkBounds 14 0 14 3), error: Expected '{'\ntokens: Just (MkBounds 14 0 14 3), error: Expected '{'\ntokens: Just (MkBounds 14 0 14 3), error: Expected '<'\ntokens: Just (MkBounds 14 0 14 3), error: expected http import\ntokens: Just (MkBounds 14 0 14 3), error: expected env import\ntokens: Just (MkBounds 14 0 14 3), error: expected import path\ntokens: Just (MkBounds 14 0 14 3), error: expected missing\ntokens: Just (MkBounds 14 0 14 3), error: expected http import\ntokens: Just (MkBounds 14 0 14 3), error: expected env import\ntokens: Just (MkBounds 14 0 14 3), error: expected import path\ntokens: Just (MkBounds 14 0 14 3), error: expected missing\ntokens: Just (MkBounds 14 0 14 3), error: expected http import\ntokens: Just (MkBounds 14 0 14 3), error: expected env import\ntokens: Just (MkBounds 14 0 14 3), error: expected import path\ntokens: Just (MkBounds 14 0 14 3), error: expected missing\ntokens: Just (MkBounds 14 0 14 3), error: expected http import\ntokens: Just (MkBounds 14 0 14 3), error: expected env import\ntokens: Just (MkBounds 14 0 14 3), error: expected import path\ntokens: Just (MkBounds 14 0 14 3), error: expected missing\ntokens: Just (MkBounds 14 0 14 3), error: Expected '['\ntokens: Just (MkBounds 14 0 14 3), error: Expected '('\ntokens: Just (MkBounds 14 0 14 3), error: Expected '\8704'\ntokens: Just (MkBounds 29 0 29 3), error: Expected 'forall'\ntokens: Just (MkBounds 29 0 29 3), error: expected builtin\ntokens: Just (MkBounds 29 0 29 3), error: expected name\ntokens: Just (MkBounds 29 0 29 3), error: expected name\ntokens: Just (MkBounds 29 0 29 3), error: expected \" or ''\ntokens: Just (MkBounds 29 0 29 3), error: expected \" or ''\ntokens: Just (MkBounds 29 0 29 3), error: expected natural\ntokens: Just (MkBounds 29 0 29 3), error: expected integer\ntokens: Just (MkBounds 29 0 29 3), error: expected double\ntokens: Just (MkBounds 29 0 29 3), error: expected builtin\ntokens: Just (MkBounds 29 0 29 3), error: Expected '\8704'\ntokens: Just (MkBounds 29 0 29 3), error: Expected 'forall'\ntokens: Just (MkBounds 29 0 29 3), error: Expected '{'\ntokens: Just (MkBounds 29 0 29 3), error: Expected '{'\ntokens: Just (MkBounds 29 0 29 3), error: Expected '<'\ntokens: Just (MkBounds 29 0 29 3), error: expected http import\ntokens: Just (MkBounds 29 0 29 3), error: expected env import\ntokens: Just (MkBounds 29 0 29 3), error: expected import path\ntokens: Just (MkBounds 29 0 29 3), error: expected missing\ntokens: Just (MkBounds 29 0 29 3), error: expected http import\ntokens: Just (MkBounds 29 0 29 3), error: expected env import\ntokens: Just (MkBounds 29 0 29 3), error: expected import path\ntokens: Just (MkBounds 29 0 29 3), error: expected missing\ntokens: Just (MkBounds 29 0 29 3), error: expected http import\ntokens: Just (MkBounds 29 0 29 3), error: expected env import\ntokens: Just (MkBounds 29 0 29 3), error: expected import path\ntokens: Just (MkBounds 29 0 29 3), error: expected missing\ntokens: Just (MkBounds 29 0 29 3), error: expected http import\ntokens: Just (MkBounds 29 0 29 3), error: expected env import\ntokens: Just (MkBounds 29 0 29 3), error: expected import path\ntokens: Just (MkBounds 29 0 29 3), error: expected missing\ntokens: Just (MkBounds 29 0 29 3), error: Expected '['\ntokens: Just (MkBounds 29 0 29 3), error: Expected '('\ntokens: Just (MkBounds 29 0 29 3), error: Expected '\8704'\ntokens: Just (MkBounds 35 8 35 9), error: Expected 'forall'\ntokens: Just (MkBounds 35 8 35 9), error: expected builtin\ntokens: Just (MkBounds 35 8 35 9), error: expected name\ntokens: Just (MkBounds 35 8 35 9), error: expected name\ntokens: Just (MkBounds 35 8 35 9), error: expected \" or ''\ntokens: Just (MkBounds 35 8 35 9), error: expected \" or ''\ntokens: Just (MkBounds 35 8 35 9), error: expected natural\ntokens: Just (MkBounds 35 8 35 9), error: expected integer\ntokens: Just (MkBounds 35 8 35 9), error: expected double\ntokens: Just (MkBounds 35 8 35 9), error: expected builtin\ntokens: Just (MkBounds 35 8 35 9), error: Expected '\8704'\ntokens: Just (MkBounds 35 8 35 9), error: Expected 'forall'\ntokens: Just (MkBounds 35 8 35 9), error: Expected '{'\ntokens: Just (MkBounds 35 8 35 9), error: Expected '{'\ntokens: Just (MkBounds 35 8 35 9), error: Expected '<'\ntokens: Just (MkBounds 35 8 35 9), error: expected http import\ntokens: Just (MkBounds 35 8 35 9), error: expected env import\ntokens: Just (MkBounds 35 8 35 9), error: expected import path\ntokens: Just (MkBounds 35 8 35 9), error: expected missing\ntokens: Just (MkBounds 35 8 35 9), error: expected http import\ntokens: Just (MkBounds 35 8 35 9), error: expected env import\ntokens: Just (MkBounds 35 8 35 9), error: expected import path\ntokens: Just (MkBounds 35 8 35 9), error: expected missing\ntokens: Just (MkBounds 35 8 35 9), error: expected http import\ntokens: Just (MkBounds 35 8 35 9), error: expected env import\ntokens: Just (MkBounds 35 8 35 9), error: expected import path\ntokens: Just (MkBounds 35 8 35 9), error: expected missing\ntokens: Just (MkBounds 35 8 35 9), error: expected http import\ntokens: Just (MkBounds 35 8 35 9), error: expected env import\ntokens: Just (MkBounds 35 8 35 9), error: expected import path\ntokens: Just (MkBounds 35 8 35 9), error: expected missing\ntokens: Just (MkBounds 35 8 35 9), error: Expected '['\ntokens: Just (MkBounds 35 8 35 9), error: Expected '('\ntokens: Just (MkBounds 35 8 35 9), error: Expected 'let'\ntokens: Just (MkBounds 35 8 35 9), error: Expected '\\'\ntokens: Just (MkBounds 35 8 35 9), error: Expected '\955'\ntokens: Just (MkBounds 35 8 35 9), error: Expected 'assert'\ntokens: Just (MkBounds 35 8 35 9), error: Expected 'if'\ntokens: Just (MkBounds 35 8 35 9), error: Expected 'merge'\ntokens: Just (MkBounds 35 8 35 9), error: Expected 'toMap'\ntokens: Just (MkBounds 35 8 35 9), error: Expected '\\'\ntokens: Just (MkBounds 29 0 29 3), error: Expected '\955'\ntokens: Just (MkBounds 29 0 29 3), error: Expected 'assert'\ntokens: Just (MkBounds 29 0 29 3), error: Expected 'if'\ntokens: Just (MkBounds 29 0 29 3), error: Expected 'merge'\ntokens: Just (MkBounds 29 0 29 3), error: Expected 'toMap'\ntokens: Just (MkBounds 29 0 29 3), error: Expected '\\'\ntokens: Just (MkBounds 14 0 14 3), error: Expected '\955'\ntokens: Just (MkBounds 14 0 14 3), error: Expected 'assert'\ntokens: Just (MkBounds 14 0 14 3), error: Expected 'if'\ntokens: Just (MkBounds 14 0 14 3), error: Expected 'merge'\ntokens: Just (MkBounds 14 0 14 3), error: Expected 'toMap'\ntokens: Just (MkBounds 14 0 14 3), error: Expected '\\'\ntokens: Just (MkBounds 10 0 10 3), error: Expected '\955'\ntokens: Just (MkBounds 10 0 10 3), error: Expected 'assert'\ntokens: Just (MkBounds 10 0 10 3), error: Expected 'if'\ntokens: Just (MkBounds 10 0 10 3), error: Expected 'merge'\ntokens: Just (MkBounds 10 0 10 3), error: Expected 'toMap'\ntokens: Just (MkBounds 10 0 10 3), error: Expected '\\'\ntokens: Just (MkBounds 6 0 6 3), error: Expected '\955'\ntokens: Just (MkBounds 6 0 6 3), error: Expected 'assert'\ntokens: Just (MkBounds 6 0 6 3), error: Expected 'if'\ntokens: Just (MkBounds 6 0 6 3), error: Expected 'merge'\ntokens: Just (MkBounds 6 0 6 3), error: Expected 'toMap'\ntokens: Just (MkBounds 6 0 6 3), error: Expected '\\'\ntokens: Just (MkBounds 2 0 2 3), error: Expected '\955'\ntokens: Just (MkBounds 2 0 2 3), error: Expected 'assert'\ntokens: Just (MkBounds 2 0 2 3), error: Expected 'if'\ntokens: Just (MkBounds 2 0 2 3), error: Expected 'merge'\ntokens: Just (MkBounds 2 0 2 3), error: Expected 'toMap'\ntokens: Just (MkBounds 2 0 2 3)]"
+../../../dhall-lang/tests/type-inference/success/../../../Prelude/package.dhall:(55, 6)-(55, 26)ParseError "Just \"../../../dhall-lang/tests/type-inference/success/../../../Prelude/./Text/package.dhall\" [error: Expected '\8704'\ntokens: Just (MkBounds 0 0 0 1), error: Expected 'forall'\ntokens: Just (MkBounds 0 0 0 1), error: expected builtin\ntokens: Just (MkBounds 0 0 0 1), error: expected name\ntokens: Just (MkBounds 0 0 0 1), error: expected name\ntokens: Just (MkBounds 0 0 0 1), error: expected \" or ''\ntokens: Just (MkBounds 0 0 0 1), error: expected \" or ''\ntokens: Just (MkBounds 0 0 0 1), error: expected natural\ntokens: Just (MkBounds 0 0 0 1), error: expected integer\ntokens: Just (MkBounds 0 0 0 1), error: expected double\ntokens: Just (MkBounds 0 0 0 1), error: expected builtin\ntokens: Just (MkBounds 0 0 0 1), error: Expected '\8704'\ntokens: Just (MkBounds 0 0 0 1), error: Expected 'forall'\ntokens: Just (MkBounds 0 0 0 1), error: Expected '}'\ntokens: Just (MkBounds 0 2 0 8), error: Expected '}'\ntokens: Just (MkBounds 0 2 0 8), error: Expected '='\ntokens: Just (MkBounds 0 2 0 8), error: Expected '}'\ntokens: Just (MkBounds 36 7 36 8), error: Expected '<'\ntokens: Just (MkBounds 0 0 0 1), error: expected http import\ntokens: Just (MkBounds 0 0 0 1), error: expected env import\ntokens: Just (MkBounds 0 0 0 1), error: expected import path\ntokens: Just (MkBounds 0 0 0 1), error: expected missing\ntokens: Just (MkBounds 0 0 0 1), error: expected http import\ntokens: Just (MkBounds 0 0 0 1), error: expected env import\ntokens: Just (MkBounds 0 0 0 1), error: expected import path\ntokens: Just (MkBounds 0 0 0 1), error: expected missing\ntokens: Just (MkBounds 0 0 0 1), error: expected http import\ntokens: Just (MkBounds 0 0 0 1), error: expected env import\ntokens: Just (MkBounds 0 0 0 1), error: expected import path\ntokens: Just (MkBounds 0 0 0 1), error: expected missing\ntokens: Just (MkBounds 0 0 0 1), error: expected http import\ntokens: Just (MkBounds 0 0 0 1), error: expected env import\ntokens: Just (MkBounds 0 0 0 1), error: expected import path\ntokens: Just (MkBounds 0 0 0 1), error: expected missing\ntokens: Just (MkBounds 0 0 0 1), error: Expected '['\ntokens: Just (MkBounds 0 0 0 1), error: Expected '('\ntokens: Just (MkBounds 0 0 0 1), error: Expected 'let'\ntokens: Just (MkBounds 0 0 0 1), error: Expected '\\'\ntokens: Just (MkBounds 0 0 0 1), error: Expected '\955'\ntokens: Just (MkBounds 0 0 0 1), error: Expected 'assert'\ntokens: Just (MkBounds 0 0 0 1), error: Expected 'if'\ntokens: Just (MkBounds 0 0 0 1), error: Expected 'merge'\ntokens: Just (MkBounds 0 0 0 1), error: Expected 'toMap'\ntokens: Just (MkBounds 0 0 0 1)]"
 
 Testing: ../../../dhall-lang/tests/type-inference/success/recordOfRecordOfTypesA.dhall
 Testing: ../../../dhall-lang/tests/type-inference/success/recordOfTypesA.dhall
@@ -62,8 +62,23 @@ Testing: ../../../dhall-lang/tests/type-inference/success/prelude/List/concatMap
 Testing: ../../../dhall-lang/tests/type-inference/success/prelude/List/filter/0A.dhall
 Testing: ../../../dhall-lang/tests/type-inference/success/prelude/List/filter/1A.dhall
 Testing: ../../../dhall-lang/tests/type-inference/success/prelude/List/fold/0A.dhall
+27|           assert
+              ^^^^^^
+
+../../../dhall-lang/tests/type-inference/success/prelude/List/fold/../../../../../../Prelude/List/fold.dhall:(27, 10)-(34, 40)AssertError: not an EEquivalent type
+
 Testing: ../../../dhall-lang/tests/type-inference/success/prelude/List/fold/1A.dhall
+27|           assert
+              ^^^^^^
+
+../../../dhall-lang/tests/type-inference/success/prelude/List/fold/../../../../../../Prelude/List/fold.dhall:(27, 10)-(34, 40)AssertError: not an EEquivalent type
+
 Testing: ../../../dhall-lang/tests/type-inference/success/prelude/List/fold/2A.dhall
+27|           assert
+              ^^^^^^
+
+../../../dhall-lang/tests/type-inference/success/prelude/List/fold/../../../../../../Prelude/List/fold.dhall:(27, 10)-(34, 40)AssertError: not an EEquivalent type
+
 Testing: ../../../dhall-lang/tests/type-inference/success/prelude/List/generate/0A.dhall
 Testing: ../../../dhall-lang/tests/type-inference/success/prelude/List/generate/1A.dhall
 Testing: ../../../dhall-lang/tests/type-inference/success/prelude/List/head/0A.dhall
@@ -106,8 +121,23 @@ Testing: ../../../dhall-lang/tests/type-inference/success/prelude/Natural/enumer
 Testing: ../../../dhall-lang/tests/type-inference/success/prelude/Natural/even/0A.dhall
 Testing: ../../../dhall-lang/tests/type-inference/success/prelude/Natural/even/1A.dhall
 Testing: ../../../dhall-lang/tests/type-inference/success/prelude/Natural/fold/0A.dhall
+18|           assert
+              ^^^^^^
+
+../../../dhall-lang/tests/type-inference/success/prelude/Natural/fold/../../../../../../Prelude/Natural/fold.dhall:(18, 10)-(20, 41)AssertError: not an EEquivalent type
+
 Testing: ../../../dhall-lang/tests/type-inference/success/prelude/Natural/fold/1A.dhall
+18|           assert
+              ^^^^^^
+
+../../../dhall-lang/tests/type-inference/success/prelude/Natural/fold/../../../../../../Prelude/Natural/fold.dhall:(18, 10)-(20, 41)AssertError: not an EEquivalent type
+
 Testing: ../../../dhall-lang/tests/type-inference/success/prelude/Natural/fold/2A.dhall
+18|           assert
+              ^^^^^^
+
+../../../dhall-lang/tests/type-inference/success/prelude/Natural/fold/../../../../../../Prelude/Natural/fold.dhall:(18, 10)-(20, 41)AssertError: not an EEquivalent type
+
 Testing: ../../../dhall-lang/tests/type-inference/success/prelude/Natural/isZero/0A.dhall
 Testing: ../../../dhall-lang/tests/type-inference/success/prelude/Natural/isZero/1A.dhall
 Testing: ../../../dhall-lang/tests/type-inference/success/prelude/Natural/odd/0A.dhall
@@ -189,6 +219,7 @@ Testing: ../../../dhall-lang/tests/type-inference/success/unit/AssertSimpleA.dha
 Testing: ../../../dhall-lang/tests/type-inference/success/unit/AssertTrivialA.dhall
 Testing: ../../../dhall-lang/tests/type-inference/success/unit/BoolA.dhall
 Testing: ../../../dhall-lang/tests/type-inference/success/unit/CompletionA.dhall
+Testing: ../../../dhall-lang/tests/type-inference/success/unit/ConstructorShiftA.dhall
 Testing: ../../../dhall-lang/tests/type-inference/success/unit/DoubleA.dhall
 Testing: ../../../dhall-lang/tests/type-inference/success/unit/DoubleLiteralA.dhall
 Testing: ../../../dhall-lang/tests/type-inference/success/unit/DoubleShowA.dhall
@@ -339,6 +370,24 @@ Testing: ../../../dhall-lang/tests/type-inference/success/unit/RightBiasedRecord
 Testing: ../../../dhall-lang/tests/type-inference/success/unit/RightBiasedRecordMergeTwoDifferentA.dhall
 Testing: ../../../dhall-lang/tests/type-inference/success/unit/RightBiasedRecordMergeTwoKindsA.dhall
 Testing: ../../../dhall-lang/tests/type-inference/success/unit/RightBiasedRecordMergeTwoTypesA.dhall
+Testing: ../../../dhall-lang/tests/type-inference/success/unit/ShowConstructorEmptyA.dhall
+0| showConstructor <A>.A
+   ^^^^^^^^^^^^^^^
+
+../../../dhall-lang/tests/type-inference/success/unit/ShowConstructorEmptyA.dhall:(0, 0)-(0, 15)MissingVar: "showConstructor@0\n in Cxt: (MkCxt { values = Empty, types = 2})"
+
+Testing: ../../../dhall-lang/tests/type-inference/success/unit/ShowConstructorNonEmptyA.dhall
+0| showConstructor (< A : Bool>.A False)
+   ^^^^^^^^^^^^^^^
+
+../../../dhall-lang/tests/type-inference/success/unit/ShowConstructorNonEmptyA.dhall:(0, 0)-(0, 15)MissingVar: "showConstructor@0\n in Cxt: (MkCxt { values = Empty, types = 2})"
+
+Testing: ../../../dhall-lang/tests/type-inference/success/unit/ShowConstructorOptionalA.dhall
+0| showConstructor (Some 0)
+   ^^^^^^^^^^^^^^^
+
+../../../dhall-lang/tests/type-inference/success/unit/ShowConstructorOptionalA.dhall:(0, 0)-(0, 15)MissingVar: "showConstructor@0\n in Cxt: (MkCxt { values = Empty, types = 2})"
+
 Testing: ../../../dhall-lang/tests/type-inference/success/unit/SomeTrueA.dhall
 Testing: ../../../dhall-lang/tests/type-inference/success/unit/TextA.dhall
 Testing: ../../../dhall-lang/tests/type-inference/success/unit/TextLiteralA.dhall
@@ -366,10 +415,73 @@ Testing: ../../../dhall-lang/tests/type-inference/success/unit/UnionTypeMixedKin
 Testing: ../../../dhall-lang/tests/type-inference/success/unit/UnionTypeOneA.dhall
 Testing: ../../../dhall-lang/tests/type-inference/success/unit/UnionTypeTypeA.dhall
 Testing: ../../../dhall-lang/tests/type-inference/success/unit/WithCreateIntermediateRecordsA.dhall
+Testing: ../../../dhall-lang/tests/type-inference/success/unit/WithInfersKindA.dhall
 Testing: ../../../dhall-lang/tests/type-inference/success/unit/WithNestedA.dhall
 Testing: ../../../dhall-lang/tests/type-inference/success/unit/WithNewFieldA.dhall
 Testing: ../../../dhall-lang/tests/type-inference/success/unit/WithNewTypeA.dhall
+Testing: ../../../dhall-lang/tests/type-inference/success/unit/WithOptionalTypeUnchangedA.dhall
+(0, 0)-(0, 86)ParseError "Just \"../../../dhall-lang/tests/type-inference/success/unit/WithOptionalTypeUnchangedA.dhall\" [error: Expected '\8704'\ntokens: Just (MkBounds 0 0 0 1), error: Expected 'forall'\ntokens: Just (MkBounds 0 0 0 1), error: expected name\ntokens: Just (MkBounds 0 14 0 15), error: Expected 'let'\ntokens: Just (MkBounds 0 0 0 1), error: Expected '\\'\ntokens: Just (MkBounds 0 0 0 1), error: Expected '\955'\ntokens: Just (MkBounds 0 0 0 1), error: Expected 'assert'\ntokens: Just (MkBounds 0 0 0 1), error: Expected 'if'\ntokens: Just (MkBounds 0 0 0 1), error: Expected 'merge'\ntokens: Just (MkBounds 0 0 0 1), error: Expected 'toMap'\ntokens: Just (MkBounds 0 0 0 1)]"
+Testing: ../../../dhall-lang/tests/type-inference/success/unit/time/DateA.dhall
+0| Date
+   ^^^^
+
+../../../dhall-lang/tests/type-inference/success/unit/time/DateA.dhall:(0, 0)-(0, 4)MissingVar: "Date@0\n in Cxt: (MkCxt { values = Empty, types = 2})"
+
+Testing: ../../../dhall-lang/tests/type-inference/success/unit/time/DateLiteralA.dhall
+0| 2000-01-01
+   ^^^^
+
+MkVirtualFCTODOUnexpected: VNatural is not a VPi or VHPi
+
+Testing: ../../../dhall-lang/tests/type-inference/success/unit/time/DateTimeLiteralA.dhall
+0| 2000-01-01T12:00:00
+   ^^^^
+
+MkVirtualFCTODOUnexpected: VNatural is not a VPi or VHPi
+
+Testing: ../../../dhall-lang/tests/type-inference/success/unit/time/DateTimeTimeZoneLiteralA.dhall
+0| 2000-01-01T12:00:00+08:00
+   ^^^^
+
+MkVirtualFCTODOUnexpected: VNatural is not a VPi or VHPi
+
+Testing: ../../../dhall-lang/tests/type-inference/success/unit/time/TimeA.dhall
+0| Time
+   ^^^^
+
+../../../dhall-lang/tests/type-inference/success/unit/time/TimeA.dhall:(0, 0)-(0, 4)MissingVar: "Time@0\n in Cxt: (MkCxt { values = Empty, types = 2})"
+
+Testing: ../../../dhall-lang/tests/type-inference/success/unit/time/TimeLiteralA.dhall
+0| 12:00:00
+   ^^
+
+MkVirtualFCTODOAlphaEquivError: VNatural
+ not alpha equivalent to:
+(VNaturalLit 0)
+
+Testing: ../../../dhall-lang/tests/type-inference/success/unit/time/TimeTimeZoneLiteralA.dhall
+0| 12:00:00+08:00
+   ^^
+
+MkVirtualFCTODOAlphaEquivError: VNatural
+ not alpha equivalent to:
+(VNaturalLit 0)
+
+Testing: ../../../dhall-lang/tests/type-inference/success/unit/time/TimeZoneA.dhall
+0| TimeZone
+   ^^^^^^^^
+
+../../../dhall-lang/tests/type-inference/success/unit/time/TimeZoneA.dhall:(0, 0)-(0, 8)MissingVar: "TimeZone@0\n in Cxt: (MkCxt { values = Empty, types = 2})"
+
+Testing: ../../../dhall-lang/tests/type-inference/success/unit/time/TimeZoneLiteralA.dhall
+0| +08:00
+   ^^^
+
+MkVirtualFCTODOAlphaEquivError: VInteger
+ not alpha equivalent to:
+(VNaturalLit 0)
+
 Result:
-Pass: 344
-Fail: 4
+Pass: 340
+Fail: 23
 Main> Bye for now!
