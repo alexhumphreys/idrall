@@ -18,12 +18,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      - name: Checkout tools repo
-        uses: actions/checkout@v2
         with:
-          repository: dhall-lang/dhall-lang
-          path: dhall-lang
-          ref: '00e67bf'
+          submodules: 'recursive'
       - name: idrall build and test
         run: |
           make clean && make build && make install && make test INTERACTIVE=''
