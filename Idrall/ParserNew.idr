@@ -738,13 +738,6 @@ finalParser od = do
   endOfInput
   pure e
 
-Show (ParsingError (TokenRawToken)) where
-  show (Error x xs) =
-    """
-    error: \{x}
-    tokens: \{show xs}
-    """
-
 removeComments : List (WithBounds TokenRawToken) -> List (WithBounds TokenRawToken)
 removeComments xs = filter pred xs
 where
