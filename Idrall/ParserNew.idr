@@ -738,7 +738,7 @@ finalParser od = do
   endOfInput
   pure e
 
-Show (ParsingError (TokenRawToken)) where
+[PERROR] Show (ParsingError TokenRawToken) where
   show (Error x xs) =
     """
     error: \{x}
@@ -777,7 +777,7 @@ parseExprNew input = do
       | Left e => Left $ show e
 
     Right (expr, x) <- pure $ doParse' od tokens
-      | Left e => Left $ "\{show od} \{show e}"
+      | Left e => Left $ let %hint perror : ?; perror = PERROR in "\{show od} \{show e}"
     pure (expr, 0)
 
 doParse : String -> IO ()
@@ -789,7 +789,7 @@ doParse input = do
   let processedTokens = (combineWhite . removeComments) tokens
   putStrLn $ "processedTokens: " ++ show processedTokens
   Right (expr, x) <- pure $ doParse' Nothing tokens
-    | Left e => printLn $ show e
+    | Left e => printLn $ let %hint perror : ?; perror = PERROR in show e
 
   let doc = the (Doc (RawExpr)) $ pretty expr
   putStrLn $
