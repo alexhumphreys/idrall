@@ -1,5 +1,7 @@
 package idrall
 
+brief = "Dhall compiler for Idris2"
+
 sourcedir = "./"
 depends = base, contrib
 
