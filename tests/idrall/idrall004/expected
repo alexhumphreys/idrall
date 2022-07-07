@@ -1,6 +1,5 @@
-1/1: Building One (One.idr)
 Main> Testing: ../../../dhall-lang/tests/type-inference/success/simple/toMapEmptyNormalizeAnnotationA.dhall
 Result:
 Pass: 1
 Fail: 0
-Main> Bye for now!
+Main> 

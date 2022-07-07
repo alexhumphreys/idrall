@@ -37,6 +37,7 @@ clean:
 	rm -rf build/
 	rm -rf tests/build/
 	rm -rf tests/*/*/build
+	rm -rf tests/*/*/output
 	@${MAKE} -C tests clean
 
 build:

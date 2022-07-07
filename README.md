@@ -147,11 +147,14 @@ As an example, the `List` type was added via [#1](https://github.com/alexhumphre
 
 There is an [`idris1` tag](https://github.com/alexhumphreys/idrall/releases/tag/idris1) which is the last confirmed commit that works with idris1. It's got all the dhall types and not much else, so if you're desperate for a Dhall implementation for idris1 it may help, but realistically you're gonna need the Idris2 version.
 
+## Updating the dhall-lang git submodule
+
+Run `git submodule update --recursive --remote`
+
 ## Future work
 
 - Add the missing things from the features list above.
 - Use dependent types to prove field names in values are elements of their Unions/Records.
 - Improve postfix operator parsing (`x.y`, `x.(y)`, `x.{y}`...)
 - Think about what api/types to expose so as to make this as nice as possible to use.
-- Derive a generic `ToDhall` interface (to go with the current `FromDhall` interface) similar to the dhall-haskell implementation.
 - Scope checking as found in [Tiny Idris](https://github.com/edwinb/SPLV20), you can find some failed attempts [here](https://github.com/alexhumphreys/idrall/blob/feat/scope-checking2/Idrall/Binder.idr).
