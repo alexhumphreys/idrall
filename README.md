@@ -70,8 +70,6 @@ $ idris2 Idrall/APIv1.idr -p contrib --client ':exec doStuff valueFromString "./
 Success: (VTextLit (MkVChunks [] "it's true!"))
 ```
 
-There's also a demo file at `Idrall/Demo.idr` which you can use to see a very rough example of how to read a Dhall file to and Idris type and use it natively. This is still very rough and verbose, but I hope to use [elaborator reflection](https://github.com/stefan-hoeck/idris2-elab-util) to improve this.
-
 To see the types it is returning you'll want to check out [IOEither.idr](https://github.com/alexhumphreys/idrall/blob/master/Idrall/IOEither.idr) and [Value.idr](https://github.com/alexhumphreys/idrall/blob/master/Idrall/Value.idr).
 
 There's still not much of an API, and this will hopefully change, but this should be enough to help you kick the tires if you're curious. If you find any problems or have any suggests, [issues](https://github.com/alexhumphreys/idrall/issues) and pull requests are welcome.
