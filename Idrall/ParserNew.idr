@@ -20,6 +20,8 @@ import Idrall.Pretty
 
 import Debug.Trace
 
+%hide Prelude.(<|>)
+
 public export
 RawExpr : Type
 RawExpr = Expr ImportStatement
@@ -380,7 +382,6 @@ mutual
                -> Grammar state (TokenRawToken) True (RawExpr)
   recordParser od sep empty cons = do
     start <- bounds $ tokenW $ symbol "{"
-    commit
     let fc' = boundToFC od start
     emptyRecord fc' empty <|> populatedRecord fc'
   where
