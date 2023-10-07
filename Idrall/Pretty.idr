@@ -85,7 +85,7 @@ mutual
   Pretty a => Pretty (Expr a) where
     pretty (EConst fc x) = pretty x
     pretty (EVar fc x n) = pretty x <+> pretty "@" <+> pretty n
-    pretty (EApp fc x y) = pretty x <++> pretty y
+    pretty (EApp fc x y) = pretty x <++> parens (pretty y)
     pretty (ELam fc n x y) =
       pretty "\\" <+> parens (pretty n <++> colon <++> pretty x)
         <++> pretty "->" <++> pretty y
