@@ -118,3 +118,15 @@ public export
 data IdrisType
   = ADT
   | Record
+
+public export
+record Options where
+  constructor MkOptions
+  ||| This function is used to adjust constructor argument names
+  ||| during encoding and decoding
+  fieldNameModifier          : String -> String
+
+export
+defaultOptions : Options
+defaultOptions = MkOptions id
+

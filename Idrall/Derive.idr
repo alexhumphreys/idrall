@@ -74,8 +74,8 @@ Alternative (Either Error) where
   (Right x) <|> _ = (Right x)
 
 export
-deriveFromDhall : IdrisType -> (name : Name) -> Elab ()
-deriveFromDhall it n =
+deriveFromDhall : IdrisType -> {default Common.defaultOptions options : Options} -> (name : Name) -> Elab ()
+deriveFromDhall it {options} n =
   do [(name, _)] <- getType n
              | _ => fail "Ambiguous name"
      let funName = UN $ Basic ("fromDhall" ++ show (stripNs name))
@@ -119,7 +119,7 @@ deriveFromDhall it n =
     genClauseRecord : Name -> Name -> List (Name, TTImp) -> Elab (TTImp)
     genClauseRecord constructor' arg xs = do
           let rhs = foldr (\(n, type), acc =>
-                            let name = primStr $ (show n) in
+                            let name = primStr $ options.fieldNameModifier (show n) in
                                 case type of
                                      _ => `(~acc <*> (lookupEither ~(varStr "fc") (MkFieldName ~name) ~(var arg) >>= fromDhall)))
                           `(pure ~(var constructor')) xs
