@@ -236,6 +236,11 @@ builtinTerm od str =
     cons : (FC -> RawExpr) -> RawExpr
     cons = mkExprFC0 od str
 
+precedingComma :  Grammar state (RawToken) True (Maybe ())
+precedingComma = do
+  _ <- symbol ","
+  optional whitespace
+
 mutual
   dhallImport : Grammar state (TokenRawToken) True (ImportStatement)
   dhallImport = httpImport <|> envImport <|> pathImport <|> missingImport
@@ -408,6 +413,7 @@ mutual
       pure (MkFieldName i, e)
     populatedRecord : FC -> Grammar state (TokenRawToken) True (RawExpr)
     populatedRecord fc = do
+      _ <- optional precedingComma
       es <- sepBy (tokenW $ symbol ",") recordField
       _ <- optional whitespace
       end <- bounds $ symbol "}"
@@ -449,6 +455,7 @@ mutual
     recordField fc = dottedField fc <|> punField fc
     populatedRecord : FC -> Grammar state (TokenRawToken) True (RawExpr)
     populatedRecord fc = do
+      _ <- optional precedingComma
       es <- sepBy1 (symbol ",") (recordField fc)
       end <- bounds $ symbol "}"
       pure $ ERecordLit (mergeBounds fc (boundToFC od end)) $ foldl1 (mergeWith (ECombine initFC)) es
@@ -492,6 +499,7 @@ mutual
       pure $ EListLit (mergeBounds fc (boundToFC od ty)) (Just (val ty)) []
     populatedList : FC -> Grammar state (TokenRawToken) True (RawExpr)
     populatedList fc = do
+      _ <- optional precedingComma
       es <- sepBy1 (tokenW $ symbol ",") $ exprTerm od
       _ <- optional whitespace
       end <- bounds $ symbol "]"
