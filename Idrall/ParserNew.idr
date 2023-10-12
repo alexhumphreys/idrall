@@ -142,6 +142,14 @@ where
                 a2 <- p >>= rest
                 rest (f a1 a2)) <|> pure a1
 
+||| Parse first expression, then attempt to parse
+||| an operation and a second argument to that operation
+||| and apply the operation to the first expression and the
+||| newly parsed argument. If the operation or argument fail
+||| to parse, produce the first expression successfully.
+|||
+||| In short, parse an expression and optionally parse and apply
+||| an operation following it.
 hchainl : Grammar state t True (a)
         -> Grammar state t True (a -> b -> a)
         -> Grammar state t True (b)
@@ -568,9 +576,15 @@ mutual
       _ <- tokenW $ symbol "."
       pure $ field'
 
+  recordCompletion : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
+  recordCompletion od = hchainl (projTermRight od) recordCompletionOp (projTermRight od)
+    where
+      recordCompletionOp : Grammar state (TokenRawToken) True (RawExpr -> RawExpr -> RawExpr)
+      recordCompletionOp = (opParser (symbol "::") ERecordCompletion)
+
   appTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
   appTerm od = (do
-                x <- some $ projTermRight od
+                x <- some $ recordCompletion od
                 pure $ List1.foldl1 (EApp EmptyFC) x) -- (appOp)
 
   mulTerm : OriginDesc -> Grammar state (TokenRawToken) True (RawExpr)
@@ -620,7 +634,6 @@ mutual
         <|> (opParser (symbol "/\\" <|> symbol "∧") ECombine)
         <|> (opParser (symbol "//\\\\" <|> symbol "⩓") ECombineTypes)
         <|> (opParser (symbol "//" <|> symbol "⫽") EPrefer)
-        <|> (opParser (symbol "::") ERecordCompletion)
         <|> (opParser (symbol "===" <|> symbol "≡") EEquivalent)
         <|> (opParser (symbol "?") EImportAlt)
 
