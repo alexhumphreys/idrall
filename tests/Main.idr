@@ -33,6 +33,7 @@ deriveTests : TestPool
 deriveTests = MkTestPool "derive tests" [] Default
   [ "derive001"
   , "derive002"
+  , "derive003"
   ]
 
 examplesTests : TestPool
