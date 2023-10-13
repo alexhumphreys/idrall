@@ -65,33 +65,6 @@ readLocalFile fc h current next = do
 
 mutual
 
-  ||| Resolve an import to a string value but do not evaluate
-  ||| that string value at all. This gets you as far as needed
-  ||| for `as Text` imports and then normal imports take it 
-  ||| further by resolving the text that was imported.
-  resolveImportToStr : FC -> (history : List FilePath) -> Maybe FilePath -> ImportStatement -> IOEither Error String
-  resolveImportToStr fc h p (LocalFile fp) = contents <$> readLocalFile fc h p fp
-  resolveImportToStr fc h p (EnvVar str) = readEnvVar fc str
-  resolveImportToStr fc h p (Http str) = MkIOEither (pure (Left (ErrorMessage fc "TODO http imports not implemented")))
-  resolveImportToStr fc h p Missing = MkIOEither (pure (Left (ErrorMessage fc "No valid imports")))
-
-  resolveImportAsString : FC -> (history : List FilePath) -> Maybe FilePath -> ImportStatement -> IOEither Error (Expr Void)
-  resolveImportAsString fc h p importStatement = do
-    str <- resolveImportToStr fc h p importStatement
-    pure $ ETextLit fc (MkChunks [] str)
-
-  resolveEnvVar : FC -> (history : List FilePath) -> Maybe FilePath -> String -> IOEither Error (Expr Void)
-  resolveEnvVar fc h p x = do
-    str <- resolveImportToStr fc h p (EnvVar x)
-    expr <- mapErr (parseErrorHandler fc) (liftEither (parseWith Nothing str))
-    resolve h p (fst expr)
-
-  resolveLocalFile : FC -> (history : List FilePath) -> (current : Maybe FilePath) -> (next : FilePath) -> IOEither Error (Expr Void)
-  resolveLocalFile fc h current next = do
-    localFile <- readLocalFile fc h current next
-    expr <- mapErr (parseErrorHandler fc) (liftEither (parseWith (Just $ canonicalFilePath localFile.filePath) localFile.contents))
-    resolve (normaliseFilePath localFile.filePath :: h) (Just localFile.filePath) (fst expr)
-
   export
   covering
   resolve : (history : List FilePath)
@@ -284,9 +257,32 @@ mutual
   resolve h p (EEmbed fc (Raw (EnvVar x))) = resolveEnvVar fc h p x
   resolve h p (EEmbed fc (Raw (Http x))) = MkIOEither (pure (Left (ErrorMessage fc "TODO http imports not implemented")))
   resolve h p (EEmbed fc (Raw Missing)) = MkIOEither (pure (Left (ErrorMessage fc "No valid imports")))
-  resolve h p (EEmbed fc (Text a)) = resolveImportAsString fc h p a
+  resolve h p (EEmbed fc (Text a)) = resolveImportAsText fc h p a
   resolve h p (EEmbed fc (Location a)) = MkIOEither (pure (Left (ErrorMessage fc "TODO as Location not implemented")))
   resolve h p (EEmbed fc (Resolved x)) = MkIOEither (pure (Left (ErrorMessage fc "Already resolved")))
+
+  resolveImportAsText : FC -> (history : List FilePath) -> Maybe FilePath -> ImportStatement -> IOEither Error (Expr Void)
+  resolveImportAsText fc h p importStatement = do
+      str <- resolveImportToStr fc h p importStatement
+      pure $ ETextLit fc (MkChunks [] str)
+    where
+      resolveImportToStr : FC -> (history : List FilePath) -> Maybe FilePath -> ImportStatement -> IOEither Error String
+      resolveImportToStr fc h p (LocalFile fp) = contents <$> readLocalFile fc h p fp
+      resolveImportToStr fc h p (EnvVar str) = readEnvVar fc str
+      resolveImportToStr fc h p (Http str) = MkIOEither (pure (Left (ErrorMessage fc "TODO http imports not implemented")))
+      resolveImportToStr fc h p Missing = MkIOEither (pure (Left (ErrorMessage fc "No valid imports")))
+
+  resolveEnvVar : FC -> (history : List FilePath) -> Maybe FilePath -> String -> IOEither Error (Expr Void)
+  resolveEnvVar fc h p x = do
+    str <- readEnvVar fc x
+    expr <- mapErr (parseErrorHandler fc) (liftEither (parseWith Nothing str))
+    resolve h p (fst expr)
+
+  resolveLocalFile : FC -> (history : List FilePath) -> (current : Maybe FilePath) -> (next : FilePath) -> IOEither Error (Expr Void)
+  resolveLocalFile fc h current next = do
+    MkLocalFile filePath contents <- readLocalFile fc h current next
+    expr <- mapErr (parseErrorHandler fc) (liftEither (parseWith (Just $ canonicalFilePath filePath) contents))
+    resolve (normaliseFilePath filePath :: h) (Just filePath) (fst expr)
 
   resolveRecord :  (history : List FilePath)
                -> Maybe FilePath
