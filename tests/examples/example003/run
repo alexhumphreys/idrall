@@ -1,0 +1,5 @@
+cp ../../../examples/ForbiddenNames.idr .
+cp ../../../examples/forbidden-names.dhall .
+idris2 -q --no-banner --no-color --console-width 0 -p contrib -p idrall ForbiddenNames.idr --exec main
+
+rm -rf build
