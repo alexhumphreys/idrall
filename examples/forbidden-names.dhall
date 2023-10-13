@@ -1,0 +1,3 @@
+{ namespace = "myNamespace"
+, record = "myRecord"
+}

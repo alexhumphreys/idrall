@@ -58,55 +58,56 @@ export
 Pretty Void where
   pretty x = pretty ""
 
--- Record Type functions
--- given a idris Record constructor arg in the form (Name, type),
--- return a dhall record field for use in the ERecord constructor.
-argToFieldType : List (Name, TTImp) -> TTImp
-argToFieldType [] = `([])
-argToFieldType ((n, t) :: xs) =
-  let name = primStr $ (show n)
-  in `(MkPair (MkFieldName ~name) (toDhallType {ty = ~t}) :: ~(argToFieldType xs))
+parameters (options : Options)
+  -- Record Type functions
+  -- given a idris Record constructor arg in the form (Name, type),
+  -- return a dhall record field for use in the ERecord constructor.
+  argToFieldType : List (Name, TTImp) -> TTImp
+  argToFieldType [] = `([])
+  argToFieldType ((n, t) :: xs) =
+    let name = primStr $ options.fieldNameModifier (show n)
+    in `(MkPair (MkFieldName ~name) (toDhallType {ty = ~t}) :: ~(argToFieldType xs))
 
-dhallRecTypeFromRecArg : List (Name, TTImp) -> TTImp
-dhallRecTypeFromRecArg xs =
-  `(ERecord EmptyFC $ fromList $ ~(argToFieldType xs))
+  dhallRecTypeFromRecArg : List (Name, TTImp) -> TTImp
+  dhallRecTypeFromRecArg xs =
+    `(ERecord EmptyFC $ fromList $ ~(argToFieldType xs))
 
-genRecordTypeClauses : -- IdrisType ->
-             Name -> Name -> Cons -> List Clause
-genRecordTypeClauses funName arg [] = do
-  pure $ patClause `(~(var funName)) (dhallRecTypeFromRecArg [])
-genRecordTypeClauses funName arg ((n, ls) :: xs) = do
-  pure $ patClause `(~(var funName)) (dhallRecTypeFromRecArg ls)
+  genRecordTypeClauses : -- IdrisType ->
+               Name -> Name -> Cons -> List Clause
+  genRecordTypeClauses funName arg [] = do
+    pure $ patClause `(~(var funName)) (dhallRecTypeFromRecArg [])
+  genRecordTypeClauses funName arg ((n, ls) :: xs) = do
+    pure $ patClause `(~(var funName)) (dhallRecTypeFromRecArg ls)
 
--- Record Lit functions
-argToField : Name -> List (Name, TTImp) -> TTImp
-argToField arg [] = `([])
-argToField arg ((n, _) :: xs) =
-  let name = primStr $ (show n)
-  in `(MkPair (MkFieldName ~name) (toDhall (~(var n) ~(var arg))) :: ~(argToField arg xs))
+  -- Record Lit functions
+  argToField : Name -> List (Name, TTImp) -> TTImp
+  argToField arg [] = `([])
+  argToField arg ((n, _) :: xs) =
+    let name = primStr $ options.fieldNameModifier (show n)
+    in `(MkPair (MkFieldName ~name) (toDhall (~(var n) ~(var arg))) :: ~(argToField arg xs))
 
-dhallRecLitFromRecArg : Name -> List (Name, TTImp) -> TTImp
-dhallRecLitFromRecArg arg xs =
-  `(ERecordLit EmptyFC $ fromList $ ~(argToField arg xs))
+  dhallRecLitFromRecArg : Name -> List (Name, TTImp) -> TTImp
+  dhallRecLitFromRecArg arg xs =
+    `(ERecordLit EmptyFC $ fromList $ ~(argToField arg xs))
 
-genRecordLitClauses : Name -> Name -> Cons -> List Clause
-genRecordLitClauses funName arg [] = do
-  pure $ patClause `(~(var funName) ~(bindvar $ show arg)) (dhallRecLitFromRecArg arg [])
-genRecordLitClauses funName arg ((n, ls) :: xs) = do
-  pure $ patClause `(~(var funName) ~(bindvar $ show arg)) (dhallRecLitFromRecArg arg ls)
+  genRecordLitClauses : Name -> Name -> Cons -> List Clause
+  genRecordLitClauses funName arg [] = do
+    pure $ patClause `(~(var funName) ~(bindvar $ show arg)) (dhallRecLitFromRecArg arg [])
+  genRecordLitClauses funName arg ((n, ls) :: xs) = do
+    pure $ patClause `(~(var funName) ~(bindvar $ show arg)) (dhallRecLitFromRecArg arg ls)
 
-deriveToDhallRecord : Name
-                    -> Name
-                    -> Name
-                    -> Cons
-                    -> Elab ()
-deriveToDhallRecord name funNameType funNameLit cons =
-  let argName = genReadableSym "arg"
-      funDeclType = IDef EmptyFC funNameType $ (genRecordTypeClauses funNameType !argName cons)
-      funDeclLit = IDef EmptyFC funNameLit $ (genRecordLitClauses funNameLit !argName cons)
-  in do
-    -- declare the fuction in the env
-    declare [funDeclType, funDeclLit]
+  deriveToDhallRecord :  Name
+                      -> Name
+                      -> Name
+                      -> Cons
+                      -> Elab ()
+  deriveToDhallRecord name funNameType funNameLit cons =
+    let argName = genReadableSym "arg"
+        funDeclType = IDef EmptyFC funNameType $ (genRecordTypeClauses funNameType !argName cons)
+        funDeclLit = IDef EmptyFC funNameLit $ (genRecordLitClauses funNameLit !argName cons)
+    in do
+      -- declare the fuction in the env
+      declare [funDeclType, funDeclLit]
 
 -- ADT Type functions
 mkUnion : Name -> Cons -> Elab (TTImp)
@@ -196,9 +197,10 @@ toDhallImpl typeName =
 
 export
 deriveToDhall : IdrisType
+              -> {default Common.defaultOptions options : Options}
               -> (name : Name)
               -> Elab ()
-deriveToDhall it n = do
+deriveToDhall it {options} n = do
   [(name, _)] <- getType n
           | _ => fail "Ambiguous name"
   let nameShortStr = show (stripNs name)
@@ -227,7 +229,7 @@ deriveToDhall it n = do
   declare [funClaimType, funClaimLit]
   case it of
        Record => do
-         deriveToDhallRecord name funNameType funNameLit cons
+         deriveToDhallRecord options name funNameType funNameLit cons
          declare $ toDhallImpl $ nameShortStr
        ADT => do
          deriveToDhallADT name funNameType funNameLit cons
