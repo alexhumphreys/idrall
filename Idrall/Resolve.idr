@@ -45,29 +45,52 @@ alreadyImported fc xs x = case elem x xs of
                             False => pure ()
                             True => Left (CyclicImportError fc ((show x) ++ " in " ++ (show xs)))
 
+||| Read a file in the IOEither monad.
+readFile' : FC -> String -> IOEither Error String
+readFile' fc filePath =
+  let contents = MkIOEither (readFile filePath) in
+      mapErr (fileErrorHandler fc filePath) contents
+
+record LocalFile where
+  constructor MkLocalFile
+  filePath : FilePath
+  contents : String
+
+readLocalFile : FC -> (history : List FilePath) -> (current : Maybe FilePath) -> (next : FilePath) -> IOEither Error LocalFile
+readLocalFile fc h current next = do
+  let combinedFilePaths = combinePaths current next
+  liftEither (alreadyImported fc h (normaliseFilePath combinedFilePaths))
+  let fp = canonicalFilePath combinedFilePaths
+  MkLocalFile combinedFilePaths <$> readFile' fc fp
+
 mutual
+
+  ||| Resolve an import to a string value but do not evaluate
+  ||| that string value at all. This gets you as far as needed
+  ||| for `as Text` imports and then normal imports take it 
+  ||| further by resolving the text that was imported.
+  resolveImportToStr : FC -> (history : List FilePath) -> Maybe FilePath -> ImportStatement -> IOEither Error String
+  resolveImportToStr fc h p (LocalFile fp) = contents <$> readLocalFile fc h p fp
+  resolveImportToStr fc h p (EnvVar str) = readEnvVar fc str
+  resolveImportToStr fc h p (Http str) = MkIOEither (pure (Left (ErrorMessage fc "TODO http imports not implemented")))
+  resolveImportToStr fc h p Missing = MkIOEither (pure (Left (ErrorMessage fc "No valid imports")))
+
+  resolveImportAsString : FC -> (history : List FilePath) -> Maybe FilePath -> ImportStatement -> IOEither Error (Expr Void)
+  resolveImportAsString fc h p importStatement = do
+    str <- resolveImportToStr fc h p importStatement
+    pure $ ETextLit fc (MkChunks [] str)
+
   resolveEnvVar : FC -> (history : List FilePath) -> Maybe FilePath -> String -> IOEither Error (Expr Void)
   resolveEnvVar fc h p x = do
-    str <- readEnvVar fc x
+    str <- resolveImportToStr fc h p (EnvVar x)
     expr <- mapErr (parseErrorHandler fc) (liftEither (parseWith Nothing str))
     resolve h p (fst expr)
 
   resolveLocalFile : FC -> (history : List FilePath) -> (current : Maybe FilePath) -> (next : FilePath) -> IOEither Error (Expr Void)
-  resolveLocalFile fc h current next =
-    let combinedFilePaths = combinePaths current next in
-        go combinedFilePaths
-    where
-    readFile' : String -> IOEither Error String
-    readFile' x =
-      let contents = MkIOEither (readFile x) in
-          mapErr (fileErrorHandler fc x) contents
-    go : FilePath -> IOEither Error (Expr Void)
-    go p = do
-      liftEither (alreadyImported fc h (normaliseFilePath p))
-      let fp = canonicalFilePath p
-      str <- readFile' fp
-      expr <- mapErr (parseErrorHandler fc) (liftEither (parseWith (Just fp) str))
-      resolve (normaliseFilePath p :: h) (Just p) (fst expr)
+  resolveLocalFile fc h current next = do
+    localFile <- readLocalFile fc h current next
+    expr <- mapErr (parseErrorHandler fc) (liftEither (parseWith (Just $ canonicalFilePath localFile.filePath) localFile.contents))
+    resolve (normaliseFilePath localFile.filePath :: h) (Just localFile.filePath) (fst expr)
 
   export
   covering
@@ -261,7 +284,7 @@ mutual
   resolve h p (EEmbed fc (Raw (EnvVar x))) = resolveEnvVar fc h p x
   resolve h p (EEmbed fc (Raw (Http x))) = MkIOEither (pure (Left (ErrorMessage fc "TODO http imports not implemented")))
   resolve h p (EEmbed fc (Raw Missing)) = MkIOEither (pure (Left (ErrorMessage fc "No valid imports")))
-  resolve h p (EEmbed fc (Text a)) = MkIOEither (pure (Left (ErrorMessage fc "TODO as Text not implemented")))
+  resolve h p (EEmbed fc (Text a)) = resolveImportAsString fc h p a
   resolve h p (EEmbed fc (Location a)) = MkIOEither (pure (Left (ErrorMessage fc "TODO as Location not implemented")))
   resolve h p (EEmbed fc (Resolved x)) = MkIOEither (pure (Left (ErrorMessage fc "Already resolved")))
 
