@@ -1,4 +1,5 @@
 Main> Success: (VNaturalLit 3)
 Error: //tmp/./importFailB.dhall:(0, 0)-(0, 19)CyclicImportError: (MkFilePath (Absolute ["", "tmp"]) Just "importFailA.dhall") in [(MkFilePath (Absolute ["", "tmp"]) Just "importFailB.dhall"), (MkFilePath (Absolute ["", "tmp"]) Just "importFailA.dhall")]
 Success: (VBoolLit True)
+Success: (VTextLit (MkVChunks [] "True"))
 Main> 
