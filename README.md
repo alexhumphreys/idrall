@@ -81,10 +81,10 @@ Most language features are in and should be working relatively correctly. The im
 ### Imports
 - [x] Keyword: missing
 - [x] Operator: ?
-- [ ] Keyword: as Text
+- [x] Keyword: as Text
 - [ ] Keyword: using
 - [x] Local imports (/path/to/file.dhall)
-- [ ] Environment variables
+- [x] Environment variables
 - [ ] HTTP imports
 - [ ] Semantic integrity checks
 

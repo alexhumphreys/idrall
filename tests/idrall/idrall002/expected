@@ -2,13 +2,13 @@ Main> Testing: ../../../dhall-lang/tests/type-inference/success/CacheImportsA.dh
 7| 	  :   https://test.dhall-lang.org/random-string as Text
           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-../../../dhall-lang/tests/type-inference/success/CacheImportsA.dhall:(7, 7)-(7, 56)ErrorMessage: "TODO as Text not implemented"
+../../../dhall-lang/tests/type-inference/success/CacheImportsA.dhall:(7, 7)-(7, 56)ErrorMessage: "TODO http imports not implemented"
 
 Testing: ../../../dhall-lang/tests/type-inference/success/CacheImportsCanonicalizeA.dhall
 6| 	  :   https://test.dhall-lang.org/random-string as Text
           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-../../../dhall-lang/tests/type-inference/success/CacheImportsCanonicalizeA.dhall:(6, 7)-(6, 56)ErrorMessage: "TODO as Text not implemented"
+../../../dhall-lang/tests/type-inference/success/CacheImportsCanonicalizeA.dhall:(6, 7)-(6, 56)ErrorMessage: "TODO http imports not implemented"
 
 Testing: ../../../dhall-lang/tests/type-inference/success/accessEncodedTypeA.dhall
 Testing: ../../../dhall-lang/tests/type-inference/success/accessTypeA.dhall
