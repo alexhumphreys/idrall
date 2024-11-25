@@ -97,7 +97,7 @@ deriveFromDhall it {options} n =
 
      clauses <- genClauses it funName argName cons
 
-     let funClaim = IClaim EmptyFC MW Export [Inline] (MkTy EmptyFC EmptyFC funName `(Expr Void -> Either Error ~(var name)))
+     let funClaim = IClaim $ MkFCVal EmptyFC $ MkIClaimData MW Export [Inline] (MkTy EmptyFC (NoFC funName) `(Expr Void -> Either Error ~(var name)))
      -- add a catch all pattern
      let funDecl = IDef EmptyFC funName (clauses ++ [patClause `(~(var funName) ~(varStr "expr")) `(Left $ FromDhallError (getFC ~(varStr "expr")) "\{show expr}")])
 
@@ -110,7 +110,7 @@ deriveFromDhall it {options} n =
 
      -- created interface for Example, and use function we already declared
      let retty = `(FromDhall ~(var name))
-     let objClaim = IClaim EmptyFC MW Export [Hint True, Inline] (MkTy EmptyFC EmptyFC objName retty)
+     let objClaim = IClaim $ MkFCVal EmptyFC $ MkIClaimData MW Export [Hint True, Inline] (MkTy EmptyFC (NoFC objName) retty)
      let objrhs = `(~(var ifCon) ~(var funName))
      let objDecl = IDef EmptyFC objName [(PatClause EmptyFC (var objName) objrhs)]
      declare [objClaim, objDecl]
