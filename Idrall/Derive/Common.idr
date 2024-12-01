@@ -17,7 +17,7 @@ import public Data.String
 ||| This is an alias for `MkTyp EmptyFC`.
 export
 mkTy : (n : Name) -> (ty : TTImp) -> ITy
-mkTy = MkTy EmptyFC EmptyFC
+mkTy = MkTy EmptyFC . MkFCVal EmptyFC
 
 ||| Creates a variable from the given name
 |||

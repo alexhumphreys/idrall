@@ -186,12 +186,12 @@ toDhallImpl typeName =
       toDhallLitClause = patClause toDhall $ var rhsToDhallLit
 
       impl = ILocal EmptyFC
-          [ IClaim EmptyFC MW Private [] (MkTy EmptyFC EmptyFC toDhallName `(~(typeNameImp) -> Expr Void))
+          [ IClaim $ NoFC $ MkIClaimData MW Private [] (MkTy EmptyFC (NoFC toDhallName) `(~(typeNameImp) -> Expr Void))
           , IDef EmptyFC toDhallName [toDhallLitClause]
           ]
           `(~(var mkToDhall) ~(var rhsToDhallType) ~(var rhsToDhallLit))
 
-  in [ IClaim EmptyFC MW Public [Hint True] $ MkTy EmptyFC EmptyFC functionName `(ToDhall ~(typeNameImp))
+  in [ IClaim $ NoFC $ MkIClaimData MW Public [Hint True] $ MkTy EmptyFC (NoFC functionName) `(ToDhall ~(typeNameImp))
      , IDef EmptyFC functionName [patClause function impl]
      ]
 
@@ -222,8 +222,8 @@ deriveToDhall it {options} n = do
   -- logCons cons
 
   -- create the function type signatures
-  let funClaimType = IClaim EmptyFC MW Export [Inline] (MkTy EmptyFC EmptyFC funNameType `(Expr Void))
-  let funClaimLit = IClaim EmptyFC MW Export [Inline] (MkTy EmptyFC EmptyFC funNameLit `(~(var name) -> Expr Void))
+  let funClaimType = IClaim $ NoFC $ MkIClaimData MW Export [Inline] (MkTy EmptyFC (NoFC funNameType) `(Expr Void))
+  let funClaimLit = IClaim $ NoFC $ MkIClaimData MW Export [Inline] (MkTy EmptyFC (NoFC funNameLit) `(~(var name) -> Expr Void))
 
   -- declare the function type signatures in the env
   declare [funClaimType, funClaimLit]
