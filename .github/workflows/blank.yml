@@ -14,14 +14,14 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
-    container: snazzybucket/idris2:latest
+    container: mattpolzin2/idris-docker:nightly
     steps:
       - name: idrall build and test
         run: |
           apt update && apt install git -y
         shell: bash
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           submodules: 'recursive'
       - name: idrall build and test
